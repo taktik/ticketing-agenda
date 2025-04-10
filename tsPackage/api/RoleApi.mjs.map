@@ -1,1 +1,0 @@
-{"version":3,"file":"RoleApi.mjs","sourceRoot":"","sources":["../../tsSourcesProject/api/RoleApi.mts"],"names":[],"mappings":"","sourcesContent":["// auto-generated file\nimport {Role} from '../model/Role.mjs';\n\n\nexport interface RoleApi {\n\n\tgetAllRoles(): Promise<Array<Role>>;\n\n}\n"]}

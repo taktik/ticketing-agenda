@@ -1,1 +1,0 @@
-{"version":3,"file":"StoredDocument.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/base/StoredDocument.mts"],"names":[],"mappings":"","sourcesContent":["// auto-generated file\nimport {Versionable} from './Versionable.mjs';\n\n\nexport interface StoredDocument extends Versionable<string> {\n\n\tdeletionDate: number | undefined;\n\n}\n"]}

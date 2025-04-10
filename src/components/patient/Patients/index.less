@@ -1,0 +1,21 @@
+@import '../../../style/less/index';
+
+.patients {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  flex: 1 0 0;
+
+  .media-breakpoint-down(@md,
+  {
+    padding: 24px 12px;
+  });
+
+  h3 {
+    color: @blue-900;
+    font-family: @font-700;
+    font-size: 20px;
+    line-height: normal;
+  }
+}

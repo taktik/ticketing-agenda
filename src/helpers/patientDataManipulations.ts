@@ -1,12 +1,15 @@
+import { AddressType, CodeStub, DecryptedPatient, PersonNameUse, TelecomType } from '@icure/cardinal-sdk'
 import dayjs from 'dayjs'
-import { AddressType, DecryptedPatient, Gender, PersonNameUse, TelecomType } from '@icure/cardinal-sdk'
+import { DATE_FORMAT_TO_DISPLAY } from '../constants'
+import { getAge } from './dateFormaters'
 
 export interface PatientFormated {
   id: string
   firstName?: string
   lastName?: string
   dateOfBirth?: number
-  gender?: Gender
+  birthSex?: string
+  language?: string
   phoneNumber?: string
   emailAddress?: string
   country?: string
@@ -19,10 +22,12 @@ export interface PatientFormated {
   userHomeAddressOneString?: string
   userDateOfBirthOneString?: string
   picture?: Int8Array
+  tags: CodeStub[]
+  age?: string
 }
 
 export const getPatientDataFormated = (patient: DecryptedPatient): PatientFormated => {
-  const { id, names, firstName, lastName, dateOfBirth, addresses, gender, picture } = patient
+  const { id, names, firstName, lastName, dateOfBirth, addresses, birthSex, tags, picture, languages } = patient
   const getTelecomBySystem = (telecomSystem: TelecomType) => {
     const expectedAddress = addresses?.find(({ telecoms }) => telecoms.some(({ telecomType }) => telecomType === telecomSystem))
     const expectedTelecom = expectedAddress?.telecoms.find(({ telecomType }) => telecomType === telecomSystem)
@@ -39,13 +44,14 @@ export const getPatientDataFormated = (patient: DecryptedPatient): PatientFormat
     .filter((el) => !!el)
     .join(', ')
   // get users birthday
-  const userDateOfBirth = dateOfBirth ? dayjs.unix(dateOfBirth).format('DD.MM.YYYY') : '-'
+  const userDateOfBirth = dateOfBirth ? dayjs.unix(dateOfBirth).format(DATE_FORMAT_TO_DISPLAY) : '-'
   return {
     id,
     firstName: userFirstName,
     lastName: userLastName,
     dateOfBirth,
-    gender,
+    birthSex,
+    tags,
     phoneNumber: getTelecomBySystem(TelecomType.Mobile) ?? '-',
     emailAddress: getTelecomBySystem(TelecomType.Email) ?? '-',
     country: homeAddressObj?.country,
@@ -57,5 +63,23 @@ export const getPatientDataFormated = (patient: DecryptedPatient): PatientFormat
     userHomeAddressOneString: homeAddressString.length !== 0 ? homeAddressString : '-',
     userDateOfBirthOneString: userDateOfBirth,
     picture: picture,
+    age: getAge(dateOfBirth),
+    language: languages[0],
   }
+}
+export const splitAddressGeneric = (address: string): { nonNumericPart: string; numericPart: string } => {
+  const match = address.match(/^(\d+)\s*,?\s*(.+)$|^(.+?)\s*,?\s*(\d+.*)$/)
+
+  if (match) {
+    return match[1] // If the first part is a number (postal code)
+      ? { nonNumericPart: match[2].trim(), numericPart: match[1].trim() }
+      : { nonNumericPart: match[3].trim(), numericPart: match[4].trim() }
+  }
+
+  return { nonNumericPart: '', numericPart: '' }
+}
+export const getPatientBirthDateFromImport = (date: string) => {
+  // based on the DATE_FORMAT
+  const dateRegex = /^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(\d{4})$/
+  return dateRegex.test(date) ? date : null
 }

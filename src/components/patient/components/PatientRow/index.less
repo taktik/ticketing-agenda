@@ -1,0 +1,263 @@
+@import '../../../../style/less/index';
+
+.patientRow {
+  width: 100%;
+  display: flex;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid @grey-400;
+  background: @grey-100;
+  cursor: pointer;
+  gap: 16px;
+
+  &:hover {
+    border-color: @blue-500;
+  }
+
+  .media-breakpoint-down(@md,
+  {
+    align-items: center;
+    gap: 12px;
+  });
+
+  &__picture, &__userAvatarPlaceholder {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+
+    img {
+      border-radius: 50%;
+    }
+
+    .media-breakpoint-down(@md,
+    {
+      width: 35px;
+      height: 35px;
+    });
+  }
+
+  &__userAvatarPlaceholder {
+    background-color: @blue-600;
+    border-radius: 50%;
+
+    svg {
+      width: 24px;
+      height: 24px;
+
+      path {
+        fill: @grey-100;
+      }
+
+      .media-breakpoint-down(@md,
+      {
+        width: 20px;
+        height: 20px;
+      });
+    }
+
+  }
+
+  &__contentDesktop {
+
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 170px repeat(2, minmax(100px, 130px))  repeat(auto-fit, minmax(150px, 1fr));
+
+    grid-auto-rows: auto; /* Adjust row height automatically */
+    row-gap: 12px;
+    align-items: center;
+
+    .media-breakpoint-up(@xxxl,
+    {
+      grid-template-columns: 170px repeat(2, minmax(100px, 150px))  repeat(auto-fit, minmax(150px, 400px));
+    });
+
+
+    .media-breakpoint-down(@xl,
+    {
+      grid-template-columns: 130px repeat(2, minmax(70px, 80px))  repeat(auto-fit, minmax(150px, 1fr));
+    });
+
+
+    .media-breakpoint-down(@lg,
+    {
+      grid-template-columns:  repeat(auto-fit, minmax(180px, 1fr));
+      align-items: start;
+    });
+
+
+    .media-breakpoint-down(@md,
+    {
+      display: none;
+    });
+
+    &__item {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 4px;
+      padding-right: 16px;
+      overflow: hidden;
+
+      &__title {
+        color: @grey-600;
+        font-size: 12px;
+        font-style: normal;
+        line-height: normal;
+      }
+
+      &__value {
+        color: @grey-800;
+        font-size: 13px;
+        font-style: normal;
+        line-height: normal;
+
+        &--name {
+          color: @grey-800;
+          font-family: @font-700;
+          font-size: 14px;
+          font-style: normal;
+          line-height: normal;
+
+          .media-breakpoint-down(@lg,
+          {
+            font-size: 13px;
+          });
+        }
+      }
+
+      &--email {
+        .media-breakpoint-down(@md,
+        {
+          display: none;
+        });
+      }
+
+      &__tagsContainer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+    }
+  }
+
+  &__contentMobile {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+
+    &__name {
+      color: @grey-800;
+      font-family: @font-700;
+      font-size: 14px;
+      font-style: normal;
+      line-height: normal;
+    }
+
+    &__value {
+      color: @grey-700;
+      font-size: 12px;
+      font-style: normal;
+      line-height: normal;
+    }
+
+    &__tagsGroup {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .media-breakpoint-up(@md,
+    {
+      display: none;
+    });
+  }
+
+  &__btnGroup {
+    display: flex;
+    align-items: center;
+
+
+    &__item {
+      display: flex;
+      width: 40px;
+      height: 40px;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 50%;
+      color: @grey-700;
+
+      .media-breakpoint-down(@xl,
+      {
+        width: 32px;
+        height: 32px;
+      });
+
+      .media-breakpoint-down(@sm,
+      {
+        background: @grey-100;
+        border: 1px solid @blue-400;
+      });
+
+      &:hover {
+        border: 1px solid @blue-800;
+        background: @grey-100;
+        box-shadow: 0 0 0 2px rgba(61, 135, 197, 0.2);
+
+        svg path {
+          fill: @blue-800;
+        }
+      }
+
+      &--active {
+        border: 1px solid @blue-800;
+        background: @grey-100;
+        box-shadow: 0 0 0 2px rgba(61, 135, 197, 0.2);
+
+        svg path {
+          fill: @blue-800;
+        }
+      }
+
+      svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+
+      &--addConsultation {
+        .media-breakpoint-down(@sm,
+        {
+          display: none;
+        });
+      }
+
+      &__dropdownRow {
+        width: 165px;
+        display: flex;
+        gap: 8px;
+
+        &__icn {
+          svg {
+            width: 14px;
+            height: 14px;
+          }
+        }
+
+      }
+    }
+  }
+}

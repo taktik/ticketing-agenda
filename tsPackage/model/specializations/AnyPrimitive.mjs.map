@@ -1,1 +1,0 @@
-{"version":3,"file":"AnyPrimitive.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/specializations/AnyPrimitive.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport type AnyPrimitive = any;\n"]}

@@ -1,23 +1,51 @@
-import React, { useState } from 'react'
+import { Challenge, resolveChallenge, Solution } from '@icure/cardinal-sdk'
+import { Button, Checkbox, Form, Input } from 'antd'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Input, Button, Form, Checkbox } from 'antd'
+import { MSG_GW_URL, SPEC_ID } from '../../../constants'
 
 import { routes } from '../../../navigation/Router'
-import FriendlyCaptcha from '../FriendlyCaptcha'
-import { SpinLoader } from '../../SpinLoader'
+import { SpinLoader } from '../../common/SpinLoader'
+import { KerberusWidget } from '../KerberusWidget'
 
 interface SignupFormProps {
   state: 'initialised' | 'loading' | 'waitingForToken'
-  submitEmailForTokenRequest: (firstName: string, lastName: string, email: string, captchaToken: string) => void
+  submitEmailForTokenRequest: (firstName: string, lastName: string, email: string, captchaToken: Solution) => void
   submitEmailAndValidationTokenForAuthentication: (email: string, validationCode: string) => void
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ state, submitEmailForTokenRequest, submitEmailAndValidationTokenForAuthentication }) => {
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined)
+  const [captchaToken, setCaptchaToken] = useState<Solution | undefined>(undefined)
+  const [progress, setProgress] = useState<number | undefined>(undefined)
 
-  const doneCallback = (solution: string) => {
-    setCaptchaToken(solution)
-  }
+  useEffect(() => {
+    if (!SPEC_ID) {
+      console.error('No spec id found')
+      return
+    }
+    let running = true
+    fetch(`${MSG_GW_URL}/${SPEC_ID}/challenge`)
+      .then((x) => x.json())
+      .then((challenge: Challenge) => {
+        if (running) {
+          return resolveChallenge(challenge, SPEC_ID!, undefined, (progress) => {
+            setProgress(progress * 100)
+          })
+        } else {
+          return Promise.reject('Cancelled')
+        }
+      })
+      .then((solution) => {
+        setProgress(undefined)
+        setCaptchaToken(solution)
+      })
+      .catch((e) => {
+        console.warn(e)
+      })
+    return () => {
+      running = false
+    }
+  }, [])
 
   const handleSubmit = (values: { firstName: string; lastName: string; email: string; validationCode: string }) => {
     const { firstName, lastName, email, validationCode } = values
@@ -85,6 +113,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ state, submitEmailForTokenReque
             </div>
           </Checkbox>
         </Form.Item>
+        {!!progress && <KerberusWidget progress={progress} />}
         <Button type="primary" size="large" htmlType="submit" disabled={(state === 'initialised' && !captchaToken) || state === 'loading'}>
           {state === 'waitingForToken' ? 'Register' : 'Receive a one time code'}
         </Button>
@@ -96,7 +125,6 @@ const SignupForm: React.FC<SignupFormProps> = ({ state, submitEmailForTokenReque
             </Link>
           </p>
         </div>
-        <FriendlyCaptcha successCallback={doneCallback} />
       </Form>
     </>
   )

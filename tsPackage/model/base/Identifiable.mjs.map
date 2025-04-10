@@ -1,1 +1,0 @@
-{"version":3,"file":"Identifiable.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/base/Identifiable.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport interface Identifiable<T> {\n\n\tid: T;\n\n}\n"]}

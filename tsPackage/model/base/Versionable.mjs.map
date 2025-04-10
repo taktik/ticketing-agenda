@@ -1,1 +1,0 @@
-{"version":3,"file":"Versionable.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/base/Versionable.mts"],"names":[],"mappings":"","sourcesContent":["// auto-generated file\nimport {Identifiable} from './Identifiable.mjs';\n\n\nexport interface Versionable<T> extends Identifiable<T> {\n\n\trev: string | undefined;\n\n}\n"]}

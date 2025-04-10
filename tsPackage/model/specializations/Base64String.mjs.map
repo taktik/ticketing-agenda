@@ -1,1 +1,0 @@
-{"version":3,"file":"Base64String.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/specializations/Base64String.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport type Base64String = string;\n"]}

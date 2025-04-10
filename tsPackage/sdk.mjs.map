@@ -1,1 +1,0 @@
-{"version":3,"file":"sdk.mjs","sourceRoot":"","sources":["../tsSourcesProject/sdk.mts"],"names":[],"mappings":"AAAA,cAAc,uBAAuB,CAAA","sourcesContent":["export * from './sdk/CardinalSdk.mjs'\n"]}

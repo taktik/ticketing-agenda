@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { Header } from '../../components/Header'
-
-import './index.css'
 import { StaticDatePicker } from '@mui/x-date-pickers'
 import { Autocomplete, TextField } from '@mui/material'
 import { AgendaSelector } from '../../components/AgendaSelector'
+import { ModalRecoveryKey } from '../../components/authentication/ModalRecoveryKey'
+import { Patients } from '../../components/patient/Patients'
+import './index.css'
+import { Header } from '../../components/common/Header'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date | null>(new Date())
@@ -28,8 +29,10 @@ export default function DashboardPage() {
           <Calendar /> */}
         </div>
       </div>
+     
     </div>
   )
 }
 
 //      <Patients />
+//      <ModalRecoveryKey />

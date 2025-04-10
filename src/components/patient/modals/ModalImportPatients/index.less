@@ -1,0 +1,122 @@
+@import '../../../../style/less/index';
+
+.customFooter {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+
+  &__btnsRight {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+}
+
+.modalImportPatients {
+  .highlighted {
+    color: @orange-900;
+    font-family: @font-700;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &--info {
+      font-family: @font-700;
+      color: @blue-700;
+    }
+  }
+
+  width: 100%;
+  display: flex;
+  align-self: stretch;
+  position: relative;
+
+  .media-breakpoint-down(@md,
+  {
+    flex-grow: 1;
+  });
+
+  &__upload,
+  &__import {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    gap: 12px;
+
+    .media-breakpoint-down(@md,
+    {
+      padding: 12px;
+    });
+
+    a {
+      padding-left: 6px;
+      font-weight: bold;
+    }
+
+    &__results {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+
+      &__item {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+    }
+
+    &__fileList {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      &__item {
+        width: 100%;
+        padding: 6px 12px;
+        display: flex;
+        justify-content: space-between;
+        background-color: @blue-350;
+        border-radius: 6px;
+
+
+        .icon {
+          svg {
+            width: 16px;
+            height: 16px;
+
+            path {
+              fill: @blue-700;
+            }
+          }
+
+          &.deleteIcn {
+            &:hover {
+              svg path {
+                fill: @red-700;
+              }
+            }
+          }
+        }
+
+        &__title {
+          display: flex;
+          gap: 8px;
+
+          p {
+            color: @blue-700;
+          }
+        }
+      }
+    }
+  }
+
+  &__import {
+    gap: 24px;
+  }
+}

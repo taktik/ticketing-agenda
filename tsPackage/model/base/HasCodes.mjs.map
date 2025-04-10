@@ -1,1 +1,0 @@
-{"version":3,"file":"HasCodes.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/base/HasCodes.mts"],"names":[],"mappings":"","sourcesContent":["// auto-generated file\nimport {CodeStub} from './CodeStub.mjs';\n\n\nexport interface HasCodes {\n\n\tcodes: Array<CodeStub>;\n\n}\n"]}

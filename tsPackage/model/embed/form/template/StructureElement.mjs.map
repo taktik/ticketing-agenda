@@ -1,1 +1,0 @@
-{"version":3,"file":"StructureElement.mjs","sourceRoot":"","sources":["../../../../../tsSourcesProject/model/embed/form/template/StructureElement.mts"],"names":[],"mappings":"","sourcesContent":["// auto-generated file\nimport {Field} from './Field.mjs';\nimport {FieldsGroup} from './FieldsGroup.mjs';\n\n\nexport type StructureElement = Field | FieldsGroup;\n"]}

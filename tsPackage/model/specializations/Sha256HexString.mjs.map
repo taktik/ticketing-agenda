@@ -1,1 +1,0 @@
-{"version":3,"file":"Sha256HexString.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/specializations/Sha256HexString.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport type Sha256HexString = string;\n"]}

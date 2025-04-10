@@ -1,1 +1,0 @@
-{"version":3,"file":"ReportVersion.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/base/ReportVersion.mts"],"names":[],"mappings":"AAAA,sBAAsB;AAEtB,MAAM,CAAN,IAAY,aAEX;AAFD,WAAY,aAAa;IACxB,kCAAiB,CAAA;AAClB,CAAC,EAFW,aAAa,KAAb,aAAa,QAExB","sourcesContent":["// auto-generated file\n\nexport enum ReportVersion {\n\tV1_0_0 = \"V1_0_0\"\n}\n"]}

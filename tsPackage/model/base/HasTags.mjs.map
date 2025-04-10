@@ -1,1 +1,0 @@
-{"version":3,"file":"HasTags.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/base/HasTags.mts"],"names":[],"mappings":"","sourcesContent":["// auto-generated file\nimport {CodeStub} from './CodeStub.mjs';\n\n\nexport interface HasTags {\n\n\ttags: Array<CodeStub>;\n\n}\n"]}

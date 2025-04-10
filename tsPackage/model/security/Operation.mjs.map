@@ -1,1 +1,0 @@
-{"version":3,"file":"Operation.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/security/Operation.mts"],"names":[],"mappings":"AAAA,sBAAsB;AAEtB,MAAM,CAAN,IAAY,SAEX;AAFD,WAAY,SAAS;IACpB,4CAA+B,CAAA;AAChC,CAAC,EAFW,SAAS,KAAT,SAAS,QAEpB","sourcesContent":["// auto-generated file\n\nexport enum Operation {\n\tTransferGroup = \"TransferGroup\"\n}\n"]}

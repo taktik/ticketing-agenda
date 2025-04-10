@@ -1,1 +1,0 @@
-{"version":3,"file":"HexString.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/specializations/HexString.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport type HexString = string;\n"]}

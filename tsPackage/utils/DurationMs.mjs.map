@@ -1,1 +1,0 @@
-{"version":3,"file":"DurationMs.mjs","sourceRoot":"","sources":["../../tsSourcesProject/utils/DurationMs.mts"],"names":[],"mappings":"","sourcesContent":["/**\n * Represents a time duration in milliseconds.\n */\nexport type DurationMs = number;"]}

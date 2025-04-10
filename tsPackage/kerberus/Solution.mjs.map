@@ -1,1 +1,0 @@
-{"version":3,"file":"Solution.mjs","sourceRoot":"","sources":["../../tsSourcesProject/kerberus/Solution.mts"],"names":[],"mappings":"","sourcesContent":["export interface Solution {\n\treadonly id: string,\n\treadonly nonces: Array<string>,\n}"]}

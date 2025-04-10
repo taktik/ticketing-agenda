@@ -1,10 +1,116 @@
-import { AuthenticationMethod, AuthenticationProcessTelecomType, CaptchaOptions, CardinalSdk, StorageFacade, User } from '@icure/cardinal-sdk'
+import {
+  AuthenticationMethod,
+  AuthenticationProcessTelecomType,
+  CaptchaOptions,
+  CardinalApis,
+  CardinalSdk,
+  CryptoStrategies,
+  KeypairFingerprintV1String,
+  KeyPairRecoverer,
+  RecoveryDataKey,
+  RecoveryDataUseFailureReason,
+  RecoveryKeyOptions,
+  RecoveryKeySize,
+  RecoveryResult,
+  Solution,
+  spkiHexKeyToFingerprintV1,
+  SpkiHexString,
+  StorageFacade,
+  User,
+  XCryptoService,
+  XRsaKeypair,
+} from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
+import { Unsubscribe } from 'redux'
+import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID } from '../../constants'
 
 import { revertAll, setSavedCredentials } from '../app'
+import { store } from '../store'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
+
+export class PetraCareCryptoStrategies extends CryptoStrategies {
+  async notifyNewKeyCreated(sdk: CardinalApis): Promise<void> {
+    const recoveryKey = await sdk.recovery.createRecoveryInfoForAvailableKeyPairs({
+      includeParentsKeys: true,
+      recoveryKeyOptions: new RecoveryKeyOptions.Generate({ recoveryKeySize: RecoveryKeySize.Bytes32 }),
+    })
+
+    const formattedKey = recoveryKey
+      .asBase32()
+      .match(/.{1,4}/g)
+      ?.join('-')
+
+    if (!!formattedKey) store.dispatch(setNewlyCreatedRecoveryKey({ recoveryKey: formattedKey }))
+  }
+
+  async recoverAndVerifySelfHierarchyKeys(
+    keysData: Array<CryptoStrategies.KeyDataRecoveryRequest>,
+    cryptoPrimitives: XCryptoService,
+    keyPairRecoverer: KeyPairRecoverer,
+  ): Promise<{ [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData }> {
+    let recovered: RecoveryResult<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }> | undefined = undefined
+    let reason = RecoveryDataUseFailureReason.Missing
+    do {
+      const rk = await this.promptUserForRecoveryKey(reason)
+      if (!rk) {
+        break
+      }
+      let decodedRecoveryKey: RecoveryDataKey
+      try {
+        decodedRecoveryKey = RecoveryDataKey.fromBase32(rk)
+      } catch (e) {
+        console.warn(e)
+        reason = RecoveryDataUseFailureReason.InvalidContent
+        continue
+      }
+      recovered = await keyPairRecoverer.recoverWithRecoveryKey(decodedRecoveryKey, false)
+    } while (!recovered || recovered instanceof RecoveryResult.Failure)
+    if (!recovered) {
+      return {}
+    }
+    const result: { [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData } = {}
+    for (const recoveryRequest of keysData) {
+      const dataOwner = recoveryRequest.dataOwnerDetails.dataOwner
+      const currDataOwnerRecoveredData = (recovered as RecoveryResult.Success<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }>).data[dataOwner.id]
+      const currRecoveryResult: { [fp: KeypairFingerprintV1String]: XRsaKeypair } = {}
+      if (currDataOwnerRecoveredData != undefined) {
+        for (const unavailableKeyInfo of recoveryRequest.unavailableKeys) {
+          const recoveredKey = currDataOwnerRecoveredData[unavailableKeyInfo.publicKey]
+          if (recoveredKey != undefined) {
+            currRecoveryResult[spkiHexKeyToFingerprintV1(unavailableKeyInfo.publicKey)] = recoveredKey
+          }
+        }
+      }
+      result[dataOwner.id] = {
+        recoveredKeys: currRecoveryResult,
+        keyAuthenticity: {},
+      }
+    }
+    return result
+  }
+
+  private async promptUserForRecoveryKey(reason: RecoveryDataUseFailureReason = RecoveryDataUseFailureReason.Missing): Promise<string | undefined> {
+    const promise = new Promise<string>((resolve) => {
+      // let unsubscribe:
+      const handleChange = () => {
+        const {
+          cardinalApi: { recoveryKeys },
+        } = store.getState()
+        if (recoveryKeys === undefined) {
+          return
+        }
+        resolve(recoveryKeys[0])
+        unsubscribe?.()
+      }
+      const unsubscribe: Unsubscribe | undefined = store.subscribe(handleChange)
+    })
+
+    store.dispatch(askForRecoveryKey({ reason }))
+    return promise
+  }
+}
 
 export interface CardinalApiState {
   email?: string
@@ -21,9 +127,12 @@ export interface CardinalApiState {
   dateOfBirth?: number
   mobilePhone?: string
   loginProcessStarted: boolean
+  newlyCreatedRecoveryKey?: string
+  recoveryKeyRequest?: { reason: string }
+  recoveryKeys?: string[]
 }
 
-const initialState: CardinalApiState = {
+const cardinalApiInitialState: CardinalApiState = {
   email: undefined,
   token: undefined,
   user: undefined,
@@ -38,6 +147,9 @@ const initialState: CardinalApiState = {
   dateOfBirth: undefined,
   mobilePhone: undefined,
   loginProcessStarted: false,
+  newlyCreatedRecoveryKey: undefined,
+  recoveryKeyRequest: undefined,
+  recoveryKeys: undefined,
 }
 
 function getError(e: Error): FetchBaseQueryError {
@@ -61,6 +173,7 @@ export const guard = async <T>(guardedInputs: unknown[], lambda: () => Promise<T
     }
     return { data: curate(res) }
   } catch (e) {
+    console.error(e)
     return { error: getError(e as Error) }
   }
 }
@@ -90,7 +203,7 @@ export const startAuthentication = createAsyncThunk(
   'cardinalApi/startAuthentication',
   async (
     _payload: {
-      captchaToken: string
+      captchaToken: Solution
     },
     { getState, dispatch },
   ) => {
@@ -106,15 +219,19 @@ export const startAuthentication = createAsyncThunk(
     try {
       const authenticationStep = await CardinalSdk.initializeWithProcess(
         undefined,
-        'https://api.icure.cloud',
-        'https://msg-gw.icure.cloud',
-        process.env.REACT_APP_EXTERNAL_SERVICES_SPEC_ID!,
-        process.env.REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID!,
+        NIGHTLY_ICURE_CLOUD_URL,
+        MSG_GW_URL,
+        SPEC_ID!,
+        PROCESS_ID!,
         AuthenticationProcessTelecomType.Email,
         email,
-        new CaptchaOptions.FriendlyCaptcha({ solution: _payload.captchaToken }),
+        new CaptchaOptions.Kerberus.Computed({ solution: _payload.captchaToken }),
         StorageFacade.usingBrowserLocalStorage(),
         { firstName, lastName },
+        {
+          useHierarchicalDataOwners: false,
+          cryptoStrategies: new PetraCareCryptoStrategies(),
+        },
       )
 
       dispatch(setLoginProcessStarted(false))
@@ -184,9 +301,12 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
   try {
     const api = await CardinalSdk.initialize(
       undefined,
-      'https://api.icure.cloud',
+      NIGHTLY_ICURE_CLOUD_URL,
       new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token),
       StorageFacade.usingBrowserLocalStorage(),
+      {
+        useHierarchicalDataOwners: false,
+      },
     )
 
     const user = await api.user.getCurrentUser()
@@ -208,10 +328,25 @@ export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { 
   dispatch(resetCredentials())
 })
 
-export const api = createSlice({
+export const cardinalApiRtk = createSlice({
   name: 'cardinalApi',
-  initialState,
+  initialState: cardinalApiInitialState,
   reducers: {
+    setNewlyCreatedRecoveryKey: (state, { payload: { recoveryKey } }: PayloadAction<{ recoveryKey: string | undefined }>) => {
+      state.newlyCreatedRecoveryKey = recoveryKey
+    },
+    askForRecoveryKey: (state, { payload: { reason } }: PayloadAction<{ reason: string }>) => {
+      state.recoveryKeyRequest = { reason }
+      state.recoveryKeys = undefined
+    },
+    provideRecoveryKey: (state, { payload: { recoveryKey } }: PayloadAction<{ recoveryKey: string }>) => {
+      state.recoveryKeyRequest = undefined
+      state.recoveryKeys = [recoveryKey]
+    },
+    markRecoveryKeyAsLost: (state) => {
+      state.recoveryKeyRequest = undefined
+      state.recoveryKeys = []
+    },
     setRegistrationInformation: (
       state,
       {
@@ -275,4 +410,15 @@ export const api = createSlice({
   },
 })
 
-export const { setRegistrationInformation, setToken, setEmail, resetCredentials, setLoginProcessStarted, setWaitingForToken } = api.actions
+export const {
+  setNewlyCreatedRecoveryKey,
+  askForRecoveryKey,
+  provideRecoveryKey,
+  markRecoveryKeyAsLost,
+  setRegistrationInformation,
+  setToken,
+  setEmail,
+  resetCredentials,
+  setLoginProcessStarted,
+  setWaitingForToken,
+} = cardinalApiRtk.actions

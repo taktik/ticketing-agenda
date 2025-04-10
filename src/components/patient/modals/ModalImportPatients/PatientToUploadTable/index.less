@@ -1,0 +1,87 @@
+@import '../../../../../style/less/index';
+
+@widthSmall: 150px;
+@widthMedium: 200px;
+@widthLarge: 250px;
+
+.gridTemplateColumns {
+  // total 8 columns
+  grid-template-columns: repeat(2, @widthSmall) @widthLarge repeat(3, @widthSmall) repeat(3, @widthLarge);
+}
+
+.PatientToUploadTable {
+  width: 100%;
+  display: flex;
+
+  &__scrollContainer {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    display: flex;
+  }
+
+  &__scrollContent {
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid @grey-450;
+    border-radius: 6px;
+    overflow-x: scroll;
+    flex-shrink: 0;
+
+    &__head {
+      width: 100%;
+      padding: 8px 0;
+      display: grid;
+
+      .gridTemplateColumns();
+
+      border-bottom: 1px solid @grey-450;
+      background-color: @grey-350;
+
+
+      &__cell {
+        display: flex;
+        padding: 0 12px;
+        border-right: 1px solid @grey-450;
+
+        &:last-child {
+          border: none;
+        }
+
+        span {
+          color: @grey-800;
+          font-weight: 700;
+        }
+      }
+    }
+
+    &__body {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+
+      &__row {
+        padding: 8px 0;
+        display: grid;
+        .gridTemplateColumns();
+        border-bottom: 1px solid @grey-450;
+        background-color: white;
+
+        &:last-child {
+          border: none;
+        }
+
+
+        &__cell {
+          display: flex;
+          padding: 0 12px;
+
+          span {
+            color: @grey-800;
+          }
+        }
+      }
+    }
+  }
+}

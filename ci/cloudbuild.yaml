@@ -6,7 +6,7 @@ steps:
   -   name: 'docker'
       args: [ "build", "--build-arg", "REACT_APP_EXTERNAL_SERVICES_SPEC_ID=${_REACT_APP_EXTERNAL_SERVICES_SPEC_ID}", "--build-arg", "REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID=${_REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID}", "--build-arg", "REACT_APP_PARENT_ORGANISATION_ID=${_REACT_APP_PARENT_ORGANISATION_ID}","--build-arg", "REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY=${_REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY}", "-t", "docker.taktik.be/icure-ehr-lite-doctor-app", "." ]
 
-  -   name: 'docker.taktik.be/icure-ehr-lite-doctor-app'
+  -   name: 'docker.taktik.be/ticketing-agenda'
       entrypoint: sh
       args: [ '-c', 'cp -af /app/build /workspace' ]
 

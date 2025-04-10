@@ -1,1 +1,0 @@
-{"version":3,"file":"storage.mjs","sourceRoot":"","sources":["../tsSourcesProject/storage.mts"],"names":[],"mappings":"AAAA,cAAc,6BAA6B,CAAA","sourcesContent":["export * from './storage/StorageFacade.mjs'\n"]}

@@ -1,1 +1,0 @@
-{"version":3,"file":"Named.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/base/Named.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport interface Named {\n\n\tname: string | undefined;\n\n}\n"]}

@@ -1,17 +1,17 @@
 import { combineReducers } from '@reduxjs/toolkit'
 import { persistReducer } from 'redux-persist'
-import { api } from './services/auth.api'
-import { app, persistConfig } from './app'
+import { contactApiRtk } from './api/contactApi'
+import { deviceApiRtk } from './api/deviceApi'
+import { healthElementApiRtk } from './api/healthElementApi'
+import { patientApiRtk } from './api/patientApi'
 import { practitionerApiRtk } from './api/practitionerApi'
 import { userApiRtk } from './api/userApi'
-import { patientApiRtk } from './api/patientApi'
-import { deviceApiRtk } from './api/deviceApi'
-import { contactApiRtk } from './api/contactApi'
-import { healthElementApiRtk } from './api/healthElementApi'
+import { app, persistConfig } from './app'
+import { cardinalApiRtk } from './services/auth.api'
 
 export const appReducer = combineReducers({
   app: app.reducer,
-  cardinalApi: api.reducer,
+  cardinalApi: cardinalApiRtk.reducer,
   practitionerApi: practitionerApiRtk.reducer,
   userApi: userApiRtk.reducer,
   deviceApi: deviceApiRtk.reducer,

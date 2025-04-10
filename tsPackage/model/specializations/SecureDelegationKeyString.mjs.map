@@ -1,1 +1,0 @@
-{"version":3,"file":"SecureDelegationKeyString.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/specializations/SecureDelegationKeyString.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport type SecureDelegationKeyString = string;\n"]}

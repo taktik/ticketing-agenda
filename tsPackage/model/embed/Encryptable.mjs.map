@@ -1,1 +1,0 @@
-{"version":3,"file":"Encryptable.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/embed/Encryptable.mts"],"names":[],"mappings":"","sourcesContent":["// auto-generated file\nimport {Base64String} from '../specializations/Base64String.mjs';\n\n\nexport interface Encryptable {\n\n\tencryptedSelf: Base64String | undefined;\n\n}\n"]}

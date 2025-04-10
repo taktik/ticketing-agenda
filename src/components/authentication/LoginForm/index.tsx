@@ -1,25 +1,53 @@
-import React, { useState } from 'react'
+import { Challenge, resolveChallenge, Solution } from '@icure/cardinal-sdk'
+import { Button, Form, Input } from 'antd'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Input, Button, Form } from 'antd'
+import { MSG_GW_URL, SPEC_ID } from '../../../constants'
 
 import { routes } from '../../../navigation/Router'
-import FriendlyCaptcha from '../FriendlyCaptcha'
 
 import '../index.css'
-import { SpinLoader } from '../../SpinLoader'
+import { SpinLoader } from '../../common/SpinLoader'
+import { KerberusWidget } from '../KerberusWidget'
 
 interface LoginFormProps {
   state: 'initialised' | 'loading' | 'waitingForToken'
-  submitEmailForTokenRequest: (email: string, captchaToken: string) => void
+  submitEmailForTokenRequest: (email: string, captchaToken: Solution) => void
   submitEmailAndValidationTokenForAuthentication: (email: string, validationCode: string) => void
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest, submitEmailAndValidationTokenForAuthentication }) => {
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined)
+  const [captchaToken, setCaptchaToken] = useState<Solution | undefined>(undefined)
+  const [progress, setProgress] = useState<number | undefined>(undefined)
 
-  const doneCallback = (solution: string) => {
-    setCaptchaToken(solution)
-  }
+  useEffect(() => {
+    if (!SPEC_ID) {
+      console.error('No spec id found')
+      return
+    }
+    let running = true
+    fetch(`${MSG_GW_URL}/${SPEC_ID}/challenge`)
+      .then((x) => x.json())
+      .then((challenge: Challenge) => {
+        if (running) {
+          return resolveChallenge(challenge, SPEC_ID!, undefined, (progress) => {
+            setProgress(progress * 100)
+          })
+        } else {
+          return Promise.reject('Cancelled')
+        }
+      })
+      .then((solution) => {
+        setProgress(undefined)
+        setCaptchaToken(solution)
+      })
+      .catch((e) => {
+        console.warn(e)
+      })
+    return () => {
+      running = false
+    }
+  }, [])
 
   /**
    * This function is called each time we press on the submit button of the login form
@@ -80,6 +108,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
             </Link>
           </p>
         </div>
+        {!!progress && <KerberusWidget progress={progress} />}
         <Button type="primary" size="large" htmlType="submit" disabled={(state === 'initialised' && !captchaToken) || state === 'loading'}>
           {state === 'waitingForToken' ? 'Log in' : 'Receive a one time code'}
         </Button>
@@ -91,8 +120,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
             </Link>
           </p>
         </div>
-
-        <FriendlyCaptcha successCallback={doneCallback} />
       </Form>
     </>
   )

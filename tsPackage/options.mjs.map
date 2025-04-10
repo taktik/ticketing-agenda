@@ -1,1 +1,0 @@
-{"version":3,"file":"options.mjs","sourceRoot":"","sources":["../tsSourcesProject/options.mts"],"names":[],"mappings":"AAAA,cAAc,0BAA0B,CAAA;AACxC,cAAc,oCAAoC,CAAA","sourcesContent":["export * from './options/SdkOptions.mjs'\nexport * from './options/AuthenticationMethod.mjs'\n"]}

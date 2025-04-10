@@ -1,1 +1,0 @@
-{"version":3,"file":"CancellablePromise.mjs","sourceRoot":"","sources":["../../tsSourcesProject/utils/CancellablePromise.mts"],"names":[],"mappings":"","sourcesContent":["export type CancellablePromise<T> = Promise<T> & { cancel(): void }"]}

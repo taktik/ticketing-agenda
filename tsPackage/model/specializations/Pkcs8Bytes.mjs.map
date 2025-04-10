@@ -1,1 +1,0 @@
-{"version":3,"file":"Pkcs8Bytes.mjs","sourceRoot":"","sources":["../../../tsSourcesProject/model/specializations/Pkcs8Bytes.mts"],"names":[],"mappings":"AAAA,sBAAsB","sourcesContent":["// auto-generated file\n\nexport type Pkcs8Bytes = Int8Array;\n"]}
