@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import { createSelector } from '@reduxjs/toolkit'
 
 import './index.css'
-import logo_horizontal from '../../assets/logo_horizontal.svg'
+import logo_mouscron from '../../assets/logo_mouscron.png'
 import { arrowDownIcn, logOutIcn, manageUserIcn, userIcn } from '../../assets/CustomIcons'
 import { useAppDispatch, useAppSelector } from '../../core/hooks'
 import { CardinalApiState, logout } from '../../core/services/auth.api'
@@ -78,7 +78,7 @@ export const Header = () => {
 
       <div className="header">
         <div className="header__logoHolder">
-          <img src={logo_horizontal} alt="petraCare logo" />
+          <img src={logo_mouscron} alt="mouscron logo" />
         </div>
         {!isPractitionerFetching && (
           <Dropdown menu={{ items, onClick }} placement="bottomRight" arrow onOpenChange={(open: boolean) => setUserDropdownOpen(open)}>

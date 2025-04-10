@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import LoginForm from '../../../components/authentication/LoginForm'
 import { completeAuthentication, CardinalApiState, setEmail, setToken, setWaitingForToken, startAuthentication } from '../../../core/services/auth.api'
 
-import logo from '../../../assets/logo_vertical.svg'
+import logo from '../../../assets/logo_mouscron.png'
 import '../index.css'
 import { createSelector } from '@reduxjs/toolkit'
 
@@ -25,6 +25,7 @@ export default function LoginPage() {
   }
 
   const completeAuthenticationProcessWithEmailAndValidationCode = (email: string, validationCode: string) => {
+    dispatch(setEmail({ email: email }))
     dispatch(setToken({ token: validationCode }))
     dispatch(completeAuthentication())
   }

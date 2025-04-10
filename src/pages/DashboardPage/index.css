@@ -119,4 +119,16 @@ body * {
   height: 100%;
   background-color: white;
 }
+.Panel {
+  display: flex;
+  flex-direction: row;
+}
+.LeftPanel {
+  display: flex;
+  flex-direction: column;
+}
+.RightPanel {
+  display: flex;
+  flex-direction: column;
+}
 /*# sourceMappingURL=index.css.map */
