@@ -118,17 +118,44 @@ body * {
   min-height: 100vh;
   height: 100%;
   background-color: white;
+  overflow: hidden;
 }
 .Panel {
   display: flex;
   flex-direction: row;
+  margin: 10px;
+  height: 100%;
 }
 .LeftPanel {
   display: flex;
   flex-direction: column;
+  margin: 10px;
+  height: 85%;
+  gap: 15px;
 }
 .RightPanel {
   display: flex;
   flex-direction: column;
+  margin: 10px;
+  height: 90%;
+  width: 100%;
+}
+.ant-picker-calendar * .ant-picker-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+.ant-picker-calendar * .ant-picker-cell-inner {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+.ant-picker-calendar .ant-picker-calendar-header {
+  justify-content: center;
+}
+.ant-picker-calendar .ant-picker-calendar-header th,
+.ant-picker-calendar .ant-picker-content th {
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 /*# sourceMappingURL=index.css.map */

@@ -8,6 +8,10 @@ import { patientApiRtk } from './api/patientApi'
 import { deviceApiRtk } from './api/deviceApi'
 import { contactApiRtk } from './api/contactApi'
 import { healthElementApiRtk } from './api/healthElementApi'
+import { agendaApiRtk } from './api/agendaApi'
+import { timeTableApiRtk } from './api/timeTableApi'
+import { calendarItemApiRtk } from './api/calendarItemApi'
+import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 
 export const store = configureStore({
   reducer: persistedReducer,
@@ -19,6 +23,10 @@ export const store = configureStore({
       patientApiRtk.middleware,
       contactApiRtk.middleware,
       healthElementApiRtk.middleware,
+      agendaApiRtk.middleware,
+      timeTableApiRtk.middleware,
+      calendarItemApiRtk.middleware,
+      healthcarePartyApiRtk.middleware,
       thunk,
       // Add your own middleware here. For example, you can add a logger:
     ),
