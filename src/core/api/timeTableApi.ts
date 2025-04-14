@@ -1,6 +1,7 @@
-import { TimeTable } from '@icure/cardinal-sdk'
+import { TimeTable, TimeTableFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
+import { loadFromIterator } from './utils'
 
 enum TimeTableTags {
   TimeTable = 'TimeTable',
@@ -13,6 +14,15 @@ export const timeTableApiRtk = createApi({
     baseUrl: '',
   }),
   endpoints: (builder) => ({
+    getTimeTables: builder.query<TimeTable[] | undefined, string>({
+      async queryFn(id, { getState }) {
+        const timeTableApi = (await cardinalApi(getState))?.timeTable
+        return guard([timeTableApi], async (): Promise<TimeTable[]> => {
+          return await loadFromIterator(await timeTableApi!.filterTimeTablesBy(TimeTableFilters.byAgendaId(id)), 1000)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: TimeTableTags.TimeTable, id: 'all' }] : []),
+    }),
     getTimeTable: builder.query<TimeTable | undefined, string>({
       async queryFn(id, { getState }) {
         const timeTableApi = (await cardinalApi(getState))?.timeTable
@@ -71,4 +81,4 @@ export const timeTableApiRtk = createApi({
   }),
 })
 
-export const { useGetTimeTableQuery, useCreateTimeTableMutation, useUpdateTimeTableMutation, useDeleteTimeTableMutation } = timeTableApiRtk
+export const { useGetTimeTablesQuery, useGetTimeTableQuery, useCreateTimeTableMutation, useUpdateTimeTableMutation, useDeleteTimeTableMutation } = timeTableApiRtk

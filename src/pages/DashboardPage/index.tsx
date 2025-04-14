@@ -87,6 +87,7 @@ export default function DashboardPage() {
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            firstDay={1}
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
