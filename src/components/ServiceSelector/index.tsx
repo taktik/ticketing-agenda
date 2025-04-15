@@ -1,73 +1,57 @@
-import React, { ReactElement, useCallback } from 'react'
+import { PlusOutlined } from '@ant-design/icons'
+import { HealthcareParty } from '@icure/cardinal-sdk'
+import { Button, Col, Divider, Row, Typography } from 'antd'
+import React, { useCallback } from 'react'
 import './index.css'
-import { Box, Typography, Button } from '@mui/material'
-import { Agenda } from '@icure/cardinal-sdk'
-import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
-import IconButton from '@mui/material/IconButton'
-interface AServiceSelectorProps {
-  agendas: Agenda[]
-  selectedAgenda: Agenda | undefined
-  setSelectedAgenda: React.Dispatch<React.SetStateAction<Agenda | undefined>>
-  setAgendaModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+
+interface ServiceSelectorProps {
+  services: HealthcareParty[]
+  selectedService: HealthcareParty | undefined
+  setSelectedService: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
+  setServiceModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export const ServiceSelector = ({ agendas, selectedAgenda, setSelectedAgenda, setAgendaModalOpen }: AServiceSelectorProps): ReactElement => {
-  const addAgenda = useCallback(() => {
-    setAgendaModalOpen(true)
-  }, [])
+export const ServiceSelector = ({ services, selectedService, setSelectedService, setServiceModalOpen }: ServiceSelectorProps): React.ReactElement => {
+  const addService = useCallback(() => {
+    setServiceModalOpen(true)
+  }, [setServiceModalOpen])
+
   return (
-    <div className="AgendaSelector">
-      <Box
-        sx={{
-          width: '300px',
-          height: 'auto',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
-          padding: 2,
-          gap: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <div className="AgendaSelectorHeader">
-          <Typography variant="h6">Services</Typography>
-          <IconButton color="primary" aria-label="add to shopping cart" onClick={addAgenda}>
-            <AddOutlinedIcon />
-          </IconButton>
-        </div>
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 1,
-          }}
-        >
-          {agendas.map((agenda) => {
-            const isSelected = selectedAgenda?.id === agenda.id
-            return (
+    <div className="service-selector" style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
+      <div className="service-selector-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography.Title level={5} style={{ margin: 0 }}>
+          Services
+        </Typography.Title>
+        <Button type="primary" icon={<PlusOutlined />} size={'middle'} onClick={addService} style={{ padding: 0 }} />
+      </div>
+
+      <Divider style={{ margin: '16px 0' }} />
+
+      <Row gutter={[8, 8]} wrap={true}>
+        {services.map((service) => {
+          const isSelected = selectedService?.id === service.id
+          return (
+            <Col key={service.id} span={24}>
               <Button
-                key={agenda.id}
-                variant={isSelected ? 'contained' : 'outlined'}
-                onClick={() => setSelectedAgenda(agenda)}
-                sx={{
-                  minWidth: '80px',
+                block
+                type={isSelected ? 'primary' : 'default'}
+                onClick={() => setSelectedService(service)}
+                style={{
                   whiteSpace: 'nowrap',
+                  minWidth: '80px',
                   ...(isSelected && {
-                    backgroundColor: 'primary.main',
+                    backgroundColor: '#1890ff',
                     color: 'white',
-                    borderColor: 'primary.main',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    },
+                    borderColor: '#1890ff',
                   }),
                 }}
               >
-                {agenda.name}
+                {service.name}
               </Button>
-            )
-          })}
-        </Box>
-      </Box>
+            </Col>
+          )
+        })}
+      </Row>
     </div>
   )
 }

@@ -1,6 +1,6 @@
+import { Agenda, AgendaFilters, Document, DocumentTemplate, DocumentGroup } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { guard, cardinalApi } from '../services/auth.api'
-import { Agenda, AgendaApi, AgendaFilters, TimeTable, CalendarItem, CalendarItemType, Document, User, HealthcareParty } from '@icure/cardinal-sdk'
+import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
 
 enum AgendaTags {
@@ -16,7 +16,7 @@ export const agendaApiRtk = createApi({
   endpoints: (builder) => ({
     getAgendas: builder.query<Agenda[] | undefined, void>({
       async queryFn(_, { getState }) {
-        const agendaApi = (await cardinalApi(getState))?.agendaApi
+        const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async (): Promise<Agenda[]> => {
           return await loadFromIterator(await agendaApi!.filterAgendasBy(AgendaFilters.all()), 1000)
         })
@@ -25,7 +25,7 @@ export const agendaApiRtk = createApi({
     }),
     getAgenda: builder.query<Agenda | undefined, string>({
       async queryFn(id, { getState }) {
-        const agendaApi = (await cardinalApi(getState))?.agendaApi
+        const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async (): Promise<Agenda> => {
           const agenda = await agendaApi?.getAgenda(id)
           if (!agenda) {
@@ -38,7 +38,7 @@ export const agendaApiRtk = createApi({
     }),
     createAgenda: builder.mutation<Agenda | undefined, Agenda>({
       async queryFn(agenda, { getState }) {
-        const agendaApi = (await cardinalApi(getState))?.agendaApi
+        const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async (): Promise<Agenda> => {
           const newAgenda = await agendaApi?.createAgenda(agenda)
           if (!newAgenda) {
@@ -51,7 +51,7 @@ export const agendaApiRtk = createApi({
     }),
     updateAgenda: builder.mutation<Agenda | undefined, Agenda>({
       async queryFn(agenda, { getState, dispatch }) {
-        const agendaApi = (await cardinalApi(getState))?.agendaApi
+        const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async (): Promise<Agenda> => {
           const updatedAgenda = await agendaApi?.modifyAgenda(agenda)
           if (!updatedAgenda) {

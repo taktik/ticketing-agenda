@@ -1,6 +1,7 @@
-import { HealthcareParty } from '@icure/cardinal-sdk'
+import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
+import { loadFromIterator } from './utils'
 
 enum HealthcarePartyTags {
   HealthcareParty = 'HealthcareParty',
@@ -13,6 +14,16 @@ export const healthcarePartyApiRtk = createApi({
     baseUrl: '',
   }),
   endpoints: (builder) => ({
+    getHealthcareParties: builder.query<HealthcareParty[] | undefined, undefined>({
+      async queryFn(_, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
+          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.all()), 1000)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+    }),
+
     getHealthcareParty: builder.query<HealthcareParty | undefined, string>({
       async queryFn(id, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
@@ -74,4 +85,5 @@ export const healthcarePartyApiRtk = createApi({
   }),
 })
 
-export const { useGetHealthcarePartyQuery, useCreateHealthcarePartyMutation, useUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation } = healthcarePartyApiRtk
+export const { useGetHealthcarePartiesQuery, useGetHealthcarePartyQuery, useCreateHealthcarePartyMutation, useUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation } =
+  healthcarePartyApiRtk
