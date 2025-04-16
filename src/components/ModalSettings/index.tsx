@@ -9,6 +9,7 @@ import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
 import { AccountSetting } from './Settings/AccountSetting'
+import { AgendaSetting } from './Settings/AgendaSetting'
 
 interface ModalSettingsProps {
   isVisible: boolean
@@ -57,15 +58,15 @@ export const ModalSettings = ({ isVisible, onClose, currentUser }: ModalSettings
       case 'utilisateur':
         return <AccountSetting currentUser={currentUser} onClose={onClose} />
       case 'droits':
-        return <div>Droits info form here</div>
+        return <div>Permissions info form here</div>
       case 'affichage':
         return <div>Affichage settings here</div>
       case 'agenda':
-        return <div>Agenda settings here</div>
+        return <AgendaSetting onClose={onClose} />
       case 'license':
         return <div>License settings here</div>
       default:
-        return <div>Account settings form here</div>
+        return <AccountSetting currentUser={currentUser} onClose={onClose} />
     }
   }, [selectedKey])
 

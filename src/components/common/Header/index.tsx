@@ -11,7 +11,6 @@ import { useGetPractitionerQuery } from '../../../core/api/practitionerApi'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
-import { ModalManageAccountForm } from '../../doctor/ModalManageAccountForm'
 import { ModalSettings } from '../../ModalSettings'
 
 const reduxSelector = createSelector(
