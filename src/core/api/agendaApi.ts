@@ -62,7 +62,23 @@ export const agendaApiRtk = createApi({
       },
       invalidatesTags: (result, error, arg) => (result ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
     }),
+    deleteAgenda: builder.mutation<string | undefined, Agenda>({
+      async queryFn(agenda, { getState }) {
+        const agendaApi = (await cardinalApi(getState))?.agenda
+        return guard([agendaApi], async () => {
+          const result = await agendaApi?.deleteAgenda(agenda)
+          if (!result) {
+            throw new Error('Agenda can’t be deleted')
+          }
+          return result.id
+        })
+      },
+      invalidatesTags: (id) => [
+        { type: AgendaTags.Agenda, id: 'all' },
+        { type: AgendaTags.Agenda, id },
+      ],
+    }),
   }),
 })
 
-export const { useGetAgendaQuery, useGetAgendasQuery, useCreateAgendaMutation, useUpdateAgendaMutation } = agendaApiRtk
+export const { useGetAgendaQuery, useGetAgendasQuery, useCreateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk

@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
 import { ModalManageAccountForm } from '../../doctor/ModalManageAccountForm'
+import { ModalSettings } from '../../ModalSettings'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,
@@ -40,7 +41,7 @@ export const Header = () => {
       label: (
         <div className="header__userDropdown__item">
           <Icon component={manageUserIcn} />
-          <span>Manage account</span>
+          <span>Global settings</span>
         </div>
       ),
     },
@@ -103,10 +104,7 @@ export const Header = () => {
         )}
       </div>
       {isModalManageAccountFormOpen &&
-        createPortal(
-          <ModalManageAccountForm isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} practitionerToBeUpdated={practitioner} />,
-          document.body,
-        )}
+        createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUser={practitioner} />, document.body)}
     </>
   )
 }

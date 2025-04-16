@@ -115,6 +115,6 @@ body * {
 .selectorRoot {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 /*# sourceMappingURL=index.css.map */

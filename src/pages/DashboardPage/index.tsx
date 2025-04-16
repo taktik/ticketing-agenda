@@ -6,7 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, HealthcareParty, TimeTable } from '@icure/cardinal-sdk'
 import { Calendar as AntCalendar, theme } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Header } from '../../components/common/Header'
 import { ModalAddAgendaForm } from '../../components/ModalAddAgendaForm'
@@ -18,6 +18,7 @@ import { useAppSelector } from '../../core/hooks'
 import './index.css'
 import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
 import { DemarcheSelector } from '../../components/DemarcheSelector'
+import { ModalAddHealthcarePartyForm } from '../../components/ModalAddHealthcarePartyForm'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
@@ -36,6 +37,14 @@ export default function DashboardPage() {
 
   const { data: demarches } = useGetTimeTablesQuery(selectedSite?.id ?? '', { skip: skip })
   const [selectedDemarche, setSelectedDemarche] = useState<TimeTable | undefined>(demarches?.[0])
+
+  useEffect(() => {
+    if (!selectedSite && sites?.length) {
+      setSelectedSite(sites[0])
+    }
+  }, [sites])
+
+  useEffect(() => console.log('services', services), [services])
 
   const handleAntCalendarDateChange = useCallback(
     (value: Dayjs) => {
@@ -71,7 +80,7 @@ export default function DashboardPage() {
       <div className="Panel">
         <div className="LeftPanel">
           <div style={{ width: '300px' }}>
-            <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
+            <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} setSiteModalOpen={setSiteModalOpen} />
           </div>
           <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
@@ -105,8 +114,8 @@ export default function DashboardPage() {
           />
         </div>
       </div>
-      {serviceModalOpen && createPortal(<ModalAddAgendaForm isVisible={siteModalOpen} onClose={() => setSiteModalOpen(false)} />, document.body)}
-      {serviceModalOpen && createPortal(<ModalAddAgendaForm isVisible={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />, document.body)}
+      {siteModalOpen && createPortal(<ModalAddAgendaForm isVisible={siteModalOpen} onClose={() => setSiteModalOpen(false)} />, document.body)}
+      {serviceModalOpen && createPortal(<ModalAddHealthcarePartyForm isVisible={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />, document.body)}
     </div>
   )
 }

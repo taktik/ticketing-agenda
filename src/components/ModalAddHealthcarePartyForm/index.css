@@ -112,4 +112,38 @@ body {
 body * {
   font-family: Lato400, sans-serif;
 }
+.modalAddForm {
+  width: 100%;
+  display: flex;
+  align-self: stretch;
+  max-height: 700px;
+  position: relative;
+}
+@media screen and (max-width: calc(768px - 1px)) {
+  .modalAddForm {
+    flex-grow: 1;
+  }
+}
+.modalAddForm__form {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  flex: 1 0 0;
+}
+@media screen and (max-width: calc(768px - 1px)) {
+  .modalAddForm__form {
+    padding: 12px;
+  }
+}
+.modalAddForm__form__inputs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  gap: 12px;
+}
+@media screen and (max-width: calc(768px - 1px)) {
+  .modalAddForm__form__inputs {
+    padding-bottom: 12px;
+  }
+}
 /*# sourceMappingURL=index.css.map */

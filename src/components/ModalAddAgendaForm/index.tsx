@@ -25,7 +25,7 @@ export const ModalAddAgendaForm = ({ isVisible, onClose }: ModalAddAgendaFormPro
 
   useEffect(() => {
     if (agendaCreationSucceeded) {
-      console.log('Agenda created successfully: ', newAgenda)
+      console.log('Site created successfully: ', newAgenda)
       onClose()
     }
   }, [agendaCreationSucceeded])
@@ -40,13 +40,13 @@ export const ModalAddAgendaForm = ({ isVisible, onClose }: ModalAddAgendaFormPro
       secondaryBtnTitle="Cancel"
       handleClickPrimaryBtn={() => handleSubmit()}
       primaryBtnTitle="Save"
-      title="Add agenda"
+      title="Add site"
     >
       <div className="modalAddAgendaForm">
         <Form className="modalAddAgendaForm__form" layout="vertical" colon={false} form={form}>
           <div className="modalAddAgendaForm__form__inputs">
-            <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name of the agenda' }]}>
-              <Input placeholder="Type the agenda's name" size="large" style={{ fontSize: 13 }} />
+            <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name of the site' }]}>
+              <Input placeholder="Type the site's name" size="large" style={{ fontSize: 13 }} />
             </Form.Item>
           </div>
         </Form>
