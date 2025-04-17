@@ -18,7 +18,7 @@ export const healthcarePartyApiRtk = createApi({
       async queryFn(_, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
         return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
-          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.all()), 1000)
+          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byTag('SERVICE')), 1000)
         })
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),

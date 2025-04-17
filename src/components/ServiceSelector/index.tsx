@@ -1,8 +1,9 @@
-import { PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Col, Divider, Row, Typography } from 'antd'
-import React, { useCallback } from 'react'
+import { Button, Divider, Typography, notification, message } from 'antd'
+import React, { useCallback, useEffect } from 'react'
 import './index.css'
+import { useDeleteHealthcarePartyMutation } from '../../core/api/healthcarePartyApi'
 
 interface ServiceSelectorProps {
   services: HealthcareParty[]
@@ -16,42 +17,86 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
     setServiceModalOpen(true)
   }, [setServiceModalOpen])
 
+  const [deleteService, { isError, isSuccess, isLoading }] = useDeleteHealthcarePartyMutation()
+
+  useEffect(() => {
+    if (isLoading) showMessageFeedback('loading', 'The site is deleting...')
+    if (isSuccess) showMessageFeedback('success', 'The site was deleted!')
+    if (isError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
+  }, [isLoading, isSuccess, isError])
+
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
+
   return (
-    <div className="service-selector" style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
-      <div className="service-selector-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
+      <div className="ServiceSelectorHeader">
         <Typography.Title level={5} style={{ margin: 0 }}>
           Services
         </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} size={'middle'} onClick={addService} style={{ padding: 0 }} />
+        <div className="ServiceSelectorButtons">
+          <Button type="primary" icon={<PlusOutlined />} size="middle" onClick={addService} style={{ padding: 0 }} />
+          <Button
+            type="primary"
+            icon={<DeleteOutlined />}
+            danger
+            disabled={!selectedService}
+            onClick={() => {
+              if (selectedService) {
+                deleteService(selectedService)
+                setSelectedService(undefined)
+              }
+            }}
+          />
+        </div>
       </div>
 
       <Divider style={{ margin: '16px 0' }} />
 
-      <Row gutter={[8, 8]} wrap={true}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
         {services.map((service) => {
           const isSelected = selectedService?.id === service.id
           return (
-            <Col key={service.id} span={24}>
-              <Button
-                block
-                type={isSelected ? 'primary' : 'default'}
-                onClick={() => setSelectedService(service)}
-                style={{
-                  whiteSpace: 'nowrap',
-                  minWidth: '80px',
-                  ...(isSelected && {
-                    backgroundColor: '#1890ff',
-                    color: 'white',
-                    borderColor: '#1890ff',
-                  }),
-                }}
-              >
-                {service.name}
-              </Button>
-            </Col>
+            <Button
+              key={service.id}
+              type={isSelected ? 'primary' : 'default'}
+              onClick={() => setSelectedService(service)}
+              style={{
+                whiteSpace: 'nowrap',
+                minWidth: '80px',
+                ...(isSelected && {
+                  backgroundColor: '#1890ff',
+                  color: 'white',
+                  borderColor: '#1890ff',
+                }),
+              }}
+            >
+              {service.name}
+            </Button>
           )
         })}
-      </Row>
+      </div>
     </div>
   )
 }

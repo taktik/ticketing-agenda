@@ -115,8 +115,12 @@ body * {
 .ServiceSelectorHeader {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 4px;
+}
+.ServiceSelectorButtons {
+  display: flex;
+  gap: 0.5rem;
 }
 /*# sourceMappingURL=index.css.map */

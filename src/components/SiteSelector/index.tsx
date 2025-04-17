@@ -4,7 +4,6 @@ import { Agenda } from '@icure/cardinal-sdk'
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import './index.css'
 import { useDeleteAgendaMutation } from '../../core/api/agendaApi'
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
 
 interface SiteSelectorProps {
   sites: Agenda[]

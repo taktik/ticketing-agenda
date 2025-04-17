@@ -27,7 +27,7 @@ export const ModalAddHealthcarePartyForm = ({ isVisible, onClose }: ModalAddHeal
   ] = useCreateHealthcarePartyMutation()
 
   const handleSubmit = () => {
-    createHealthcareParty(new HealthcareParty({ ...form.getFieldsValue(), id: v4() }))
+    createHealthcareParty(new HealthcareParty({ ...form.getFieldsValue(), tags: [{ type: 'SERVICE' }], id: v4() }))
     form.submit()
   }
 
