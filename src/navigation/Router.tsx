@@ -1,26 +1,36 @@
 import React from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AuthenticatedLayout from '../layout/AuthenticatedLayout'
-import Layout from '../layout/Layout'
+import DashboardLayout from '../layout/DashboardLayout'
 import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/authentication/LoginPage'
 import RegisterPage from '../pages/authentication/RegisterPage'
+import AppointmentLayout from '../layout/AppointmentLayout'
 
 export const routes = {
-  home: '/home',
+  dashboard: '/dashboard',
   login: '/',
   register: '/register',
+  appointmentNew: '/appointment/new',
+  appointmentConfirmation: '/appointment/confirm',
+  appointmentSuccess: '/appointment/success',
+  appointmentError: '/appointment/error',
+  appointmentModification: '/appointment/modification',
+  appointmentCancellation: '/appointment/cancel',
 }
 
 export const Router = () => (
   <BrowserRouter>
     <Routes>
-      <Route element={<Layout />}>
+      <Route element={<DashboardLayout />}>
         <Route path={routes.login} element={<LoginPage />} />
         <Route path={routes.register} element={<RegisterPage />} />
       </Route>
       <Route element={<AuthenticatedLayout />}>
-        <Route path={routes.home} element={<DashboardPage />} />
+        <Route path={routes.dashboard} element={<DashboardPage />} />
+      </Route>
+      <Route element={<AppointmentLayout />}>
+        <Route path={routes.appointmentNew} />
       </Route>
     </Routes>
   </BrowserRouter>

@@ -15,7 +15,7 @@ const combinedSelector = createSelector([selectRestApiData, selectAppData], (car
   lsToken: app?.savedCredentials?.token,
 }))
 
-function Layout() {
+function DashboardLayout() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
 
@@ -31,7 +31,7 @@ function Layout() {
 
   useEffect(() => {
     if (online) {
-      navigate(routes.home)
+      navigate(routes.dashboard)
     }
   }, [online])
 
@@ -42,4 +42,4 @@ function Layout() {
   )
 }
 
-export default Layout
+export default DashboardLayout

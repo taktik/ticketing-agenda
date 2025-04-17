@@ -3,10 +3,8 @@ import { Form, UploadFile, UploadProps, Input, Upload, Button, Tabs } from 'antd
 import React, { ReactElement, useEffect, useState } from 'react'
 import { useCreateOrUpdatePractitionerMutation } from '../../../../core/api/practitionerApi'
 import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileToBase64'
-
 import './index.css'
 import { SpinLoader } from '../../../common/SpinLoader'
-
 import ImgCrop from 'antd-img-crop'
 
 import './index.css'

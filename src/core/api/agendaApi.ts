@@ -1,4 +1,4 @@
-import { Agenda, AgendaFilters, Document, DocumentTemplate, DocumentGroup } from '@icure/cardinal-sdk'
+import { Agenda, AgendaFilters, Document, DocumentTemplate, DocumentGroup, CalendarItem } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
