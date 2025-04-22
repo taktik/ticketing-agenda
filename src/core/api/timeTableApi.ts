@@ -2,6 +2,7 @@ import { TimeTable, TimeTableFilters, MedicalLocation } from '@icure/cardinal-sd
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
+import { TimeTablesServiceParameters } from './fetchType'
 
 enum TimeTableTags {
   TimeTable = 'TimeTable',
@@ -14,11 +15,11 @@ export const timeTableApiRtk = createApi({
     baseUrl: '',
   }),
   endpoints: (builder) => ({
-    getTimeTables: builder.query<TimeTable[] | undefined, string>({
-      async queryFn(id, { getState }) {
+    getTimeTables: builder.query<TimeTable[] | undefined, TimeTablesServiceParameters>({
+      async queryFn(params, { getState }) {
         const timeTableApi = (await cardinalApi(getState))?.timeTable
         return guard([timeTableApi], async (): Promise<TimeTable[]> => {
-          return await loadFromIterator(await timeTableApi!.filterTimeTablesBy(TimeTableFilters.byAgendaId(id)), 1000)
+          return await loadFromIterator(await timeTableApi!.filterTimeTablesBy(TimeTableFilters.byAgendaId(params.agendaId)), 1000)
         })
       },
       providesTags: (res) => (res ? [{ type: TimeTableTags.TimeTable, id: 'all' }] : []),
@@ -82,3 +83,19 @@ export const timeTableApiRtk = createApi({
 })
 
 export const { useGetTimeTablesQuery, useGetTimeTableQuery, useCreateTimeTableMutation, useUpdateTimeTableMutation, useDeleteTimeTableMutation } = timeTableApiRtk
+
+export const useGetTimeTables = (params: TimeTablesServiceParameters) => {
+  const { data, ...rest } = useGetTimeTablesQuery(params, {
+    skip: params.skip,
+  })
+
+  const serviceTimeTable = data?.filter((item) => {
+    if (!params.serviceTag) return true
+    return item.tags.some((tag) => tag.type === params.serviceTag)
+  })
+
+  return {
+    data: serviceTimeTable,
+    ...rest,
+  }
+}

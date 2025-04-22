@@ -7,12 +7,12 @@ import { CustomModal } from '../common/CustomModal'
 import { useCreateAgendaMutation } from '../../core/api/agendaApi'
 import React from 'react'
 
-interface ModalAddAgendaFormProps {
+interface ModalAddSiteFormProps {
   isVisible: boolean
   onClose: () => void
 }
 
-export const ModalAddAgendaForm = ({ isVisible, onClose }: ModalAddAgendaFormProps) => {
+export const ModalAddSiteForm = ({ isVisible, onClose }: ModalAddSiteFormProps) => {
   const [form] = Form.useForm()
 
   const [createAgenda, { data: newAgenda, error: agendaCreationError, isError: agendaCreationFailed, isSuccess: agendaCreationSucceeded, isLoading: agendaCreationOngoing }] =

@@ -9,21 +9,24 @@ import dayjs, { Dayjs } from 'dayjs'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Header } from '../../components/common/Header'
-import { ModalAddAgendaForm } from '../../components/ModalAddAgendaForm'
+import { ModalAddSiteForm } from '../../components/ModalAddSiteForm'
 import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
 import { useGetAgendasQuery } from '../../core/api/agendaApi'
-import { useGetTimeTablesQuery } from '../../core/api/timeTableApi'
+import { useGetTimeTables } from '../../core/api/timeTableApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
 import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
 import { DemarcheSelector } from '../../components/DemarcheSelector'
-import { ModalAddHealthcarePartyForm } from '../../components/ModalAddHealthcarePartyForm'
+import { ModalAddServiceForm } from '../../components/ModalAddServiceForm'
+import { ModalServiceSettings } from '../../components/ModalServiceSettings'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
-  const [siteModalOpen, setSiteModalOpen] = useState<boolean>(false)
-  const [serviceModalOpen, setServiceModalOpen] = useState<boolean>(false)
+  const [addSiteModalOpen, setAddSiteModalOpen] = useState<boolean>(false)
+  const [addServiceModalOpen, setAddServiceModalOpen] = useState<boolean>(false)
+  const [addDemarcheModalOpen, setAddDemarcheModalOpen] = useState<boolean>(false)
+  const [serviceSettingModalOpen, setServiceSettingModalOpen] = useState<boolean>(false)
   const calendarRef = useRef<FullCalendar | null>(null)
   const { token } = theme.useToken()
   const user = useAppSelector((state) => state.cardinalApi.user)
@@ -35,7 +38,11 @@ export default function DashboardPage() {
   const { data: services } = useGetHealthcarePartiesQuery(undefined, { skip: skip })
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
 
-  const { data: demarches } = useGetTimeTablesQuery(selectedSite?.id ?? '', { skip: skip })
+  const { data: demarches } = useGetTimeTables({
+    agendaId: selectedSite?.id ?? '',
+    serviceTag: selectedService ? `service-${selectedService.id}` : undefined,
+    skip: skip || !selectedSite?.id,
+  })
   const [selectedDemarche, setSelectedDemarche] = useState<TimeTable | undefined>(demarches?.[0])
 
   useEffect(() => {
@@ -43,8 +50,6 @@ export default function DashboardPage() {
       setSelectedSite(sites[0])
     }
   }, [sites])
-
-  useEffect(() => console.log('services', services), [services])
 
   const handleAntCalendarDateChange = useCallback(
     (value: Dayjs) => {
@@ -80,13 +85,19 @@ export default function DashboardPage() {
       <div className="Panel">
         <div className="LeftPanel">
           <div style={{ width: '300px' }}>
-            <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} setSiteModalOpen={setSiteModalOpen} />
+            <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} setSiteModalOpen={setAddSiteModalOpen} />
           </div>
           <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
 
-          <ServiceSelector services={services ?? []} selectedService={selectedService} setSelectedService={setSelectedService} setServiceModalOpen={setServiceModalOpen} />
+          <ServiceSelector
+            services={services ?? []}
+            selectedService={selectedService}
+            setSelectedService={setSelectedService}
+            setServiceModalOpen={setAddServiceModalOpen}
+            setServiceSettingModalOpen={setServiceSettingModalOpen}
+          />
           <DemarcheSelector demarches={demarches ?? []} selectedDemarche={selectedDemarche} setSelectedDemarche={setSelectedDemarche} />
         </div>
         <div className="RightPanel">
@@ -114,8 +125,11 @@ export default function DashboardPage() {
           />
         </div>
       </div>
-      {siteModalOpen && createPortal(<ModalAddAgendaForm isVisible={siteModalOpen} onClose={() => setSiteModalOpen(false)} />, document.body)}
-      {serviceModalOpen && createPortal(<ModalAddHealthcarePartyForm isVisible={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />, document.body)}
+      {addSiteModalOpen && createPortal(<ModalAddSiteForm isVisible={addSiteModalOpen} onClose={() => setAddSiteModalOpen(false)} />, document.body)}
+      {addServiceModalOpen && createPortal(<ModalAddServiceForm isVisible={addServiceModalOpen} onClose={() => setAddServiceModalOpen(false)} />, document.body)}
+      {addDemarcheModalOpen && createPortal(<ModalAddServiceForm isVisible={addDemarcheModalOpen} onClose={() => setAddDemarcheModalOpen(false)} />, document.body)}
+      {serviceSettingModalOpen &&
+        createPortal(<ModalServiceSettings isVisible={serviceSettingModalOpen} onClose={() => setServiceSettingModalOpen(false)} selectedSite={selectedSite} />, document.body)}
     </div>
   )
 }

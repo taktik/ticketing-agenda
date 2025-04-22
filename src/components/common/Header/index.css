@@ -240,4 +240,7 @@ body * {
     height: 20px;
   }
 }
+.header .header__logoHolder {
+  width: 20%;
+}
 /*# sourceMappingURL=index.css.map */

@@ -1,0 +1,145 @@
+import { AddressType, Agenda, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType } from '@icure/cardinal-sdk'
+import { Form, Input, Upload, UploadFile, UploadProps, Button, Col, Divider, Row, Typography, Menu, MenuProps } from 'antd'
+import ImgCrop from 'antd-img-crop'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCreateOrUpdatePractitionerMutation } from '../../core/api/practitionerApi'
+import { getFileUploaderCommonProps, getImgSRC } from '../../helpers/fileToBase64'
+
+import { CustomModal } from '../common/CustomModal'
+import { SpinLoader } from '../common/SpinLoader'
+import './index.css'
+import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
+import { useAppSelector } from '../../core/hooks'
+import { useGetTimeTables } from '../../core/api/timeTableApi'
+import { SettingOutlined } from '@ant-design/icons'
+import { ItemType } from 'antd/es/menu/interface'
+
+interface ModalServiceSettingsProps {
+  isVisible: boolean
+  onClose: () => void
+  selectedSite: Agenda | undefined
+  currentUser?: HealthcareParty
+}
+
+type MenuItem = Required<MenuProps>['items'][number]
+
+export const ModalServiceSettings = ({ isVisible, onClose, currentUser, selectedSite }: ModalServiceSettingsProps): ReactElement => {
+  const [selectedKey, setSelectedKey] = useState<string>('default')
+  const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(undefined)
+  const [search, setSearch] = useState('')
+  const user = useAppSelector((state) => state.cardinalApi.user)
+  const skip = !user
+
+  const { data: services } = useGetHealthcarePartiesQuery(undefined, { skip: skip })
+  const { data: demarches } = useGetTimeTables({ agendaId: selectedSite?.id ?? '', serviceTag: undefined, skip: skip || !selectedSite?.id })
+
+  const itemsFromServices: MenuItem[] = useMemo(
+    () =>
+      (services ?? []).map((service) => {
+        const matchingDemarches = (demarches ?? []).filter((d) => d.tags.some((tag) => tag.type === `service-${service.id}`))
+
+        const children: MenuItem[] = [
+          {
+            key: `service-${service.id}-general`,
+            label: <strong>Paramètres généraux</strong>,
+            icon: <SettingOutlined />,
+          },
+          ...matchingDemarches.map((demarche) => ({
+            key: `demarche-${demarche.id}`,
+            label: demarche.name,
+          })),
+        ]
+
+        return {
+          key: `service-${service.id}`,
+          label: service.name,
+          children,
+        }
+      }),
+    [services, demarches],
+  )
+
+  const filteredItems = useMemo(
+    () =>
+      itemsFromServices
+        .map((item) => {
+          // Check if item has children, if not, return null
+          if (!item || !('children' in item) || !item.children || !item.children.length) {
+            return null
+          }
+
+          // Safely handle children and find 'general' setting if exists
+          const generalSetting = item.children?.find((child) => {
+            if (!child) return false // Safeguard if the child is null or undefined
+            return 'key' in child && typeof child.key === 'string' && child.key.endsWith('-general')
+          })
+          // Filter out children that match search (with null/undefined check for label)
+          const matchingChildren = item.children.filter((child) => {
+            // Narrow the type to MenuItemType or SubMenuType before accessing `label`
+            if (!child || !('label' in child)) return false // Skip if no label field
+
+            const labelText = (() => {
+              if (typeof child.label === 'string') {
+                return child.label
+              }
+
+              if (React.isValidElement(child.label) && typeof child.label.props?.children === 'string') {
+                return child.label.props.children.toLowerCase()
+              }
+
+              return ''
+            })()
+            return labelText.includes(search.toLowerCase())
+          })
+
+          // Combine the "general" setting and the matching children
+          const childrenToKeep = [...(generalSetting ? [generalSetting] : []), ...matchingChildren.filter((child) => child !== generalSetting)]
+
+          // If no children match and we're searching, skip this item
+          if (childrenToKeep.length === 0 && search) {
+            return null
+          }
+
+          return {
+            ...item,
+            children: childrenToKeep,
+          }
+        })
+        .filter((item): item is Exclude<typeof item, null> => item !== null),
+    [itemsFromServices, search],
+  )
+
+  const onClick: MenuProps['onClick'] = ({ key }) => {
+    setSelectedKey(key)
+  }
+
+  const renderSetting = useCallback(() => {
+    switch (selectedKey) {
+      case 'utilisateur':
+        return <div>Affichage settings here</div>
+      case 'droits':
+        return <div>Permissions info form here</div>
+      case 'affichage':
+        return <div>Affichage settings here</div>
+      case 'agenda':
+        return <div>Affichage settings here</div>
+      case 'license':
+        return <div>License settings here</div>
+      default:
+        return <div></div>
+    }
+  }, [selectedKey])
+
+  return (
+    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings">
+      <div className="modalSettings">
+        <div className="settingsTitle">
+          <Input.Search placeholder="Search menu" onChange={(e) => setSearch(e.target.value)} />
+          <Menu onClick={onClick} style={{ width: 150 }} defaultSelectedKeys={['utilisateur']} defaultOpenKeys={['sub1']} mode="inline" items={filteredItems} />
+        </div>
+        <Divider type="vertical" variant="solid" style={{ height: '100%' }} />
+        <div className="selectedSetting">{renderSetting()}</div>
+      </div>
+    </CustomModal>
+  )
+}

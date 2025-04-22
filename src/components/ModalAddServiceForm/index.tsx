@@ -1,5 +1,5 @@
 import { Form, Input } from 'antd'
-import { useEffect } from 'react'
+import { SetStateAction, useEffect } from 'react'
 import { v4 } from 'uuid'
 import './index.css'
 import { HealthcareParty } from '@icure/cardinal-sdk'
@@ -7,12 +7,12 @@ import { CustomModal } from '../common/CustomModal'
 import React from 'react'
 import { useCreateHealthcarePartyMutation } from '../../core/api/healthcarePartyApi'
 
-interface ModalAddHealthcarePartyFormProps {
+interface ModalAddServiceFormProps {
   isVisible: boolean
   onClose: () => void
 }
 
-export const ModalAddHealthcarePartyForm = ({ isVisible, onClose }: ModalAddHealthcarePartyFormProps) => {
+export const ModalAddServiceForm = ({ isVisible, onClose }: ModalAddServiceFormProps) => {
   const [form] = Form.useForm()
 
   const [

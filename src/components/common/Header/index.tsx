@@ -1,6 +1,6 @@
 import Icon from '@ant-design/icons'
 import { createSelector } from '@reduxjs/toolkit'
-import logo_mouscron from '../../../assets/logo_mouscron.png'
+import mouscronLogo from '../../../assets/mouscronLogo.png'
 import './index.css'
 import type { MenuProps } from 'antd'
 import { Dropdown } from 'antd'
@@ -77,7 +77,7 @@ export const Header = () => {
 
       <div className="header">
         <div className="header__logoHolder">
-          <img src={logo_mouscron} alt="mouscron logo" />
+          <img src={mouscronLogo} alt="mouscron logo" />
         </div>
         {!isPractitionerFetching && (
           <Dropdown menu={{ items, onClick }} placement="bottomRight" arrow onOpenChange={(open: boolean) => setUserDropdownOpen(open)}>

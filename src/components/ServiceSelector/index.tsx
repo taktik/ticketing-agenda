@@ -1,5 +1,5 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { HealthcareParty } from '@icure/cardinal-sdk'
+import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
+import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Divider, Typography, notification, message } from 'antd'
 import React, { useCallback, useEffect } from 'react'
 import './index.css'
@@ -10,9 +10,10 @@ interface ServiceSelectorProps {
   selectedService: HealthcareParty | undefined
   setSelectedService: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
   setServiceModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  setServiceSettingModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export const ServiceSelector = ({ services, selectedService, setSelectedService, setServiceModalOpen }: ServiceSelectorProps): React.ReactElement => {
+export const ServiceSelector = ({ services, selectedService, setSelectedService, setServiceModalOpen, setServiceSettingModalOpen }: ServiceSelectorProps): React.ReactElement => {
   const addService = useCallback(() => {
     setServiceModalOpen(true)
   }, [setServiceModalOpen])
@@ -49,6 +50,14 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
     setTimeout(messageApi.destroy, 2500)
   }
 
+  const handleSelectServiceClick = useCallback(
+    (service: HealthcareParty) => {
+      const toSelect = service.id === selectedService?.id ? undefined : service
+      setSelectedService(toSelect)
+    },
+    [selectedService],
+  )
+
   return (
     <div style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
       <div className="ServiceSelectorHeader">
@@ -57,6 +66,7 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
         </Typography.Title>
         <div className="ServiceSelectorButtons">
           <Button type="primary" icon={<PlusOutlined />} size="middle" onClick={addService} style={{ padding: 0 }} />
+          <Button type="primary" icon={<SettingOutlined />} size="middle" onClick={() => setServiceSettingModalOpen(true)} style={{ padding: 0 }} />
           <Button
             type="primary"
             icon={<DeleteOutlined />}
@@ -81,7 +91,9 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
             <Button
               key={service.id}
               type={isSelected ? 'primary' : 'default'}
-              onClick={() => setSelectedService(service)}
+              onClick={() => {
+                handleSelectServiceClick(service)
+              }}
               style={{
                 whiteSpace: 'nowrap',
                 minWidth: '80px',

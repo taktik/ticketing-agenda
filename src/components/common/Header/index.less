@@ -17,7 +17,8 @@
     padding: 12px;
   });
 
-  p, a {
+  p,
+  a {
     color: white;
     font-size: 14px;
     text-align: center;
@@ -28,14 +29,12 @@
     });
   }
 
-
   a {
     font-weight: 700;
     cursor: pointer;
     text-decoration: underline;
     margin-left: 12px;
   }
-
 }
 
 .header {
@@ -82,10 +81,11 @@
       }
     }
 
-    &--active, &:hover {
+    &--active,
+    &:hover {
       border-radius: 6px;
       border: 1px solid @blue-800;
-      box-shadow: 0 0 0 2px rgba(8, 75, 131, 0.20);
+      box-shadow: 0 0 0 2px rgba(8, 75, 131, 0.2);
     }
 
     &__heading {
@@ -111,7 +111,8 @@
       }
     }
 
-    &__picture, &__userAvatarPlaceholder {
+    &__picture,
+    &__userAvatarPlaceholder {
       display: flex;
       width: 40px;
       height: 40px;
@@ -145,5 +146,7 @@
       }
     }
   }
-
+  .header__logoHolder {
+    width: 20%;
+  }
 }
