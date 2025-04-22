@@ -20,6 +20,7 @@ import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
 import { DemarcheSelector } from '../../components/DemarcheSelector'
 import { ModalAddServiceForm } from '../../components/ModalAddServiceForm'
 import { ModalServiceSettings } from '../../components/ModalServiceSettings'
+import { ModalAddDemarcheForm } from '../../components/ModalAddDemarcheForm'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
@@ -75,19 +76,20 @@ export default function DashboardPage() {
 
   const wrapperStyle: React.CSSProperties = {
     width: 300,
-    border: `1px solid ${token.colorBorderSecondary}`,
-    borderRadius: token.borderRadiusLG,
+    border: `1px solid #D9D9D9`,
+    borderRadius: 0,
   }
 
   return (
     <div className="Dashboard">
       <Header />
       <div className="Panel">
+        <div className="svg-background" />
         <div className="LeftPanel">
           <div style={{ width: '300px' }}>
             <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} setSiteModalOpen={setAddSiteModalOpen} />
           </div>
-          <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+          <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', zIndex: '1' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
 
@@ -98,7 +100,12 @@ export default function DashboardPage() {
             setServiceModalOpen={setAddServiceModalOpen}
             setServiceSettingModalOpen={setServiceSettingModalOpen}
           />
-          <DemarcheSelector demarches={demarches ?? []} selectedDemarche={selectedDemarche} setSelectedDemarche={setSelectedDemarche} />
+          <DemarcheSelector
+            demarches={demarches ?? []}
+            selectedDemarche={selectedDemarche}
+            setSelectedDemarche={setSelectedDemarche}
+            setAddDemarcheModalOpen={setAddDemarcheModalOpen}
+          />
         </div>
         <div className="RightPanel">
           <FullCalendar
@@ -127,7 +134,11 @@ export default function DashboardPage() {
       </div>
       {addSiteModalOpen && createPortal(<ModalAddSiteForm isVisible={addSiteModalOpen} onClose={() => setAddSiteModalOpen(false)} />, document.body)}
       {addServiceModalOpen && createPortal(<ModalAddServiceForm isVisible={addServiceModalOpen} onClose={() => setAddServiceModalOpen(false)} />, document.body)}
-      {addDemarcheModalOpen && createPortal(<ModalAddServiceForm isVisible={addDemarcheModalOpen} onClose={() => setAddDemarcheModalOpen(false)} />, document.body)}
+      {addDemarcheModalOpen &&
+        createPortal(
+          <ModalAddDemarcheForm isVisible={addDemarcheModalOpen} onClose={() => setAddDemarcheModalOpen(false)} selectedService={selectedService} selectedSite={selectedSite} />,
+          document.body,
+        )}
       {serviceSettingModalOpen &&
         createPortal(<ModalServiceSettings isVisible={serviceSettingModalOpen} onClose={() => setServiceSettingModalOpen(false)} selectedSite={selectedSite} />, document.body)}
     </div>

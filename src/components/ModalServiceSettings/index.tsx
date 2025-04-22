@@ -13,6 +13,7 @@ import { useAppSelector } from '../../core/hooks'
 import { useGetTimeTables } from '../../core/api/timeTableApi'
 import { SettingOutlined } from '@ant-design/icons'
 import { ItemType } from 'antd/es/menu/interface'
+import { normalize } from '../patient/modals/ModalImportPatients/utils/functionUtils'
 
 interface ModalServiceSettingsProps {
   isVisible: boolean
@@ -68,35 +69,45 @@ export const ModalServiceSettings = ({ isVisible, onClose, currentUser, selected
             return null
           }
 
+          const normalizedSearch = normalize(search)
+          const normalizedItemLabel = normalize(
+            typeof item.label === 'string' ? item.label : React.isValidElement(item.label) && typeof item.label.props?.children === 'string' ? item.label.props.children : '',
+          )
+
+          // 🧠 If service name matches search, keep all children
+          const matchService = normalizedItemLabel.includes(normalizedSearch)
+
           // Safely handle children and find 'general' setting if exists
           const generalSetting = item.children?.find((child) => {
             if (!child) return false // Safeguard if the child is null or undefined
             return 'key' in child && typeof child.key === 'string' && child.key.endsWith('-general')
           })
           // Filter out children that match search (with null/undefined check for label)
-          const matchingChildren = item.children.filter((child) => {
-            // Narrow the type to MenuItemType or SubMenuType before accessing `label`
-            if (!child || !('label' in child)) return false // Skip if no label field
+          const matchingChildren = matchService
+            ? item.children
+            : item.children.filter((child) => {
+                // Narrow the type to MenuItemType or SubMenuType before accessing `label`
+                if (!child || !('label' in child)) return false // Skip if no label field
 
-            const labelText = (() => {
-              if (typeof child.label === 'string') {
-                return child.label
-              }
+                const labelText = (() => {
+                  if (typeof child.label === 'string') {
+                    return normalize(child.label)
+                  }
 
-              if (React.isValidElement(child.label) && typeof child.label.props?.children === 'string') {
-                return child.label.props.children.toLowerCase()
-              }
+                  if (React.isValidElement(child.label) && typeof child.label.props?.children === 'string') {
+                    return normalize(child.label.props.children)
+                  }
 
-              return ''
-            })()
-            return labelText.includes(search.toLowerCase())
-          })
+                  return ''
+                })()
+                return labelText.includes(normalize(search))
+              })
 
           // Combine the "general" setting and the matching children
           const childrenToKeep = [...(generalSetting ? [generalSetting] : []), ...matchingChildren.filter((child) => child !== generalSetting)]
 
           // If no children match and we're searching, skip this item
-          if (childrenToKeep.length === 0 && search) {
+          if (childrenToKeep.length === 0 || (search && matchingChildren.length === 0)) {
             return null
           }
 
@@ -108,6 +119,8 @@ export const ModalServiceSettings = ({ isVisible, onClose, currentUser, selected
         .filter((item): item is Exclude<typeof item, null> => item !== null),
     [itemsFromServices, search],
   )
+
+  useEffect(() => console.log('filteredItems', filteredItems), [filteredItems])
 
   const onClick: MenuProps['onClick'] = ({ key }) => {
     setSelectedKey(key)
@@ -126,16 +139,16 @@ export const ModalServiceSettings = ({ isVisible, onClose, currentUser, selected
       case 'license':
         return <div>License settings here</div>
       default:
-        return <div></div>
+        return <div>default</div>
     }
   }, [selectedKey])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings">
+    <CustomModal isVisible={isVisible} handleClose={onClose} title="Service Settings">
       <div className="modalSettings">
         <div className="settingsTitle">
           <Input.Search placeholder="Search menu" onChange={(e) => setSearch(e.target.value)} />
-          <Menu onClick={onClick} style={{ width: 150 }} defaultSelectedKeys={['utilisateur']} defaultOpenKeys={['sub1']} mode="inline" items={filteredItems} />
+          <Menu onClick={onClick} style={{ width: 250 }} defaultSelectedKeys={['default']} defaultOpenKeys={['sub1']} mode="inline" items={filteredItems} />
         </div>
         <Divider type="vertical" variant="solid" style={{ height: '100%' }} />
         <div className="selectedSetting">{renderSetting()}</div>

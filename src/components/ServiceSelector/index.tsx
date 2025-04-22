@@ -59,7 +59,7 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
   )
 
   return (
-    <div style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
+    <div className="ServiceSelector">
       <div className="ServiceSelectorHeader">
         <Typography.Title level={5} style={{ margin: 0 }}>
           Services
@@ -82,9 +82,9 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
         </div>
       </div>
 
-      <Divider style={{ margin: '16px 0' }} />
+      <Divider style={{ margin: 0 }} />
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+      <div className="ServicesContent">
         {services.map((service) => {
           const isSelected = selectedService?.id === service.id
           return (

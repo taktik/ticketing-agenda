@@ -112,15 +112,28 @@ body {
 body * {
   font-family: Lato400, sans-serif;
 }
+.ServiceSelector {
+  width: 300px;
+  border: 1px solid #d9d9d9;
+  z-index: 1;
+  background: #ffffff;
+}
 .ServiceSelectorHeader {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   gap: 4px;
+  padding: 16px;
 }
 .ServiceSelectorButtons {
   display: flex;
   gap: 0.5rem;
+}
+.ServicesContent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px;
 }
 /*# sourceMappingURL=index.css.map */

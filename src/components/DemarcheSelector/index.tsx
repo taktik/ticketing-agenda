@@ -1,74 +1,28 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { TimeTable } from '@icure/cardinal-sdk'
-import { Select as AntSelect, Button } from 'antd'
-import React, { ReactElement } from 'react'
+import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
+import { Agenda, TimeTable } from '@icure/cardinal-sdk'
+import { Select as AntSelect, Button, Divider, Typography, notification, message } from 'antd'
+import React, { ReactElement, useCallback, useEffect } from 'react'
 import './index.css'
+import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
 
 interface DemarcheSelectorProps {
   demarches: TimeTable[]
   selectedDemarche: TimeTable | undefined
   setSelectedDemarche: React.Dispatch<React.SetStateAction<TimeTable | undefined>>
+  setAddDemarcheModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche }: DemarcheSelectorProps): ReactElement => {
-  const options = demarches.map((demarche) => ({
-    label: demarche.name,
-    value: demarche.id,
-  }))
-
-  return (
-    <div className="selectorRoot">
-      <AntSelect
-        allowClear
-        showSearch
-        style={{ width: '100%' }}
-        placeholder="Select a demarche"
-        optionFilterProp="label"
-        labelInValue
-        filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}
-        options={options}
-        value={selectedDemarche ? { label: selectedDemarche.name, value: selectedDemarche.id } : undefined}
-        onChange={(option) => {
-          if (option && option.value) {
-            const selected = demarches.find((demarche) => demarche.id === option.value)
-            setSelectedDemarche(selected)
-          } else {
-            setSelectedDemarche(undefined)
-          }
-        }}
-      />
-      <Button type="primary" shape="circle" icon={<PlusOutlined />} />
-      <Button type="primary" shape="circle" icon={<DeleteOutlined />} danger disabled={!selectedDemarche} />
-    </div>
-  )
-}
-
-/*
-
-import { HealthcareParty } from '@icure/cardinal-sdk'
-import { Divider, Typography, message, notification } from 'antd'
-import { useCallback, useEffect } from 'react'
-import { useDeleteHealthcarePartyMutation } from '../../core/api/healthcarePartyApi'
-import './index.css'
-
-interface DemarcheSelectorProps {
-  demarches: TimeTable[]
-  selectedDemarche: TimeTable | undefined
-  setSelectedDemarche: React.Dispatch<React.SetStateAction<TimeTable | undefined>>
-  setDemarcheModalOpen: React.Dispatch<React.SetStateAction<boolean>>
-}
-
-export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche, setDemarcheModalOpen }: DemarcheSelectorProps): ReactElement => {
+export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche, setAddDemarcheModalOpen }: DemarcheSelectorProps): ReactElement => {
   const addDemarche = useCallback(() => {
-    setDemarcheModalOpen(true)
-  }, [setDemarcheModalOpen])
+    setAddDemarcheModalOpen(true)
+  }, [setAddDemarcheModalOpen])
 
-  const [deleteService, { isError, isSuccess, isLoading }] = useDeleteHealthcarePartyMutation()
+  const [deleteDemarche, { isError, isSuccess, isLoading }] = useDeleteTimeTableMutation()
 
   useEffect(() => {
-    if (isLoading) showMessageFeedback('loading', 'The site is deleting...')
-    if (isSuccess) showMessageFeedback('success', 'The site was deleted!')
-    if (isError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
+    if (isLoading) showMessageFeedback('loading', 'The demarche is deleting...')
+    if (isSuccess) showMessageFeedback('success', 'The demarche was deleted!')
+    if (isError) openNotification('error', 'We could not delete the demarche!', `An error occurred while deleting the demarche.`)
   }, [isLoading, isSuccess, isError])
 
   const [api, notificationContextHolder] = notification.useNotification()
@@ -95,39 +49,49 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
     setTimeout(messageApi.destroy, 2500)
   }
 
+  const handleSelectDemarcheClick = useCallback(
+    (demarche: TimeTable) => {
+      const toSelect = demarche.id === selectedDemarche?.id ? undefined : demarche
+      setSelectedDemarche(toSelect)
+    },
+    [selectedDemarche],
+  )
+
   return (
-    <div style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
-      <div className="ServiceSelectorHeader">
+    <div className="DemarcheSelector">
+      <div className="DemarcheSelectorHeader">
         <Typography.Title level={5} style={{ margin: 0 }}>
-          Services
+          Demarches
         </Typography.Title>
         <div className="ServiceSelectorButtons">
-          <Button type="primary" icon={<PlusOutlined />} size="middle" onClick={addService} style={{ padding: 0 }} />
+          <Button type="primary" icon={<PlusOutlined />} size="middle" onClick={addDemarche} style={{ padding: 0 }} />
           <Button
             type="primary"
             icon={<DeleteOutlined />}
             danger
-            disabled={!selectedService}
+            disabled={!selectedDemarche}
             onClick={() => {
-              if (selectedService) {
-                deleteService(selectedService)
-                setSelectedService(undefined)
+              if (selectedDemarche) {
+                deleteDemarche(selectedDemarche)
+                setSelectedDemarche(undefined)
               }
             }}
           />
         </div>
       </div>
 
-      <Divider style={{ margin: '16px 0' }} />
+      <Divider style={{ margin: 0 }} />
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        {services.map((service) => {
-          const isSelected = selectedService?.id === service.id
+      <div className="DemarchesContent">
+        {demarches.map((demarche) => {
+          const isSelected = selectedDemarche?.id === demarche.id
           return (
             <Button
-              key={service.id}
+              key={demarche.id}
               type={isSelected ? 'primary' : 'default'}
-              onClick={() => setSelectedService(service)}
+              onClick={() => {
+                handleSelectDemarcheClick(demarche)
+              }}
               style={{
                 whiteSpace: 'nowrap',
                 minWidth: '80px',
@@ -138,7 +102,7 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
                 }),
               }}
             >
-              {service.name}
+              {demarche.name}
             </Button>
           )
         })}
@@ -146,4 +110,3 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
     </div>
   )
 }
-*/

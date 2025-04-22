@@ -1,4 +1,4 @@
-import { TimeTable, TimeTableFilters, MedicalLocation } from '@icure/cardinal-sdk'
+import { TimeTable, TimeTableFilters, MedicalLocation, CalendarItemType } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'

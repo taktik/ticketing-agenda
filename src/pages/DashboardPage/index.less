@@ -5,14 +5,32 @@
   width: 100%;
   min-height: 100vh;
   height: 100%;
-  background-color: white;
+  background: #ffffff;
   overflow: hidden;
 }
 .Panel {
+  position: relative;
   display: flex;
   flex-direction: row;
-  margin: 10px;
   height: 100%;
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 8px;
+}
+.svg-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 60vh;
+  background-image: url('../../assets/background-shape.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  pointer-events: none;
+  z-index: 0;
 }
 .LeftPanel {
   display: flex;
@@ -48,4 +66,26 @@
 .ant-picker-calendar .ant-picker-content th {
   text-align: center !important;
   vertical-align: middle !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border: 1px solid @red-font !important;
+}
+
+.ant-radio-button-wrapper-checked {
+  color: @red-font !important;
+  border: 1px solid @red-font !important;
+}
+
+.ant-picker-cell-inner:not(.ant-picker-cell-selected):hover {
+  background: @red-background !important;
+  color: black !important;
+
+  .ant-picker-calendar-date-value {
+    background: transparent !important;
+  }
+}
+
+.ant-picker-cell-selected .ant-picker-cell-inner {
+  background-color: @red-font !important;
 }

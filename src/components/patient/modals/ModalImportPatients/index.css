@@ -129,7 +129,7 @@ body * {
   position: relative;
 }
 .modalImportPatients .highlighted {
-  color: #FAAD14;
+  color: #faad14;
   font-family: Lato700, sans-serif;
 }
 .modalImportPatients .highlighted:hover {
@@ -191,7 +191,7 @@ body * {
   padding: 6px 12px;
   display: flex;
   justify-content: space-between;
-  background-color: #DDEEFF;
+  background-color: #ddeeff;
   border-radius: 6px;
 }
 .modalImportPatients__upload__fileList__item .icon svg,

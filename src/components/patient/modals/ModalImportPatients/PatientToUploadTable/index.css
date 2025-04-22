@@ -129,7 +129,7 @@ body * {
   width: auto;
   display: flex;
   flex-direction: column;
-  border: 1px solid #D6DBDF;
+  border: 1px solid #d6dbdf;
   border-radius: 6px;
   overflow-x: scroll;
   flex-shrink: 0;
@@ -139,13 +139,13 @@ body * {
   padding: 8px 0;
   display: grid;
   grid-template-columns: repeat(2, 150px) 250px repeat(3, 150px) repeat(3, 250px);
-  border-bottom: 1px solid #D6DBDF;
-  background-color: #F1F5F7;
+  border-bottom: 1px solid #d6dbdf;
+  background-color: #f1f5f7;
 }
 .PatientToUploadTable__scrollContent__head__cell {
   display: flex;
   padding: 0 12px;
-  border-right: 1px solid #D6DBDF;
+  border-right: 1px solid #d6dbdf;
 }
 .PatientToUploadTable__scrollContent__head__cell:last-child {
   border: none;
@@ -163,7 +163,7 @@ body * {
   padding: 8px 0;
   display: grid;
   grid-template-columns: repeat(2, 150px) 250px repeat(3, 150px) repeat(3, 250px);
-  border-bottom: 1px solid #D6DBDF;
+  border-bottom: 1px solid #d6dbdf;
   background-color: white;
 }
 .PatientToUploadTable__scrollContent__body__row:last-child {
