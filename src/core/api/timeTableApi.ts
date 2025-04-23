@@ -37,26 +37,13 @@ export const timeTableApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: TimeTableTags.TimeTable, id: res.id }] : []),
     }),
-    createTimeTable: builder.mutation<TimeTable | undefined, TimeTable>({
+    createUpdateTimeTable: builder.mutation<TimeTable | undefined, TimeTable>({
       async queryFn(timeTable, { getState }) {
         const timeTableApi = (await cardinalApi(getState))?.timeTable
         return guard([timeTableApi], async (): Promise<TimeTable> => {
-          const newTimeTable = await timeTableApi?.createTimeTable(timeTable)
-          if (!newTimeTable) {
-            throw new Error('TimeTable creation failed')
-          }
-          return new TimeTable(newTimeTable)
-        })
-      },
-      invalidatesTags: (result, error, arg) => (result ? [{ type: TimeTableTags.TimeTable, id: 'all' }] : []),
-    }),
-    updateTimeTable: builder.mutation<TimeTable | undefined, TimeTable>({
-      async queryFn(timeTable, { getState }) {
-        const timeTableApi = (await cardinalApi(getState))?.timeTable
-        return guard([timeTableApi], async (): Promise<TimeTable> => {
-          const updatedTimeTable = await timeTableApi?.modifyTimeTable(timeTable)
+          const updatedTimeTable = !!timeTable.rev ? await timeTableApi?.modifyTimeTable(timeTable) : await timeTableApi?.createTimeTable(timeTable)
           if (!updatedTimeTable) {
-            throw new Error('TimeTable update failed')
+            throw new Error('TimeTable creation failed')
           }
           return new TimeTable(updatedTimeTable)
         })
@@ -82,7 +69,7 @@ export const timeTableApiRtk = createApi({
   }),
 })
 
-export const { useGetTimeTablesQuery, useGetTimeTableQuery, useCreateTimeTableMutation, useUpdateTimeTableMutation, useDeleteTimeTableMutation } = timeTableApiRtk
+export const { useGetTimeTablesQuery, useGetTimeTableQuery, useCreateUpdateTimeTableMutation, useDeleteTimeTableMutation } = timeTableApiRtk
 
 export const useGetTimeTables = (params: TimeTablesServiceParameters) => {
   const { data, ...rest } = useGetTimeTablesQuery(params, {

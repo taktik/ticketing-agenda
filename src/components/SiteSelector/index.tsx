@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect } from 'react'
+import React, { ReactElement, useCallback, useEffect, useMemo } from 'react'
 import { Select as AntSelect, Button, notification, message, Tooltip } from 'antd'
 import { Agenda } from '@icure/cardinal-sdk'
 import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
@@ -10,14 +10,23 @@ interface SiteSelectorProps {
   selectedSite: Agenda | undefined
   setSelectedSite: React.Dispatch<React.SetStateAction<Agenda | undefined>>
   setSiteModalOpen: React.Dispatch<React.SetStateAction<boolean>>
-  setServiceSettingModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  setSiteModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>
 }
 
-export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModalOpen, setServiceSettingModalOpen }: SiteSelectorProps): ReactElement => {
-  const options = sites.map((site) => ({
-    label: site.name,
-    value: site.id,
-  }))
+export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModalOpen, setSiteModalMode }: SiteSelectorProps): ReactElement => {
+  const options = useMemo(
+    () =>
+      sites.map((site) => ({
+        label: site.name,
+        value: site.id,
+      })),
+    [sites],
+  )
+
+  const openModal = useCallback((mode: 'add' | 'edit') => {
+    setSiteModalMode(mode)
+    setSiteModalOpen(true)
+  }, [])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -51,6 +60,13 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModa
     if (isError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
   }, [isLoading, isSuccess, isError])
 
+  useEffect(() => {
+    if (selectedSite) {
+      const selected = sites.find((site) => site.id === selectedSite.id)
+      setSelectedSite(selected)
+    }
+  }, [sites])
+
   return (
     <div className="selectorRoot">
       <AntSelect
@@ -77,18 +93,25 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModa
           type="primary"
           shape="circle"
           icon={<PlusOutlined />}
-          onClick={() => setSiteModalOpen(true)}
+          onClick={() => openModal('add')}
           style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large', color: 'black' }}
         />
       </Tooltip>
-      <Tooltip title="View the scheduling">
+      <Tooltip title="Modify the selected site">
         <Button
           icon={<SettingOutlined />}
-          onClick={() => setServiceSettingModalOpen(true)}
+          disabled={!selectedSite}
+          onClick={() => openModal('edit')}
           style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
         />
       </Tooltip>
-      <Tooltip title="Delete the site">
+    </div>
+  )
+}
+
+/*
+
+ <Tooltip title="Delete the site">
         <Button
           type="primary"
           shape="circle"
@@ -103,6 +126,6 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModa
           }}
         />
       </Tooltip>
-    </div>
-  )
-}
+
+
+*/

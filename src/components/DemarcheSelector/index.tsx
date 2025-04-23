@@ -8,14 +8,24 @@ import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
 interface DemarcheSelectorProps {
   demarches: TimeTable[]
   selectedDemarche: TimeTable | undefined
+  selectedSite: Agenda | undefined
   setSelectedDemarche: React.Dispatch<React.SetStateAction<TimeTable | undefined>>
-  setAddDemarcheModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  setDemarcheModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  setSiteModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>
 }
 
-export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche, setAddDemarcheModalOpen }: DemarcheSelectorProps): ReactElement => {
-  const addDemarche = useCallback(() => {
-    setAddDemarcheModalOpen(true)
-  }, [setAddDemarcheModalOpen])
+export const DemarcheSelector = ({
+  demarches,
+  selectedDemarche,
+  selectedSite,
+  setSelectedDemarche,
+  setDemarcheModalOpen,
+  setSiteModalMode,
+}: DemarcheSelectorProps): ReactElement => {
+  const openModal = useCallback((mode: 'add' | 'edit') => {
+    setSiteModalMode(mode)
+    setDemarcheModalOpen(true)
+  }, [])
 
   const [deleteDemarche, { isError, isSuccess, isLoading }] = useDeleteTimeTableMutation()
 
@@ -65,20 +75,19 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
         </Typography.Title>
         <div className="ServiceSelectorButtons">
           <Tooltip title="Add a new demarche">
-            <Button icon={<PlusOutlined />} onClick={addDemarche} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
-          </Tooltip>
-          <Tooltip title="Delete the demarche">
             <Button
-              type="primary"
-              icon={<DeleteOutlined />}
-              danger
-              disabled={!selectedDemarche}
-              onClick={() => {
-                if (selectedDemarche) {
-                  deleteDemarche(selectedDemarche)
-                  setSelectedDemarche(undefined)
-                }
-              }}
+              icon={<PlusOutlined />}
+              disabled={!selectedSite}
+              onClick={() => openModal('add')}
+              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+            />
+          </Tooltip>
+          <Tooltip title="Modify the selected demarche">
+            <Button
+              icon={<SettingOutlined />}
+              disabled={!selectedDemarche || !selectedSite}
+              onClick={() => openModal('edit')}
+              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
             />
           </Tooltip>
         </div>
@@ -114,3 +123,22 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
     </div>
   )
 }
+
+/*
+
+ <Tooltip title="Delete the demarche">
+            <Button
+              type="primary"
+              icon={<DeleteOutlined />}
+              danger
+              disabled={!selectedDemarche}
+              onClick={() => {
+                if (selectedDemarche) {
+                  deleteDemarche(selectedDemarche)
+                  setSelectedDemarche(undefined)
+                }
+              }}
+            />
+          </Tooltip>
+
+          */

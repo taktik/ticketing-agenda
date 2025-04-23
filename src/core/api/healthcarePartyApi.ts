@@ -23,7 +23,6 @@ export const healthcarePartyApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
-
     getHealthcareParty: builder.query<HealthcareParty | undefined, string>({
       async queryFn(id, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
@@ -37,35 +36,19 @@ export const healthcarePartyApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: res.id }] : []),
     }),
-
-    createHealthcareParty: builder.mutation<HealthcareParty | undefined, HealthcareParty>({
+    createUpdateHealthcareParty: builder.mutation<HealthcareParty | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
         return guard([hcpApi], async (): Promise<HealthcareParty> => {
-          const newHcp = await hcpApi?.createHealthcareParty(hcp)
-          if (!newHcp) {
-            throw new Error('HealthcareParty creation failed')
-          }
-          return new HealthcareParty(newHcp)
-        })
-      },
-      invalidatesTags: () => [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }],
-    }),
-
-    updateHealthcareParty: builder.mutation<HealthcareParty | undefined, HealthcareParty>({
-      async queryFn(hcp, { getState }) {
-        const hcpApi = (await cardinalApi(getState))?.healthcareParty
-        return guard([hcpApi], async (): Promise<HealthcareParty> => {
-          const updatedHcp = await hcpApi?.modifyHealthcareParty(hcp)
+          const updatedHcp = !!hcp.rev ? await hcpApi?.modifyHealthcareParty(hcp) : await hcpApi?.createHealthcareParty(hcp)
           if (!updatedHcp) {
-            throw new Error('HealthcareParty update failed')
+            throw new Error('HealthcareParty creation failed')
           }
           return new HealthcareParty(updatedHcp)
         })
       },
       invalidatesTags: () => [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }],
     }),
-
     deleteHealthcareParty: builder.mutation<string | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
@@ -85,5 +68,4 @@ export const healthcarePartyApiRtk = createApi({
   }),
 })
 
-export const { useGetHealthcarePartiesQuery, useGetHealthcarePartyQuery, useCreateHealthcarePartyMutation, useUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation } =
-  healthcarePartyApiRtk
+export const { useGetHealthcarePartiesQuery, useGetHealthcarePartyQuery, useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation } = healthcarePartyApiRtk

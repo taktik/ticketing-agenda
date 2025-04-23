@@ -122,6 +122,13 @@ body * {
   gap: 50px;
   background: #f2f9ff;
 }
+.auth-page .auth-page__logo {
+  display: flex;
+  justify-content: center;
+}
+.auth-page .auth-page__logo img {
+  width: 20%;
+}
 @media screen and (max-width: calc(576px - 1px)) {
   .auth-page {
     padding: 24px 0;

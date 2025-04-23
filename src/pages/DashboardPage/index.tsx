@@ -9,7 +9,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Header } from '../../components/common/Header'
-import { ModalAddSiteForm } from '../../components/ModalAddSiteForm'
+import { ModalSiteForm } from '../../components/ModalSiteForm'
 import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
 import { useGetAgendasQuery } from '../../core/api/agendaApi'
@@ -18,18 +18,18 @@ import { useAppSelector } from '../../core/hooks'
 import './index.css'
 import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
 import { DemarcheSelector } from '../../components/DemarcheSelector'
-import { ModalAddServiceForm } from '../../components/ModalAddServiceForm'
+import { ModalServiceForm } from '../../components/ModalServiceForm'
 import { ModalServiceSettings } from '../../components/ModalServiceSettings'
-import { ModalAddDemarcheForm } from '../../components/ModalAddDemarcheForm'
+import { ModalDemarcheForm } from '../../components/ModalDemarcheForm'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
-  const [addSiteModalOpen, setAddSiteModalOpen] = useState<boolean>(false)
-  const [addServiceModalOpen, setAddServiceModalOpen] = useState<boolean>(false)
-  const [addDemarcheModalOpen, setAddDemarcheModalOpen] = useState<boolean>(false)
+  const [siteModalOpen, setSiteModalOpen] = useState<boolean>(false)
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
+  const [serviceModalOpen, setServiceModalOpen] = useState<boolean>(false)
+  const [demarcheModalOpen, setDemarcheModalOpen] = useState<boolean>(false)
   const [serviceSettingModalOpen, setServiceSettingModalOpen] = useState<boolean>(false)
   const calendarRef = useRef<FullCalendar | null>(null)
-  const { token } = theme.useToken()
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
 
@@ -42,7 +42,7 @@ export default function DashboardPage() {
   const { data: demarches } = useGetTimeTables({
     agendaId: selectedSite?.id ?? '',
     serviceTag: selectedService ? `service-${selectedService.id}` : undefined,
-    skip: skip || !selectedSite?.id,
+    skip: skip,
   })
   const [selectedDemarche, setSelectedDemarche] = useState<TimeTable | undefined>(demarches?.[0])
 
@@ -87,47 +87,48 @@ export default function DashboardPage() {
         <div className="svg-background" />
         <div className="LeftPanel">
           <div style={{ width: '300px' }}>
-            <SiteSelector
-              sites={sites ?? []}
-              setSelectedSite={setSelectedSite}
-              selectedSite={selectedSite}
-              setSiteModalOpen={setAddSiteModalOpen}
-              setServiceSettingModalOpen={setServiceSettingModalOpen}
-            />
+            <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} setSiteModalOpen={setSiteModalOpen} setSiteModalMode={setModalMode} />
           </div>
           <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', zIndex: '1' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
-
-          <ServiceSelector services={services ?? []} selectedService={selectedService} setSelectedService={setSelectedService} setServiceModalOpen={setAddServiceModalOpen} />
+          <ServiceSelector
+            services={services ?? []}
+            selectedService={selectedService}
+            setSelectedService={setSelectedService}
+            setServiceModalOpen={setServiceModalOpen}
+            setSiteModalMode={setModalMode}
+            selectedSite={selectedSite}
+          />
           <DemarcheSelector
             demarches={demarches ?? []}
             selectedDemarche={selectedDemarche}
             setSelectedDemarche={setSelectedDemarche}
-            setAddDemarcheModalOpen={setAddDemarcheModalOpen}
+            setDemarcheModalOpen={setDemarcheModalOpen}
+            selectedSite={selectedSite}
+            setSiteModalMode={setModalMode}
           />
         </div>
         <div className="RightPanel">
           <FullCalendar
-            themeSystem="bootstrap5"
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             firstDay={1}
             headerToolbar={{
-              left: 'prev today next',
+              left: 'prev,next today',
               center: 'title',
-              right: 'timeGridDay,timeGridWeek,myCustomButton',
+              right: 'timeGridDay,timeGridWeek myCustomButton',
             }}
             customButtons={{
               myCustomButton: {
-                icon: 'gear',
+                text: 'Scheduling',
                 hint: 'View the scheduling',
                 click: () => {
                   console.log('Settings clicked!')
                 },
               },
             }}
-            initialView="dayGridMonth"
+            initialView="timeGridWeek"
             editable={true}
             selectable={true}
             selectMirror={true}
@@ -142,11 +143,23 @@ export default function DashboardPage() {
           />
         </div>
       </div>
-      {addSiteModalOpen && createPortal(<ModalAddSiteForm isVisible={addSiteModalOpen} onClose={() => setAddSiteModalOpen(false)} />, document.body)}
-      {addServiceModalOpen && createPortal(<ModalAddServiceForm isVisible={addServiceModalOpen} onClose={() => setAddServiceModalOpen(false)} />, document.body)}
-      {addDemarcheModalOpen &&
+      {siteModalOpen &&
+        createPortal(<ModalSiteForm isVisible={siteModalOpen} onClose={() => setSiteModalOpen(false)} selectedSite={selectedSite} modalMode={modalMode} />, document.body)}
+      {serviceModalOpen &&
         createPortal(
-          <ModalAddDemarcheForm isVisible={addDemarcheModalOpen} onClose={() => setAddDemarcheModalOpen(false)} selectedService={selectedService} selectedSite={selectedSite} />,
+          <ModalServiceForm isVisible={serviceModalOpen} onClose={() => setServiceModalOpen(false)} selectedService={selectedService} modalMode={modalMode} />,
+          document.body,
+        )}
+      {demarcheModalOpen &&
+        createPortal(
+          <ModalDemarcheForm
+            isVisible={demarcheModalOpen}
+            onClose={() => setDemarcheModalOpen(false)}
+            selectedService={selectedService}
+            selectedSite={selectedSite}
+            selectedDemarche={selectedDemarche}
+            modalMode={modalMode}
+          />,
           document.body,
         )}
       {serviceSettingModalOpen &&

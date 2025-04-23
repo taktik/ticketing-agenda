@@ -192,4 +192,19 @@ body * {
   background-color: #e30613 !important;
   color: white;
 }
+.ant-select:hover {
+  border: 1px solid #e30613 !important;
+}
+.ant-select:hover > * {
+  border: none !important;
+}
+.fc-toolbar-title {
+  position: relative !important;
+}
+.fc-myCustomButton-button {
+  position: relative !important;
+}
+.fc-today-button {
+  position: relative !important;
+}
 /*# sourceMappingURL=index.css.map */

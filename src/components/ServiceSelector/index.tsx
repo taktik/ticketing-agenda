@@ -8,14 +8,24 @@ import { useDeleteHealthcarePartyMutation } from '../../core/api/healthcareParty
 interface ServiceSelectorProps {
   services: HealthcareParty[]
   selectedService: HealthcareParty | undefined
+  selectedSite: Agenda | undefined
   setSelectedService: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
   setServiceModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  setSiteModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>
 }
 
-export const ServiceSelector = ({ services, selectedService, setSelectedService, setServiceModalOpen }: ServiceSelectorProps): React.ReactElement => {
-  const addService = useCallback(() => {
+export const ServiceSelector = ({
+  services,
+  selectedService,
+  selectedSite,
+  setSelectedService,
+  setServiceModalOpen,
+  setSiteModalMode,
+}: ServiceSelectorProps): React.ReactElement => {
+  const openModal = useCallback((mode: 'add' | 'edit') => {
+    setSiteModalMode(mode)
     setServiceModalOpen(true)
-  }, [setServiceModalOpen])
+  }, [])
 
   const [deleteService, { isError, isSuccess, isLoading }] = useDeleteHealthcarePartyMutation()
 
@@ -65,20 +75,19 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
         </Typography.Title>
         <div className="ServiceSelectorButtons">
           <Tooltip title="Add a new service">
-            <Button icon={<PlusOutlined />} onClick={addService} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
-          </Tooltip>
-          <Tooltip title="Delete the service">
             <Button
-              type="primary"
-              icon={<DeleteOutlined />}
-              danger
-              disabled={!selectedService}
-              onClick={() => {
-                if (selectedService) {
-                  deleteService(selectedService)
-                  setSelectedService(undefined)
-                }
-              }}
+              icon={<PlusOutlined />}
+              disabled={!selectedSite}
+              onClick={() => openModal('add')}
+              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+            />
+          </Tooltip>
+          <Tooltip title="Modify the selected service">
+            <Button
+              icon={<SettingOutlined />}
+              disabled={!selectedService || !selectedSite}
+              onClick={() => openModal('edit')}
+              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
             />
           </Tooltip>
         </div>
@@ -114,3 +123,20 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
     </div>
   )
 }
+
+/*
+<Tooltip title="Delete the service">
+            <Button
+              type="primary"
+              icon={<DeleteOutlined />}
+              danger
+              disabled={!selectedService}
+              onClick={() => {
+                if (selectedService) {
+                  deleteService(selectedService)
+                  setSelectedService(undefined)
+                }
+              }}
+            />
+          </Tooltip>
+          */
