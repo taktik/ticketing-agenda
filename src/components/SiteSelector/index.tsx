@@ -1,7 +1,7 @@
 import React, { ReactElement, useEffect } from 'react'
-import { Select as AntSelect, Button, notification, message } from 'antd'
+import { Select as AntSelect, Button, notification, message, Tooltip } from 'antd'
 import { Agenda } from '@icure/cardinal-sdk'
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import './index.css'
 import { useDeleteAgendaMutation } from '../../core/api/agendaApi'
 
@@ -10,9 +10,10 @@ interface SiteSelectorProps {
   selectedSite: Agenda | undefined
   setSelectedSite: React.Dispatch<React.SetStateAction<Agenda | undefined>>
   setSiteModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+  setServiceSettingModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModalOpen }: SiteSelectorProps): ReactElement => {
+export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModalOpen, setServiceSettingModalOpen }: SiteSelectorProps): ReactElement => {
   const options = sites.map((site) => ({
     label: site.name,
     value: site.id,
@@ -71,20 +72,37 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModa
           }
         }}
       />
-      <Button type="primary" shape="circle" icon={<PlusOutlined />} onClick={() => setSiteModalOpen(true)} />
-      <Button
-        type="primary"
-        shape="circle"
-        icon={<DeleteOutlined />}
-        danger
-        disabled={!selectedSite}
-        onClick={() => {
-          if (selectedSite) {
-            deleteAgenda(selectedSite)
-            setSelectedSite(undefined)
-          }
-        }}
-      />
+      <Tooltip title="Add a new site">
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<PlusOutlined />}
+          onClick={() => setSiteModalOpen(true)}
+          style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large', color: 'black' }}
+        />
+      </Tooltip>
+      <Tooltip title="View the scheduling">
+        <Button
+          icon={<SettingOutlined />}
+          onClick={() => setServiceSettingModalOpen(true)}
+          style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+        />
+      </Tooltip>
+      <Tooltip title="Delete the site">
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<DeleteOutlined />}
+          danger
+          disabled={!selectedSite}
+          onClick={() => {
+            if (selectedSite) {
+              deleteAgenda(selectedSite)
+              setSelectedSite(undefined)
+            }
+          }}
+        />
+      </Tooltip>
     </div>
   )
 }

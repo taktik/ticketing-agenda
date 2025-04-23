@@ -1,6 +1,6 @@
 import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { Agenda, TimeTable } from '@icure/cardinal-sdk'
-import { Select as AntSelect, Button, Divider, Typography, notification, message } from 'antd'
+import { Select as AntSelect, Button, Divider, Typography, notification, message, Tooltip } from 'antd'
 import React, { ReactElement, useCallback, useEffect } from 'react'
 import './index.css'
 import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
@@ -64,19 +64,23 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
           Demarches
         </Typography.Title>
         <div className="ServiceSelectorButtons">
-          <Button type="primary" icon={<PlusOutlined />} size="middle" onClick={addDemarche} style={{ padding: 0 }} />
-          <Button
-            type="primary"
-            icon={<DeleteOutlined />}
-            danger
-            disabled={!selectedDemarche}
-            onClick={() => {
-              if (selectedDemarche) {
-                deleteDemarche(selectedDemarche)
-                setSelectedDemarche(undefined)
-              }
-            }}
-          />
+          <Tooltip title="Add a new demarche">
+            <Button icon={<PlusOutlined />} onClick={addDemarche} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
+          </Tooltip>
+          <Tooltip title="Delete the demarche">
+            <Button
+              type="primary"
+              icon={<DeleteOutlined />}
+              danger
+              disabled={!selectedDemarche}
+              onClick={() => {
+                if (selectedDemarche) {
+                  deleteDemarche(selectedDemarche)
+                  setSelectedDemarche(undefined)
+                }
+              }}
+            />
+          </Tooltip>
         </div>
       </div>
 

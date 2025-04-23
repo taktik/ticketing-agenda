@@ -1,6 +1,6 @@
 import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Divider, Typography, notification, message } from 'antd'
+import { Button, Divider, Typography, notification, message, Tooltip } from 'antd'
 import React, { useCallback, useEffect } from 'react'
 import './index.css'
 import { useDeleteHealthcarePartyMutation } from '../../core/api/healthcarePartyApi'
@@ -10,10 +10,9 @@ interface ServiceSelectorProps {
   selectedService: HealthcareParty | undefined
   setSelectedService: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
   setServiceModalOpen: React.Dispatch<React.SetStateAction<boolean>>
-  setServiceSettingModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export const ServiceSelector = ({ services, selectedService, setSelectedService, setServiceModalOpen, setServiceSettingModalOpen }: ServiceSelectorProps): React.ReactElement => {
+export const ServiceSelector = ({ services, selectedService, setSelectedService, setServiceModalOpen }: ServiceSelectorProps): React.ReactElement => {
   const addService = useCallback(() => {
     setServiceModalOpen(true)
   }, [setServiceModalOpen])
@@ -65,20 +64,23 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService,
           Services
         </Typography.Title>
         <div className="ServiceSelectorButtons">
-          <Button type="primary" icon={<PlusOutlined />} size="middle" onClick={addService} style={{ padding: 0 }} />
-          <Button type="primary" icon={<SettingOutlined />} size="middle" onClick={() => setServiceSettingModalOpen(true)} style={{ padding: 0 }} />
-          <Button
-            type="primary"
-            icon={<DeleteOutlined />}
-            danger
-            disabled={!selectedService}
-            onClick={() => {
-              if (selectedService) {
-                deleteService(selectedService)
-                setSelectedService(undefined)
-              }
-            }}
-          />
+          <Tooltip title="Add a new service">
+            <Button icon={<PlusOutlined />} onClick={addService} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
+          </Tooltip>
+          <Tooltip title="Delete the service">
+            <Button
+              type="primary"
+              icon={<DeleteOutlined />}
+              danger
+              disabled={!selectedService}
+              onClick={() => {
+                if (selectedService) {
+                  deleteService(selectedService)
+                  setSelectedService(undefined)
+                }
+              }}
+            />
+          </Tooltip>
         </div>
       </div>
 

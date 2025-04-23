@@ -87,19 +87,19 @@ export default function DashboardPage() {
         <div className="svg-background" />
         <div className="LeftPanel">
           <div style={{ width: '300px' }}>
-            <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} setSiteModalOpen={setAddSiteModalOpen} />
+            <SiteSelector
+              sites={sites ?? []}
+              setSelectedSite={setSelectedSite}
+              selectedSite={selectedSite}
+              setSiteModalOpen={setAddSiteModalOpen}
+              setServiceSettingModalOpen={setServiceSettingModalOpen}
+            />
           </div>
           <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', zIndex: '1' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
 
-          <ServiceSelector
-            services={services ?? []}
-            selectedService={selectedService}
-            setSelectedService={setSelectedService}
-            setServiceModalOpen={setAddServiceModalOpen}
-            setServiceSettingModalOpen={setServiceSettingModalOpen}
-          />
+          <ServiceSelector services={services ?? []} selectedService={selectedService} setSelectedService={setSelectedService} setServiceModalOpen={setAddServiceModalOpen} />
           <DemarcheSelector
             demarches={demarches ?? []}
             selectedDemarche={selectedDemarche}
@@ -109,13 +109,23 @@ export default function DashboardPage() {
         </div>
         <div className="RightPanel">
           <FullCalendar
+            themeSystem="bootstrap5"
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             firstDay={1}
             headerToolbar={{
-              left: 'prev,next today',
+              left: 'prev today next',
               center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay',
+              right: 'timeGridDay,timeGridWeek,myCustomButton',
+            }}
+            customButtons={{
+              myCustomButton: {
+                icon: 'gear',
+                hint: 'View the scheduling',
+                click: () => {
+                  console.log('Settings clicked!')
+                },
+              },
             }}
             initialView="dayGridMonth"
             editable={true}

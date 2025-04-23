@@ -3,7 +3,7 @@ import { createSelector } from '@reduxjs/toolkit'
 import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 
-import logo from '../../../assets/logo_mouscron.png'
+import logo from '../../../assets/mouscronLogo.png'
 import '../index.css'
 import LoginForm from '../../../components/authentication/LoginForm'
 import { ModalRecoveryKeyRequest } from '../../../components/authentication/ModalRecoveryKeyRequest'
