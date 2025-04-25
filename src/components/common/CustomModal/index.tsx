@@ -1,4 +1,4 @@
-import { Button, ConfigProvider, Modal } from 'antd'
+import { Button, ConfigProvider, Modal, Popconfirm } from 'antd'
 import React, { CSSProperties, ReactElement } from 'react'
 
 import { DEFAULT_MODAL_WIDTH } from '../../../constants'
@@ -7,10 +7,12 @@ import { breakpoints, getWindowSize } from '../../../helpers/windowSize'
 interface PatientFormModalProps {
   isVisible: boolean
   handleClose: () => void
-  secondaryBtnTitle?: string
-  handleClickSecondaryBtn?: () => void
   handleClickPrimaryBtn?: (value: unknown) => void
+  handleClickSecondaryBtn?: () => void
+  handleClickDeleteBtn?: () => void
   primaryBtnTitle?: string | ReactElement
+  secondaryBtnTitle?: string
+  deleteBtnTitle?: string
   children: ReactElement
   width?: number
   title: string
@@ -51,11 +53,13 @@ export const CustomModal = ({
   handleClose,
   handleClickPrimaryBtn,
   handleClickSecondaryBtn,
+  handleClickDeleteBtn,
+  primaryBtnTitle,
+  secondaryBtnTitle,
+  deleteBtnTitle,
   children,
   width,
   title,
-  secondaryBtnTitle,
-  primaryBtnTitle,
   customFooter,
   mode,
   primaryBtnDisabled,
@@ -67,7 +71,7 @@ export const CustomModal = ({
     header: {
       borderBottom: mode === 'danger' ? `1px solid #FAD1D1` : `1px solid #DCE7F2`,
       padding: innerWidth < breakpoints.md ? '16px' : '20px 24px',
-      background: mode === 'danger' ? '#FDF3F3' : '#EEF6FE',
+      background: mode === 'danger' ? '#FDF3F3' : '#F4F4F4',
       borderRadius: '8px 8px 0px 0px',
       margin: 0,
     },
@@ -83,6 +87,7 @@ export const CustomModal = ({
     content: {
       padding: 0,
       background: 'white',
+      borderRadius: 0,
 
       maxHeight: '100%',
       height: innerWidth < breakpoints.md || blockAntModalBodyVerticalScroll ? '100%' : 'auto',
@@ -102,22 +107,33 @@ export const CustomModal = ({
   }
 
   const getFooter = () => {
-    if (customFooter) {
-      return customFooter
-    }
+    const deleteButton = deleteBtnTitle && handleClickDeleteBtn && (
+      <Button type="primary" danger key="tertiary" onClick={handleClickDeleteBtn}>
+        {deleteBtnTitle}
+      </Button>
+    )
 
-    return [
-      secondaryBtnTitle && handleClose && (
-        <Button key="back" onClick={handleClickSecondaryBtn ?? handleClose}>
-          {secondaryBtnTitle}
-        </Button>
-      ),
-      primaryBtnTitle && handleClickPrimaryBtn && (
-        <Button key="submit" type="primary" danger={mode === 'danger'} onClick={handleClickPrimaryBtn} disabled={primaryBtnDisabled}>
-          {primaryBtnTitle}
-        </Button>
-      ),
-    ]
+    const secondaryButton = secondaryBtnTitle && handleClose && (
+      <Button key="back" onClick={handleClickSecondaryBtn ?? handleClose}>
+        {secondaryBtnTitle}
+      </Button>
+    )
+
+    const primaryButton = primaryBtnTitle && handleClickPrimaryBtn && (
+      <Button key="submit" type="primary" danger={mode === 'danger'} onClick={handleClickPrimaryBtn} disabled={primaryBtnDisabled}>
+        {primaryBtnTitle}
+      </Button>
+    )
+
+    return (
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+        <div>{deleteButton}</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {secondaryButton}
+          {primaryButton}
+        </div>
+      </div>
+    )
   }
 
   return (

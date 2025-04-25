@@ -3,3 +3,8 @@ export type TimeTablesServiceParameters = {
   serviceTag: string | undefined
   skip?: boolean
 }
+
+export type CalendarItemTypeServiceParameters = {
+  agendaId: string
+  skip?: boolean
+}

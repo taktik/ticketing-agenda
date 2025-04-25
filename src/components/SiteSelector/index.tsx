@@ -1,7 +1,7 @@
 import React, { ReactElement, useCallback, useEffect, useMemo } from 'react'
-import { Select as AntSelect, Button, notification, message, Tooltip } from 'antd'
+import { Select as AntSelect, Button, notification, message, Tooltip, ConfigProvider } from 'antd'
 import { Agenda } from '@icure/cardinal-sdk'
-import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
+import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import './index.css'
 import { useDeleteAgendaMutation } from '../../core/api/agendaApi'
 
@@ -9,11 +9,9 @@ interface SiteSelectorProps {
   sites: Agenda[]
   selectedSite: Agenda | undefined
   setSelectedSite: React.Dispatch<React.SetStateAction<Agenda | undefined>>
-  setSiteModalOpen: React.Dispatch<React.SetStateAction<boolean>>
-  setSiteModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>
 }
 
-export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModalOpen, setSiteModalMode }: SiteSelectorProps): ReactElement => {
+export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelectorProps): ReactElement => {
   const options = useMemo(
     () =>
       sites.map((site) => ({
@@ -22,11 +20,6 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModa
       })),
     [sites],
   )
-
-  const openModal = useCallback((mode: 'add' | 'edit') => {
-    setSiteModalMode(mode)
-    setSiteModalOpen(true)
-  }, [])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -88,23 +81,6 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite, setSiteModa
           }
         }}
       />
-      <Tooltip title="Add a new site">
-        <Button
-          type="primary"
-          shape="circle"
-          icon={<PlusOutlined />}
-          onClick={() => openModal('add')}
-          style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large', color: 'black' }}
-        />
-      </Tooltip>
-      <Tooltip title="Modify the selected site">
-        <Button
-          icon={<SettingOutlined />}
-          disabled={!selectedSite}
-          onClick={() => openModal('edit')}
-          style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-        />
-      </Tooltip>
     </div>
   )
 }

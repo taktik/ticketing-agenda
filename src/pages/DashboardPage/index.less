@@ -35,14 +35,21 @@
 .LeftPanel {
   display: flex;
   flex-direction: column;
-  height: 85%;
+  height: 100%;
   gap: 1.5rem;
 }
 .RightPanel {
   display: flex;
   flex-direction: column;
-  height: 90%;
+  height: 100%;
   width: 100%;
+}
+
+.SiteSelectorRow {
+  display: flex;
+  width: 400px;
+  flex-direction: row;
+  gap: 1.5rem;
 }
 .ant-picker-calendar * .ant-picker-cell {
   text-align: center !important;
@@ -88,10 +95,6 @@
   color: white;
 }
 
-.ant-select:hover {
-  border: 1px solid @red-font !important;
-}
-
 .ant-select:hover > * {
   border: none !important;
 }
@@ -105,4 +108,8 @@
 
 .fc-today-button {
   position: relative !important;
+}
+
+.fc .fc-view-harness-active > .fc-view {
+  background: #ffffff !important;
 }

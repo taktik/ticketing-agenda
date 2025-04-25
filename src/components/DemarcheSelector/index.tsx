@@ -8,25 +8,10 @@ import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
 interface DemarcheSelectorProps {
   demarches: TimeTable[]
   selectedDemarche: TimeTable | undefined
-  selectedSite: Agenda | undefined
   setSelectedDemarche: React.Dispatch<React.SetStateAction<TimeTable | undefined>>
-  setDemarcheModalOpen: React.Dispatch<React.SetStateAction<boolean>>
-  setSiteModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>
 }
 
-export const DemarcheSelector = ({
-  demarches,
-  selectedDemarche,
-  selectedSite,
-  setSelectedDemarche,
-  setDemarcheModalOpen,
-  setSiteModalMode,
-}: DemarcheSelectorProps): ReactElement => {
-  const openModal = useCallback((mode: 'add' | 'edit') => {
-    setSiteModalMode(mode)
-    setDemarcheModalOpen(true)
-  }, [])
-
+export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche }: DemarcheSelectorProps): ReactElement => {
   const [deleteDemarche, { isError, isSuccess, isLoading }] = useDeleteTimeTableMutation()
 
   useEffect(() => {
@@ -73,24 +58,6 @@ export const DemarcheSelector = ({
         <Typography.Title level={5} style={{ margin: 0 }}>
           Demarches
         </Typography.Title>
-        <div className="ServiceSelectorButtons">
-          <Tooltip title="Add a new demarche">
-            <Button
-              icon={<PlusOutlined />}
-              disabled={!selectedSite}
-              onClick={() => openModal('add')}
-              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-            />
-          </Tooltip>
-          <Tooltip title="Modify the selected demarche">
-            <Button
-              icon={<SettingOutlined />}
-              disabled={!selectedDemarche || !selectedSite}
-              onClick={() => openModal('edit')}
-              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-            />
-          </Tooltip>
-        </div>
       </div>
 
       <Divider style={{ margin: 0 }} />

@@ -40,13 +40,15 @@ export const ModalServiceForm = ({ isVisible, onClose, selectedService, modalMod
   return (
     <CustomModal
       isVisible={isVisible}
+      primaryBtnTitle="Save"
+      secondaryBtnTitle="Cancel"
+      deleteBtnTitle={modalMode === 'edit' ? 'Delete' : undefined}
+      handleClickPrimaryBtn={() => handleSubmit()}
       handleClose={() => {
         form.resetFields()
         onClose()
       }}
-      secondaryBtnTitle="Cancel"
-      handleClickPrimaryBtn={() => handleSubmit()}
-      primaryBtnTitle="Save"
+      handleClickDeleteBtn={modalMode === 'edit' ? () => console.log('delete') : undefined}
       title={modalMode === 'add' ? 'Add service' : 'Edit service'}
     >
       <div className="modalAddForm">

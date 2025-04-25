@@ -11,7 +11,7 @@ import { useGetPractitionerQuery } from '../../../core/api/practitionerApi'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
-import { ModalSettings } from '../../ModalSettings'
+import { ModalSettings } from '../../ModalUserSettings'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,
@@ -40,7 +40,7 @@ export const Header = () => {
       label: (
         <div className="header__userDropdown__item">
           <Icon component={manageUserIcn} />
-          <span>Global settings</span>
+          <span>Your settings</span>
         </div>
       ),
     },

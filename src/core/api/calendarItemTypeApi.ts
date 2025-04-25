@@ -1,0 +1,71 @@
+import { CalendarItemType, CalendarItemTypeApi, DocIdentifier, ListOfIds } from '@icure/cardinal-sdk'
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { cardinalApi, guard } from '../services/auth.api'
+import { loadFromIterator } from './utils'
+import { CalendarItemTypeServiceParameters } from './fetchType'
+
+enum calendarItemTypeTag {
+  CalendarItemType = 'CalendarItemTypeTag',
+}
+
+export const calendarItemTypeApi = createApi({
+  reducerPath: 'calendarItemTypeApi',
+  tagTypes: [calendarItemTypeTag.CalendarItemType],
+  baseQuery: fetchBaseQuery({
+    baseUrl: '',
+  }),
+  endpoints: (builder) => ({
+    getCalendarItemTypes: builder.query<CalendarItemType[] | undefined, CalendarItemTypeServiceParameters>({
+      async queryFn(params, { getState }) {
+        const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
+        return guard([calendarItemTypeApi], async (): Promise<CalendarItemType[]> => {
+          return await calendarItemTypeApi!.listCalendarItemTypesByAgendaId(params.agendaId)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
+    }),
+    getCalendarItemType: builder.query<CalendarItemType | undefined, string>({
+      async queryFn(id, { getState }) {
+        const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
+        return guard([calendarItemTypeApi], async (): Promise<CalendarItemType> => {
+          const item = await calendarItemTypeApi?.getCalendarItemType(id)
+          if (!item) {
+            throw new Error('CalendarItemType does not exist')
+          }
+          return new CalendarItemType(item)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: res.id }] : []),
+    }),
+    createUpdateCalendarItemType: builder.mutation<CalendarItemType | undefined, CalendarItemType>({
+      async queryFn(item, { getState }) {
+        const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
+        return guard([calendarItemTypeApi], async (): Promise<CalendarItemType> => {
+          const updated = !!item.rev ? await calendarItemTypeApi?.modifyCalendarItemType(item) : await calendarItemTypeApi?.createCalendarItemType(item)
+
+          if (!updated) {
+            throw new Error('CalendarItemType creation failed')
+          }
+          return new CalendarItemType(updated)
+        })
+      },
+      invalidatesTags: (result) => (result ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
+    }),
+    deleteCalendarItemType: builder.mutation<DocIdentifier[] | undefined, string[]>({
+      async queryFn(ids, { getState }) {
+        const calendarItemTypeIds = new ListOfIds({ ids: ids })
+        const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
+        return guard([calendarItemTypeApi], async () => {
+          const result = await calendarItemTypeApi?.deleteCalendarItemTypes(calendarItemTypeIds)
+          if (!result) {
+            throw new Error('CalendarItemType can`t be deleted')
+          }
+          return result
+        })
+      },
+      invalidatesTags: () => [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }],
+    }),
+  }),
+})
+
+export const { useGetCalendarItemTypesQuery, useGetCalendarItemTypeQuery, useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation } = calendarItemTypeApi

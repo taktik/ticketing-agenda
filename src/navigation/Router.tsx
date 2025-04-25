@@ -6,6 +6,7 @@ import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/authentication/LoginPage'
 import RegisterPage from '../pages/authentication/RegisterPage'
 import AppointmentLayout from '../layout/AppointmentLayout'
+import { ConfigProvider } from 'antd'
 
 export const routes = {
   dashboard: '/dashboard',
@@ -20,18 +21,39 @@ export const routes = {
 }
 
 export const Router = () => (
-  <BrowserRouter>
-    <Routes>
-      <Route element={<DashboardLayout />}>
-        <Route path={routes.login} element={<LoginPage />} />
-        <Route path={routes.register} element={<RegisterPage />} />
-      </Route>
-      <Route element={<AuthenticatedLayout />}>
-        <Route path={routes.dashboard} element={<DashboardPage />} />
-      </Route>
-      <Route element={<AppointmentLayout />}>
-        <Route path={routes.appointmentNew} />
-      </Route>
-    </Routes>
-  </BrowserRouter>
+  <ConfigProvider
+    theme={{
+      components: {
+        Select: {
+          colorPrimary: '#e30613',
+          optionSelectedBg: '#e306131a', // background of selected option
+          controlOutline: '#e306131a', // outline glow when focused
+          optionSelectedColor: '#e30613', // <== TEXT color of selected option
+        },
+        Menu: {
+          itemHoverBg: '#e306131a',
+          itemSelectedBg: '#e30613',
+          itemSelectedColor: '#ffffff',
+          itemMarginBlock: '0.75rem',
+          itemPaddingInline: 0,
+          itemMarginInline: 0,
+        },
+      },
+    }}
+  >
+    <BrowserRouter>
+      <Routes>
+        <Route element={<DashboardLayout />}>
+          <Route path={routes.login} element={<LoginPage />} />
+          <Route path={routes.register} element={<RegisterPage />} />
+        </Route>
+        <Route element={<AuthenticatedLayout />}>
+          <Route path={routes.dashboard} element={<DashboardPage />} />
+        </Route>
+        <Route element={<AppointmentLayout />}>
+          <Route path={routes.appointmentNew} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  </ConfigProvider>
 )
