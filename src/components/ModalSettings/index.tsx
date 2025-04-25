@@ -4,7 +4,6 @@ import ImgCrop from 'antd-img-crop'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useCreateOrUpdatePractitionerMutation } from '../../core/api/practitionerApi'
 import { getFileUploaderCommonProps, getImgSRC } from '../../helpers/fileToBase64'
-
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
@@ -29,6 +28,7 @@ export const ModalSettings = ({ isVisible, onClose, selectedSite }: ModalSchedul
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [selectedKey, setSelectedKey] = useState<string>('default')
+  const [openKeys, setOpenKeys] = useState<string[]>([])
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(undefined)
   const { data: sites } = useGetAgendasQuery(undefined, { skip: skip })
   const [selectedSettingSite, setSelectedSettingSite] = useState<Agenda | undefined>(sites?.find((site) => site.id === selectedSite?.id) ?? sites?.[0])
@@ -44,17 +44,57 @@ export const ModalSettings = ({ isVisible, onClose, selectedSite }: ModalSchedul
 
   const items: MenuItem[] = useMemo(
     () =>
-      (services ?? []).map((service) => {
+      (sites ?? []).map((site) => {
+        const children: MenuItem[] = [
+          ...(services ?? []).map((service) => ({
+            key: `service-${service.id}`,
+            label: service.name,
+          })),
+        ]
+
         return {
-          key: `service-${service.id}`,
-          label: service.name,
+          key: `site-${site.id}`,
+          label: (
+            <div
+              style={{
+                color: selectedKey === `site-${site.id}` ? '#ffffff' : 'inherit',
+                padding: 0,
+                margin: 0,
+              }}
+            >
+              {site.name}
+            </div>
+          ),
+          style:
+            selectedKey === `site-${site.id}`
+              ? {
+                  backgroundColor: '#e30613',
+                  margin: 13,
+                }
+              : {
+                  margin: 13,
+                },
+          children,
         }
       }),
-    [services],
+    [sites, services, selectedKey],
   )
 
-  const onClick: MenuProps['onClick'] = ({ key }) => {
-    setSelectedKey(key)
+  const onServiceClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === selectedKey) setSelectedKey('default')
+    else setSelectedKey(key)
+  }
+
+  const onSiteClick = (keys: string[]) => {
+    if (keys.length > openKeys.length) {
+      // Means we've opened a menu
+      const openedKey = keys.find((key) => !openKeys.includes(key)) // Find the menu we've just opened and select it
+      if (openedKey) setSelectedKey(openedKey)
+    } else {
+      // Closed the menu
+      setSelectedKey('default')
+    }
+    setOpenKeys(keys)
   }
 
   const renderSetting = useCallback(() => {
@@ -75,12 +115,19 @@ export const ModalSettings = ({ isVisible, onClose, selectedSite }: ModalSchedul
   }, [selectedKey])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings">
+    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings" blockAntModalBodyVerticalScroll noFooter>
       <div className="modalSettings">
         <div className="settingsTitle">
-          <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSettingSite} selectedSite={selectedSettingSite} />
-
-          <Menu onClick={onClick} style={{ width: 250 }} defaultSelectedKeys={['default']} defaultOpenKeys={['sub1']} mode="inline" items={items} />
+          <Menu
+            onClick={onServiceClick}
+            onOpenChange={onSiteClick}
+            selectedKeys={[selectedKey]}
+            openKeys={openKeys}
+            style={{ width: 250 }}
+            defaultSelectedKeys={['default']}
+            mode="inline"
+            items={items}
+          />
         </div>
         <Divider type="vertical" variant="solid" style={{ height: '100%' }} />
         <div className="selectedSetting">{renderSetting()}</div>

@@ -128,8 +128,8 @@ body * {
 .settingsTitle {
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 1.5rem;
-  gap: 1rem;
+  padding: 0;
+  gap: 0;
 }
 .selectedSetting {
   display: flex;
@@ -142,12 +142,14 @@ body * {
 .ant-menu-item,
 .ant-dropdown-menu-item,
 .ant-list-item {
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
+  width: 200px !important;
+  margin-left: 24px !important;
+  text-align: left !important;
+  padding-left: 24px !important;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
 }
-.ant-menu-item {
-  padding: 10px !important;
-  margin-bottom: 10px !important;
+.ant-menu-submenu-title {
+  margin-bottom: 0 !important;
 }
 /*# sourceMappingURL=index.css.map */

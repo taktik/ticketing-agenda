@@ -154,7 +154,7 @@ body * {
   align-items: center;
   flex: 1 0 0;
   align-self: stretch;
-  background: #f2f9ff;
+  background: #ffffff;
 }
 @media screen and (max-width: calc(768px - 1px)) {
   .header {

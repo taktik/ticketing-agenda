@@ -1,4 +1,4 @@
-import { Agenda, AgendaFilters, TimeTableItem, CalendarItem, TimeTable } from '@icure/cardinal-sdk'
+import { Agenda, AgendaFilters, TimeTableItem, CalendarItem, TimeTable, HealthcareParty } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'

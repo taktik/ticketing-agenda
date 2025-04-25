@@ -25,10 +25,10 @@ export const Router = () => (
     theme={{
       components: {
         Select: {
-          colorPrimary: '#e30613',
-          optionSelectedBg: '#e306131a', // background of selected option
-          controlOutline: '#e306131a', // outline glow when focused
-          optionSelectedColor: '#e30613', // <== TEXT color of selected option
+          //colorPrimary: '#e30613',
+          optionSelectedBg: '#e306131a',
+          //controlOutline: '#e306131a',
+          optionSelectedColor: '#e30613',
         },
         Menu: {
           itemHoverBg: '#e306131a',
@@ -37,6 +37,9 @@ export const Router = () => (
           itemMarginBlock: '0.75rem',
           itemPaddingInline: 0,
           itemMarginInline: 0,
+          itemBg: '#ffffff',
+          subMenuItemBg: '#ffffff',
+          itemBorderRadius: 0,
         },
       },
     }}

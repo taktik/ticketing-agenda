@@ -4,7 +4,7 @@ import React, { CSSProperties, ReactElement } from 'react'
 import { DEFAULT_MODAL_WIDTH } from '../../../constants'
 import { breakpoints, getWindowSize } from '../../../helpers/windowSize'
 
-interface PatientFormModalProps {
+interface CustomModalProps {
   isVisible: boolean
   handleClose: () => void
   handleClickPrimaryBtn?: (value: unknown) => void
@@ -21,6 +21,7 @@ interface PatientFormModalProps {
   primaryBtnDisabled?: boolean
   closable?: boolean
   blockAntModalBodyVerticalScroll?: boolean
+  noFooter?: boolean
 }
 
 export const getCustomModalResponsiveStyles = (mobileViewCondition: boolean) => {
@@ -65,7 +66,8 @@ export const CustomModal = ({
   primaryBtnDisabled,
   closable,
   blockAntModalBodyVerticalScroll,
-}: PatientFormModalProps): ReactElement => {
+  noFooter,
+}: CustomModalProps): ReactElement => {
   const { innerWidth } = getWindowSize()
   const modalStyles: { [key: string]: CSSProperties } = {
     header: {
@@ -79,6 +81,7 @@ export const CustomModal = ({
       background: 'rgba(8, 75, 131, 0.5)',
     },
     footer: {
+      display: noFooter ? 'none' : 'inherit',
       borderTop: mode === 'danger' ? `1px solid #FAD1D1` : `1px solid #DCE7F2`,
       padding: innerWidth < breakpoints.md ? '16px' : '20px 24px',
       margin: 0,
@@ -90,7 +93,7 @@ export const CustomModal = ({
       borderRadius: 0,
 
       maxHeight: '100%',
-      height: innerWidth < breakpoints.md || blockAntModalBodyVerticalScroll ? '100%' : 'auto',
+      height: innerWidth < breakpoints.md ? '100%' : 'auto',
       width: '100vw',
       maxWidth: innerWidth < breakpoints.md ? '100vw' : (width ?? DEFAULT_MODAL_WIDTH),
 
