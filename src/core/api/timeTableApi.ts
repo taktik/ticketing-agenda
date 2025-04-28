@@ -70,19 +70,3 @@ export const timeTableApiRtk = createApi({
 })
 
 export const { useGetTimeTablesQuery, useGetTimeTableQuery, useCreateUpdateTimeTableMutation, useDeleteTimeTableMutation } = timeTableApiRtk
-
-export const useGetTimeTables = (params: TimeTablesServiceParameters) => {
-  const { data, ...rest } = useGetTimeTablesQuery(params, {
-    skip: params.skip,
-  })
-
-  const serviceTimeTable = data?.filter((item) => {
-    if (!params.serviceTag) return true
-    return item.tags.some((tag) => tag.type === params.serviceTag)
-  })
-
-  return {
-    data: serviceTimeTable,
-    ...rest,
-  }
-}

@@ -24,11 +24,20 @@ export const Router = () => (
   <ConfigProvider
     theme={{
       components: {
+        Input: {
+          borderRadius: 0,
+          hoverBorderColor: '#e30613',
+          colorPrimary: '#e30613',
+          activeBorderColor: '#e30613',
+          controlOutline: '#e306131a',
+        },
         Select: {
           //colorPrimary: '#e30613',
+          hoverBorderColor: '#e30613',
           optionSelectedBg: '#e306131a',
-          //controlOutline: '#e306131a',
+          controlOutline: '#e306131a',
           optionSelectedColor: '#e30613',
+          activeBorderColor: '#e30613',
         },
         Menu: {
           itemHoverBg: '#e306131a',

@@ -13821,6 +13821,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-colorful@npm:5.6.1":
+  version: 5.6.1
+  resolution: "react-colorful@npm:5.6.1"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 48eb73cf71e10841c2a61b6b06ab81da9fffa9876134c239bfdebcf348ce2a47e56b146338e35dfb03512c85966bfc9a53844fc56bc50154e71f8daee59ff6f0
+  languageName: node
+  linkType: hard
+
 "react-dev-utils@npm:^12.0.1":
   version: 12.0.1
   resolution: "react-dev-utils@npm:12.0.1"
@@ -15874,6 +15884,7 @@ __metadata:
     prettier: "npm:^3.4.2"
     pretty-quick: "npm:^4.0.0"
     react: "npm:^18.3.1"
+    react-colorful: "npm:5.6.1"
     react-dom: "npm:^18.3.1"
     react-redux: "npm:^8.1.3"
     react-router-dom: "npm:^7.1.5"

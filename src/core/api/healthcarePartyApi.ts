@@ -2,6 +2,7 @@ import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
+import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters } from './fetchType'
 
 enum HealthcarePartyTags {
   HealthcareParty = 'HealthcareParty',
@@ -18,7 +19,25 @@ export const healthcarePartyApiRtk = createApi({
       async queryFn(_, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
         return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
-          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byTag('SERVICE')), 1000)
+          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.all()), 1000)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+    }),
+    getHealthcarePartiesByParent: builder.query<HealthcareParty[] | undefined, GetHealthcarePartyByParentParameters>({
+      async queryFn(params, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
+          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byParentId(params.parentId)), 1000)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+    }),
+    getRootHealthcareParty: builder.query<HealthcareParty[] | undefined, undefined>({
+      async queryFn(_, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
+          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byName('Mouscron')), 1000)
         })
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
@@ -68,4 +87,24 @@ export const healthcarePartyApiRtk = createApi({
   }),
 })
 
-export const { useGetHealthcarePartiesQuery, useGetHealthcarePartyQuery, useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation } = healthcarePartyApiRtk
+export const {
+  useGetHealthcarePartiesQuery,
+  useGetHealthcarePartiesByParentQuery,
+  useGetRootHealthcarePartyQuery,
+  useGetHealthcarePartyQuery,
+  useCreateUpdateHealthcarePartyMutation,
+  useDeleteHealthcarePartyMutation,
+} = healthcarePartyApiRtk
+
+export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {
+  const { data, ...rest } = useGetRootHealthcarePartyQuery(undefined, {
+    skip: params.skip,
+  })
+
+  const root = data ? data[0] : undefined
+
+  return {
+    data: root,
+    ...rest,
+  }
+}

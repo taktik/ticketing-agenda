@@ -7,44 +7,53 @@ import { getFileUploaderCommonProps, getImgSRC } from '../../helpers/fileToBase6
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
-import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesByParentQuery, useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
-import { useGetTimeTables } from '../../core/api/timeTableApi'
+import { useGetTimeTablesQuery } from '../../core/api/timeTableApi'
 import { SettingOutlined } from '@ant-design/icons'
-import { ItemType } from 'antd/es/menu/interface'
+import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import { normalize } from '../patient/modals/ModalImportPatients/utils/functionUtils'
 import { SiteSelector } from '../SiteSelector'
 import { useGetAgendasQuery } from '../../core/api/agendaApi'
+import { SiteSetting } from './SiteSetting'
+import { ServiceSetting } from './ServiceSetting'
+import { v4 } from 'uuid'
 
 interface ModalSchedulingProps {
   isVisible: boolean
   onClose: () => void
-  selectedSite: Agenda | undefined
+  selectedSite: HealthcareParty | undefined
+  rootHcp: HealthcareParty | undefined
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
 
-export const ModalSettings = ({ isVisible, onClose, selectedSite }: ModalSchedulingProps): ReactElement => {
+export const ModalSettings = ({ isVisible, onClose, selectedSite, rootHcp }: ModalSchedulingProps): ReactElement => {
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
-  const [selectedKey, setSelectedKey] = useState<string>('default')
-  const [openKeys, setOpenKeys] = useState<string[]>([])
-  const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(undefined)
-  const { data: sites } = useGetAgendasQuery(undefined, { skip: skip })
-  const [selectedSettingSite, setSelectedSettingSite] = useState<Agenda | undefined>(sites?.find((site) => site.id === selectedSite?.id) ?? sites?.[0])
+  const [selectedKey, setSelectedKey] = useState<string>(selectedSite ? `site-${selectedSite.id}` : 'default')
+  const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
+  const [search, setSearch] = useState('')
 
-  const { data: services } = useGetHealthcarePartiesQuery(undefined, { skip: skip })
-  const { data: demarches } = useGetTimeTables({ agendaId: selectedSite?.id ?? '', serviceTag: undefined, skip: skip || !selectedSite?.id })
+  const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
+  const [selectedSettingSite, setSelectedSettingSite] = useState<HealthcareParty | undefined>(sites?.find((site) => site.id === selectedSite?.id) ?? sites?.[0])
 
-  const groupedByService = new Map<HealthcareParty, TimeTable[]>()
-  ;(services ?? []).forEach((service) => {
-    const matchingDemarches = (demarches ?? []).filter((d) => d.tags.some((tag) => tag.type === `service-${service.id}`))
-    groupedByService.set(service, matchingDemarches)
-  })
+  const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
+  const [selectedSettingService, setSelectedSettingService] = useState<HealthcareParty | undefined>(undefined)
+
+  const [newSite, setNewSite] = useState<HealthcareParty | undefined>()
+
+  const handleAddSite = useCallback(() => {
+    if (!newSite && rootHcp) {
+      setNewSite(new HealthcareParty({ name: 'New Site', parentId: rootHcp.id, id: v4() }))
+    } else {
+      // HCp undefined ? => error
+    }
+  }, [newSite, setNewSite])
 
   const items: MenuItem[] = useMemo(
     () =>
-      (sites ?? []).map((site) => {
+      [...(sites ?? []), ...(newSite ? [newSite] : [])].map((site) => {
         const children: MenuItem[] = [
           ...(services ?? []).map((service) => ({
             key: `service-${service.id}`,
@@ -77,8 +86,56 @@ export const ModalSettings = ({ isVisible, onClose, selectedSite }: ModalSchedul
           children,
         }
       }),
-    [sites, services, selectedKey],
+    [sites, services, selectedKey, newSite],
   )
+
+  const filteredItems = useMemo(() => {
+    const filtered = (items ?? [])
+      .map((item) => {
+        if (!item) return null
+        if (!('label' in item)) return null
+
+        const normalizedSearch = normalize(search)
+        const normalizedItemLabel = normalize(
+          typeof item.label === 'string' ? item.label : React.isValidElement(item.label) && typeof item.label.props?.children === 'string' ? item.label.props.children : '',
+        )
+
+        const matchService = normalizedItemLabel.includes(normalizedSearch)
+
+        let matchingChildren: ItemType<MenuItemType>[] = []
+
+        if ('children' in item && Array.isArray(item.children)) {
+          matchingChildren = matchService
+            ? item.children
+            : item.children.filter((child) => {
+                if (!child || !('label' in child)) return false
+
+                const labelText = (() => {
+                  if (typeof child.label === 'string') {
+                    return normalize(child.label)
+                  }
+                  if (React.isValidElement(child.label) && typeof child.label.props?.children === 'string') {
+                    return normalize(child.label.props.children)
+                  }
+                  return ''
+                })()
+                return labelText.includes(normalize(search))
+              })
+        }
+
+        if (matchService || matchingChildren.length > 0) {
+          return {
+            ...item,
+            children: matchingChildren,
+          }
+        }
+
+        return null
+      })
+      .filter((item): item is Exclude<typeof item, null> => item !== null)
+
+    return filtered
+  }, [items, search])
 
   const onServiceClick: MenuProps['onClick'] = ({ key }) => {
     if (key === selectedKey) setSelectedKey('default')
@@ -98,19 +155,17 @@ export const ModalSettings = ({ isVisible, onClose, selectedSite }: ModalSchedul
   }
 
   const renderSetting = useCallback(() => {
-    switch (selectedKey) {
-      case 'utilisateur':
-        return <div>Affichage settings here</div>
-      case 'droits':
-        return <div>Permissions info form here</div>
-      case 'affichage':
-        return <div>Affichage settings here</div>
-      case 'agenda':
-        return <div>Affichage settings here</div>
-      case 'license':
-        return <div>License settings here</div>
-      default:
-        return <div>default</div>
+    if (selectedKey.startsWith('site-')) {
+      const siteID = selectedKey.split('site-')[1]
+      const groupedSites = [...(sites ?? []), ...(newSite ? [newSite] : [])]
+      const matchingSite = groupedSites?.find((site) => site.id === siteID)
+      return <SiteSetting site={matchingSite} />
+    } else if (selectedKey.startsWith('service-')) {
+      const serviceID = selectedKey.split('service-')[1]
+      const matchingService = services?.find((service) => service.id === serviceID)
+      return <ServiceSetting service={matchingService} />
+    } else {
+      return <div>Select a site or a service to edit</div>
     }
   }, [selectedKey])
 
@@ -118,16 +173,24 @@ export const ModalSettings = ({ isVisible, onClose, selectedSite }: ModalSchedul
     <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings" blockAntModalBodyVerticalScroll noFooter>
       <div className="modalSettings">
         <div className="settingsTitle">
-          <Menu
-            onClick={onServiceClick}
-            onOpenChange={onSiteClick}
-            selectedKeys={[selectedKey]}
-            openKeys={openKeys}
-            style={{ width: 250 }}
-            defaultSelectedKeys={['default']}
-            mode="inline"
-            items={items}
-          />
+          <div className="content">
+            <div className="SearchInput">
+              <Input placeholder="Search menu" onChange={(e) => setSearch(e.target.value)} />
+            </div>
+            <Menu
+              onClick={onServiceClick}
+              onOpenChange={onSiteClick}
+              selectedKeys={[selectedKey]}
+              openKeys={openKeys}
+              style={{ width: 250 }}
+              defaultSelectedKeys={['default']}
+              mode="inline"
+              items={filteredItems}
+            />
+          </div>
+          <div className="bottomFooter">
+            <Button onClick={handleAddSite}>Ajouter un site</Button>
+          </div>
         </div>
         <Divider type="vertical" variant="solid" style={{ height: '100%' }} />
         <div className="selectedSetting">{renderSetting()}</div>

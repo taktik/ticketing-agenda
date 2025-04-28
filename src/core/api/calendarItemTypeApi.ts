@@ -8,7 +8,7 @@ enum calendarItemTypeTag {
   CalendarItemType = 'CalendarItemTypeTag',
 }
 
-export const calendarItemTypeApi = createApi({
+export const calendarItemTypeApiRtk = createApi({
   reducerPath: 'calendarItemTypeApi',
   tagTypes: [calendarItemTypeTag.CalendarItemType],
   baseQuery: fetchBaseQuery({
@@ -68,4 +68,4 @@ export const calendarItemTypeApi = createApi({
   }),
 })
 
-export const { useGetCalendarItemTypesQuery, useGetCalendarItemTypeQuery, useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation } = calendarItemTypeApi
+export const { useGetCalendarItemTypesQuery, useGetCalendarItemTypeQuery, useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation } = calendarItemTypeApiRtk

@@ -1,14 +1,14 @@
 import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
-import { Agenda, TimeTable } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, TimeTable } from '@icure/cardinal-sdk'
 import { Select as AntSelect, Button, Divider, Typography, notification, message, Tooltip } from 'antd'
 import React, { ReactElement, useCallback, useEffect } from 'react'
 import './index.css'
 import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
 
 interface DemarcheSelectorProps {
-  demarches: TimeTable[]
-  selectedDemarche: TimeTable | undefined
-  setSelectedDemarche: React.Dispatch<React.SetStateAction<TimeTable | undefined>>
+  demarches: CalendarItemType[]
+  selectedDemarche: CalendarItemType | undefined
+  setSelectedDemarche: React.Dispatch<React.SetStateAction<CalendarItemType | undefined>>
 }
 
 export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche }: DemarcheSelectorProps): ReactElement => {
@@ -45,7 +45,7 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
   }
 
   const handleSelectDemarcheClick = useCallback(
-    (demarche: TimeTable) => {
+    (demarche: CalendarItemType) => {
       const toSelect = demarche.id === selectedDemarche?.id ? undefined : demarche
       setSelectedDemarche(toSelect)
     },

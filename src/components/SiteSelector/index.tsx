@@ -1,14 +1,14 @@
 import React, { ReactElement, useCallback, useEffect, useMemo } from 'react'
 import { Select as AntSelect, Button, notification, message, Tooltip, ConfigProvider } from 'antd'
-import { Agenda } from '@icure/cardinal-sdk'
+import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
 import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import './index.css'
 import { useDeleteAgendaMutation } from '../../core/api/agendaApi'
 
 interface SiteSelectorProps {
-  sites: Agenda[]
-  selectedSite: Agenda | undefined
-  setSelectedSite: React.Dispatch<React.SetStateAction<Agenda | undefined>>
+  sites: HealthcareParty[]
+  selectedSite: HealthcareParty | undefined
+  setSelectedSite: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
 }
 
 export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelectorProps): ReactElement => {

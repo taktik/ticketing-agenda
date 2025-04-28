@@ -10,7 +10,7 @@ import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
 import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
-import { useGetTimeTables } from '../../core/api/timeTableApi'
+import { useGetTimeTablesQuery } from '../../core/api/timeTableApi'
 import { SettingOutlined } from '@ant-design/icons'
 import { ItemType } from 'antd/es/menu/interface'
 import { normalize } from '../patient/modals/ModalImportPatients/utils/functionUtils'
@@ -18,15 +18,12 @@ import { normalize } from '../patient/modals/ModalImportPatients/utils/functionU
 interface ModalSchedulingProps {
   isVisible: boolean
   onClose: () => void
-  selectedSite: Agenda | undefined
+  selectedSite: HealthcareParty | undefined
 }
 
 export const ModalScheduling = ({ isVisible, onClose, selectedSite }: ModalSchedulingProps): ReactElement => {
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
-
-  const { data: services } = useGetHealthcarePartiesQuery(undefined, { skip: skip })
-  const { data: demarches } = useGetTimeTables({ agendaId: selectedSite?.id ?? '', serviceTag: undefined, skip: skip || !selectedSite?.id })
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title="Liste des horaires">

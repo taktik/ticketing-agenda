@@ -12,6 +12,9 @@ interface ServiceSelectorProps {
 }
 
 export const ServiceSelector = ({ services, selectedService, setSelectedService }: ServiceSelectorProps): React.ReactElement => {
+  const handleDelete = () => {
+    if (selectedService) deleteService(selectedService)
+  }
   const [deleteService, { isError, isSuccess, isLoading }] = useDeleteHealthcarePartyMutation()
 
   useEffect(() => {

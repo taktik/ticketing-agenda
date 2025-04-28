@@ -3,7 +3,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Agenda, HealthcareParty, TimeTable } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, HealthcareParty, TimeTable } from '@icure/cardinal-sdk'
 import { Calendar as AntCalendar, Button, theme, Tooltip } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -13,16 +13,17 @@ import { ModalSiteForm } from '../../components/ModalSiteForm'
 import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
 import { useGetAgendasQuery } from '../../core/api/agendaApi'
-import { useGetTimeTables } from '../../core/api/timeTableApi'
+import { useGetTimeTablesQuery } from '../../core/api/timeTableApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
-import { useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesQuery, useGetRootHealthcareParty, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
 import { DemarcheSelector } from '../../components/DemarcheSelector'
 import { ModalServiceForm } from '../../components/ModalServiceForm'
 import { ModalSettings } from '../../components/ModalSettings'
 import { ModalDemarcheForm } from '../../components/ModalDemarcheForm'
 import { ModalScheduling } from '../../components/ModalScheduling'
 import { SettingOutlined } from '@ant-design/icons'
+import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
@@ -32,18 +33,19 @@ export default function DashboardPage() {
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
 
-  const { data: sites } = useGetAgendasQuery(undefined, { skip: skip })
-  const [selectedSite, setSelectedSite] = useState<Agenda | undefined>(sites?.[0])
+  const { data: rootHcp } = useGetRootHealthcareParty({ skip: skip })
 
-  const { data: services } = useGetHealthcarePartiesQuery(undefined, { skip: skip })
+  const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
+  const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
+
+  const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
 
-  const { data: demarches } = useGetTimeTables({
+  const { data: demarches } = useGetCalendarItemTypesQuery({
     agendaId: selectedSite?.id ?? '',
-    serviceTag: selectedService ? `service-${selectedService.id}` : undefined,
     skip: skip,
   })
-  const [selectedDemarche, setSelectedDemarche] = useState<TimeTable | undefined>(demarches?.[0])
+  const [selectedDemarche, setSelectedDemarche] = useState<CalendarItemType | undefined>(demarches?.[0])
 
   useEffect(() => {
     if (!selectedSite && sites?.length) {
@@ -90,7 +92,6 @@ export default function DashboardPage() {
             <Tooltip title="Settings">
               <Button
                 icon={<SettingOutlined />}
-                disabled={!selectedSite}
                 onClick={() => setSettingsModalOpen(true)}
                 style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
               />
@@ -136,7 +137,8 @@ export default function DashboardPage() {
           />
         </div>
       </div>
-      {settingsModalOpen && createPortal(<ModalSettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} selectedSite={selectedSite} />, document.body)}
+      {settingsModalOpen &&
+        createPortal(<ModalSettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} selectedSite={selectedSite} rootHcp={rootHcp} />, document.body)}
       {schedulingModalOpen &&
         createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} selectedSite={selectedSite} />, document.body)}
     </div>
