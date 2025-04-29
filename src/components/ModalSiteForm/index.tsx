@@ -4,7 +4,7 @@ import { v4 } from 'uuid'
 import './index.css'
 import { Agenda } from '@icure/cardinal-sdk'
 import { CustomModal } from '../common/CustomModal'
-import { useCreateAgendaMutation } from '../../core/api/agendaApi'
+import { useCreateUpdateAgendaMutation } from '../../core/api/agendaApi'
 import React from 'react'
 
 interface ModalSiteFormProps {
@@ -18,7 +18,7 @@ export const ModalSiteForm = ({ isVisible, onClose, selectedSite, modalMode }: M
   const [form] = Form.useForm()
 
   const [createAgenda, { data: newAgenda, error: agendaCreationError, isError: agendaCreationFailed, isSuccess: agendaCreationSucceeded, isLoading: agendaCreationOngoing }] =
-    useCreateAgendaMutation()
+    useCreateUpdateAgendaMutation()
 
   const handleSubmit = () => {
     const { name } = form.getFieldsValue()

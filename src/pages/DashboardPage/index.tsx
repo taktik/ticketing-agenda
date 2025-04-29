@@ -24,6 +24,7 @@ import { ModalDemarcheForm } from '../../components/ModalDemarcheForm'
 import { ModalScheduling } from '../../components/ModalScheduling'
 import { SettingOutlined } from '@ant-design/icons'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
+import { SettingContextProvider } from '../../contexts/SettingContext'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
@@ -138,7 +139,12 @@ export default function DashboardPage() {
         </div>
       </div>
       {settingsModalOpen &&
-        createPortal(<ModalSettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} selectedSite={selectedSite} rootHcp={rootHcp} />, document.body)}
+        createPortal(
+          <SettingContextProvider selectedSite={selectedSite} rootHcp={rootHcp}>
+            <ModalSettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
+          </SettingContextProvider>,
+          document.body,
+        )}
       {schedulingModalOpen &&
         createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} selectedSite={selectedSite} />, document.body)}
     </div>

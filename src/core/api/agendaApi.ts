@@ -2,6 +2,7 @@ import { Agenda, AgendaFilters, TimeTableItem, CalendarItem, TimeTable, Healthca
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
+import { useMemo } from 'react'
 
 enum AgendaTags {
   Agenda = 'Agenda',
@@ -36,26 +37,23 @@ export const agendaApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: res.id }] : []),
     }),
-    createAgenda: builder.mutation<Agenda | undefined, Agenda>({
+    getAgendaByAuthorId: builder.query<Agenda[] | undefined, void>({
+      async queryFn(_, { getState }) {
+        const agendaApi = (await cardinalApi(getState))?.agenda
+        return guard([agendaApi], async (): Promise<Agenda[]> => {
+          return await loadFromIterator(await agendaApi!.filterAgendasBy(AgendaFilters.all()), 1000)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
+    }),
+    createUpdateAgenda: builder.mutation<Agenda | undefined, Agenda>({
       async queryFn(agenda, { getState }) {
         const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async (): Promise<Agenda> => {
-          const newAgenda = await agendaApi?.createAgenda(agenda)
-          if (!newAgenda) {
-            throw new Error('Agenda creation failed')
-          }
-          return new Agenda(newAgenda)
-        })
-      },
-      invalidatesTags: (result, error, arg) => (result ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
-    }),
-    updateAgenda: builder.mutation<Agenda | undefined, Agenda>({
-      async queryFn(agenda, { getState, dispatch }) {
-        const agendaApi = (await cardinalApi(getState))?.agenda
-        return guard([agendaApi], async (): Promise<Agenda> => {
-          const updatedAgenda = await agendaApi?.modifyAgenda(agenda)
+          const updatedAgenda = !!agenda.rev ? await agendaApi?.modifyAgenda(agenda) : await agendaApi?.createAgenda(agenda)
+
           if (!updatedAgenda) {
-            throw new Error('Agenda update failed')
+            throw new Error('Agenda creation or update failed')
           }
           return new Agenda(updatedAgenda)
         })
@@ -81,4 +79,19 @@ export const agendaApiRtk = createApi({
   }),
 })
 
-export const { useGetAgendaQuery, useGetAgendasQuery, useCreateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
+export const { useGetAgendaQuery, useGetAgendasQuery, useGetAgendaByAuthorIdQuery, useCreateUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
+
+export const useGetAgendaByAuthorId = (params: { skip: boolean; authorId: string }) => {
+  const { data, ...rest } = useGetAgendaByAuthorIdQuery(undefined, {
+    skip: params.skip,
+  })
+
+  const agendas = useMemo(() => (data?.length ? data : []), [data])
+
+  const agendaResult = useMemo(() => agendas.find((agenda) => agenda.author === params.authorId), [agendas, params.authorId])
+
+  return {
+    data: agendaResult,
+    ...rest,
+  }
+}

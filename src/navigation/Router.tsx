@@ -50,6 +50,9 @@ export const Router = () => (
           subMenuItemBg: '#ffffff',
           itemBorderRadius: 0,
         },
+        List: {
+          itemPadding: '0',
+        },
       },
     }}
   >
