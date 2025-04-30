@@ -2,7 +2,7 @@ import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
-import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters } from './fetchType'
+import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters } from './fetchType'
 
 enum HealthcarePartyTags {
   HealthcareParty = 'HealthcareParty',
@@ -105,6 +105,19 @@ export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParamete
 
   return {
     data: root,
+    ...rest,
+  }
+}
+
+export const useGetAllServiceBySiteId = (params: GetAllServiceBySiteIdParameters) => {
+  const { data, ...rest } = useGetHealthcarePartiesQuery(undefined, {
+    skip: params.skip,
+  })
+
+  const result = data?.filter((item) => item.parentId && params.sitesIds.includes(item.parentId)) ?? []
+
+  return {
+    data: result,
     ...rest,
   }
 }

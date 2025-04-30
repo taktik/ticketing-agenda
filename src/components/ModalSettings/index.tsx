@@ -7,7 +7,7 @@ import { getFileUploaderCommonProps, getImgSRC } from '../../helpers/fileToBase6
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
-import { useGetHealthcarePartiesByParentQuery, useGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesByParentQuery, useGetAllServiceBySiteId } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import { useGetTimeTablesQuery } from '../../core/api/timeTableApi'
 import { SettingOutlined } from '@ant-design/icons'
@@ -34,7 +34,18 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
   const [search, setSearch] = useState('')
   const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
-  const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
+  const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
+
+  //const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
+  const { data: services } = useGetAllServiceBySiteId({ skip: skip || !rootHcp, sitesIds: sitesIds ?? [] })
+
+  const sortedServices = useMemo(() => {
+    return [...(services ?? [])].sort((a, b) => {
+      const nameA = a.name ?? ''
+      const nameB = b.name ?? ''
+      return nameA.localeCompare(nameB)
+    })
+  }, [services])
 
   const handleAddSite = useCallback(() => {
     if (!newSite && rootHcp) {
@@ -47,8 +58,10 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   const items: MenuItem[] = useMemo(
     () =>
       [...(sites ?? []), ...(newSite ? [newSite] : [])].map((site) => {
+        const matchingParties = sortedServices?.filter((service) => service.parentId === site.id) ?? []
+
         const children: MenuItem[] = [
-          ...(services ?? []).map((service) => ({
+          ...(matchingParties ?? []).map((service) => ({
             key: `service-${service.id}`,
             label: service.name,
           })),
@@ -79,7 +92,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           children,
         }
       }),
-    [sites, services, selectedKey, newSite],
+    [sites, sortedServices, selectedKey, newSite],
   )
 
   const filteredItems = useMemo(() => {

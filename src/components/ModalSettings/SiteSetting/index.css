@@ -52,4 +52,14 @@
   margin: 0 !important;
   gap: 12px;
 }
+.edit-button {
+  opacity: 0;
+}
+.ant-list-item:hover .edit-button {
+  opacity: 1;
+}
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
 /*# sourceMappingURL=index.css.map */

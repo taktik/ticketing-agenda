@@ -1,6 +1,6 @@
-import { DeleteOutlined, PlusOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PlusOutlined, EditOutlined, SaveOutlined, RollbackOutlined } from '@ant-design/icons'
 import { SettingContext } from '../../../contexts/SettingContext'
-import { HealthcareParty, CalendarItemType } from '@icure/cardinal-sdk'
+import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Tooltip, List, Row, Col, notification, message } from 'antd'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import './index.css'
@@ -9,20 +9,21 @@ import { useDeleteCalendarItemTypeMutation } from '../../../core/api/calendarIte
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
 import { v4 } from 'uuid'
+import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 
 const ListHeader = React.memo(() => {
   const { newService, setNewService, selectedKeyId } = useContext(SettingContext)
   const handleAddService = useCallback(() => {
     if (!newService && selectedKeyId) {
-      setNewService(new HealthcareParty({ name: 'New Demarche', parentId: selectedKeyId, id: v4() }))
+      setNewService(new HealthcareParty({ name: 'New Service', parentId: selectedKeyId, id: v4() }))
     } else {
       // selectedkeyId undefined ? => error
     }
   }, [newService, setNewService])
   return (
     <div className="list-header">
-      <div>Services</div>
-      <Tooltip title="Add a new site">
+      <div>Services :</div>
+      <Tooltip title="Add a new service">
         <Button icon={<PlusOutlined />} disabled={!!newService} onClick={handleAddService} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
       </Tooltip>
     </div>
@@ -35,17 +36,26 @@ interface SiteSettingProps {
 
 export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const { newSite, setNewSite, setSelectedKey, newService, setNewService } = useContext(SettingContext)
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false)
+  const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
+  const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const siteIsNew = useMemo(() => (newSite ? newSite.id === site?.id : false), [newSite, site])
-  const [editItem, setEditItem] = useState<string | undefined>(undefined)
+  const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined)
   const [inputValue, setInputValue] = useState<string>('')
 
   const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: !site, parentId: site?.id ?? '' })
-  const servicesList = useMemo(() => [...(services ?? []), ...(newService ? [newService] : [])], [services, newService])
+  const servicesList = useMemo(() => {
+    const combined = [...(services ?? []), ...(newService ? [newService] : [])]
+    return combined.sort((a, b) => {
+      const nameA = a.name ?? ''
+      const nameB = b.name ?? ''
+      return nameA.localeCompare(nameB)
+    })
+  }, [services, newService])
 
   const [form] = Form.useForm()
 
-  const [createUpdateHealthcareParty, { data, error, isError: isUpdateError, isSuccess: isUpdateSuccess, isLoading: isUpdateLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateAgendaMutation, { isError: isCreateAgendaError, isSuccess: isCreateAgendaSuccess, isLoading: isCreateAgendaLoading }] = useCreateUpdateAgendaMutation()
+  const [createUpdateHealthcareParty, { isError: isUpdateError, isSuccess: isUpdateSuccess, isLoading: isUpdateLoading }] = useCreateUpdateHealthcarePartyMutation()
   const [deleteHealthcareParty, { isError: isDeleteError, isSuccess: isDeleteSuccess, isLoading: isDeleteLoading }] = useDeleteHealthcarePartyMutation()
 
   const handleSubmit = () => {
@@ -64,18 +74,29 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     }
   }, [site, form])
 
-  const handleDelete = () => {
+  const handleSiteDelete = () => {
     if (site && !siteIsNew) {
       deleteHealthcareParty(site)
       setSelectedKey('default')
     }
   }
 
+  const handleServiceDelete = () => {
+    if (editItem) {
+      deleteHealthcareParty(editItem)
+      setEditItem(undefined)
+    }
+  }
+
   useEffect(() => {
-    if (isDeleteLoading) showMessageFeedback('loading', 'The site is deleting...')
     if (isDeleteSuccess) showMessageFeedback('success', 'The site was deleted!')
     if (isDeleteError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
-  }, [isDeleteLoading, isDeleteSuccess, isDeleteError])
+  }, [isDeleteSuccess, isDeleteError])
+
+  useEffect(() => {
+    if (isUpdateSuccess) showMessageFeedback('success', 'The site was saved!')
+    if (isUpdateError) openNotification('error', 'We could not save the site!', `An error occurred while saving the site.`)
+  }, [isUpdateSuccess, isUpdateError])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -101,26 +122,34 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const handleClose = () => {
+  const handleCancel = () => {
     form.resetFields()
+    setNewService(undefined)
   }
 
   const handleEditClick = (item: HealthcareParty) => {
-    setEditItem(item.id)
+    setEditItem(item)
     setInputValue(item.name ?? '')
   }
 
   const handleSaveClick = useCallback(
     (item: HealthcareParty) => {
-      const updatedItems = (services ?? []).map((item) => (item.id === editItem ? { ...item, name: inputValue } : item))
-      console.log('Updated Items:', updatedItems)
+      createUpdateHealthcareParty(new HealthcareParty({ ...item, name: inputValue }))
+      createUpdateAgendaMutation(new Agenda({ author: item.id }))
       setEditItem(undefined)
+      if (item.id === newService?.id) setNewService(undefined)
     },
-    [services, editItem, inputValue],
+    [services, editItem, inputValue, newService],
   )
+
+  const cancelEdit = () => {
+    setEditItem(undefined)
+  }
 
   return (
     <div className="root">
+      {notificationContextHolder}
+      {messageContextHolder}
       <div className="top-part">
         <div className="edit-site">
           <Form
@@ -140,7 +169,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             <Button
               icon={<DeleteOutlined />}
               disabled={siteIsNew || !site}
-              onClick={() => setShowDeleteModal(true)}
+              onClick={() => setShowDeleteSiteModal(true)}
               style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
             />
           </Tooltip>
@@ -151,16 +180,42 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             dataSource={servicesList}
             renderItem={(item) => (
               <List.Item>
-                {editItem === item.id ? (
+                {editItem?.id === item.id ? (
                   <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveClick(item)} autoFocus />
                 ) : (
                   item.name
                 )}
-                {editItem !== item.id && (
-                  <Button icon={<EditOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={() => handleEditClick(item)} />
+                {editItem?.id !== item.id && (
+                  <Tooltip title="Edit the service">
+                    <Button
+                      className="edit-button"
+                      icon={<EditOutlined />}
+                      style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+                      onClick={() => handleEditClick(item)}
+                    />
+                  </Tooltip>
                 )}
-                {editItem === item.id && (
-                  <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={() => handleSaveClick(item)} />
+                {editItem?.id === item.id && (
+                  <div className="action-buttons">
+                    <Tooltip title="Cancel">
+                      <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEdit} />
+                    </Tooltip>
+                    <Tooltip title="Save the service">
+                      <Button
+                        icon={<SaveOutlined />}
+                        style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+                        onClick={() => handleSaveClick(item)}
+                      />
+                    </Tooltip>
+                    <Tooltip title="Delete the service">
+                      <Button
+                        icon={<DeleteOutlined />}
+                        disabled={item.id === newService?.id}
+                        onClick={() => setShowDeleteServiceModal(true)}
+                        style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+                      />
+                    </Tooltip>
+                  </div>
                 )}
               </List.Item>
             )}
@@ -168,12 +223,12 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         </div>
       </div>
       <div className="button-list">
-        <Button variant="filled" color="primary" onClick={handleClose}>
+        <Button variant="filled" color="primary" onClick={handleCancel}>
           Cancel
         </Button>
         <Button onClick={handleSubmit}>Save</Button>
       </div>
-      {showDeleteModal &&
+      {showDeleteSiteModal &&
         createPortal(
           <ModalConfirmAction
             title="Delete site"
@@ -181,11 +236,28 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             yesBtnTitle="Delete"
             noBtnTitle="Close"
             onYesClick={() => {
-              handleDelete()
-              setShowDeleteModal(false)
+              handleSiteDelete()
+              setShowDeleteSiteModal(false)
             }}
-            onNoClick={() => setShowDeleteModal(false)}
-            isVisible={showDeleteModal}
+            onNoClick={() => setShowDeleteSiteModal(false)}
+            isVisible={showDeleteSiteModal}
+            mode="danger"
+          />,
+          document.body,
+        )}
+      {showDeleteServiceModal &&
+        createPortal(
+          <ModalConfirmAction
+            title="Delete service"
+            description="Are you sure you want to delete this service? Once deleted, their information can't be recovered, so it's a permanent action."
+            yesBtnTitle="Delete"
+            noBtnTitle="Close"
+            onYesClick={() => {
+              handleServiceDelete()
+              setShowDeleteServiceModal(false)
+            }}
+            onNoClick={() => setShowDeleteServiceModal(false)}
+            isVisible={showDeleteServiceModal}
             mode="danger"
           />,
           document.body,

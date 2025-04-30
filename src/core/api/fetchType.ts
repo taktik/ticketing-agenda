@@ -16,3 +16,8 @@ export type GetHealthcarePartyByParentParameters = {
   parentId: string
   skip?: boolean
 }
+
+export type GetAllServiceBySiteIdParameters = {
+  sitesIds: string[]
+  skip?: boolean
+}
