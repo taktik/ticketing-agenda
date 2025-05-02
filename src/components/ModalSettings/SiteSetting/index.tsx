@@ -1,4 +1,4 @@
-import { DeleteOutlined, PlusOutlined, EditOutlined, SaveOutlined, RollbackOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PlusOutlined, EditOutlined, SaveOutlined, RollbackOutlined, CloseOutlined } from '@ant-design/icons'
 import { SettingContext } from '../../../contexts/SettingContext'
 import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Tooltip, List, Row, Col, notification, message } from 'antd'
@@ -16,15 +16,24 @@ import { createPortal } from 'react-dom'
 import { v4 } from 'uuid'
 import { useCreateUpdateAgendaMutation, useDeleteAgendaByAuthorId, useDeleteAgendaMutation, useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
 
-const ListHeader = React.memo(() => {
+interface ListHeaderProps {
+  editItem: HealthcareParty | undefined
+  setEditItem: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
+}
+
+const ListHeader = React.memo(({ editItem, setEditItem }: ListHeaderProps) => {
   const { newService, setNewService, selectedKeyId } = useContext(SettingContext)
   const handleAddService = useCallback(() => {
     if (!newService && selectedKeyId) {
-      setNewService(new HealthcareParty({ name: 'New Service', parentId: selectedKeyId, id: v4() }))
+      const addedService = new HealthcareParty({ name: 'New Service', parentId: selectedKeyId, id: v4() })
+      setNewService(addedService)
+      if (!editItem) {
+        setEditItem(addedService)
+      }
     } else {
       // selectedkeyId undefined ? => error
     }
-  }, [newService, setNewService])
+  }, [newService, setNewService, editItem])
   return (
     <div className="list-header">
       <div>Services :</div>
@@ -44,8 +53,8 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const siteIsNew = useMemo(() => (newSite ? newSite.id === site?.id : false), [newSite, site]) // Easier to use that condition
-  const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined) // The demarche being edited in the list
-  const [inputValue, setInputValue] = useState<string>('') // Input value of the demarche being edited
+  const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined) // The service being edited in the list
+  const [inputValue, setInputValue] = useState<string>('New service') // Input value of the service being edited
 
   const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: !site, parentId: site?.id ?? '' })
   const servicesList = useMemo(() => {
@@ -63,9 +72,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] =
     useCreateUpdateAgendaMutation()
 
-  const { data: agenda } = useGetAgendaByAuthorId({ skip: !editItem, authorId: editItem?.id ?? '' })
-  const [deleteAgenda, { isError: isDeleteAgendaError, isSuccess: isDeleteAgendaSuccess, isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
-
   // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] =
     useCreateUpdateHealthcarePartyMutation()
@@ -73,9 +79,8 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     useCreateUpdateHealthcarePartyMutation()
 
   // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
-  // const [deleteSite, { isError: isDeleteSiteError, isSuccess: isDeleteSiteSuccess, isLoading: isDeleteSiteLoading }] = useDeleteHealthcarePartyMutation()  OLD WAY
-  const { deleteHcpRecursively, isLoading: isDeleteSiteLoading, isSuccess: isDeleteSiteSuccess, error: isDeleteSiteError } = useRecursiveHcpDeletion()
-  const [deleteService, { isError: isDeleteServiceError, isSuccess: isDeleteServiceSuccess, isLoading: isDeleteServiceLoading }] = useDeleteHealthcarePartyMutation()
+  const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading, isSuccess: isDeleteSiteSuccess, error: isDeleteSiteError } = useRecursiveHcpDeletion()
+  const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading, isSuccess: isDeleteServiceSuccess, error: isDeleteServiceError } = useRecursiveHcpDeletion()
 
   const handleSubmit = () => {
     try {
@@ -99,20 +104,22 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const handleSiteDelete = () => {
     if (site && !siteIsNew) {
-      deleteHcpRecursively(site)
+      deleteSite(site)
       setSelectedKey('default')
     }
   }
 
   const handleServiceDelete = () => {
-    if (editItem && agenda) {
-      deleteAgenda(agenda)
+    if (editItem) {
+      deleteService(editItem)
+      setEditItem(undefined)
     }
   }
 
   const handleSaveServiceClick = useCallback(
     (item: HealthcareParty) => {
       createUpdateService({ ...item, name: inputValue })
+      setInputValue('New service')
     },
     [inputValue],
   )
@@ -126,7 +133,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     setEditItem(undefined)
   }
 
-  // If we successfully crated the service, then we create the associated agenda. Error is handled in the useEffects below
+  // If we successfully created the service, then we create the associated agenda. Error is handled in the useEffects below
   useEffect(() => {
     if (editItem && isCreateUpdateServiceSuccess) {
       if (!editItem.rev) {
@@ -137,14 +144,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
       if (editItem.id === newService?.id) setNewService(undefined)
     }
   }, [isCreateUpdateServiceSuccess])
-
-  // If we successfully deleted the agenda, then we delete the associated service. Error is handled in the useEffects below
-  useEffect(() => {
-    if (editItem && isDeleteAgendaSuccess) {
-      deleteService(editItem)
-      setEditItem(undefined)
-    }
-  }, [isDeleteAgendaSuccess])
 
   // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   useEffect(() => {
@@ -159,9 +158,9 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   useEffect(() => {
-    if (isDeleteServiceSuccess) showMessageFeedback('success', 'The service te was deleted!')
-    if (isDeleteServiceError || isDeleteAgendaError) openNotification('error', 'We could not delete the service!', `An error occurred while deleting the service.`)
-  }, [isDeleteServiceSuccess, isDeleteServiceError, isDeleteAgendaError])
+    if (isDeleteServiceSuccess) showMessageFeedback('success', 'The service was deleted!')
+    if (isDeleteServiceError) openNotification('error', 'We could not delete the service!', `An error occurred while deleting the service.`)
+  }, [isDeleteServiceSuccess, isDeleteServiceError])
 
   useEffect(() => {
     if (isCreateUpdateServiceSuccess) showMessageFeedback('success', 'The service was saved!')
@@ -197,6 +196,8 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     setNewService(undefined)
   }
 
+  const nameValue = Form.useWatch('name', form)
+
   return (
     <div className="root">
       {notificationContextHolder}
@@ -213,9 +214,22 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             style={{ width: '100%' }}
           >
             <Form.Item name="name" rules={[{ required: true, message: 'Name of the site' }]}>
-              <Input value={site ? site.name : "Site's name"} size="large" style={{ fontSize: 13, borderRadius: 0 }} />
+              <Input
+                suffix={<CloseOutlined disabled={nameValue === site?.name} onClick={handleCancel} />}
+                value={site ? site.name : 'New site'}
+                size="large"
+                style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
+              />
             </Form.Item>
           </Form>
+          <Tooltip title="Save the site">
+            <Button
+              icon={<SaveOutlined />}
+              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+              disabled={nameValue === site?.name && !!site?.rev}
+              onClick={handleSubmit}
+            />
+          </Tooltip>
           <Tooltip title="Delete the site">
             <Button
               icon={<DeleteOutlined />}
@@ -227,7 +241,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         </div>
         <div className="services-list">
           <List
-            header={<ListHeader />}
+            header={<ListHeader editItem={editItem} setEditItem={setEditItem} />}
             dataSource={servicesList}
             renderItem={(item) => (
               <List.Item>
@@ -272,12 +286,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             )}
           />
         </div>
-      </div>
-      <div className="button-list">
-        <Button variant="filled" color="primary" onClick={handleCancel}>
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit}>Save</Button>
       </div>
       {showDeleteSiteModal &&
         createPortal(

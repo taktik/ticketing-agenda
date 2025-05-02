@@ -49,11 +49,15 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
 
   const handleAddSite = useCallback(() => {
     if (!newSite && rootHcp) {
-      setNewSite(new HealthcareParty({ name: 'New Site', parentId: rootHcp.id, id: v4() }))
+      const id = v4()
+      setNewSite(new HealthcareParty({ name: 'New Site', parentId: rootHcp.id, id: id }))
+      if (selectedKey === 'default') {
+        setSelectedKey(`site-${id}`)
+      }
     } else {
       // HCp undefined ? => error
     }
-  }, [newSite, setNewSite])
+  }, [newSite, setNewSite, selectedKey])
 
   const items: MenuItem[] = useMemo(
     () =>

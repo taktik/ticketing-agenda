@@ -50,7 +50,19 @@ export const SettingContextProvider: React.FC<SettingContextProviderProps> = ({ 
 
   return (
     <SettingContext.Provider
-      value={{ newSite, setNewSite, newService, setNewService, newDemarche, setNewDemarche, selectedSite, rootHcp, selectedKey, setSelectedKey, selectedKeyId }}
+      value={{
+        newSite,
+        setNewSite,
+        newService,
+        setNewService,
+        newDemarche,
+        setNewDemarche,
+        selectedSite,
+        rootHcp,
+        selectedKey,
+        setSelectedKey,
+        selectedKeyId,
+      }}
     >
       {children}
     </SettingContext.Provider>
