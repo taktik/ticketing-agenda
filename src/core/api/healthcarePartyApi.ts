@@ -3,6 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
 import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters } from './fetchType'
+import { useDeleteAgendaMutation, useGetAgendaByAuthorId } from './agendaApi'
 
 enum HealthcarePartyTags {
   HealthcareParty = 'HealthcareParty',
@@ -120,4 +121,47 @@ export const useGetAllServiceBySiteId = (params: GetAllServiceBySiteIdParameters
     data: result,
     ...rest,
   }
+}
+
+const deleteHcpRecursively = async (hcp: HealthcareParty) => {
+  // Delete the healthcareParty and all its associated children (healthcare parties that have their parentId field set)
+  const { data: childrenHcp = [] } = useGetHealthcarePartiesByParentQuery({ skip: !hcp, parentId: hcp.id })
+  const { data: agenda } = useGetAgendaByAuthorId({ skip: !hcp, authorId: hcp.id })
+  const [deleteHealthcareParty, { isError, isSuccess, isLoading }] = useDeleteHealthcarePartyMutation()
+
+  // Step 2: Recursively delete each child
+  for (const child of childrenHcp) {
+    await deleteHcpRecursively(child)
+  }
+
+  // Step 3: Delete the current Hcp
+  await deleteHealthcareParty(hcp)
+}
+
+export const useRecursiveHcpDeletion = () => {
+  const [deleteHcp] = useDeleteHealthcarePartyMutation()
+  const [deleteAgenda] = useDeleteAgendaMutation()
+  const getChildren = useGetHealthcarePartiesByParentQuery
+  const getAgenda = useGetAgendaByAuthorId
+
+  const deleteHcpRecursively = async (hcp: HealthcareParty) => {
+    // 1. Fetch children
+    const { data: children } = await getChildren({ parentId: hcp.id })
+    if (children && children.length > 0) {
+      for (const child of children) {
+        await deleteHcpRecursively(child)
+      }
+    }
+
+    // 2. Fetch and delete agenda (if any)
+    const { data: agenda } = await getAgenda({ skip: !hcp, authorId: hcp.id })
+    if (agenda) {
+      await deleteAgenda(agenda).unwrap()
+    }
+
+    // 3. Delete this Hcp
+    await deleteHcp(hcp).unwrap()
+  }
+
+  return { deleteHcpRecursively }
 }

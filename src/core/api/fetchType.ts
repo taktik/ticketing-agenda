@@ -8,6 +8,12 @@ export type CalendarItemTypeServiceParameters = {
   skip?: boolean
 }
 
+export type DeleteAgendaByIdParameters = {
+  agendaId: string
+  rev: string
+  skip?: boolean
+}
+
 export type GetRootHealthcarePartyParameters = {
   skip?: boolean
 }

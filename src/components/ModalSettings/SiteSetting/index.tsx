@@ -9,7 +9,7 @@ import { useDeleteCalendarItemTypeMutation } from '../../../core/api/calendarIte
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
 import { v4 } from 'uuid'
-import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
+import { useCreateUpdateAgendaMutation, useDeleteAgendaByAuthorId, useDeleteAgendaMutation } from '../../../core/api/agendaApi'
 
 const ListHeader = React.memo(() => {
   const { newService, setNewService, selectedKeyId } = useContext(SettingContext)
@@ -38,12 +38,13 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const { newSite, setNewSite, setSelectedKey, newService, setNewService } = useContext(SettingContext)
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
-  const siteIsNew = useMemo(() => (newSite ? newSite.id === site?.id : false), [newSite, site])
-  const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined)
-  const [inputValue, setInputValue] = useState<string>('')
+  const siteIsNew = useMemo(() => (newSite ? newSite.id === site?.id : false), [newSite, site]) // Easier to use that condition
+  const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined) // The demarche being edited in the list
+  const [inputValue, setInputValue] = useState<string>('') // Input value of the demarche being edited
 
   const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: !site, parentId: site?.id ?? '' })
   const servicesList = useMemo(() => {
+    // Sorting the services alphabetically
     const combined = [...(services ?? []), ...(newService ? [newService] : [])]
     return combined.sort((a, b) => {
       const nameA = a.name ?? ''
@@ -54,16 +55,36 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const [form] = Form.useForm()
 
-  const [createUpdateAgendaMutation, { isError: isCreateAgendaError, isSuccess: isCreateAgendaSuccess, isLoading: isCreateAgendaLoading }] = useCreateUpdateAgendaMutation()
-  const [createUpdateHealthcareParty, { isError: isUpdateError, isSuccess: isUpdateSuccess, isLoading: isUpdateLoading }] = useCreateUpdateHealthcarePartyMutation()
-  const [deleteHealthcareParty, { isError: isDeleteError, isSuccess: isDeleteSuccess, isLoading: isDeleteLoading }] = useDeleteHealthcarePartyMutation()
+  const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] =
+    useCreateUpdateAgendaMutation()
+  const {
+    deleteAgenda: deleteAgendaByAuthorId,
+    data,
+    isLoading: isDeleteAgendaLoading,
+    isError: isDeleteAgendaError,
+    isSuccess: isDeleteAgendaSuccess,
+  } = useDeleteAgendaByAuthorId()
+
+  // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
+  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] =
+    useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] =
+    useCreateUpdateHealthcarePartyMutation()
+
+  // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
+  const [deleteSite, { isError: isDeleteSiteError, isSuccess: isDeleteSiteSuccess, isLoading: isDeleteSiteLoading }] = useDeleteHealthcarePartyMutation()
+  const [deleteService, { isError: isDeleteServiceError, isSuccess: isDeleteServiceSuccess, isLoading: isDeleteServiceLoading }] = useDeleteHealthcarePartyMutation()
 
   const handleSubmit = () => {
-    const { name } = form.getFieldsValue()
-    createUpdateHealthcareParty(new HealthcareParty({ ...site, ...form.getFieldsValue() }))
-    if (newSite && siteIsNew) setNewSite(undefined)
-
-    form.submit()
+    try {
+      if (!site) throw new Error('No site selected')
+      const { name } = form.getFieldsValue()
+      createUpdateSite({ ...site, name: name })
+      if (newSite && siteIsNew) setNewSite(undefined)
+      form.submit()
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    }
   }
 
   useEffect(() => {
@@ -76,27 +97,74 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const handleSiteDelete = () => {
     if (site && !siteIsNew) {
-      deleteHealthcareParty(site)
+      deleteSite(site)
       setSelectedKey('default')
     }
   }
 
   const handleServiceDelete = () => {
     if (editItem) {
-      deleteHealthcareParty(editItem)
-      setEditItem(undefined)
+      deleteAgendaByAuthorId({ authorId: editItem.id })
     }
   }
 
+  const handleSaveServiceClick = useCallback(
+    (item: HealthcareParty) => {
+      createUpdateService({ ...item, name: inputValue })
+      setEditItem(undefined)
+    },
+    [inputValue],
+  )
+
+  const handleEditServiceClick = (item: HealthcareParty) => {
+    setEditItem(item)
+    setInputValue(item.name ?? '')
+  }
+
+  const cancelEditService = () => {
+    setEditItem(undefined)
+  }
+
+  // If we successfully crated the service, then we create the associated agenda. Error is handled in the useEffects below
   useEffect(() => {
-    if (isDeleteSuccess) showMessageFeedback('success', 'The site was deleted!')
-    if (isDeleteError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
-  }, [isDeleteSuccess, isDeleteError])
+    if (editItem && isCreateUpdateServiceSuccess) {
+      if (!editItem.rev) {
+        // If service has no rev, it's a new object and thus we create an associated agenda
+        createUpdateAgendaMutation(new Agenda({ author: editItem.id }))
+      }
+      if (editItem.id === newService?.id) setNewService(undefined)
+    }
+  }, [isCreateUpdateServiceSuccess])
+
+  // If we successfully deleted the agenda, then we delete the associated service. Error is handled in the useEffects below
+  useEffect(() => {
+    if (editItem && isDeleteAgendaSuccess) {
+      deleteService(editItem)
+      setEditItem(undefined)
+    }
+  }, [isDeleteAgendaSuccess])
+
+  // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
+  useEffect(() => {
+    if (isDeleteSiteSuccess) showMessageFeedback('success', 'The site was deleted!')
+    if (isDeleteSiteError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
+  }, [isDeleteSiteSuccess, isDeleteSiteError])
 
   useEffect(() => {
-    if (isUpdateSuccess) showMessageFeedback('success', 'The site was saved!')
-    if (isUpdateError) openNotification('error', 'We could not save the site!', `An error occurred while saving the site.`)
-  }, [isUpdateSuccess, isUpdateError])
+    if (isCreateUpdateSiteSuccess) showMessageFeedback('success', 'The site was saved!')
+    if (isCreateUpdateSiteError) openNotification('error', 'We could not save the site!', `An error occurred while saving the site.`)
+  }, [isCreateUpdateSiteSuccess, isCreateUpdateSiteError])
+
+  // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
+  useEffect(() => {
+    if (isDeleteServiceSuccess) showMessageFeedback('success', 'The service te was deleted!')
+    if (isDeleteServiceError || isDeleteAgendaError) openNotification('error', 'We could not delete the service!', `An error occurred while deleting the service.`)
+  }, [isDeleteServiceSuccess, isDeleteServiceError, isDeleteAgendaError])
+
+  useEffect(() => {
+    if (isCreateUpdateServiceSuccess) showMessageFeedback('success', 'The service was saved!')
+    if (isCreateUpdateServiceError) openNotification('error', 'We could not save the service!', `An error occurred while saving the service.`)
+  }, [isCreateUpdateServiceSuccess, isCreateUpdateServiceError])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -125,25 +193,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const handleCancel = () => {
     form.resetFields()
     setNewService(undefined)
-  }
-
-  const handleEditClick = (item: HealthcareParty) => {
-    setEditItem(item)
-    setInputValue(item.name ?? '')
-  }
-
-  const handleSaveClick = useCallback(
-    (item: HealthcareParty) => {
-      createUpdateHealthcareParty(new HealthcareParty({ ...item, name: inputValue }))
-      createUpdateAgendaMutation(new Agenda({ author: item.id }))
-      setEditItem(undefined)
-      if (item.id === newService?.id) setNewService(undefined)
-    },
-    [services, editItem, inputValue, newService],
-  )
-
-  const cancelEdit = () => {
-    setEditItem(undefined)
   }
 
   return (
@@ -181,7 +230,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             renderItem={(item) => (
               <List.Item>
                 {editItem?.id === item.id ? (
-                  <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveClick(item)} autoFocus />
+                  <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveServiceClick(item)} autoFocus />
                 ) : (
                   item.name
                 )}
@@ -191,20 +240,20 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                       className="edit-button"
                       icon={<EditOutlined />}
                       style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      onClick={() => handleEditClick(item)}
+                      onClick={() => handleEditServiceClick(item)}
                     />
                   </Tooltip>
                 )}
                 {editItem?.id === item.id && (
                   <div className="action-buttons">
                     <Tooltip title="Cancel">
-                      <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEdit} />
+                      <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
                     </Tooltip>
                     <Tooltip title="Save the service">
                       <Button
                         icon={<SaveOutlined />}
                         style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                        onClick={() => handleSaveClick(item)}
+                        onClick={() => handleSaveServiceClick(item)}
                       />
                     </Tooltip>
                     <Tooltip title="Delete the service">

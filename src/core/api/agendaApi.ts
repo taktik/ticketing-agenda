@@ -2,7 +2,8 @@ import { Agenda, AgendaFilters, TimeTableItem, CalendarItem, CalendarItemType, T
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { DeleteAgendaByIdParameters } from './fetchType'
 
 enum AgendaTags {
   Agenda = 'Agenda',
@@ -37,15 +38,6 @@ export const agendaApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: res.id }] : []),
     }),
-    getAgendaByAuthorId: builder.query<Agenda[] | undefined, void>({
-      async queryFn(_, { getState }) {
-        const agendaApi = (await cardinalApi(getState))?.agenda
-        return guard([agendaApi], async (): Promise<Agenda[]> => {
-          return await loadFromIterator(await agendaApi!.filterAgendasBy(AgendaFilters.all()), 1000)
-        })
-      },
-      providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
-    }),
     createUpdateAgenda: builder.mutation<Agenda | undefined, Agenda>({
       async queryFn(agenda, { getState }) {
         const agendaApi = (await cardinalApi(getState))?.agenda
@@ -79,10 +71,10 @@ export const agendaApiRtk = createApi({
   }),
 })
 
-export const { useGetAgendaQuery, useGetAgendasQuery, useGetAgendaByAuthorIdQuery, useCreateUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
+export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
 
 export const useGetAgendaByAuthorId = (params: { skip: boolean; authorId: string }) => {
-  const { data, ...rest } = useGetAgendaByAuthorIdQuery(undefined, {
+  const { data, ...rest } = useGetAgendasQuery(undefined, {
     skip: params.skip,
   })
 
@@ -93,5 +85,39 @@ export const useGetAgendaByAuthorId = (params: { skip: boolean; authorId: string
   return {
     data: agendaResult,
     ...rest,
+  }
+}
+
+export const useDeleteAgendaByAuthorId = () => {
+  const [deleteAgendaMutation, { isError: isDeleteError, isSuccess: isDeleteSuccess, isLoading: isDeleteLoading }] = useDeleteAgendaMutation()
+  const [authorId, setAuthorId] = useState<string | null>(null)
+
+  const {
+    data: agendas,
+    isError: isGetError,
+    isSuccess: isGetSuccess,
+    isLoading: isGetLoading,
+  } = useGetAgendasQuery(undefined, {
+    skip: !authorId,
+  })
+
+  const agendaToDelete = useMemo(() => agendas?.find((agenda) => agenda.author === authorId), [agendas, authorId])
+
+  const deleteAgenda = (params: { authorId: string }) => {
+    setAuthorId(params.authorId)
+  }
+
+  useEffect(() => {
+    if (agendaToDelete) {
+      deleteAgendaMutation(agendaToDelete)
+    }
+  }, [agendaToDelete])
+
+  return {
+    data: agendaToDelete,
+    deleteAgenda,
+    isLoading: isDeleteLoading || isGetLoading,
+    isError: isDeleteError || isGetError,
+    isSuccess: isDeleteSuccess && isGetSuccess,
   }
 }
