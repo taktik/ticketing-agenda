@@ -4,12 +4,17 @@ import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Tooltip, List, Row, Col, notification, message } from 'antd'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import './index.css'
-import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery } from '../../../core/api/healthcarePartyApi'
+import {
+  useCreateUpdateHealthcarePartyMutation,
+  useDeleteHealthcarePartyMutation,
+  useGetHealthcarePartiesByParentQuery,
+  useRecursiveHcpDeletion,
+} from '../../../core/api/healthcarePartyApi'
 import { useDeleteCalendarItemTypeMutation } from '../../../core/api/calendarItemTypeApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
 import { v4 } from 'uuid'
-import { useCreateUpdateAgendaMutation, useDeleteAgendaByAuthorId, useDeleteAgendaMutation } from '../../../core/api/agendaApi'
+import { useCreateUpdateAgendaMutation, useDeleteAgendaByAuthorId, useDeleteAgendaMutation, useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
 
 const ListHeader = React.memo(() => {
   const { newService, setNewService, selectedKeyId } = useContext(SettingContext)
@@ -57,13 +62,9 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] =
     useCreateUpdateAgendaMutation()
-  const {
-    deleteAgenda: deleteAgendaByAuthorId,
-    data,
-    isLoading: isDeleteAgendaLoading,
-    isError: isDeleteAgendaError,
-    isSuccess: isDeleteAgendaSuccess,
-  } = useDeleteAgendaByAuthorId()
+
+  const { data: agenda } = useGetAgendaByAuthorId({ skip: !editItem, authorId: editItem?.id ?? '' })
+  const [deleteAgenda, { isError: isDeleteAgendaError, isSuccess: isDeleteAgendaSuccess, isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
 
   // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] =
@@ -72,7 +73,8 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     useCreateUpdateHealthcarePartyMutation()
 
   // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
-  const [deleteSite, { isError: isDeleteSiteError, isSuccess: isDeleteSiteSuccess, isLoading: isDeleteSiteLoading }] = useDeleteHealthcarePartyMutation()
+  // const [deleteSite, { isError: isDeleteSiteError, isSuccess: isDeleteSiteSuccess, isLoading: isDeleteSiteLoading }] = useDeleteHealthcarePartyMutation()  OLD WAY
+  const { deleteHcpRecursively, isLoading: isDeleteSiteLoading, isSuccess: isDeleteSiteSuccess, error: isDeleteSiteError } = useRecursiveHcpDeletion()
   const [deleteService, { isError: isDeleteServiceError, isSuccess: isDeleteServiceSuccess, isLoading: isDeleteServiceLoading }] = useDeleteHealthcarePartyMutation()
 
   const handleSubmit = () => {
@@ -97,21 +99,20 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const handleSiteDelete = () => {
     if (site && !siteIsNew) {
-      deleteSite(site)
+      deleteHcpRecursively(site)
       setSelectedKey('default')
     }
   }
 
   const handleServiceDelete = () => {
-    if (editItem) {
-      deleteAgendaByAuthorId({ authorId: editItem.id })
+    if (editItem && agenda) {
+      deleteAgenda(agenda)
     }
   }
 
   const handleSaveServiceClick = useCallback(
     (item: HealthcareParty) => {
       createUpdateService({ ...item, name: inputValue })
-      setEditItem(undefined)
     },
     [inputValue],
   )
@@ -132,6 +133,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         // If service has no rev, it's a new object and thus we create an associated agenda
         createUpdateAgendaMutation(new Agenda({ author: editItem.id }))
       }
+      setEditItem(undefined)
       if (editItem.id === newService?.id) setNewService(undefined)
     }
   }, [isCreateUpdateServiceSuccess])

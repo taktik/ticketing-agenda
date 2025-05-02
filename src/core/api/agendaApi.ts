@@ -4,6 +4,9 @@ import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
 import { useEffect, useMemo, useState } from 'react'
 import { DeleteAgendaByIdParameters } from './fetchType'
+import { calendarItemApiRtk } from './calendarItemApi'
+import { calendarItemTypeApiRtk } from './calendarItemTypeApi'
+import { timeTableApiRtk } from './timeTableApi'
 
 enum AgendaTags {
   Agenda = 'Agenda',
@@ -53,6 +56,7 @@ export const agendaApiRtk = createApi({
       invalidatesTags: (result, error, arg) => (result ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
     }),
     deleteAgenda: builder.mutation<string | undefined, Agenda>({
+      // Delete the agendas and the related CalendarItemTypes (demarches) and the TimeTable associated with it (backend will remove timetableItems related to the timetable)
       async queryFn(agenda, { getState }) {
         const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async () => {
@@ -67,6 +71,60 @@ export const agendaApiRtk = createApi({
         { type: AgendaTags.Agenda, id: 'all' },
         { type: AgendaTags.Agenda, id },
       ],
+      async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
+        let getCalendarItemTypesAction
+        let getTimeTablesAction
+
+        try {
+          // --- Step 1: Fetch Calendar Item Types ---
+          getCalendarItemTypesAction = dispatch(calendarItemTypeApiRtk.endpoints.getCalendarItemTypes.initiate({ agendaId: id }))
+          const calendarItemsResult = await getCalendarItemTypesAction
+          getCalendarItemTypesAction.unsubscribe() // Unsubscribe after getting result
+
+          // Check for errors from queryFn (expects { data: ... } or { error: ... })
+          if (calendarItemsResult.error) {
+            throw calendarItemsResult.error // Propagate the error
+          }
+          const calendarItemTypes = calendarItemsResult.data // Extract data on success
+
+          // --- Step 2: Delete Calendar Item Types (if any) ---
+          if (calendarItemTypes && calendarItemTypes.length > 0) {
+            const idsToDelete = calendarItemTypes.map((item) => item.id)
+            // Initiate the deletion mutation, passing the array of IDs
+            // Use unwrap() to await completion and catch errors
+            await dispatch(calendarItemTypeApiRtk.endpoints.deleteCalendarItemType.initiate(idsToDelete)).unwrap()
+          } else {
+            console.log(`[onQueryStarted deleteAgenda] No CalendarItemTypes found for agenda ${id}. Skipping deletion.`)
+          }
+
+          // --- Step 3: Fetch Time Tables ---
+          getTimeTablesAction = dispatch(timeTableApiRtk.endpoints.getTimeTables.initiate({ agendaId: id }))
+          const timeTablesResult = await getTimeTablesAction
+          getTimeTablesAction.unsubscribe() // Unsubscribe after getting result
+
+          if (timeTablesResult.error) {
+            console.error(`[onQueryStarted deleteAgenda] Error fetching TimeTables for agenda ${id}:`, timeTablesResult.error)
+            throw timeTablesResult.error
+          }
+          const timeTables = timeTablesResult.data
+
+          // --- Step 4: Delete Time Tables (if any) ---
+          if (timeTables && timeTables.length > 0) {
+            await dispatch(timeTableApiRtk.endpoints.deleteTimeTables.initiate(timeTables)).unwrap()
+          } else {
+            console.log(`[onQueryStarted deleteAgenda] No TimeTables found for agenda ${id}.`)
+          }
+        } catch (error) {
+          console.error(`[onQueryStarted deleteAgenda] Error during orchestrated deletion for agenda ${id}:`, error)
+          // Error could be from fetching/deleting children, or deleting the parent.
+          // RTK Query handles the mutation's error state.
+          // Ensure subscriptions are cleaned up on error
+          getCalendarItemTypesAction?.unsubscribe()
+          getTimeTablesAction?.unsubscribe()
+          // Let the error propagate so the calling hook's .unwrap() catches it.
+          throw error
+        }
+      },
     }),
   }),
 })

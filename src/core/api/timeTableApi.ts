@@ -1,4 +1,4 @@
-import { TimeTable, TimeTableFilters } from '@icure/cardinal-sdk'
+import { DocIdentifier, TimeTable, TimeTableFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
@@ -66,7 +66,20 @@ export const timeTableApiRtk = createApi({
         { type: TimeTableTags.TimeTable, id: id },
       ],
     }),
+    deleteTimeTables: builder.mutation<DocIdentifier[] | undefined, TimeTable[]>({
+      async queryFn(timeTables, { getState }) {
+        const timeTableApi = (await cardinalApi(getState))?.timeTable
+        return guard([timeTableApi], async () => {
+          const result = await timeTableApi?.deleteTimeTables(timeTables)
+          if (!result) {
+            throw new Error('TimeTable can`t be deleted')
+          }
+          return result
+        })
+      },
+      invalidatesTags: () => [{ type: TimeTableTags.TimeTable, id: 'all' }],
+    }),
   }),
 })
 
-export const { useGetTimeTablesQuery, useGetTimeTableQuery, useCreateUpdateTimeTableMutation, useDeleteTimeTableMutation } = timeTableApiRtk
+export const { useGetTimeTablesQuery, useGetTimeTableQuery, useCreateUpdateTimeTableMutation, useDeleteTimeTableMutation, useDeleteTimeTablesMutation } = timeTableApiRtk
