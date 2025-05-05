@@ -13,6 +13,7 @@ import { timeTableApiRtk } from './api/timeTableApi'
 import { calendarItemApiRtk } from './api/calendarItemApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
+import { groupApiRtk } from './api/groupApi'
 
 export const appReducer = combineReducers({
   app: app.reducer,
@@ -28,6 +29,7 @@ export const appReducer = combineReducers({
   calendarItemApi: calendarItemApiRtk.reducer,
   healthcarePartyApi: healthcarePartyApiRtk.reducer,
   calendarItemTypeApi: calendarItemTypeApiRtk.reducer,
+  groupApi: groupApiRtk.reducer,
 })
 
 export const persistedReducer = persistReducer(persistConfig, appReducer)

@@ -15,14 +15,18 @@ import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
 import { v4 } from 'uuid'
 import { useCreateUpdateAgendaMutation, useDeleteAgendaByAuthorId, useDeleteAgendaMutation, useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
+import { useTranslation } from 'react-i18next'
 
 interface ListHeaderProps {
+  site: HealthcareParty | undefined
   editItem: HealthcareParty | undefined
   setEditItem: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
 }
 
-const ListHeader = React.memo(({ editItem, setEditItem }: ListHeaderProps) => {
+const ListHeader = React.memo(({ site, editItem, setEditItem }: ListHeaderProps) => {
   const { newService, setNewService, selectedKeyId } = useContext(SettingContext)
+  const { t, i18n } = useTranslation()
+
   const handleAddService = useCallback(() => {
     if (!newService && selectedKeyId) {
       const addedService = new HealthcareParty({ name: 'New Service', parentId: selectedKeyId, id: v4() })
@@ -33,12 +37,17 @@ const ListHeader = React.memo(({ editItem, setEditItem }: ListHeaderProps) => {
     } else {
       // selectedkeyId undefined ? => error
     }
-  }, [newService, setNewService, editItem])
+  }, [newService, setNewService, editItem, selectedKeyId])
   return (
     <div className="list-header">
       <div>Services :</div>
-      <Tooltip title="Add a new service">
-        <Button icon={<PlusOutlined />} disabled={!!newService} onClick={handleAddService} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
+      <Tooltip title={!site?.rev ? 'You must first save the site before adding Services' : 'Add a new service'}>
+        <Button
+          icon={<PlusOutlined />}
+          disabled={!!newService || !site?.rev}
+          onClick={handleAddService}
+          style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+        />
       </Tooltip>
     </div>
   )
@@ -50,6 +59,7 @@ interface SiteSettingProps {
 
 export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const { newSite, setNewSite, setSelectedKey, newService, setNewService } = useContext(SettingContext)
+  const { t, i18n } = useTranslation()
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const siteIsNew = useMemo(() => (newSite ? newSite.id === site?.id : false), [newSite, site]) // Easier to use that condition
@@ -125,12 +135,22 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   )
 
   const handleEditServiceClick = (item: HealthcareParty) => {
-    setEditItem(item)
     setInputValue(item.name ?? '')
+    setEditItem(item)
+  }
+
+  const handleDeleteServiceClick = (item: HealthcareParty) => {
+    if (!item.rev) {
+      setEditItem(undefined)
+      setNewService(undefined)
+    } else {
+      setShowDeleteServiceModal(true)
+    }
   }
 
   const cancelEditService = () => {
     setEditItem(undefined)
+    setInputValue('New service')
   }
 
   // If we successfully created the service, then we create the associated agenda. Error is handled in the useEffects below
@@ -241,13 +261,13 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         </div>
         <div className="services-list">
           <List
-            header={<ListHeader editItem={editItem} setEditItem={setEditItem} />}
+            header={<ListHeader site={site} editItem={editItem} setEditItem={setEditItem} />}
             dataSource={servicesList}
             locale={{ emptyText: <Empty description="No service yet" /> }}
             renderItem={(item) => (
               <List.Item>
                 {editItem?.id === item.id ? (
-                  <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveServiceClick(item)} autoFocus />
+                  <Input defaultValue={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveServiceClick(item)} autoFocus />
                 ) : (
                   item.name
                 )}
@@ -276,8 +296,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                     <Tooltip title="Delete the service">
                       <Button
                         icon={<DeleteOutlined />}
-                        disabled={item.id === newService?.id}
-                        onClick={() => setShowDeleteServiceModal(true)}
+                        onClick={() => handleDeleteServiceClick(item)}
                         style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
                       />
                     </Tooltip>

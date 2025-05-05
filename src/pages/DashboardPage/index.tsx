@@ -1,30 +1,29 @@
+import { SettingOutlined } from '@ant-design/icons'
 import { DatesSetArg } from '@fullcalendar/core'
+import '@fullcalendar/core/locales/de'
+import '@fullcalendar/core/locales/fr'
+import '@fullcalendar/core/locales/nl'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Agenda, CalendarItemType, HealthcareParty, TimeTable } from '@icure/cardinal-sdk'
-import { Calendar as AntCalendar, Button, theme, Tooltip } from 'antd'
+import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
+import { Calendar as AntCalendar, Button, Tooltip } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { Header } from '../../components/common/Header'
-import { ModalSiteForm } from '../../components/ModalSiteForm'
+import { DemarcheSelector } from '../../components/DemarcheSelector'
+import { ModalScheduling } from '../../components/ModalScheduling'
+import { ModalSettings } from '../../components/ModalSettings'
 import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
-import { useGetAgendasQuery } from '../../core/api/agendaApi'
-import { useGetTimeTablesQuery } from '../../core/api/timeTableApi'
+import { SettingContextProvider } from '../../contexts/SettingContext'
+import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
+import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
-import { useGetHealthcarePartiesQuery, useGetRootHealthcareParty, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
-import { DemarcheSelector } from '../../components/DemarcheSelector'
-import { ModalServiceForm } from '../../components/ModalServiceForm'
-import { ModalSettings } from '../../components/ModalSettings'
-import { ModalDemarcheForm } from '../../components/ModalDemarcheForm'
-import { ModalScheduling } from '../../components/ModalScheduling'
-import { SettingOutlined } from '@ant-design/icons'
-import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { SettingContextProvider } from '../../contexts/SettingContext'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
@@ -33,6 +32,7 @@ export default function DashboardPage() {
   const calendarRef = useRef<FullCalendar | null>(null)
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
+  const { t, i18n } = useTranslation()
 
   const { data: rootHcp } = useGetRootHealthcareParty({ skip: skip })
 
@@ -90,7 +90,7 @@ export default function DashboardPage() {
         <div className="LeftPanel">
           <div className="SiteSelectorRow">
             <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
-            <Tooltip title="Settings">
+            <Tooltip title={t('content.settings')}>
               <Button
                 icon={<SettingOutlined />}
                 onClick={() => setSettingsModalOpen(true)}
@@ -107,6 +107,7 @@ export default function DashboardPage() {
         <div className="RightPanel">
           <FullCalendar
             ref={calendarRef}
+            locale={i18n.language}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             firstDay={1}
             headerToolbar={{
@@ -114,9 +115,14 @@ export default function DashboardPage() {
               center: 'title',
               right: 'timeGridDay,timeGridWeek myCustomButton',
             }}
+            buttonText={{
+              today: t('content.today'),
+              timeGridDay: t('content.day'),
+              timeGridWeek: t('content.week'),
+            }}
             customButtons={{
               myCustomButton: {
-                text: 'Scheduling',
+                text: t('content.scheduling'),
                 hint: 'View the scheduling',
                 click: () => {
                   setSchedulingModalOpen(true)

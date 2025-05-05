@@ -19,6 +19,7 @@ import { SiteSetting } from './SiteSetting'
 import { ServiceSetting } from './ServiceSetting'
 import { v4 } from 'uuid'
 import { SettingContext } from '../../contexts/SettingContext'
+import { useTranslation } from 'react-i18next'
 
 interface ModalSchedulingProps {
   isVisible: boolean
@@ -29,6 +30,7 @@ type MenuItem = Required<MenuProps>['items'][number]
 
 export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): ReactElement => {
   const { newSite, setNewSite, selectedSite, rootHcp, selectedKey, setSelectedKey } = useContext(SettingContext)
+  const { t, i18n } = useTranslation()
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])

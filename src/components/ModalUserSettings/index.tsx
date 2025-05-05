@@ -7,7 +7,7 @@ import { getFileUploaderCommonProps, getImgSRC } from '../../helpers/fileToBase6
 
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
-import './index.css'
+import '../ModalUserSettings/index.css'
 import { AccountSetting } from './Settings/AccountSetting'
 import { AgendaSetting } from './Settings/AgendaSetting'
 
@@ -68,7 +68,7 @@ export const ModalSettings = ({ isVisible, onClose, currentUser }: ModalSettings
       default:
         return <AccountSetting currentUser={currentUser} onClose={onClose} />
     }
-  }, [selectedKey])
+  }, [selectedKey, currentUser])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings">

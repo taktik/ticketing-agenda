@@ -16,6 +16,7 @@ import { createPortal } from 'react-dom'
 import { v4 } from 'uuid'
 import { useCreateUpdateAgendaMutation, useDeleteAgendaByAuthorId, useDeleteAgendaMutation, useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
 import { useGetCalendarItemQuery } from '../../../core/api/calendarItemApi'
+import { useTranslation } from 'react-i18next'
 
 interface ListHeaderProps {
   service: HealthcareParty | undefined
@@ -59,6 +60,7 @@ interface ServiceSettingProps {
 
 export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement => {
   const { setSelectedKey, newDemarche, setNewDemarche } = useContext(SettingContext)
+  const { t, i18n } = useTranslation()
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const [showDeleteDemarcheModal, setShowDeleteDemarcheModal] = useState<boolean>(false)
   const [editItem, setEditItem] = useState<CalendarItemType | undefined>(undefined) // The demarche being edited in the list
@@ -147,23 +149,19 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     setInputValue(item.name ?? '')
   }
 
-  const cancelEditService = () => {
-    setEditItem(undefined)
+  const handleDeleteServiceClick = (item: CalendarItemType) => {
+    if (!item.rev) {
+      setEditItem(undefined)
+      setNewDemarche(undefined)
+    } else {
+      setShowDeleteDemarcheModal(true)
+    }
   }
 
-  /*
-  // If we successfully created the service, then we create the associated agenda. Error is handled in the useEffects below
-  useEffect(() => {
-    if (editItem && isCreateUpdateServiceSuccess) {
-      if (!editItem.rev) {
-        // If service has no rev, it's a new object and thus we create an associated agenda
-        createUpdateAgendaMutation(new Agenda({ author: editItem.id }))
-      }
-      setEditItem(undefined)
-      if (editItem.id === newService?.id) setNewService(undefined)
-    }
-  }, [isCreateUpdateServiceSuccess])
-  */
+  const cancelEditService = () => {
+    setEditItem(undefined)
+    setInputValue('New Demarche')
+  }
 
   //  Two pairs of useffects : First pair handles the delete and create/update of demarches
   useEffect(() => {
@@ -296,8 +294,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                     <Tooltip title="Delete the demarche">
                       <Button
                         icon={<DeleteOutlined />}
-                        disabled={item.id === newDemarche?.id}
-                        onClick={() => setShowDeleteServiceModal(true)}
+                        onClick={() => handleDeleteServiceClick(item)}
                         style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
                       />
                     </Tooltip>

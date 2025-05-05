@@ -1,9 +1,7 @@
-import React, { ReactElement, useCallback, useEffect, useMemo } from 'react'
-import { Select as AntSelect, Button, notification, message, Tooltip, ConfigProvider } from 'antd'
-import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
-import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
+import { HealthcareParty } from '@icure/cardinal-sdk'
+import { Select as AntSelect, message, notification } from 'antd'
+import React, { ReactElement, useEffect, useMemo } from 'react'
 import './index.css'
-import { useDeleteAgendaMutation } from '../../core/api/agendaApi'
 
 interface SiteSelectorProps {
   sites: HealthcareParty[]
@@ -20,38 +18,6 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelec
       })),
     [sites],
   )
-
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
-
-  const [deleteAgenda, { isError, isSuccess, isLoading }] = useDeleteAgendaMutation()
-
-  useEffect(() => {
-    if (isLoading) showMessageFeedback('loading', 'The site is deleting...')
-    if (isSuccess) showMessageFeedback('success', 'The site was deleted!')
-    if (isError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
-  }, [isLoading, isSuccess, isError])
 
   useEffect(() => {
     if (selectedSite) {
@@ -84,24 +50,3 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelec
     </div>
   )
 }
-
-/*
-
- <Tooltip title="Delete the site">
-        <Button
-          type="primary"
-          shape="circle"
-          icon={<DeleteOutlined />}
-          danger
-          disabled={!selectedSite}
-          onClick={() => {
-            if (selectedSite) {
-              deleteAgenda(selectedSite)
-              setSelectedSite(undefined)
-            }
-          }}
-        />
-      </Tooltip>
-
-
-*/

@@ -7,8 +7,6 @@ import './index.css'
 import { SpinLoader } from '../../../common/SpinLoader'
 import ImgCrop from 'antd-img-crop'
 
-import './index.css'
-
 interface AgendaSettingProps {
   onClose: () => void
 }

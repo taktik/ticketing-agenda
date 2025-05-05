@@ -112,38 +112,13 @@ body {
 body * {
   font-family: Lato400, sans-serif;
 }
-.modalAddAgendaForm {
+.root {
   width: 100%;
-  display: flex;
-  align-self: stretch;
-  max-height: 700px;
-  position: relative;
-}
-@media screen and (max-width: calc(768px - 1px)) {
-  .modalAddAgendaForm {
-    flex-grow: 1;
-  }
-}
-.modalAddAgendaForm__form {
+  height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding: 24px;
-  flex: 1 0 0;
-}
-@media screen and (max-width: calc(768px - 1px)) {
-  .modalAddAgendaForm__form {
-    padding: 12px;
-  }
-}
-.modalAddAgendaForm__form__inputs {
-  display: flex;
-  flex-direction: column;
-  flex: 1 0 0;
-  gap: 12px;
-}
-@media screen and (max-width: calc(768px - 1px)) {
-  .modalAddAgendaForm__form__inputs {
-    padding-bottom: 12px;
-  }
 }
 /*# sourceMappingURL=index.css.map */

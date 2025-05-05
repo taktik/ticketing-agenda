@@ -18,12 +18,28 @@ export const ANTD_NEW_THEME = {
     Tooltip: {
       colorBgSpotlight: '#1F2C4E',
     },
+    Menu: {
+      itemHoverBg: '#e306131a',
+      itemSelectedBg: '#e30613',
+      itemSelectedColor: '#ffffff',
+      itemMarginBlock: '0.75rem',
+      itemPaddingInline: 0,
+      itemMarginInline: 0,
+      itemBg: '#ffffff',
+      subMenuItemBg: '#ffffff',
+      itemBorderRadius: 0,
+    },
     Modal: {
       margin: 0,
     },
     Input: {
       fontSizeLG: 13,
       fontSize: 13,
+      borderRadius: 0,
+      hoverBorderColor: '#e30613',
+      colorPrimary: '#e30613',
+      activeBorderColor: '#e30613',
+      controlOutline: '#e306131a',
     },
     InputNumber: {
       fontSizeLG: 13,
@@ -33,11 +49,17 @@ export const ANTD_NEW_THEME = {
       fontSizeLG: 13,
       fontSize: 13,
     },
+    List: {
+      itemPadding: '0',
+    },
     Select: {
       fontSizeLG: 13,
       fontSize: 13,
-      optionSelectedBg: '#DCE7F2',
-      optionSelectedColor: '#084B83',
+      hoverBorderColor: '#e30613',
+      optionSelectedBg: '#e306131a',
+      controlOutline: '#e306131a',
+      optionSelectedColor: '#e30613',
+      activeBorderColor: '#e30613',
     },
     Popconfirm: {
       colorWarning: '#EB3437',

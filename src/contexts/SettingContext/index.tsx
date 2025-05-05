@@ -45,6 +45,7 @@ export const SettingContextProvider: React.FC<SettingContextProviderProps> = ({ 
   const selectedKeyId = useMemo(() => {
     const match = selectedKey.match(/^(site|service)-(.+)$/)
     const id = match?.[2]
+    console.log('key id', id)
     return id
   }, [selectedKey])
 
