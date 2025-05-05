@@ -12,9 +12,10 @@ interface ModalConfirmActionProps {
   onNoClick: () => void
   isVisible: boolean
   mode?: 'danger' | undefined
+  content?: React.ReactNode
 }
 
-export const ModalConfirmAction = ({ title, description, yesBtnTitle, noBtnTitle, onYesClick, onNoClick, isVisible, mode }: ModalConfirmActionProps) => {
+export const ModalConfirmAction = ({ title, description, yesBtnTitle, noBtnTitle, onYesClick, onNoClick, isVisible, mode, content }: ModalConfirmActionProps) => {
   return (
     <CustomModal
       mode={mode}
@@ -25,9 +26,7 @@ export const ModalConfirmAction = ({ title, description, yesBtnTitle, noBtnTitle
       primaryBtnTitle={yesBtnTitle}
       title={title}
     >
-      <div className="modalConfirmAction">
-        <p>{description}</p>
-      </div>
+      <div className="modalConfirmAction">{content ? content : <p>{description}</p>}</div>
     </CustomModal>
   )
 }

@@ -1,7 +1,7 @@
 import { DeleteOutlined, PlusOutlined, EditOutlined, SaveOutlined, RollbackOutlined, CloseOutlined } from '@ant-design/icons'
 import { SettingContext } from '../../../contexts/SettingContext'
 import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
-import { Button, Form, Input, Tooltip, List, Row, Col, notification, message } from 'antd'
+import { Button, Form, Input, Tooltip, List, Row, Col, notification, message, Empty } from 'antd'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import './index.css'
 import {
@@ -243,6 +243,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
           <List
             header={<ListHeader editItem={editItem} setEditItem={setEditItem} />}
             dataSource={servicesList}
+            locale={{ emptyText: <Empty description="No service yet" /> }}
             renderItem={(item) => (
               <List.Item>
                 {editItem?.id === item.id ? (
@@ -290,8 +291,14 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
       {showDeleteSiteModal &&
         createPortal(
           <ModalConfirmAction
-            title="Delete site"
-            description="Are you sure you want to delete this site? Once deleted, their information can't be recovered, so it's a permanent action."
+            title="Are you sure you want to delete this site?"
+            description=""
+            content={
+              <>
+                <p>This action will delete the services, demarches and all schedules associated with that site</p>
+                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+              </>
+            }
             yesBtnTitle="Delete"
             noBtnTitle="Close"
             onYesClick={() => {
@@ -307,8 +314,14 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
       {showDeleteServiceModal &&
         createPortal(
           <ModalConfirmAction
-            title="Delete service"
-            description="Are you sure you want to delete this service? Once deleted, their information can't be recovered, so it's a permanent action."
+            title="Are you sure you want to delete this service?"
+            description=""
+            content={
+              <>
+                <p>This action will delete the demarches and all schedules associated with that service.</p>
+                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+              </>
+            }
             yesBtnTitle="Delete"
             noBtnTitle="Close"
             onYesClick={() => {

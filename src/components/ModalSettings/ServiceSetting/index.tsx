@@ -1,7 +1,7 @@
 import { DeleteOutlined, PlusOutlined, EditOutlined, SaveOutlined, RollbackOutlined, CloseOutlined } from '@ant-design/icons'
 import { SettingContext } from '../../../contexts/SettingContext'
 import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
-import { Button, Form, Input, Tooltip, List, Row, Col, notification, message } from 'antd'
+import { Button, Form, Input, Tooltip, List, Row, Col, notification, message, Empty, Typography } from 'antd'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import './index.css'
 import {
@@ -21,28 +21,30 @@ interface ListHeaderProps {
   service: HealthcareParty | undefined
   editItem: CalendarItemType | undefined
   setEditItem: React.Dispatch<React.SetStateAction<CalendarItemType | undefined>>
+  agenda: Agenda | undefined
 }
 
-const ListHeader = React.memo(({ service, editItem, setEditItem }: ListHeaderProps) => {
+const ListHeader = React.memo(({ service, agenda, editItem, setEditItem }: ListHeaderProps) => {
   const { selectedKeyId, newDemarche, setNewDemarche } = useContext(SettingContext)
   const handleAddDemarche = useCallback(() => {
     if (!newDemarche && selectedKeyId) {
-      const addedDemarche = new CalendarItemType({ name: 'New Demarche', healthcarePartyId: service?.id, id: v4() }) //new HealthcareParty({ name: 'New Service', parentId: selectedKeyId, id: v4() })
+      const addedDemarche = new CalendarItemType({ name: 'New Demarche', healthcarePartyId: service?.id, agendaId: agenda?.id, id: v4() })
       setNewDemarche(addedDemarche)
+      console.log('addedDemarche', addedDemarche)
       if (!editItem) {
         setEditItem(addedDemarche)
       }
     } else {
       // selectedkeyId undefined ? => error
     }
-  }, [newDemarche, setNewDemarche, editItem])
+  }, [newDemarche, setNewDemarche, editItem, service, agenda])
   return (
     <div className="list-header">
-      <div>Services :</div>
-      <Tooltip title="Add a new service">
+      <div>Demarches :</div>
+      <Tooltip title="Add a new demarche">
         <Button
           icon={<PlusOutlined />}
-          disabled={!!newService}
+          disabled={!!newDemarche}
           onClick={handleAddDemarche}
           style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
         />
@@ -64,7 +66,11 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const { data: agenda } = useGetAgendaByAuthorId({ skip: !service, authorId: service?.id ?? '' })
 
-  const { data: demarches } = useGetCalendarItemTypesQuery({ skip: !service, agendaId: agenda?.id ?? '' })
+  const { data: demarches } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
+
+  useEffect(() => console.log('service', service), [service])
+  useEffect(() => console.log('agenda', agenda), [agenda])
+  useEffect(() => console.log('demarches', demarches), [demarches])
 
   const servicesList = useMemo(() => {
     // Sorting the services alphabetically
@@ -80,8 +86,12 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] =
     useCreateUpdateHealthcarePartyMutation()
-  const [createUpdateDemarche, { isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading }] =
-    useCreateUpdateCalendarItemTypeMutation()
+  const [
+    createUpdateDemarche,
+    { data: createdUpdatedCalendarItemTypeData, isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading },
+  ] = useCreateUpdateCalendarItemTypeMutation()
+
+  useEffect(() => console.log('createdUpdatedCalendarItemTypeData', createdUpdatedCalendarItemTypeData), [createdUpdatedCalendarItemTypeData])
 
   const [deleteDemarche, { isError: isDeleteDemarcheError, isSuccess: isDeleteDemarcheSuccess, isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypeMutation()
   const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading, isSuccess: isDeleteServiceSuccess, error: isDeleteServiceError } = useRecursiveHcpDeletion()
@@ -120,14 +130,19 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   }
 
   const handleSaveServiceClick = useCallback(
-    (item: HealthcareParty) => {
-      createUpdateService({ ...item, name: inputValue })
-      setInputValue('New service')
+    (item: CalendarItemType) => {
+      // Create/Update the demarche
+      createUpdateDemarche({ ...item, name: inputValue })
+      // Set back to default
+      setInputValue('New Demarche')
+      setEditItem(undefined)
+      // If this was a new demarche, set newDemarche value back to default as well
+      if (item.id === newDemarche?.id) setNewDemarche(undefined)
     },
-    [inputValue],
+    [inputValue, newDemarche],
   )
 
-  const handleEditServiceClick = (item: HealthcareParty) => {
+  const handleEditServiceClick = (item: CalendarItemType) => {
     setEditItem(item)
     setInputValue(item.name ?? '')
   }
@@ -136,6 +151,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     setEditItem(undefined)
   }
 
+  /*
   // If we successfully created the service, then we create the associated agenda. Error is handled in the useEffects below
   useEffect(() => {
     if (editItem && isCreateUpdateServiceSuccess) {
@@ -147,19 +163,20 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       if (editItem.id === newService?.id) setNewService(undefined)
     }
   }, [isCreateUpdateServiceSuccess])
+  */
 
-  // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
+  //  Two pairs of useffects : First pair handles the delete and create/update of demarches
   useEffect(() => {
-    if (isDeleteSiteSuccess) showMessageFeedback('success', 'The site was deleted!')
-    if (isDeleteSiteError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
-  }, [isDeleteSiteSuccess, isDeleteSiteError])
+    if (isDeleteDemarcheSuccess) showMessageFeedback('success', 'The demarche was deleted!')
+    if (isDeleteDemarcheError) openNotification('error', 'We could not delete the demarche!', `An error occurred while deleting the demarche.`)
+  }, [isDeleteDemarcheSuccess, isDeleteDemarcheError])
 
   useEffect(() => {
-    if (isCreateUpdateSiteSuccess) showMessageFeedback('success', 'The site was saved!')
-    if (isCreateUpdateSiteError) openNotification('error', 'We could not save the site!', `An error occurred while saving the site.`)
-  }, [isCreateUpdateSiteSuccess, isCreateUpdateSiteError])
+    if (isCreateUpdateDemarcheSuccess) showMessageFeedback('success', 'The demarche was saved!')
+    if (isCreateUpdateDemarcheError) openNotification('error', 'We could not save the demarche!', `An error occurred while saving the demarche.`)
+  }, [isCreateUpdateDemarcheSuccess, isCreateUpdateDemarcheError])
 
-  // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
+  // Second pair handles the delete and create/update of services
   useEffect(() => {
     if (isDeleteServiceSuccess) showMessageFeedback('success', 'The service was deleted!')
     if (isDeleteServiceError) openNotification('error', 'We could not delete the service!', `An error occurred while deleting the service.`)
@@ -196,7 +213,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const handleCancel = () => {
     form.resetFields()
-    setNewService(undefined)
+    setNewDemarche(undefined)
   }
 
   const nameValue = Form.useWatch('name', form)
@@ -206,46 +223,47 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       {notificationContextHolder}
       {messageContextHolder}
       <div className="top-part">
-        <div className="edit-site">
+        <div className="edit-service">
           <Form
             layout="vertical"
             colon={false}
             form={form}
             initialValues={{
-              name: site?.name,
+              name: service?.name,
             }}
             style={{ width: '100%' }}
           >
-            <Form.Item name="name" rules={[{ required: true, message: 'Name of the site' }]}>
+            <Form.Item name="name" rules={[{ required: true, message: 'Name of the service' }]}>
               <Input
-                suffix={<CloseOutlined disabled={nameValue === site?.name} onClick={handleCancel} />}
-                value={site ? site.name : 'New site'}
+                suffix={<CloseOutlined disabled={nameValue === service?.name} onClick={handleCancel} />}
+                value={service ? service.name : 'New service'}
                 size="large"
                 style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
               />
             </Form.Item>
           </Form>
-          <Tooltip title="Save the site">
+          <Tooltip title="Save the service">
             <Button
               icon={<SaveOutlined />}
               style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-              disabled={nameValue === site?.name && !!site?.rev}
+              disabled={nameValue === service?.name && !!service?.rev}
               onClick={handleSubmit}
             />
           </Tooltip>
-          <Tooltip title="Delete the site">
+          <Tooltip title="Delete the service">
             <Button
               icon={<DeleteOutlined />}
               disabled={!service}
-              onClick={() => setShowDeleteSiteModal(true)}
+              onClick={() => setShowDeleteServiceModal(true)}
               style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
             />
           </Tooltip>
         </div>
-        <div className="services-list">
+        <div className="demarches-list">
           <List
-            header={<ListHeader service={service} editItem={editItem} setEditItem={setEditItem} />}
+            header={<ListHeader service={service} agenda={agenda} editItem={editItem} setEditItem={setEditItem} />}
             dataSource={servicesList}
+            locale={{ emptyText: <Empty description="No demarche yet" /> }}
             renderItem={(item) => (
               <List.Item>
                 {editItem?.id === item.id ? (
@@ -254,7 +272,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   item.name
                 )}
                 {editItem?.id !== item.id && (
-                  <Tooltip title="Edit the service">
+                  <Tooltip title="Edit the demarche">
                     <Button
                       className="edit-button"
                       icon={<EditOutlined />}
@@ -268,17 +286,17 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                     <Tooltip title="Cancel">
                       <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
                     </Tooltip>
-                    <Tooltip title="Save the service">
+                    <Tooltip title="Save the demarche">
                       <Button
                         icon={<SaveOutlined />}
                         style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
                         onClick={() => handleSaveServiceClick(item)}
                       />
                     </Tooltip>
-                    <Tooltip title="Delete the service">
+                    <Tooltip title="Delete the demarche">
                       <Button
                         icon={<DeleteOutlined />}
-                        disabled={item.id === newService?.id}
+                        disabled={item.id === newDemarche?.id}
                         onClick={() => setShowDeleteServiceModal(true)}
                         style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
                       />
@@ -294,8 +312,14 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       {showDeleteServiceModal &&
         createPortal(
           <ModalConfirmAction
-            title="Delete service"
-            description="Are you sure you want to delete this service? Once deleted, their information can't be recovered, so it's a permanent action."
+            title="Are you sure you want to delete this service?"
+            description=""
+            content={
+              <>
+                <p>This action will delete the demarches and all schedules associated with that service.</p>
+                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+              </>
+            }
             yesBtnTitle="Delete"
             noBtnTitle="Close"
             onYesClick={() => {
@@ -311,8 +335,14 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       {showDeleteDemarcheModal &&
         createPortal(
           <ModalConfirmAction
-            title="Delete demarche"
-            description="Are you sure you want to delete this demarche? Once deleted, their information can't be recovered, so it's a permanent action."
+            title="Are you sure you want to delete this demarche?"
+            description=""
+            content={
+              <>
+                <p>This action will delete all schedules associated with that demarche.</p>
+                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+              </>
+            }
             yesBtnTitle="Delete"
             noBtnTitle="Close"
             onYesClick={() => {
