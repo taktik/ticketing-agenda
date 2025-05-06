@@ -19,7 +19,25 @@
     "close": "Fermer",
     "new_service": "Nouveau service",
     "new_site": "Nouveau site",
-    "new_procedure": "Nouvelle démarche"
+    "new_procedure": "Nouvelle démarche",
+    "add_site": "Ajouter un site",
+    "select_site_or_service_to_edit": "Sélectionner un site ou un service à modifier",
+    "search_site_or_service": "Rechercher un site/service",
+    "add_new_service": "Ajouter un nouveau service",
+    "save_site_before_adding_services": "Vous devez d'abord enregistrer le site avant d'ajouter des services"
+  },
+  "delete_modal": {
+    "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
+    "confirm_delete_service_prompt": "Êtes-vous sûr de vouloir supprimer ce service ?",
+    "confirm_delete_procedure_prompt": "Êtes-vous sûr de vouloir supprimer cette démarche ?",
+    "confirm_delete_schedule_prompt": "Êtes-vous sûr de vouloir supprimer cet horaire ?",
+    "confirm_delete_rule_prompt": "Êtes-vous sûr de vouloir supprimer cette règle ?",
+    "delete_site_warning_details": "Cette action supprimera les services, les démarches et tous les horaires associés à ce site.",
+    "delete_service_warning_details": "Cette action supprimera les démarches et tous les horaires associés à ce service.",
+    "delete_procedure_warning_details": "Cette action supprimera tous les horaires associés à cette démarche.",
+    "delete_schedule_warning_details": "Cette action supprimera les règles associées à cet horaire.",
+    "delete_rule_warning_details": "Cette action supprimera définitivement cette règle.",
+    "delete_permanent_warning": "Une fois supprimées, leurs informations ne pourront plus être récupérées, il s'agit donc d'une action permanente."
   },
   "notification": {
     "procedure_deleted": "La démarche a été supprimée !",

@@ -19,7 +19,25 @@
     "close": "Schließen",
     "new_service": "Neuer Dienst",
     "new_site": "Neuer Standort",
-    "new_procedure": "Neues Verfahren"
+    "new_procedure": "Neues Verfahren",
+    "add_site": "Standort hinzufügen",
+    "select_site_or_service_to_edit": "Wählen Sie einen Standort oder Dienst zum Bearbeiten aus",
+    "search_site_or_service": "Standort/Dienst suchen",
+    "add_new_service": "Neuen Dienst hinzufügen",
+    "save_site_before_adding_services": "Sie müssen zuerst den Standort speichern, bevor Sie Dienste hinzufügen können"
+  },
+  "delete_modal": {
+    "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
+    "confirm_delete_service_prompt": "Sind Sie sicher, dass Sie diesen Dienst löschen möchten?",
+    "confirm_delete_procedure_prompt": "Sind Sie sicher, dass Sie dieses Verfahren löschen möchten?",
+    "confirm_delete_schedule_prompt": "Sind Sie sicher, dass Sie diesen Zeitplan löschen möchten?",
+    "confirm_delete_rule_prompt": "Sind Sie sicher, dass Sie diese Regel löschen möchten?",
+    "delete_site_warning_details": "Diese Aktion löscht die Dienste, Verfahren und alle Zeitpläne, die mit diesem Standort verbunden sind.",
+    "delete_service_warning_details": "Diese Aktion löscht die Verfahren und alle Zeitpläne, die mit diesem Dienst verbunden sind.",
+    "delete_procedure_warning_details": "Diese Aktion löscht alle Zeitpläne, die mit diesem Verfahren verbunden sind.",
+    "delete_schedule_warning_details": "Diese Aktion löscht die Regeln, die mit diesem Zeitplan verbunden sind.",
+    "delete_rule_warning_details": "Diese Aktion löscht diese Regel endgültig.",
+    "delete_permanent_warning": "Einmal gelöscht, können ihre Informationen nicht wiederhergestellt werden, es handelt sich also um eine endgültige Aktion."
   },
   "notification": {
     "procedure_deleted": "Das Verfahren wurde gelöscht!",

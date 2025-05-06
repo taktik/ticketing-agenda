@@ -152,7 +152,7 @@ export default function DashboardPage() {
           document.body,
         )}
       {schedulingModalOpen &&
-        createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} selectedSite={selectedSite} />, document.body)}
+        createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} services={services ?? []} />, document.body)}
     </div>
   )
 }

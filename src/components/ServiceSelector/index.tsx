@@ -12,41 +12,6 @@ interface ServiceSelectorProps {
 }
 
 export const ServiceSelector = ({ services, selectedService, setSelectedService }: ServiceSelectorProps): React.ReactElement => {
-  const handleDelete = () => {
-    if (selectedService) deleteService(selectedService)
-  }
-  const [deleteService, { isError, isSuccess, isLoading }] = useDeleteHealthcarePartyMutation()
-
-  useEffect(() => {
-    if (isLoading) showMessageFeedback('loading', 'The site is deleting...')
-    if (isSuccess) showMessageFeedback('success', 'The site was deleted!')
-    if (isError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
-  }, [isLoading, isSuccess, isError])
-
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
-
   const handleSelectServiceClick = useCallback(
     (service: HealthcareParty) => {
       const toSelect = service.id === selectedService?.id ? undefined : service
@@ -93,20 +58,3 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService 
     </div>
   )
 }
-
-/*
-<Tooltip title="Delete the service">
-            <Button
-              type="primary"
-              icon={<DeleteOutlined />}
-              danger
-              disabled={!selectedService}
-              onClick={() => {
-                if (selectedService) {
-                  deleteService(selectedService)
-                  setSelectedService(undefined)
-                }
-              }}
-            />
-          </Tooltip>
-          */

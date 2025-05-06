@@ -29,7 +29,7 @@ const ListHeader = React.memo(({ site, editItem, setEditItem }: ListHeaderProps)
 
   const handleAddService = useCallback(() => {
     if (!newService && selectedKeyId) {
-      const addedService = new HealthcareParty({ name: 'New Service', parentId: selectedKeyId, id: v4() })
+      const addedService = new HealthcareParty({ name: t('content.new_service'), parentId: selectedKeyId, id: v4() })
       setNewService(addedService)
       if (!editItem) {
         setEditItem(addedService)
@@ -41,7 +41,7 @@ const ListHeader = React.memo(({ site, editItem, setEditItem }: ListHeaderProps)
   return (
     <div className="list-header">
       <div>Services :</div>
-      <Tooltip title={!site?.rev ? 'You must first save the site before adding Services' : 'Add a new service'}>
+      <Tooltip title={!site?.rev ? t('content.save_site_before_adding_services') : t('content.add_new_service')}>
         <Button
           icon={<PlusOutlined />}
           disabled={!!newService || !site?.rev}
@@ -64,7 +64,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const siteIsNew = useMemo(() => (newSite ? newSite.id === site?.id : false), [newSite, site]) // Easier to use that condition
   const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined) // The service being edited in the list
-  const [inputValue, setInputValue] = useState<string>('New service') // Input value of the service being edited
+  const [inputValue, setInputValue] = useState<string>(t('content.new_service')) // Input value of the service being edited
 
   const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: !site, parentId: site?.id ?? '' })
   const servicesList = useMemo(() => {
@@ -115,8 +115,10 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const handleSiteDelete = () => {
     if (site && !siteIsNew) {
       deleteSite(site)
-      setSelectedKey('default')
+    } else {
+      setNewSite(undefined)
     }
+    setSelectedKey('default')
   }
 
   const handleServiceDelete = () => {
@@ -129,7 +131,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const handleSaveServiceClick = useCallback(
     (item: HealthcareParty) => {
       createUpdateService({ ...item, name: inputValue })
-      setInputValue('New service')
+      setInputValue(t('content.new_service'))
     },
     [inputValue],
   )
@@ -150,7 +152,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const cancelEditService = () => {
     setEditItem(undefined)
-    setInputValue('New service')
+    setInputValue(t('content.new_service'))
   }
 
   // If we successfully created the service, then we create the associated agenda. Error is handled in the useEffects below
@@ -167,24 +169,24 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   useEffect(() => {
-    if (isDeleteSiteSuccess) showMessageFeedback('success', 'The site was deleted!')
-    if (isDeleteSiteError) openNotification('error', 'We could not delete the site!', `An error occurred while deleting the site.`)
+    if (isDeleteSiteSuccess) showMessageFeedback('success', t('notification.site_deleted'))
+    if (isDeleteSiteError) openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
   }, [isDeleteSiteSuccess, isDeleteSiteError])
 
   useEffect(() => {
-    if (isCreateUpdateSiteSuccess) showMessageFeedback('success', 'The site was saved!')
-    if (isCreateUpdateSiteError) openNotification('error', 'We could not save the site!', `An error occurred while saving the site.`)
+    if (isCreateUpdateSiteSuccess) showMessageFeedback('success', t('notification.site_saved'))
+    if (isCreateUpdateSiteError) openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
   }, [isCreateUpdateSiteSuccess, isCreateUpdateSiteError])
 
   // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   useEffect(() => {
-    if (isDeleteServiceSuccess) showMessageFeedback('success', 'The service was deleted!')
-    if (isDeleteServiceError) openNotification('error', 'We could not delete the service!', `An error occurred while deleting the service.`)
+    if (isDeleteServiceSuccess) showMessageFeedback('success', t('notification.service_deleted'))
+    if (isDeleteServiceError) openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
   }, [isDeleteServiceSuccess, isDeleteServiceError])
 
   useEffect(() => {
-    if (isCreateUpdateServiceSuccess) showMessageFeedback('success', 'The service was saved!')
-    if (isCreateUpdateServiceError) openNotification('error', 'We could not save the service!', `An error occurred while saving the service.`)
+    if (isCreateUpdateServiceSuccess) showMessageFeedback('success', t('notification.service_saved'))
+    if (isCreateUpdateServiceError) openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
   }, [isCreateUpdateServiceSuccess, isCreateUpdateServiceError])
 
   const [api, notificationContextHolder] = notification.useNotification()
@@ -236,7 +238,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             <Form.Item name="name" rules={[{ required: true, message: 'Name of the site' }]}>
               <Input
                 suffix={<CloseOutlined disabled={nameValue === site?.name} onClick={handleCancel} />}
-                value={site ? site.name : 'New site'}
+                value={site ? site.name : t('content.new_site')}
                 size="large"
                 style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
               />
@@ -253,7 +255,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
           <Tooltip title="Delete the site">
             <Button
               icon={<DeleteOutlined />}
-              disabled={siteIsNew || !site}
+              disabled={!site}
               onClick={() => setShowDeleteSiteModal(true)}
               style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
             />
@@ -310,12 +312,12 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
       {showDeleteSiteModal &&
         createPortal(
           <ModalConfirmAction
-            title="Are you sure you want to delete this site?"
+            title={t('delete_modal.confirm_delete_site_prompt')}
             description=""
             content={
               <>
-                <p>This action will delete the services, demarches and all schedules associated with that site</p>
-                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+                <p>{t('delete_modal.delete_site_warning_details')}</p>
+                <p>{t('delete_modal.delete_permanent_warning')}</p>
               </>
             }
             yesBtnTitle="Delete"
@@ -333,12 +335,12 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
       {showDeleteServiceModal &&
         createPortal(
           <ModalConfirmAction
-            title="Are you sure you want to delete this service?"
+            title={t('delete_modal.confirm_delete_service_prompt')}
             description=""
             content={
               <>
-                <p>This action will delete the demarches and all schedules associated with that service.</p>
-                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+                <p>{t('delete_modal.delete_service_warning_details')}</p>
+                <p>{t('delete_modal.delete_permanent_warning')}</p>
               </>
             }
             yesBtnTitle="Delete"

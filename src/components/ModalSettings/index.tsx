@@ -52,7 +52,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   const handleAddSite = useCallback(() => {
     if (!newSite && rootHcp) {
       const id = v4()
-      setNewSite(new HealthcareParty({ name: 'New Site', parentId: rootHcp.id, id: id }))
+      setNewSite(new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id }))
       if (selectedKey === 'default') {
         setSelectedKey(`site-${id}`)
       }

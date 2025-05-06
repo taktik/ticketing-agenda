@@ -27,9 +27,10 @@ interface ListHeaderProps {
 
 const ListHeader = React.memo(({ service, agenda, editItem, setEditItem }: ListHeaderProps) => {
   const { selectedKeyId, newDemarche, setNewDemarche } = useContext(SettingContext)
+  const { t } = useTranslation()
   const handleAddDemarche = useCallback(() => {
     if (!newDemarche && selectedKeyId) {
-      const addedDemarche = new CalendarItemType({ name: 'New Demarche', healthcarePartyId: service?.id, agendaId: agenda?.id, id: v4() })
+      const addedDemarche = new CalendarItemType({ name: t('content.new_procedure'), healthcarePartyId: service?.id, agendaId: agenda?.id, id: v4() })
       setNewDemarche(addedDemarche)
       console.log('addedDemarche', addedDemarche)
       if (!editItem) {
@@ -64,7 +65,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const [showDeleteDemarcheModal, setShowDeleteDemarcheModal] = useState<boolean>(false)
   const [editItem, setEditItem] = useState<CalendarItemType | undefined>(undefined) // The demarche being edited in the list
-  const [inputValue, setInputValue] = useState<string>('New Demarche') // Input value of the demarche being edited
+  const [inputValue, setInputValue] = useState<string>(t('content.new_procedure')) // Input value of the demarche being edited
 
   const { data: agenda } = useGetAgendaByAuthorId({ skip: !service, authorId: service?.id ?? '' })
 
@@ -136,7 +137,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       // Create/Update the demarche
       createUpdateDemarche({ ...item, name: inputValue })
       // Set back to default
-      setInputValue('New Demarche')
+      setInputValue(t('content.new_procedure'))
       setEditItem(undefined)
       // If this was a new demarche, set newDemarche value back to default as well
       if (item.id === newDemarche?.id) setNewDemarche(undefined)
@@ -160,7 +161,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const cancelEditService = () => {
     setEditItem(undefined)
-    setInputValue('New Demarche')
+    setInputValue(t('content.new_procedure'))
   }
 
   //  Two pairs of useffects : First pair handles the delete and create/update of demarches
@@ -234,7 +235,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             <Form.Item name="name" rules={[{ required: true, message: 'Name of the service' }]}>
               <Input
                 suffix={<CloseOutlined disabled={nameValue === service?.name} onClick={handleCancel} />}
-                value={service ? service.name : 'New service'}
+                value={service ? service.name : t('content.new_service')}
                 size="large"
                 style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
               />
@@ -309,12 +310,12 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       {showDeleteServiceModal &&
         createPortal(
           <ModalConfirmAction
-            title="Are you sure you want to delete this service?"
+            title={t('delete_modal.confirm_delete_service_prompt')}
             description=""
             content={
               <>
-                <p>This action will delete the demarches and all schedules associated with that service.</p>
-                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+                <p>{t('delete_modal.delete_service_warning_details')}</p>
+                <p>{t('delete_modal.delete_permanent_warning')}</p>
               </>
             }
             yesBtnTitle="Delete"
@@ -332,12 +333,12 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       {showDeleteDemarcheModal &&
         createPortal(
           <ModalConfirmAction
-            title="Are you sure you want to delete this demarche?"
+            title={t('delete_modal.confirm_delete_procedure_prompt')}
             description=""
             content={
               <>
-                <p>This action will delete all schedules associated with that demarche.</p>
-                <p>Once deleted, their information can&rsquo;t be recovered, so it&rsquo;s a permanent action.</p>
+                <p>{t('delete_modal.delete_procedure_warning_details')}</p>
+                <p>{t('delete_modal.delete_permanent_warning')}</p>
               </>
             }
             yesBtnTitle="Delete"

@@ -19,7 +19,25 @@
     "close": "Sluiten",
     "new_service": "Nieuwe dienst",
     "new_site": "Nieuwe locatie",
-    "new_procedure": "Nieuwe procedure"
+    "new_procedure": "Nieuwe procedure",
+    "add_site": "Locatie toevoegen",
+    "select_site_or_service_to_edit": "Selecteer een locatie of dienst om te bewerken",
+    "search_site_or_service": "Zoek een locatie/dienst",
+    "add_new_service": "Nieuwe dienst toevoegen",
+    "save_site_before_adding_services": "U moet eerst de locatie opslaan voordat u diensten kunt toevoegen"
+  },
+  "delete_modal": {
+    "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
+    "confirm_delete_service_prompt": "Weet u zeker dat u deze dienst wilt verwijderen?",
+    "confirm_delete_procedure_prompt": "Weet u zeker dat u deze procedure wilt verwijderen?",
+    "confirm_delete_schedule_prompt": "Weet u zeker dat u deze planning wilt verwijderen?",
+    "confirm_delete_rule_prompt": "Weet u zeker dat u deze regel wilt verwijderen?",
+    "delete_site_warning_details": "Deze actie verwijdert de diensten, procedures en alle planningen die aan deze locatie zijn gekoppeld.",
+    "delete_service_warning_details": "Deze actie verwijdert de procedures en alle planningen die aan deze dienst zijn gekoppeld.",
+    "delete_procedure_warning_details": "Deze actie verwijdert alle planningen die aan deze procedure zijn gekoppeld.",
+    "delete_schedule_warning_details": "Deze actie verwijdert de regels die aan deze planning zijn gekoppeld.",
+    "delete_rule_warning_details": "Deze actie verwijdert deze regel definitief.",
+    "delete_permanent_warning": "Eenmaal verwijderd, kan hun informatie niet worden hersteld, dus het is een permanente actie."
   },
   "notification": {
     "procedure_deleted": "De procedure is verwijderd!",
