@@ -21,7 +21,7 @@
   justify-content: center;
   align-items: center;
 }
-.demarches-list {
+.procedures-list {
   display: flex;
   flex-direction: column;
   gap: 4px;

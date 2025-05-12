@@ -27,14 +27,19 @@
     "save_service": "Dienst opslaan",
     "edit_service": "Dienst bewerken",
     "delete_service": "Dienst verwijderen",
+    "save_procedure": "Procedure opslaan",
+    "edit_procedure": "Procedure bewerken",
+    "delete_procedure": "Procedure verwijderen",
+    "no_procedure_yet": "Nog geen procedure",
     "new_service": "Nieuwe dienst",
     "new_site": "Nieuwe locatie",
     "new_procedure": "Nieuwe procedure",
     "add_site": "Locatie toevoegen",
     "select_site_or_service_to_edit": "Selecteer een locatie of dienst om te bewerken",
-    "search_site_or_service": "Zoek een locatie/dienst",
+    "search_site_or_service": "Locatie of dienst zoeken...",
     "add_new_service": "Nieuwe dienst toevoegen",
-    "save_site_before_adding_services": "U moet eerst de locatie opslaan voordat u diensten kunt toevoegen"
+    "save_site_before_adding_services": "U moet eerst de locatie opslaan voordat u diensten kunt toevoegen",
+    "select_site": "Locatie selecteren"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

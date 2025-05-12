@@ -170,4 +170,17 @@ body * {
   width: 100%;
   padding: 0.5rem 0.5rem 0 0.5rem;
 }
+.defaultRender {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  padding: 1rem;
+  font-size: large;
+}
+.defaultRender img {
+  width: 60%;
+}
 /*# sourceMappingURL=index.css.map */

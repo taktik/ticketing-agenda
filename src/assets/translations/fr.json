@@ -27,14 +27,19 @@
     "save_service": "Enregistrer le service",
     "edit_service": "Modifier le service",
     "delete_service": "Supprimer le service",
+    "save_procedure": "Enregistrer la démarche",
+    "edit_procedure": "Modifier la démarche",
+    "delete_procedure": "Supprimer la démarche",
+    "no_procedure_yet": "Aucune démarche pour l'instant",
     "new_service": "Nouveau service",
     "new_site": "Nouveau site",
     "new_procedure": "Nouvelle démarche",
     "add_site": "Ajouter un site",
     "select_site_or_service_to_edit": "Sélectionner un site ou un service à modifier",
-    "search_site_or_service": "Rechercher un site/service",
+    "search_site_or_service": "Rechercher un site ou un service...",
     "add_new_service": "Ajouter un nouveau service",
-    "save_site_before_adding_services": "Vous devez d'abord enregistrer le site avant d'ajouter des services"
+    "save_site_before_adding_services": "Vous devez d'abord enregistrer le site avant d'ajouter des services",
+    "select_site": "Sélectionner un site"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

@@ -4,6 +4,7 @@ import { Select as AntSelect, Button, Divider, Typography, notification, message
 import React, { ReactElement, useCallback, useEffect } from 'react'
 import './index.css'
 import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
+import { useTranslation } from 'react-i18next'
 
 interface DemarcheSelectorProps {
   demarches: CalendarItemType[]
@@ -12,37 +13,7 @@ interface DemarcheSelectorProps {
 }
 
 export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche }: DemarcheSelectorProps): ReactElement => {
-  const [deleteDemarche, { isError, isSuccess, isLoading }] = useDeleteTimeTableMutation()
-
-  useEffect(() => {
-    if (isLoading) showMessageFeedback('loading', 'The demarche is deleting...')
-    if (isSuccess) showMessageFeedback('success', 'The demarche was deleted!')
-    if (isError) openNotification('error', 'We could not delete the demarche!', `An error occurred while deleting the demarche.`)
-  }, [isLoading, isSuccess, isError])
-
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
+  const { t } = useTranslation()
 
   const handleSelectDemarcheClick = useCallback(
     (demarche: CalendarItemType) => {
@@ -56,7 +27,7 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
     <div className="DemarcheSelector">
       <div className="DemarcheSelectorHeader">
         <Typography.Title level={5} style={{ margin: 0 }}>
-          Demarches
+          {t('content.procedures')}
         </Typography.Title>
       </div>
 

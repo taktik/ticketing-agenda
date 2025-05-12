@@ -19,10 +19,10 @@ import { useTranslation } from 'react-i18next'
 
 interface ListHeaderProps {
   site: HealthcareParty | undefined
-  handleSaveService: (item: HealthcareParty) => void
+  handleCreateNewService: (item: HealthcareParty) => void
 }
 
-const ListHeader = React.memo(({ site, handleSaveService }: ListHeaderProps) => {
+const ListHeader = React.memo(({ site, handleCreateNewService }: ListHeaderProps) => {
   const { selectedKeyId } = useContext(SettingContext)
   const { t } = useTranslation()
 
@@ -42,7 +42,7 @@ const ListHeader = React.memo(({ site, handleSaveService }: ListHeaderProps) => 
     try {
       if (!selectedKeyId) throw new Error('No selected Site')
       const serviceHcp = new HealthcareParty({ name: t('content.new_service'), parentId: selectedKeyId, id: v4() })
-      handleSaveService(serviceHcp)
+      handleCreateNewService(serviceHcp)
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
@@ -52,8 +52,8 @@ const ListHeader = React.memo(({ site, handleSaveService }: ListHeaderProps) => 
     <div className="list-header">
       {notificationContextHolder}
       <div>{t('content.services')} :</div>
-      <Tooltip title={!site?.rev ? t('content.save_site_before_adding_services') : t('content.add_new_service')}>
-        <Button icon={<PlusOutlined />} disabled={!site?.rev} onClick={handleAddService} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
+      <Tooltip title={t('content.add_new_service')}>
+        <Button icon={<PlusOutlined />} onClick={handleAddService} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
       </Tooltip>
     </div>
   )
@@ -116,15 +116,34 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   }, [site, form])
 
   const handleSiteDelete = () => {
-    if (site) {
+    try {
+      if (!site) throw new Error('No site selected')
       deleteSite(site)
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } finally {
+      setSelectedKey('default')
     }
-    setSelectedKey('default')
   }
 
   const handleServiceDelete = () => {
-    if (editItem) {
+    try {
+      if (!editItem) throw new Error('No site selected')
       deleteService(editItem)
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } finally {
+      setEditItem(undefined)
+    }
+  }
+
+  const handleCreateNewService = async (item: HealthcareParty) => {
+    try {
+      await createUpdateService({ ...item })
+      createUpdateAgendaMutation(new Agenda({ author: item.id }))
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } finally {
       setEditItem(undefined)
     }
   }
@@ -136,39 +155,26 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         setInputValue(t('content.new_service'))
       } catch (error) {
         openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      } finally {
+        setEditItem(undefined)
       }
     },
     [inputValue],
   )
 
-  const handleEditServiceClick = (item: HealthcareParty) => {
+  const handleEditService = (item: HealthcareParty) => {
     setInputValue(item.name ?? '')
     setEditItem(item)
   }
 
-  const handleDeleteServiceClick = (item: HealthcareParty) => {
-    if (!item.rev) {
-      setEditItem(undefined)
-    } else {
-      setShowDeleteServiceModal(true)
-    }
+  const handleDeleteService = (item: HealthcareParty) => {
+    setShowDeleteServiceModal(true)
   }
 
   const cancelEditService = () => {
     setEditItem(undefined)
     setInputValue(t('content.new_service'))
   }
-
-  // If we successfully created the service, then we create the associated agenda. Error is handled in the useEffects below
-  useEffect(() => {
-    if (editItem && isCreateUpdateServiceSuccess) {
-      if (!editItem.rev) {
-        // If service has no rev, it's a new object and thus we create an associated agenda
-        createUpdateAgendaMutation(new Agenda({ author: editItem.id }))
-      }
-      setEditItem(undefined)
-    }
-  }, [isCreateUpdateServiceSuccess])
 
   // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   useEffect(() => {
@@ -262,7 +268,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
             <Button
               icon={<SaveOutlined />}
               style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-              disabled={nameValue === site?.name && !!site?.rev}
+              disabled={nameValue === site?.name}
               onClick={handleSubmit}
             />
           </Tooltip>
@@ -277,7 +283,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         </div>
         <div className="services-list">
           <List
-            header={<ListHeader site={site} handleSaveService={handleSaveService} />}
+            header={<ListHeader site={site} handleCreateNewService={handleCreateNewService} />}
             dataSource={servicesList}
             locale={{ emptyText: <Empty description={t('content.no_service_yet')} /> }}
             renderItem={(item) => (
@@ -293,7 +299,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                       className="edit-button"
                       icon={<EditOutlined />}
                       style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      onClick={() => handleEditServiceClick(item)}
+                      onClick={() => handleEditService(item)}
                     />
                   </Tooltip>
                 )}
@@ -312,7 +318,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                     <Tooltip title={t('content.delete_service')}>
                       <Button
                         icon={<DeleteOutlined />}
-                        onClick={() => handleDeleteServiceClick(item)}
+                        onClick={() => handleDeleteService(item)}
                         style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
                       />
                     </Tooltip>

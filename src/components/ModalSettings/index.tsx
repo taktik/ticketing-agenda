@@ -20,6 +20,7 @@ import { ServiceSetting } from './ServiceSetting'
 import { v4 } from 'uuid'
 import { SettingContext } from '../../contexts/SettingContext'
 import { useTranslation } from 'react-i18next'
+import defaultLogo from '../../assets/undraw_choose_j1ds.svg'
 
 interface ModalSchedulingProps {
   isVisible: boolean
@@ -30,7 +31,7 @@ type MenuItem = Required<MenuProps>['items'][number]
 
 export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): ReactElement => {
   const { selectedSite, rootHcp, selectedKey, setSelectedKey } = useContext(SettingContext)
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
@@ -202,7 +203,11 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     const id = match?.[2]
 
     if (!type || !id) {
-      return <div>{t('content.select_site_or_service_to_edit')}</div>
+      return (
+        <div className="defaultRender">
+          {t('content.select_site_or_service_to_edit')} <img src={defaultLogo} />
+        </div>
+      )
     }
 
     if (type === 'site') {
@@ -227,7 +232,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
         <div className="settingsTitle">
           <div className="content">
             <div className="SearchInput">
-              <Input placeholder="Search menu" onChange={(e) => setSearch(e.target.value)} />
+              <Input placeholder={t('content.search_site_or_service')} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <Menu
               onClick={onServiceClick}

@@ -2,6 +2,7 @@ import { HealthcareParty } from '@icure/cardinal-sdk'
 import { Select as AntSelect, message, notification } from 'antd'
 import React, { ReactElement, useEffect, useMemo } from 'react'
 import './index.css'
+import { useTranslation } from 'react-i18next'
 
 interface SiteSelectorProps {
   sites: HealthcareParty[]
@@ -10,6 +11,8 @@ interface SiteSelectorProps {
 }
 
 export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelectorProps): ReactElement => {
+  const { t } = useTranslation()
+
   const options = useMemo(
     () =>
       sites.map((site) => ({
@@ -32,7 +35,7 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelec
         allowClear
         showSearch
         style={{ width: '100%' }}
-        placeholder="Select a site"
+        placeholder={t('content.select_site')}
         optionFilterProp="label"
         labelInValue
         filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}

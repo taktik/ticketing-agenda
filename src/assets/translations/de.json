@@ -27,14 +27,19 @@
     "save_service": "Dienst speichern",
     "edit_service": "Dienst bearbeiten",
     "delete_service": "Dienst löschen",
+    "save_procedure": "Verfahren speichern",
+    "edit_procedure": "Verfahren bearbeiten",
+    "delete_procedure": "Verfahren löschen",
+    "no_procedure_yet": "Noch kein Verfahren vorhanden",
     "new_service": "Neuer Dienst",
     "new_site": "Neuer Standort",
     "new_procedure": "Neues Verfahren",
     "add_site": "Standort hinzufügen",
     "select_site_or_service_to_edit": "Wählen Sie einen Standort oder Dienst zum Bearbeiten aus",
-    "search_site_or_service": "Standort/Dienst suchen",
+    "search_site_or_service": "Standort oder Dienst suchen...",
     "add_new_service": "Neuen Dienst hinzufügen",
-    "save_site_before_adding_services": "Sie müssen zuerst den Standort speichern, bevor Sie Dienste hinzufügen können"
+    "save_site_before_adding_services": "Sie müssen zuerst den Standort speichern, bevor Sie Dienste hinzufügen können",
+    "select_site": "Standort auswählen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

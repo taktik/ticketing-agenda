@@ -4,6 +4,7 @@ import { Button, Divider, Typography, notification, message, Tooltip } from 'ant
 import React, { useCallback, useEffect } from 'react'
 import './index.css'
 import { useDeleteHealthcarePartyMutation } from '../../core/api/healthcarePartyApi'
+import { useTranslation } from 'react-i18next'
 
 interface ServiceSelectorProps {
   services: HealthcareParty[]
@@ -12,6 +13,8 @@ interface ServiceSelectorProps {
 }
 
 export const ServiceSelector = ({ services, selectedService, setSelectedService }: ServiceSelectorProps): React.ReactElement => {
+  const { t } = useTranslation()
+
   const handleSelectServiceClick = useCallback(
     (service: HealthcareParty) => {
       const toSelect = service.id === selectedService?.id ? undefined : service
@@ -24,7 +27,7 @@ export const ServiceSelector = ({ services, selectedService, setSelectedService 
     <div className="ServiceSelector">
       <div className="ServiceSelectorHeader">
         <Typography.Title level={5} style={{ margin: 0 }}>
-          Services
+          {t('content.services')}
         </Typography.Title>
       </div>
 
