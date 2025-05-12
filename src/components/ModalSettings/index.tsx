@@ -1,5 +1,5 @@
 import { AddressType, Agenda, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType, TimeTable } from '@icure/cardinal-sdk'
-import { Form, Input, Upload, UploadFile, UploadProps, Button, Col, Divider, Row, Typography, Menu, MenuProps } from 'antd'
+import { Form, Input, Upload, UploadFile, UploadProps, Button, Col, Divider, Row, Typography, Menu, MenuProps, notification, message } from 'antd'
 import ImgCrop from 'antd-img-crop'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useCreateOrUpdatePractitionerMutation } from '../../core/api/practitionerApi'
@@ -7,7 +7,7 @@ import { getFileUploaderCommonProps, getImgSRC } from '../../helpers/fileToBase6
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
-import { useGetHealthcarePartiesByParentQuery, useGetAllServiceBySiteId } from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesByParentQuery, useGetAllServiceBySiteId, useCreateUpdateHealthcarePartyMutation } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import { useGetTimeTablesQuery } from '../../core/api/timeTableApi'
 import { SettingOutlined } from '@ant-design/icons'
@@ -29,7 +29,7 @@ interface ModalSchedulingProps {
 type MenuItem = Required<MenuProps>['items'][number]
 
 export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): ReactElement => {
-  const { newSite, setNewSite, selectedSite, rootHcp, selectedKey, setSelectedKey } = useContext(SettingContext)
+  const { selectedSite, rootHcp, selectedKey, setSelectedKey } = useContext(SettingContext)
   const { t, i18n } = useTranslation()
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
@@ -38,7 +38,33 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
-  //const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
+  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] =
+    useCreateUpdateHealthcarePartyMutation()
+
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
+
   const { data: services } = useGetAllServiceBySiteId({ skip: skip || !rootHcp, sitesIds: sitesIds ?? [] })
 
   const sortedServices = useMemo(() => {
@@ -50,20 +76,24 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   }, [services])
 
   const handleAddSite = useCallback(() => {
-    if (!newSite && rootHcp) {
+    try {
+      if (!rootHcp) throw new Error('No root')
       const id = v4()
-      setNewSite(new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id }))
-      if (selectedKey === 'default') {
-        setSelectedKey(`site-${id}`)
-      }
-    } else {
-      // HCp undefined ? => error
+      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id })
+      createUpdateSite(siteHcp)
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
-  }, [newSite, setNewSite, selectedKey])
+  }, [selectedKey, rootHcp])
+
+  useEffect(() => {
+    if (isCreateUpdateSiteSuccess) showMessageFeedback('success', t('notification.site_saved'))
+    if (isCreateUpdateSiteError) openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
+  }, [isCreateUpdateSiteSuccess, isCreateUpdateSiteError])
 
   const items: MenuItem[] = useMemo(
     () =>
-      [...(sites ?? []), ...(newSite ? [newSite] : [])].map((site) => {
+      (sites ?? []).map((site) => {
         const matchingParties = sortedServices?.filter((service) => service.parentId === site.id) ?? []
 
         const children: MenuItem[] = [
@@ -98,7 +128,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           children,
         }
       }),
-    [sites, sortedServices, selectedKey, newSite],
+    [sites, sortedServices, selectedKey],
   )
 
   const filteredItems = useMemo(() => {
@@ -172,11 +202,11 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     const id = match?.[2]
 
     if (!type || !id) {
-      return <div>Select a site or a service to edit</div>
+      return <div>{t('content.select_site_or_service_to_edit')}</div>
     }
 
     if (type === 'site') {
-      const groupedSites = [...(sites ?? []), ...(newSite ? [newSite] : [])]
+      const groupedSites = sites ?? []
       const matchingSite = groupedSites.find((site) => site.id === id)
       return <SiteSetting site={matchingSite} />
     }
@@ -186,12 +216,14 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
       return <ServiceSetting service={matchingService} />
     }
 
-    return <div>Select a site or a service to edit</div>
-  }, [selectedKey, sites, newSite, services])
+    return <div>{t('content.select_site_or_service_to_edit')}</div>
+  }, [selectedKey, sites, services])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings" blockAntModalBodyVerticalScroll noFooter>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.settings')} blockAntModalBodyVerticalScroll noFooter>
       <div className="modalSettings">
+        {notificationContextHolder}
+        {messageContextHolder}
         <div className="settingsTitle">
           <div className="content">
             <div className="SearchInput">
@@ -209,9 +241,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
             />
           </div>
           <div className="bottomFooter">
-            <Button disabled={!!newSite} onClick={handleAddSite}>
-              Ajouter un site
-            </Button>
+            <Button onClick={handleAddSite}>{t('content.add_site')}</Button>
           </div>
         </div>
         <Divider type="vertical" variant="solid" style={{ height: '100%' }} />

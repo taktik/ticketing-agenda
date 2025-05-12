@@ -1,5 +1,5 @@
 import { HealthcareParty, TimeTable } from '@icure/cardinal-sdk'
-import { Select as AntSelect, Button, Space, Table, Tooltip } from 'antd'
+import { Select as AntSelect, Button, Empty, Space, Table, Tooltip, notification, message } from 'antd'
 import React, { ReactElement, useEffect, useMemo, useState } from 'react'
 
 import Column from 'antd/es/table/Column'
@@ -46,18 +46,42 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] =
     useCreateUpdateTimeTableMutation()
 
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
+
   const addSchedule = () => {
-    if (agenda) {
+    try {
+      if (!agenda) throw new Error('No service selected')
       const today = startOfDay(new Date())
       const start = today.getTime()
       const end = addMonths(today, 1).getTime()
       createUpdateTimeTable(new TimeTable({ name: 'New Schedule', agendaId: agenda.id, startTime: start, endTime: end, id: v4() }))
-    } else {
-      // No agenda ? => error
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
   }
   const handleEditClick = (timeTable: TimeTable) => {
-    console.log('test')
     setSelectedTimeTable(timeTable)
     setShowRulesModal(true)
   }
@@ -91,11 +115,24 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       setSelectedService(selected)
     }
   }, [services])
-  // Ant select
+
+  //Delete notifications
+  useEffect(() => {
+    if (isDeleteTimeTableSuccess) showMessageFeedback('success', 'The schedule was deleted!')
+    if (isDeleteTimeTableError) openNotification('error', 'We could not delete the schedule!', `An error occurred while deleting the schedule.`)
+  }, [isDeleteTimeTableSuccess, isDeleteTimeTableError])
+
+  //Save notifications
+  useEffect(() => {
+    if (isCreateUpdateTimeTableSuccess) showMessageFeedback('success', 'The schedule was saved!')
+    if (isCreateUpdateTimeTableError) openNotification('error', 'We could not save the schedule!', `An error occurred while saving the schedule.`)
+  }, [isCreateUpdateTimeTableSuccess, isCreateUpdateTimeTableError])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title="Liste des horaires" blockAntModalBodyVerticalScroll noFooter>
       <div className="modalSchedule">
+        {notificationContextHolder}
+        {messageContextHolder}
         <div className="antSelect">
           Services
           <AntSelect
@@ -120,7 +157,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
         </div>
 
         <div className="antTable">
-          <Table<TimeTable> dataSource={timeTables ?? []} rowKey="id">
+          <Table<TimeTable> dataSource={timeTables ?? []} rowKey="id" locale={{ emptyText: <Empty description="No schedule yet" /> }}>
             <ColumnGroup
               title={
                 <Tooltip title={selectedService ? null : 'You need to select a service to add a schedule'}>

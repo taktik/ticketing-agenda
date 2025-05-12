@@ -1,3 +1,6 @@
+import { BorderHorizontalOutlined } from '@ant-design/icons'
+import { DatePicker } from 'antd'
+
 export const ANTD_NEW_THEME = {
   token: {
     colorPrimary: '#084B83',
@@ -11,6 +14,15 @@ export const ANTD_NEW_THEME = {
       primaryShadow: 'none',
       paddingInline: 16,
       contentFontSizeLG: 14,
+    },
+    DatePicker: {
+      fontSizeLG: 13,
+      fontSize: 13,
+      borderRadius: 0,
+      hoverBorderColor: '#e30613',
+      colorPrimary: '#e30613',
+      activeBorderColor: '#e30613',
+      controlOutline: '#e306131a',
     },
     Form: {
       itemMarginBottom: 0,
@@ -42,10 +54,6 @@ export const ANTD_NEW_THEME = {
       controlOutline: '#e306131a',
     },
     InputNumber: {
-      fontSizeLG: 13,
-      fontSize: 13,
-    },
-    DatePicker: {
       fontSizeLG: 13,
       fontSize: 13,
     },

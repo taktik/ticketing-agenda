@@ -1,1 +1,36 @@
-@import '../../style/less/index';
+@import '../../../style/less/index';
+
+.modalRule {
+  width: 100%;
+  height: 60vh;
+  display: flex;
+  align-self: stretch;
+  position: relative;
+  flex-direction: column;
+  padding: 12px 24px 24px 24px;
+
+  .media-breakpoint-down(@md,
+    {
+      flex-grow: 1;
+    });
+}
+.selectors {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+.antSelect {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  font-size: small;
+  font-weight: 700;
+}
+.ant-form-item-explain-error {
+  position: absolute;
+}
+.submitButton {
+  display: flex;
+  justify-content: flex-end;
+}

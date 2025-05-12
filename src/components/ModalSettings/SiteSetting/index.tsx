@@ -19,35 +19,41 @@ import { useTranslation } from 'react-i18next'
 
 interface ListHeaderProps {
   site: HealthcareParty | undefined
-  editItem: HealthcareParty | undefined
-  setEditItem: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
+  handleSaveService: (item: HealthcareParty) => void
 }
 
-const ListHeader = React.memo(({ site, editItem, setEditItem }: ListHeaderProps) => {
-  const { newService, setNewService, selectedKeyId } = useContext(SettingContext)
-  const { t, i18n } = useTranslation()
+const ListHeader = React.memo(({ site, handleSaveService }: ListHeaderProps) => {
+  const { selectedKeyId } = useContext(SettingContext)
+  const { t } = useTranslation()
+
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
 
   const handleAddService = useCallback(() => {
-    if (!newService && selectedKeyId) {
-      const addedService = new HealthcareParty({ name: t('content.new_service'), parentId: selectedKeyId, id: v4() })
-      setNewService(addedService)
-      if (!editItem) {
-        setEditItem(addedService)
-      }
-    } else {
-      // selectedkeyId undefined ? => error
+    try {
+      if (!selectedKeyId) throw new Error('No selected Site')
+      const serviceHcp = new HealthcareParty({ name: t('content.new_service'), parentId: selectedKeyId, id: v4() })
+      handleSaveService(serviceHcp)
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
-  }, [newService, setNewService, editItem, selectedKeyId])
+  }, [selectedKeyId])
+
   return (
     <div className="list-header">
-      <div>Services :</div>
+      {notificationContextHolder}
+      <div>{t('content.services')} :</div>
       <Tooltip title={!site?.rev ? t('content.save_site_before_adding_services') : t('content.add_new_service')}>
-        <Button
-          icon={<PlusOutlined />}
-          disabled={!!newService || !site?.rev}
-          onClick={handleAddService}
-          style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-        />
+        <Button icon={<PlusOutlined />} disabled={!site?.rev} onClick={handleAddService} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
       </Tooltip>
     </div>
   )
@@ -58,24 +64,22 @@ interface SiteSettingProps {
 }
 
 export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
-  const { newSite, setNewSite, setSelectedKey, newService, setNewService } = useContext(SettingContext)
+  const { setSelectedKey } = useContext(SettingContext)
   const { t, i18n } = useTranslation()
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
-  const siteIsNew = useMemo(() => (newSite ? newSite.id === site?.id : false), [newSite, site]) // Easier to use that condition
   const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined) // The service being edited in the list
   const [inputValue, setInputValue] = useState<string>(t('content.new_service')) // Input value of the service being edited
 
   const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: !site, parentId: site?.id ?? '' })
   const servicesList = useMemo(() => {
     // Sorting the services alphabetically
-    const combined = [...(services ?? []), ...(newService ? [newService] : [])]
-    return combined.sort((a, b) => {
+    return [...(services ?? [])].sort((a, b) => {
       const nameA = a.name ?? ''
       const nameB = b.name ?? ''
       return nameA.localeCompare(nameB)
     })
-  }, [services, newService])
+  }, [services])
 
   const [form] = Form.useForm()
 
@@ -97,7 +101,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
       if (!site) throw new Error('No site selected')
       const { name } = form.getFieldsValue()
       createUpdateSite({ ...site, name: name })
-      if (newSite && siteIsNew) setNewSite(undefined)
       form.submit()
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
@@ -113,10 +116,8 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   }, [site, form])
 
   const handleSiteDelete = () => {
-    if (site && !siteIsNew) {
+    if (site) {
       deleteSite(site)
-    } else {
-      setNewSite(undefined)
     }
     setSelectedKey('default')
   }
@@ -128,10 +129,14 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     }
   }
 
-  const handleSaveServiceClick = useCallback(
+  const handleSaveService = useCallback(
     (item: HealthcareParty) => {
-      createUpdateService({ ...item, name: inputValue })
-      setInputValue(t('content.new_service'))
+      try {
+        createUpdateService({ ...item, name: inputValue })
+        setInputValue(t('content.new_service'))
+      } catch (error) {
+        openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      }
     },
     [inputValue],
   )
@@ -144,7 +149,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   const handleDeleteServiceClick = (item: HealthcareParty) => {
     if (!item.rev) {
       setEditItem(undefined)
-      setNewService(undefined)
     } else {
       setShowDeleteServiceModal(true)
     }
@@ -163,7 +167,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         createUpdateAgendaMutation(new Agenda({ author: editItem.id }))
       }
       setEditItem(undefined)
-      if (editItem.id === newService?.id) setNewService(undefined)
     }
   }, [isCreateUpdateServiceSuccess])
 
@@ -215,7 +218,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const handleCancel = () => {
     form.resetFields()
-    setNewService(undefined)
   }
 
   const nameValue = Form.useWatch('name', form)
@@ -237,14 +239,26 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
           >
             <Form.Item name="name" rules={[{ required: true, message: 'Name of the site' }]}>
               <Input
-                suffix={<CloseOutlined disabled={nameValue === site?.name} onClick={handleCancel} />}
+                suffix={
+                  <Tooltip title={t('content.reset_name')}>
+                    <span
+                      style={{
+                        color: nameValue === site?.name ? 'gray' : 'black',
+                        cursor: nameValue === site?.name ? 'not-allowed' : 'pointer',
+                        pointerEvents: 'auto',
+                      }}
+                      onClick={handleCancel}
+                    >
+                      <CloseOutlined />
+                    </span>
+                  </Tooltip>
+                }
                 value={site ? site.name : t('content.new_site')}
-                size="large"
                 style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
               />
             </Form.Item>
           </Form>
-          <Tooltip title="Save the site">
+          <Tooltip title={t('content.save_site')}>
             <Button
               icon={<SaveOutlined />}
               style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
@@ -252,7 +266,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
               onClick={handleSubmit}
             />
           </Tooltip>
-          <Tooltip title="Delete the site">
+          <Tooltip title={t('content.delete_site')}>
             <Button
               icon={<DeleteOutlined />}
               disabled={!site}
@@ -263,18 +277,18 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         </div>
         <div className="services-list">
           <List
-            header={<ListHeader site={site} editItem={editItem} setEditItem={setEditItem} />}
+            header={<ListHeader site={site} handleSaveService={handleSaveService} />}
             dataSource={servicesList}
-            locale={{ emptyText: <Empty description="No service yet" /> }}
+            locale={{ emptyText: <Empty description={t('content.no_service_yet')} /> }}
             renderItem={(item) => (
               <List.Item>
                 {editItem?.id === item.id ? (
-                  <Input defaultValue={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveServiceClick(item)} autoFocus />
+                  <Input defaultValue={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveService(item)} autoFocus />
                 ) : (
                   item.name
                 )}
                 {editItem?.id !== item.id && (
-                  <Tooltip title="Edit the service">
+                  <Tooltip title={t('content.edit_service')}>
                     <Button
                       className="edit-button"
                       icon={<EditOutlined />}
@@ -288,14 +302,14 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                     <Tooltip title="Cancel">
                       <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
                     </Tooltip>
-                    <Tooltip title="Save the service">
+                    <Tooltip title={t('content.save_service')}>
                       <Button
                         icon={<SaveOutlined />}
                         style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                        onClick={() => handleSaveServiceClick(item)}
+                        onClick={() => handleSaveService(item)}
                       />
                     </Tooltip>
-                    <Tooltip title="Delete the service">
+                    <Tooltip title={t('content.delete_service')}>
                       <Button
                         icon={<DeleteOutlined />}
                         onClick={() => handleDeleteServiceClick(item)}
@@ -320,8 +334,8 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                 <p>{t('delete_modal.delete_permanent_warning')}</p>
               </>
             }
-            yesBtnTitle="Delete"
-            noBtnTitle="Close"
+            yesBtnTitle={t('content.delete')}
+            noBtnTitle={t('content.close')}
             onYesClick={() => {
               handleSiteDelete()
               setShowDeleteSiteModal(false)
@@ -343,8 +357,8 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                 <p>{t('delete_modal.delete_permanent_warning')}</p>
               </>
             }
-            yesBtnTitle="Delete"
-            noBtnTitle="Close"
+            yesBtnTitle={t('content.delete')}
+            noBtnTitle={t('content.close')}
             onYesClick={() => {
               handleServiceDelete()
               setShowDeleteServiceModal(false)

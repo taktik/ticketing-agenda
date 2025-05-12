@@ -234,9 +234,21 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
           >
             <Form.Item name="name" rules={[{ required: true, message: 'Name of the service' }]}>
               <Input
-                suffix={<CloseOutlined disabled={nameValue === service?.name} onClick={handleCancel} />}
+                suffix={
+                  <Tooltip title="Reset the name">
+                    <span
+                      style={{
+                        color: nameValue === service?.name ? 'gray' : 'black',
+                        cursor: nameValue === service?.name ? 'not-allowed' : 'pointer',
+                        pointerEvents: 'auto',
+                      }}
+                      onClick={handleCancel}
+                    >
+                      <CloseOutlined />
+                    </span>
+                  </Tooltip>
+                }
                 value={service ? service.name : t('content.new_service')}
-                size="large"
                 style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
               />
             </Form.Item>
