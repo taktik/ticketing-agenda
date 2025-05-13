@@ -232,102 +232,100 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     <div className="root">
       {notificationContextHolder}
       {messageContextHolder}
-      <div className="top-part">
-        <div className="edit-site">
-          <Form
-            layout="vertical"
-            colon={false}
-            form={form}
-            initialValues={{
-              name: site?.name,
-            }}
-            style={{ width: '100%' }}
-          >
-            <Form.Item name="name" rules={[{ required: true, message: 'Name of the site' }]}>
-              <Input
-                suffix={
-                  <Tooltip title={t('content.reset_name')}>
-                    <span
-                      style={{
-                        color: nameValue === site?.name ? 'gray' : 'black',
-                        cursor: nameValue === site?.name ? 'not-allowed' : 'pointer',
-                        pointerEvents: 'auto',
-                      }}
-                      onClick={handleCancel}
-                    >
-                      <CloseOutlined />
-                    </span>
+      <div className="edit-site">
+        <Form
+          layout="vertical"
+          colon={false}
+          form={form}
+          initialValues={{
+            name: site?.name,
+          }}
+          style={{ width: '100%' }}
+        >
+          <Form.Item name="name" rules={[{ required: true, message: 'Name of the site' }]}>
+            <Input
+              suffix={
+                <Tooltip title={t('content.reset_name')}>
+                  <span
+                    style={{
+                      color: nameValue === site?.name ? 'gray' : 'black',
+                      cursor: nameValue === site?.name ? 'not-allowed' : 'pointer',
+                      pointerEvents: 'auto',
+                    }}
+                    onClick={handleCancel}
+                  >
+                    <CloseOutlined />
+                  </span>
+                </Tooltip>
+              }
+              value={site ? site.name : t('content.new_site')}
+              style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
+            />
+          </Form.Item>
+        </Form>
+        <Tooltip title={t('content.save_site')}>
+          <Button
+            icon={<SaveOutlined />}
+            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+            disabled={nameValue === site?.name}
+            onClick={handleSubmit}
+          />
+        </Tooltip>
+        <Tooltip title={t('content.delete_site')}>
+          <Button
+            icon={<DeleteOutlined />}
+            disabled={!site}
+            onClick={() => setShowDeleteSiteModal(true)}
+            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+          />
+        </Tooltip>
+      </div>
+      <div className="services-list">
+        <List
+          header={<ListHeader site={site} handleCreateNewService={handleCreateNewService} />}
+          dataSource={servicesList}
+          locale={{ emptyText: <Empty description={t('content.no_service_yet')} /> }}
+          renderItem={(item) => (
+            <List.Item>
+              {editItem?.id === item.id ? (
+                <Input defaultValue={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveService(item)} autoFocus />
+              ) : (
+                item.name
+              )}
+              {editItem?.id !== item.id && (
+                <Tooltip title={t('content.edit_service')}>
+                  <Button
+                    className="edit-button"
+                    icon={<EditOutlined />}
+                    style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+                    onClick={() => handleEditService(item)}
+                  />
+                </Tooltip>
+              )}
+              {editItem?.id === item.id && (
+                <div className="action-buttons">
+                  <Tooltip title="Cancel">
+                    <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
                   </Tooltip>
-                }
-                value={site ? site.name : t('content.new_site')}
-                style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
-              />
-            </Form.Item>
-          </Form>
-          <Tooltip title={t('content.save_site')}>
-            <Button
-              icon={<SaveOutlined />}
-              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-              disabled={nameValue === site?.name}
-              onClick={handleSubmit}
-            />
-          </Tooltip>
-          <Tooltip title={t('content.delete_site')}>
-            <Button
-              icon={<DeleteOutlined />}
-              disabled={!site}
-              onClick={() => setShowDeleteSiteModal(true)}
-              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-            />
-          </Tooltip>
-        </div>
-        <div className="services-list">
-          <List
-            header={<ListHeader site={site} handleCreateNewService={handleCreateNewService} />}
-            dataSource={servicesList}
-            locale={{ emptyText: <Empty description={t('content.no_service_yet')} /> }}
-            renderItem={(item) => (
-              <List.Item>
-                {editItem?.id === item.id ? (
-                  <Input defaultValue={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveService(item)} autoFocus />
-                ) : (
-                  item.name
-                )}
-                {editItem?.id !== item.id && (
-                  <Tooltip title={t('content.edit_service')}>
+                  <Tooltip title={t('content.save_service')}>
                     <Button
-                      className="edit-button"
-                      icon={<EditOutlined />}
+                      icon={<SaveOutlined />}
                       style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      onClick={() => handleEditService(item)}
+                      onClick={() => handleSaveService(item)}
                     />
                   </Tooltip>
-                )}
-                {editItem?.id === item.id && (
-                  <div className="action-buttons">
-                    <Tooltip title="Cancel">
-                      <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
-                    </Tooltip>
-                    <Tooltip title={t('content.save_service')}>
-                      <Button
-                        icon={<SaveOutlined />}
-                        style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                        onClick={() => handleSaveService(item)}
-                      />
-                    </Tooltip>
-                    <Tooltip title={t('content.delete_service')}>
-                      <Button
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDeleteService(item)}
-                        style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      />
-                    </Tooltip>
-                  </div>
-                )}
-              </List.Item>
-            )}
-          />
-        </div>
+                  <Tooltip title={t('content.delete_service')}>
+                    <Button
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDeleteService(item)}
+                      style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+                    />
+                  </Tooltip>
+                </div>
+              )}
+            </List.Item>
+          )}
+        />
       </div>
       {showDeleteSiteModal &&
         createPortal(

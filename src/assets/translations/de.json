@@ -39,7 +39,17 @@
     "search_site_or_service": "Standort oder Dienst suchen...",
     "add_new_service": "Neuen Dienst hinzufügen",
     "save_site_before_adding_services": "Sie müssen zuerst den Standort speichern, bevor Sie Dienste hinzufügen können",
-    "select_site": "Standort auswählen"
+    "select_site": "Standort auswählen",
+    "edit": "Bearbeiten",
+    "name": "Name",
+    "start": "Anfang",
+    "end": "Ende",
+    "add_rule": "Regel hinzufügen",
+    "save_schedule": "Zeitplan speichern",
+    "new_schedule": "Neuer Zeitplan",
+    "schedule_list": "Liste der Zeitpläne",
+    "edit_schedule": "Zeitplan bearbeiten",
+    "select_service_for_schedule": "Sie müssen einen Dienst auswählen, um einen Zeitplan hinzuzufügen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -72,7 +82,19 @@
     "service_delete_error": "Beim Löschen des Dienstes ist ein Fehler aufgetreten.",
     "service_saved": "Der Dienst wurde gespeichert!",
     "service_save_failed": "Wir konnten den Dienst nicht speichern!",
-    "service_save_error": "Beim Speichern des Dienstes ist ein Fehler aufgetreten."
+    "service_save_error": "Beim Speichern des Dienstes ist ein Fehler aufgetreten.",
+    "schedule_deleted": "Der Zeitplan wurde gelöscht!",
+    "schedule_saved": "Der Zeitplan wurde gespeichert!",
+    "schedule_save_failed": "Wir konnten den Zeitplan nicht speichern!",
+    "schedule_save_error": "Beim Speichern des Zeitplans ist ein Fehler aufgetreten.",
+    "schedule_delete_failed": "Wir konnten den Zeitplan nicht löschen!",
+    "schedule_delete_error": "Beim Löschen des Zeitplans ist ein Fehler aufgetreten.",
+    "rule_deleted": "Die Regel wurde gelöscht!",
+    "rule_saved": "Die Regel wurde gespeichert!",
+    "rule_save_failed": "Wir konnten die Regel nicht speichern!",
+    "rule_save_error": "Beim Speichern der Regel ist ein Fehler aufgetreten.",
+    "rule_delete_failed": "Wir konnten die Regel nicht löschen!",
+    "rule_delete_error": "Beim Löschen der Regel ist ein Fehler aufgetreten."
   },
   "months": {
     "januray": "Januar",

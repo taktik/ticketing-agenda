@@ -39,7 +39,17 @@
     "search_site_or_service": "Locatie of dienst zoeken...",
     "add_new_service": "Nieuwe dienst toevoegen",
     "save_site_before_adding_services": "U moet eerst de locatie opslaan voordat u diensten kunt toevoegen",
-    "select_site": "Locatie selecteren"
+    "select_site": "Locatie selecteren",
+    "edit": "Bewerken",
+    "name": "Naam",
+    "start": "Begin",
+    "end": "Einde",
+    "add_rule": "Regel toevoegen",
+    "save_schedule": "Planning opslaan",
+    "new_schedule": "Nieuwe planning",
+    "schedule_list": "Lijst van planningen",
+    "edit_schedule": "Planning bewerken",
+    "select_service_for_schedule": "U moet een dienst selecteren om een planning toe te voegen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -72,7 +82,19 @@
     "service_delete_error": "Er is een fout opgetreden bij het verwijderen van de dienst.",
     "service_saved": "De dienst is opgeslagen!",
     "service_save_failed": "We konden de dienst niet opslaan!",
-    "service_save_error": "Er is een fout opgetreden bij het opslaan van de dienst."
+    "service_save_error": "Er is een fout opgetreden bij het opslaan van de dienst.",
+    "schedule_deleted": "De planning is verwijderd!",
+    "schedule_saved": "De planning is opgeslagen!",
+    "schedule_save_failed": "We konden de planning niet opslaan!",
+    "schedule_save_error": "Er is een fout opgetreden bij het opslaan van de planning.",
+    "schedule_delete_failed": "We konden de planning niet verwijderen!",
+    "schedule_delete_error": "Er is een fout opgetreden bij het verwijderen van de planning.",
+    "rule_deleted": "De regel is verwijderd!",
+    "rule_saved": "De regel is opgeslagen!",
+    "rule_save_failed": "We konden de regel niet opslaan!",
+    "rule_save_error": "Er is een fout opgetreden bij het opslaan van de regel.",
+    "rule_delete_failed": "We konden de regel niet verwijderen!",
+    "rule_delete_error": "Er is een fout opgetreden bij het verwijderen van de regel."
   },
   "months": {
     "januray": "Januari",

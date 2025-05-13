@@ -10,7 +10,7 @@ import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { addDays, addMonths, format, Locale, startOfDay } from 'date-fns'
 import { enUS, fr, de, nl } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
-import { useCreateUpdateTimeTableMutation } from '../../../core/api/timeTableApi'
+import { useCreateUpdateTimeTableMutation, useGetTimeTableQuery } from '../../../core/api/timeTableApi'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -28,15 +28,32 @@ interface FormValues {
 interface ModalRulesProps {
   isVisible: boolean
   onClose: () => void
-  timeTable: TimeTable | undefined
+  timeTableId: string | undefined
 }
 
-export const ModalRules = ({ isVisible, onClose, timeTable }: ModalRulesProps): ReactElement => {
+export const ModalRules = ({ isVisible, onClose, timeTableId }: ModalRulesProps): ReactElement => {
   const { t, i18n } = useTranslation()
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
+  const [form] = Form.useForm<FormValues>()
+
+  const { data: timeTable } = useGetTimeTableQuery(timeTableId ?? '')
+
+  useEffect(() => console.log('timeTable', timeTable), [timeTable])
 
   const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] =
     useCreateUpdateTimeTableMutation()
+
+  useEffect(() => {
+    if (timeTable) {
+      form.setFieldsValue({
+        name: timeTable.name,
+        start: timeTable.startTime ? dayjs(timeTable.startTime) : undefined,
+        end: timeTable.endTime ? dayjs(timeTable.endTime) : undefined,
+      })
+    } else {
+      form.resetFields()
+    }
+  }, [timeTable, form])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -62,9 +79,8 @@ export const ModalRules = ({ isVisible, onClose, timeTable }: ModalRulesProps): 
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const [form] = Form.useForm<FormValues>()
   const nameValue = Form.useWatch('name', form)
-  const initialName = timeTable?.name || ''
+  const initialName = useMemo(() => timeTable?.name || '', [timeTable])
 
   const handleNameCancel = () => {
     form.setFieldsValue({ name: initialName })
@@ -91,7 +107,7 @@ export const ModalRules = ({ isVisible, onClose, timeTable }: ModalRulesProps): 
   }, [isCreateUpdateTimeTableSuccess, isCreateUpdateTimeTableError])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Edition d'un horaire" blockAntModalBodyVerticalScroll noFooter>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title="Edition d'un horaire" blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modalRule">
         {notificationContextHolder}
         {messageContextHolder}
@@ -99,11 +115,6 @@ export const ModalRules = ({ isVisible, onClose, timeTable }: ModalRulesProps): 
           layout="vertical"
           colon={false}
           form={form}
-          initialValues={{
-            name: timeTable?.name,
-            start: timeTable?.startTime ? dayjs(timeTable.startTime) : null,
-            end: timeTable?.endTime ? dayjs(timeTable.endTime) : null,
-          }}
           onFinish={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between', gap: '1rem' }}
         >

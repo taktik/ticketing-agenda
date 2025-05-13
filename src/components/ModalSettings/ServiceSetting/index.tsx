@@ -40,15 +40,22 @@ const ListHeader = React.memo(({ service, agenda, handleSaveProcedure }: ListHea
     setTimeout(api.destroy, 2500)
   }
 
-  const handleAddProcedure = useCallback(() => {
+  const handleAddProcedure = () => {
     try {
       if (!selectedKeyId) throw new Error('No selected Service')
-      const procedure = new CalendarItemType({ name: t('content.new_procedure'), healthcarePartyId: service?.id, agendaId: agenda?.id, id: v4() })
+      const procedure = new CalendarItemType({
+        name: t('content.new_procedure'),
+        defaultCalendarItemType: false,
+        duration: 0,
+        healthcarePartyId: service?.id,
+        agendaId: agenda?.id,
+        id: v4(),
+      })
       handleSaveProcedure(procedure)
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
-  }, [service, agenda, selectedKeyId])
+  }
 
   return (
     <div className="list-header">
@@ -78,12 +85,13 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
 
   const servicesList = useMemo(() => {
-    // Sorting the services alphabetically
-    return [...(procedures ?? [])].sort((a, b) => {
-      const nameA = a.name ?? ''
-      const nameB = b.name ?? ''
-      return nameA.localeCompare(nameB)
-    })
+    return [...(procedures ?? [])]
+      .filter((proc) => !proc.deletionDate) // Exclude deleted items
+      .sort((a, b) => {
+        const nameA = a.name ?? ''
+        const nameB = b.name ?? ''
+        return nameA.localeCompare(nameB)
+      })
   }, [procedures])
 
   const [form] = Form.useForm()
@@ -139,19 +147,16 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }
 
-  const handleSaveProcedure = useCallback(
-    (item: CalendarItemType) => {
-      try {
-        createUpdateProcedure({ ...item, name: inputValue })
-      } catch (error) {
-        openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-      } finally {
-        setInputValue(t('content.new_procedure'))
-        setEditItem(undefined)
-      }
-    },
-    [inputValue],
-  )
+  const handleSaveProcedure = (item: CalendarItemType) => {
+    try {
+      createUpdateProcedure({ ...item, name: inputValue })
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } finally {
+      setInputValue(t('content.new_procedure'))
+      setEditItem(undefined)
+    }
+  }
 
   const handleEditService = (item: CalendarItemType) => {
     setEditItem(item)
@@ -223,102 +228,100 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     <div className="root">
       {notificationContextHolder}
       {messageContextHolder}
-      <div className="top-part">
-        <div className="edit-service">
-          <Form
-            layout="vertical"
-            colon={false}
-            form={form}
-            initialValues={{
-              name: service?.name,
-            }}
-            style={{ width: '100%' }}
-          >
-            <Form.Item name="name" rules={[{ required: true, message: 'Name of the service' }]}>
-              <Input
-                suffix={
-                  <Tooltip title={t('content.reset_name')}>
-                    <span
-                      style={{
-                        color: nameValue === service?.name ? 'gray' : 'black',
-                        cursor: nameValue === service?.name ? 'not-allowed' : 'pointer',
-                        pointerEvents: 'auto',
-                      }}
-                      onClick={handleCancel}
-                    >
-                      <CloseOutlined />
-                    </span>
+      <div className="edit-service">
+        <Form
+          layout="vertical"
+          colon={false}
+          form={form}
+          initialValues={{
+            name: service?.name,
+          }}
+          style={{ width: '100%' }}
+        >
+          <Form.Item name="name" rules={[{ required: true, message: 'Name of the service' }]}>
+            <Input
+              suffix={
+                <Tooltip title={t('content.reset_name')}>
+                  <span
+                    style={{
+                      color: nameValue === service?.name ? 'gray' : 'black',
+                      cursor: nameValue === service?.name ? 'not-allowed' : 'pointer',
+                      pointerEvents: 'auto',
+                    }}
+                    onClick={handleCancel}
+                  >
+                    <CloseOutlined />
+                  </span>
+                </Tooltip>
+              }
+              value={service ? service.name : t('content.new_service')}
+              style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
+            />
+          </Form.Item>
+        </Form>
+        <Tooltip title={t('content.save_service')}>
+          <Button
+            icon={<SaveOutlined />}
+            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+            disabled={nameValue === service?.name}
+            onClick={handleSubmit}
+          />
+        </Tooltip>
+        <Tooltip title={t('content.delete_service')}>
+          <Button
+            icon={<DeleteOutlined />}
+            disabled={!service}
+            onClick={() => setShowDeleteServiceModal(true)}
+            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+          />
+        </Tooltip>
+      </div>
+      <div className="procedures-list">
+        <List
+          header={<ListHeader service={service} agenda={agenda} handleSaveProcedure={handleSaveProcedure} />}
+          dataSource={servicesList}
+          locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}
+          renderItem={(item) => (
+            <List.Item>
+              {editItem?.id === item.id ? (
+                <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveProcedure(item)} autoFocus />
+              ) : (
+                item.name
+              )}
+              {editItem?.id !== item.id && (
+                <Tooltip title={t('content.edit_procedure')}>
+                  <Button
+                    className="edit-button"
+                    icon={<EditOutlined />}
+                    style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+                    onClick={() => handleEditService(item)}
+                  />
+                </Tooltip>
+              )}
+              {editItem?.id === item.id && (
+                <div className="action-buttons">
+                  <Tooltip title="Cancel">
+                    <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
                   </Tooltip>
-                }
-                value={service ? service.name : t('content.new_service')}
-                style={{ fontSize: 13, borderRadius: 0, width: '100%' }}
-              />
-            </Form.Item>
-          </Form>
-          <Tooltip title={t('content.save_service')}>
-            <Button
-              icon={<SaveOutlined />}
-              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-              disabled={nameValue === service?.name}
-              onClick={handleSubmit}
-            />
-          </Tooltip>
-          <Tooltip title={t('content.delete_service')}>
-            <Button
-              icon={<DeleteOutlined />}
-              disabled={!service}
-              onClick={() => setShowDeleteServiceModal(true)}
-              style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-            />
-          </Tooltip>
-        </div>
-        <div className="procedures-list">
-          <List
-            header={<ListHeader service={service} agenda={agenda} handleSaveProcedure={handleSaveProcedure} />}
-            dataSource={servicesList}
-            locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}
-            renderItem={(item) => (
-              <List.Item>
-                {editItem?.id === item.id ? (
-                  <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveProcedure(item)} autoFocus />
-                ) : (
-                  item.name
-                )}
-                {editItem?.id !== item.id && (
-                  <Tooltip title={t('content.edit_procedure')}>
+                  <Tooltip title={t('content.save_procedure')}>
                     <Button
-                      className="edit-button"
-                      icon={<EditOutlined />}
+                      icon={<SaveOutlined />}
                       style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      onClick={() => handleEditService(item)}
+                      onClick={() => handleSaveProcedure(item)}
                     />
                   </Tooltip>
-                )}
-                {editItem?.id === item.id && (
-                  <div className="action-buttons">
-                    <Tooltip title="Cancel">
-                      <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
-                    </Tooltip>
-                    <Tooltip title={t('content.save_procedure')}>
-                      <Button
-                        icon={<SaveOutlined />}
-                        style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                        onClick={() => handleSaveProcedure(item)}
-                      />
-                    </Tooltip>
-                    <Tooltip title={t('content.delete_procedure')}>
-                      <Button
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDeleteService(item)}
-                        style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      />
-                    </Tooltip>
-                  </div>
-                )}
-              </List.Item>
-            )}
-          />
-        </div>
+                  <Tooltip title={t('content.delete_procedure')}>
+                    <Button
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDeleteService(item)}
+                      style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
+                    />
+                  </Tooltip>
+                </div>
+              )}
+            </List.Item>
+          )}
+        />
       </div>
 
       {showDeleteServiceModal &&

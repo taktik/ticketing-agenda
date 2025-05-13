@@ -34,7 +34,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const { t, i18n } = useTranslation()
   const [showRulesModal, setShowRulesModal] = useState<boolean>(false)
   const [showDeleteTimeTableModal, setShowDeleteTimeTableModal] = useState<boolean>(false)
-  const [selectedTimeTable, setSelectedTimeTable] = useState<TimeTable | undefined>(undefined)
+  const [selectedTimeTable, setSelectedTimeTable] = useState<string | undefined>(undefined)
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
   const [timeTableToBeDelete, setTimeTableToBeDelete] = useState<TimeTable | undefined>(undefined)
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
@@ -76,13 +76,13 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       const today = startOfDay(new Date())
       const start = today.getTime()
       const end = addMonths(today, 1).getTime()
-      createUpdateTimeTable(new TimeTable({ name: 'New Schedule', agendaId: agenda.id, startTime: start, endTime: end, id: v4() }))
+      createUpdateTimeTable(new TimeTable({ name: t('content.new_schedule'), agendaId: agenda.id, startTime: start, endTime: end, id: v4() }))
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
   }
   const handleEditClick = (timeTable: TimeTable) => {
-    setSelectedTimeTable(timeTable)
+    setSelectedTimeTable(timeTable.id)
     setShowRulesModal(true)
   }
   const handleDeleteClick = (timeTable: TimeTable) => {
@@ -118,18 +118,18 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
   //Delete notifications
   useEffect(() => {
-    if (isDeleteTimeTableSuccess) showMessageFeedback('success', 'The schedule was deleted!')
-    if (isDeleteTimeTableError) openNotification('error', 'We could not delete the schedule!', `An error occurred while deleting the schedule.`)
+    if (isDeleteTimeTableSuccess) showMessageFeedback('success', t('notification.schedule_deleted'))
+    if (isDeleteTimeTableError) openNotification('error', t('notification.schedule_delete_failed'), t('notification.schedule_delete_error'))
   }, [isDeleteTimeTableSuccess, isDeleteTimeTableError])
 
   //Save notifications
   useEffect(() => {
-    if (isCreateUpdateTimeTableSuccess) showMessageFeedback('success', 'The schedule was saved!')
-    if (isCreateUpdateTimeTableError) openNotification('error', 'We could not save the schedule!', `An error occurred while saving the schedule.`)
+    if (isCreateUpdateTimeTableSuccess) showMessageFeedback('success', t('notification.schedule_saved'))
+    if (isCreateUpdateTimeTableError) openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
   }, [isCreateUpdateTimeTableSuccess, isCreateUpdateTimeTableError])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Liste des horaires" blockAntModalBodyVerticalScroll noFooter>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title="Liste des horaires" blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modalSchedule">
         {notificationContextHolder}
         {messageContextHolder}
@@ -185,7 +185,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             </ColumnGroup>
           </Table>
         </div>
-        {showRulesModal && createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} timeTable={selectedTimeTable} />, document.body)}
+        {showRulesModal && createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} timeTableId={selectedTimeTable} />, document.body)}
         {showDeleteTimeTableModal &&
           createPortal(
             <ModalConfirmAction

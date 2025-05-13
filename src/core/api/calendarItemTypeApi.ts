@@ -35,14 +35,13 @@ export const calendarItemTypeApiRtk = createApi({
           return new CalendarItemType(item)
         })
       },
-      providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: res.id }] : []),
+      providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
     }),
     createUpdateCalendarItemType: builder.mutation<CalendarItemType | undefined, CalendarItemType>({
       async queryFn(item, { getState }) {
         const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
         return guard([calendarItemTypeApi], async (): Promise<CalendarItemType> => {
           const updated = !!item.rev ? await calendarItemTypeApi?.modifyCalendarItemType(item) : await calendarItemTypeApi?.createCalendarItemType(item)
-
           if (!updated) {
             throw new Error('CalendarItemType creation failed')
           }

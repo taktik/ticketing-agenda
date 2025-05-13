@@ -1,4 +1,4 @@
-export const DEFAULT_MODAL_WIDTH = 1000
+export const DEFAULT_MODAL_WIDTH = 1100
 export const SMALL_MODAL_WIDTH = 700
 
 export const NIGHTLY_ICURE_CLOUD_URL = 'https://nightly.icure.cloud'

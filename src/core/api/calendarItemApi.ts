@@ -24,28 +24,13 @@ export const calendarItemApiRtk = createApi({
           return new DecryptedCalendarItem(calendarItem)
         })
       },
-      providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: res.id }] : []),
+      providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: 'all' }] : []),
     }),
-
-    createCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, DecryptedCalendarItem>({
+    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, DecryptedCalendarItem>({
       async queryFn(calendarItem, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
-          const newCalendarItem = await calendarApi?.createCalendarItem(calendarItem)
-          if (!newCalendarItem) {
-            throw new Error('CalendarItem creation failed')
-          }
-          return new DecryptedCalendarItem(newCalendarItem)
-        })
-      },
-      invalidatesTags: () => [{ type: CalendarItemTags.CalendarItem, id: 'all' }],
-    }),
-
-    updateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, DecryptedCalendarItem>({
-      async queryFn(calendarItem, { getState }) {
-        const calendarApi = (await cardinalApi(getState))?.calendarItem
-        return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
-          const updatedCalendarItem = await calendarApi?.modifyCalendarItem(calendarItem)
+          const updatedCalendarItem = !!calendarItem.rev ? await calendarApi?.modifyCalendarItem(calendarItem) : await calendarApi?.createCalendarItem(calendarItem)
           if (!updatedCalendarItem) {
             throw new Error('CalendarItem update failed')
           }
@@ -54,7 +39,6 @@ export const calendarItemApiRtk = createApi({
       },
       invalidatesTags: () => [{ type: CalendarItemTags.CalendarItem, id: 'all' }],
     }),
-
     deleteCalendarItem: builder.mutation<string | undefined, DecryptedCalendarItem>({
       async queryFn(calendarItem, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
@@ -74,4 +58,4 @@ export const calendarItemApiRtk = createApi({
   }),
 })
 
-export const { useGetCalendarItemQuery, useCreateCalendarItemMutation, useUpdateCalendarItemMutation, useDeleteCalendarItemMutation } = calendarItemApiRtk
+export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation } = calendarItemApiRtk

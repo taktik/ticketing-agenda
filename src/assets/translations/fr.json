@@ -39,7 +39,17 @@
     "search_site_or_service": "Rechercher un site ou un service...",
     "add_new_service": "Ajouter un nouveau service",
     "save_site_before_adding_services": "Vous devez d'abord enregistrer le site avant d'ajouter des services",
-    "select_site": "Sélectionner un site"
+    "select_site": "Sélectionner un site",
+    "edit": "Modifier",
+    "name": "Nom",
+    "start": "Début",
+    "end": "Fin",
+    "add_rule": "Ajouter une règle",
+    "save_schedule": "Enregistrer l'horaire",
+    "new_schedule": "Nouvel horaire",
+    "schedule_list": "Liste des horaires",
+    "edit_schedule": "Édition d'un horaire",
+    "select_service_for_schedule": "Vous devez sélectionner un service pour ajouter un horaire"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -72,7 +82,19 @@
     "service_delete_error": "Une erreur s'est produite lors de la suppression du service.",
     "service_saved": "Le service a été enregistré !",
     "service_save_failed": "Nous n'avons pas pu enregistrer le service !",
-    "service_save_error": "Une erreur s'est produite lors de l'enregistrement du service."
+    "service_save_error": "Une erreur s'est produite lors de l'enregistrement du service.",
+    "schedule_deleted": "L'horaire a été supprimé !",
+    "schedule_saved": "L'horaire a été enregistré !",
+    "schedule_save_failed": "Nous n'avons pas pu enregistrer l'horaire !",
+    "schedule_save_error": "Une erreur s'est produite lors de l'enregistrement de l'horaire.",
+    "schedule_delete_failed": "Nous n'avons pas pu supprimer l'horaire !",
+    "schedule_delete_error": "Une erreur s'est produite lors de la suppression de l'horaire.",
+    "rule_deleted": "La règle a été supprimée !",
+    "rule_saved": "La règle a été enregistrée !",
+    "rule_save_failed": "Nous n'avons pas pu enregistrer la règle !",
+    "rule_save_error": "Une erreur s'est produite lors de l'enregistrement de la règle.",
+    "rule_delete_failed": "Nous n'avons pas pu supprimer la règle !",
+    "rule_delete_error": "Une erreur s'est produite lors de la suppression de la règle."
   },
   "months": {
     "january": "Janvier",

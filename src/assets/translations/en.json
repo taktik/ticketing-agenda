@@ -39,7 +39,17 @@
     "search_site_or_service": "Search site or service...",
     "add_new_service": "Add a new service",
     "save_site_before_adding_services": "You must first save the site before adding Services",
-    "select_site": "Select a site"
+    "select_site": "Select a site",
+    "edit": "Edit",
+    "name": "Name",
+    "start": "Start",
+    "end": "End",
+    "add_rule": "Add a rule",
+    "save_schedule": "Save schedule",
+    "new_schedule": "New schedule",
+    "schedule_list": "List of schedules",
+    "edit_schedule": "Edit schedule",
+    "select_service_for_schedule": "You need to select a service to add a schedule"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -72,7 +82,19 @@
     "service_delete_error": "An error occurred while deleting the service.",
     "service_saved": "The service was saved!",
     "service_save_failed": "We could not save the service!",
-    "service_save_error": "An error occurred while saving the service."
+    "service_save_error": "An error occurred while saving the service.",
+    "schedule_deleted": "The schedule was deleted!",
+    "schedule_saved": "The schedule was saved!",
+    "schedule_save_failed": "We could not save the schedule!",
+    "schedule_save_error": "An error occurred while saving the schedule.",
+    "schedule_delete_failed": "We could not delete the schedule!",
+    "schedule_delete_error": "An error occurred while deleting the schedule.",
+    "rule_deleted": "The rule was deleted!",
+    "rule_saved": "The rule was saved!",
+    "rule_save_failed": "We could not save the rule!",
+    "rule_save_error": "An error occurred while saving the rule.",
+    "rule_delete_failed": "We could not delete the rule!",
+    "rule_delete_error": "An error occurred while deleting the rule."
   },
   "months": {
     "januray": "January",

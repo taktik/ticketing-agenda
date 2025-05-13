@@ -35,7 +35,7 @@ export const timeTableApiRtk = createApi({
           return new TimeTable(timeTable)
         })
       },
-      providesTags: (res) => (res ? [{ type: TimeTableTags.TimeTable, id: res.id }] : []),
+      providesTags: (res) => (res ? [{ type: TimeTableTags.TimeTable, id: 'all' }] : []),
     }),
     createUpdateTimeTable: builder.mutation<TimeTable | undefined, TimeTable>({
       async queryFn(timeTable, { getState }) {
