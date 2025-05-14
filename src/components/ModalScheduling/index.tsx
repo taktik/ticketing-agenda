@@ -81,6 +81,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
   }
+
   const handleEditClick = (timeTable: TimeTable) => {
     setSelectedTimeTable(timeTable.id)
     setShowRulesModal(true)
@@ -91,12 +92,15 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   }
 
   const handleDeleteTimeTable = () => {
-    if (agenda && timeTableToBeDelete) {
+    try {
+      if (!agenda) throw new Error('No service selected')
+      if (!timeTableToBeDelete) throw new Error('No schedule selected')
       deleteTimeTable(timeTableToBeDelete)
-    } else {
-      // error
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } finally {
+      setShowDeleteTimeTableModal(false)
     }
-    setShowDeleteTimeTableModal(false)
   }
 
   // Ant select
@@ -129,17 +133,17 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   }, [isCreateUpdateTimeTableSuccess, isCreateUpdateTimeTableError])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Liste des horaires" blockAntModalBodyVerticalScroll noFooter width={1300}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.schedule_list')} blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modalSchedule">
         {notificationContextHolder}
         {messageContextHolder}
         <div className="antSelect">
-          Services
+          {t('content.services')}
           <AntSelect
             allowClear
             showSearch
             style={{ width: '20%' }}
-            placeholder="Select a service"
+            placeholder={t('content.select_service')}
             optionFilterProp="label"
             labelInValue
             filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}
@@ -157,35 +161,48 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
         </div>
 
         <div className="antTable">
-          <Table<TimeTable> dataSource={timeTables ?? []} rowKey="id" locale={{ emptyText: <Empty description="No schedule yet" /> }}>
+          <Table<TimeTable> dataSource={timeTables ?? []} rowKey="id" locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}>
             <ColumnGroup
               title={
-                <Tooltip title={selectedService ? null : 'You need to select a service to add a schedule'}>
+                <Tooltip title={selectedService ? null : t('content.select_service_for_schedule')}>
                   <Button style={{ width: '100%' }} disabled={!selectedService} onClick={addSchedule}>
-                    Ajouter un horaire
+                    {t('content.add_schedule')}
                   </Button>
                 </Tooltip>
               }
             >
-              <Column title="Nom" dataIndex="name" key="name" width={'28%'} />
-              <Column title="Début" dataIndex="startTime" key="startTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
-              <Column title="Fin" dataIndex="endTime" key="endTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
+              <Column title={t('content.name')} dataIndex="name" key="name" width={'28%'} />
+              <Column
+                title={t('content.start')}
+                dataIndex="startTime"
+                key="startTime"
+                width={'28%'}
+                render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })}
+              />
+              <Column
+                title={t('content.end')}
+                dataIndex="endTime"
+                key="endTime"
+                width={'28%'}
+                render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })}
+              />
 
               <Column
-                title="Action"
+                title={t('content.actions')}
                 key="action"
                 width={'16%'}
                 render={(_: unknown, record: TimeTable) => (
                   <Space size="middle">
-                    <Button onClick={() => handleEditClick(record)}>Editer</Button>
-                    <Button onClick={() => handleDeleteClick(record)}>Supprimer</Button>
+                    <Button onClick={() => handleEditClick(record)}>{t('content.edit')}</Button>
+                    <Button onClick={() => handleDeleteClick(record)}>{t('content.delete')}</Button>
                   </Space>
                 )}
               />
             </ColumnGroup>
           </Table>
         </div>
-        {showRulesModal && createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} timeTableId={selectedTimeTable} />, document.body)}
+        {showRulesModal &&
+          createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} timeTableId={selectedTimeTable} agenda={agenda} />, document.body)}
         {showDeleteTimeTableModal &&
           createPortal(
             <ModalConfirmAction
@@ -197,8 +214,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
                   <p>{t('delete_modal.delete_permanent_warning')}</p>
                 </>
               }
-              yesBtnTitle="Delete"
-              noBtnTitle="Close"
+              yesBtnTitle={t('content.delete')}
+              noBtnTitle={t('content.close')}
               onYesClick={handleDeleteTimeTable}
               onNoClick={() => setShowDeleteTimeTableModal(false)}
               isVisible={showDeleteTimeTableModal}
