@@ -59,9 +59,20 @@
     "days": "Days",
     "hours": "Hours",
     "availability": "Availability",
-    "number_of_slots": "Number of slots",
     "procedure_duration": "Procedure duration",
-    "update": "Update"
+    "update": "Update",
+    "activate": "Activate",
+    "activated": "Activated",
+    "deactivate": "Deactivate",
+    "deactivated": "Deactivated",
+    "unknown": "Unknown",
+    "number_of_slots": "Number of slots",
+    "enter_slots": "Enter slots",
+    "slot": "Slot",
+    "slots": "Slots",
+    "slot_required_at_least_one": "At least 1 slot is required.",
+    "slots_required": "Slots are required!",
+    "not_set": "Not set"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

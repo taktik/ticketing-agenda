@@ -59,9 +59,20 @@
     "days": "Tage",
     "hours": "Uhrzeiten",
     "availability": "Verfügbarkeit",
-    "number_of_slots": "Anzahl der Plätze",
     "procedure_duration": "Dauer des Verfahrens",
-    "update": "Aktualisieren"
+    "update": "Aktualisieren",
+    "activate": "Aktivieren",
+    "activated": "Aktiviert",
+    "deactivate": "Deaktivieren",
+    "deactivated": "Deaktiviert",
+    "unknown": "Unbekannt",
+    "number_of_slots": "Anzahl der Zeitfenster",
+    "enter_slots": "Zeitfenster eingeben",
+    "slot": "Zeitfenster",
+    "slots": "Zeitfenster",
+    "slot_required_at_least_one": "Mindestens 1 Zeitfenster ist erforderlich.",
+    "slots_required": "Zeitfenster sind erforderlich!",
+    "not_set": "Nicht festgelegt"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

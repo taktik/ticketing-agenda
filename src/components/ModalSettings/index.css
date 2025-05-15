@@ -31,7 +31,7 @@ html,
 body {
   box-sizing: border-box;
   font-size: 16px;
-  background-color: #f5f5f5;
+  background-color: #F5F5F5;
 }
 *,
 *:before,
@@ -96,14 +96,14 @@ th {
 /* Responsive media queries:
  ========================================================================== */
 @font-face {
-  font-family: 'Lato700';
+  font-family: "Lato700";
   /*Can be any text*/
-  src: local('Inter-Bold'), url('/public/fonts/Lato/Lato-Bold.ttf') format('truetype');
+  src: local("Inter-Bold"), url("/public/fonts/Lato/Lato-Bold.ttf") format("truetype");
 }
 @font-face {
-  font-family: 'Lato400';
+  font-family: "Lato400";
   /*Can be any text*/
-  src: local('Inter-Regular'), url('/public/fonts/Lato/Lato-Regular.ttf') format('truetype');
+  src: local("Inter-Regular"), url("/public/fonts/Lato/Lato-Regular.ttf") format("truetype");
 }
 body {
   width: 100vw;
@@ -174,12 +174,13 @@ body * {
   height: 100%;
   width: 100%;
   display: flex;
-  justify-content: space-around;
   flex-direction: column;
   align-items: center;
+  gap: 3rem;
+  padding: 1rem;
   font-size: large;
 }
 .defaultRender img {
-  width: 45%;
+  width: 60%;
 }
 /*# sourceMappingURL=index.css.map */

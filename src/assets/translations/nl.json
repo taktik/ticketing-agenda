@@ -59,9 +59,20 @@
     "days": "Dagen",
     "hours": "Tijden",
     "availability": "Beschikbaarheid",
-    "number_of_slots": "Aantal slots",
     "procedure_duration": "Duur van de procedure",
-    "update": "Bijwerken"
+    "update": "Bijwerken",
+    "activate": "Activeren",
+    "activated": "Geactiveerd",
+    "deactivate": "Deactiveren",
+    "deactivated": "Gedeactiveerd",
+    "unknown": "Onbekend",
+    "number_of_slots": "Aantal slots",
+    "enter_slots": "Slots invoeren",
+    "slot": "Slot",
+    "slots": "Slots",
+    "slot_required_at_least_one": "Minstens 1 slot is vereist.",
+    "slots_required": "Slots zijn vereist!",
+    "not_set": "Niet ingesteld"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

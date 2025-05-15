@@ -59,9 +59,20 @@
     "days": "Jours",
     "hours": "Heures",
     "availability": "Disponibilité",
-    "number_of_slots": "Nombre de slots",
     "procedure_duration": "Durée de la démarche",
-    "update": "Mettre à jour"
+    "update": "Mettre à jour",
+    "activate": "Activer",
+    "activated": "Activé",
+    "deactivate": "Désactiver",
+    "deactivated": "Désactivé",
+    "unknown": "Inconnu",
+    "number_of_slots": "Nombre de créneaux",
+    "enter_slots": "Saisir les créneaux",
+    "slot": "Créneau",
+    "slots": "Créneaux",
+    "slot_required_at_least_one": "Au moins 1 créneau est requis.",
+    "slots_required": "Les créneaux sont requis !",
+    "not_set": "Non défini"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
