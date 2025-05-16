@@ -7,7 +7,7 @@ import { CloseOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/ic
 import dayjs from 'dayjs'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
-import { addDays, addMonths, format, Locale, startOfDay } from 'date-fns'
+import { addDays, addMonths, format, Locale, setDay, setMonth, startOfDay } from 'date-fns'
 import { enUS, fr, de, nl } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import { useCreateUpdateTimeTableMutation, useGetTimeTableQuery } from '../../../core/api/timeTableApi'
@@ -17,6 +17,7 @@ import { dayjsToMinutes, formatMinutesToHHMM, minutesToDayjs } from '../../commo
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
 import { Frequency, Options, RRule, RRuleSet, rrulestr, Weekday } from 'rrule'
+import { Language } from 'rrule/dist/esm/nlp/i18n'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -28,7 +29,13 @@ const localeMap: Record<string, Locale> = {
 interface UIRrulePartsForForm {
   _freq: Frequency // RRule.WEEKLY, RRule.DAILY etc. are numbers (0-4)
   _interval: number
-  _byday: string[] // This will hold ["MO", "TU"], etc. for Checkbox.Group
+  _byday: string[]
+}
+
+interface RRuleLanguageOptions {
+  dayNames: string[]
+  monthNames: string[]
+  ordinal: (dayOfMonth: number) => string
 }
 
 type TableHours = {
@@ -68,21 +75,20 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const isEditing = useMemo(() => (record: TimeTableItem) => record.placeId === editingKey, [editingKey])
 
   const RRuleWeekdays = [
-    { label: 'Monday', short: 'Mon', value: 'MO', rruleConst: RRule.MO },
-    { label: 'Tuesday', short: 'Tue', value: 'TU', rruleConst: RRule.TU },
-    { label: 'Wednesday', short: 'Wed', value: 'WE', rruleConst: RRule.WE },
-    { label: 'Thursday', short: 'Thu', value: 'TH', rruleConst: RRule.TH },
-    { label: 'Friday', short: 'Fri', value: 'FR', rruleConst: RRule.FR },
-    { label: 'Saturday', short: 'Sat', value: 'SA', rruleConst: RRule.SA },
-    { label: 'Sunday', short: 'Sun', value: 'SU', rruleConst: RRule.SU },
+    { label: t('rrule.monday_upper'), short: 'Mon', value: 'MO', rruleConst: RRule.MO },
+    { label: t('rrule.tuesday_upper'), short: 'Tue', value: 'TU', rruleConst: RRule.TU },
+    { label: t('rrule.wednesday_upper'), short: 'Wed', value: 'WE', rruleConst: RRule.WE },
+    { label: t('rrule.thursday_upper'), short: 'Thu', value: 'TH', rruleConst: RRule.TH },
+    { label: t('rrule.friday_upper'), short: 'Fri', value: 'FR', rruleConst: RRule.FR },
+    { label: t('rrule.saturday_upper'), short: 'Sat', value: 'SA', rruleConst: RRule.SA },
+    { label: t('rrule.sunday_upper'), short: 'Sun', value: 'SU', rruleConst: RRule.SU },
   ]
 
   const { data: timeTable } = useGetTimeTableQuery(timeTableId ?? '')
 
   const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !timeTable || !agenda, agendaId: agenda?.id ?? '' })
 
-  const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] =
-    useCreateUpdateTimeTableMutation()
+  const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
 
   const [form] = Form.useForm<FormValues>()
   const nameValue = Form.useWatch('name', form)
@@ -183,6 +189,86 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     }
   }, [watchedFreq, watchedInterval, watchedByDay, form])
 
+  const tokens: { [k: string]: RegExp } = {
+    // Copied from a version of rrule.js default nlp tokens (may vary)
+    SKIP: /^[ \r\n\t]+|^\.$/,
+    INVALID: /.*/,
+    SECOND: /^second(s)?/i,
+    MINUTE: /^minute(s)?/i,
+    HOUR: /^hour(s)?/i,
+    DAY: /^day(s)?/i,
+    WEEK: /^week(s)?/i,
+    MONTH: /^month(s)?/i,
+    YEAR: /^year(s)?/i,
+    // ... and many others for parsing text.
+  }
+
+  const getCurrentRruleLanguageOptions = (): Language => {
+    // rrule.js expects dayNames: [Monday, Tuesday, ..., Sunday]
+    // date-fns getDay(): Sunday is 0, Monday is 1, ..., Saturday is 6.
+    // We use RRule.MO, etc. (which are Weekday instances) to ensure correct order and mapping.
+    // RRule.MO.weekday is 0 (Monday), RRule.TU.weekday is 1 (Tuesday), ..., RRule.SU.weekday is 6 (Sunday).
+    const rruleWeekdaysOrdered = [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR, RRule.SA, RRule.SU]
+
+    const dayNames = rruleWeekdaysOrdered.map((rruleWd) => {
+      // We need a date that falls on that specific weekday to format its name.
+      // dateFnsSetDay: 0 for Sunday, 1 for Monday... 6 for Saturday.
+      // So, rruleWd.weekday (Mon=0, ... Sun=6) maps to dateFnsSetDay index by:
+      // (rruleWd.weekday + 1) % 7 maps MO(0)->1, TU(1)->2, ..., SA(5)->6, SU(6)->0
+      const dayIndexForDateFns = (rruleWd.weekday + 1) % 7
+      return format(setDay(new Date(), dayIndexForDateFns), 'EEEE', { locale: dateFnsLocale }) // EEEE for full day name
+    })
+
+    const monthNames = [...Array(12)].map(
+      (_, i) =>
+        // date-fns setMonth: month is 0-indexed (0 for January).
+        format(setMonth(new Date(), i), 'LLLL', { locale: dateFnsLocale }), // LLLL for full month name
+    )
+
+    return {
+      dayNames,
+      monthNames,
+      tokens,
+    }
+  }
+
+  const rruleGettextAdapter = (id: string | number | Weekday): string => {
+    let translationKeySeed: string
+    let fallbackText: string
+
+    if (typeof id === 'string') {
+      // Handles keywords like "every", "on", "until", "and", "week", "weeks", "day", "days",
+      // and potentially "st", "nd", "rd", "th" for ordinals if rrule.js passes them as strings.
+      translationKeySeed = id
+      fallbackText = id
+    } else if (typeof id === 'number') {
+      // rrule.js might pass numbers in a few contexts:
+      // 1. For ordinals (e.g., it might pass 1, 2, 3, 21, 22, 23, 31) expecting
+      //    the gettext function to return the appropriate ordinal suffix (st, nd, rd, th)
+      //    or the full ordinal ("1st", "2nd"). This depends on the rrule.js version and how it forms sentences.
+      // 2. For counts if it doesn't use a string like "times".
+      // A simple approach is to try and translate it as a numeric key, or just return the number as a string.
+      // You'll need to observe what numbers are passed to translate them effectively.
+      // For now, we'll treat it as a generic number that might be part of a phrase.
+      translationKeySeed = `num_${id}` // e.g., rrule:num_1, rrule:num_2
+      fallbackText = String(id)
+    } else if (id instanceof Weekday) {
+      const englishDayName = RRuleWeekdays.find((d) => d.rruleConst.weekday === id.weekday)?.label // e.g., "Monday"
+      translationKeySeed = englishDayName || `weekday_${id.weekday}`
+      fallbackText = englishDayName || `Day ${id.weekday + 1}` // Fallback if not in RRuleWeekdays
+    } else {
+      // Should not happen with the defined union type, but as a fallback:
+      console.warn('rruleGettextAdapter received unexpected id type:', id)
+      translationKeySeed = 'unknown'
+      fallbackText = 'unknown'
+    }
+
+    // Construct the final i18n key, e.g., "rrule:every", "rrule:Monday", "rrule:num_1"
+    const i18nKey = `rrule.${translationKeySeed}`
+    // console.log(`Attempting to translate: key='${i18nKey}', fallback='${fallbackText}' (original id from rrule: ${JSON.stringify(id)})`);
+    return t(i18nKey, fallbackText) // Use your app's t() function
+  }
+
   const tableHandleEdit = (timeTableItem: TimeTableItem) => {
     try {
       if (!timeTableItem.placeId) throw new Error('No rule selected')
@@ -277,11 +363,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       }))
 
       setTimeTableItems((prev) =>
-        prev.map((item) =>
-          item.placeId === timeTableItem.placeId
-            ? { ...item, calendarItemTypeId: rowValues.calendarItemTypeId, unavailable: rowValues.unavailable, hours: hoursToSave, rrule: rowValues.rrule }
-            : item,
-        ),
+        prev.map((item) => (item.placeId === timeTableItem.placeId ? { ...item, calendarItemTypeId: rowValues.calendarItemTypeId, unavailable: rowValues.unavailable, hours: hoursToSave, rrule: rowValues.rrule } : item)),
       )
       setEditingKey('')
     } catch (error) {
@@ -335,13 +417,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       <div className="modalRule">
         {notificationContextHolder}
         {messageContextHolder}
-        <Form
-          layout="vertical"
-          colon={false}
-          form={form}
-          onFinish={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between', gap: '1rem' }}
-        >
+        <Form layout="vertical" colon={false} form={form} onFinish={handleSubmit} style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between', gap: '1rem' }}>
           <div className="formElements">
             <div className="selectors">
               <div className="antSelect">
@@ -376,11 +452,12 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.procedure')}
                     dataIndex="calendarItemTypeId"
                     key="calendarItemTypeId"
-                    width={'17%'}
+                    width={'15%'}
                     render={(currentValue: string | undefined, record: TimeTableItem) => {
                       const editable = isEditing(record)
 
                       if (editable) {
+                        // Edit mode
                         return (
                           <Form.Item name="calendarItemTypeId" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select a procedure!' }]}>
                             <Select placeholder="Select a type" style={{ width: '100%' }} loading={!procedures}>
@@ -404,89 +481,75 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.days')}
                     dataIndex="rrule"
                     key="rrule"
-                    width={'17%'}
+                    width={'25%'}
                     render={(rruleString: string | undefined, record: TimeTableItem) => {
                       const editable = isEditing(record)
 
                       if (editable) {
-                        // EDIT MODE
                         return (
                           <Space direction="vertical" style={{ width: '100%' }}>
-                            {/* This Form.Item is hidden but ensures 'rrule' is part of the form,
-                                gets validated, and its value is collected. */}
                             <Form.Item name="rrule" noStyle rules={[{ required: true, message: 'Recurrence is required' }]}>
                               <Input type="hidden" />
                             </Form.Item>
 
-                            <Form.Item
-                              label={t('rrule.frequency', 'Repeats')}
-                              name="_freq"
-                              initialValue={RRule.WEEKLY} // Default
-                              rules={[{ required: true, message: t('validation.frequencyRequired', 'Frequency required') }]}
-                              style={{ marginBottom: 8 }}
-                            >
-                              <Select style={{ width: '100%' }}>
-                                <Select.Option value={RRule.DAILY}>{t('rrule.daily', 'Daily')}</Select.Option>
-                                <Select.Option value={RRule.WEEKLY}>{t('rrule.weekly', 'Weekly')}</Select.Option>
-                                <Select.Option value={RRule.MONTHLY}>{t('rrule.monthly', 'Monthly')}</Select.Option>
-                                <Select.Option value={RRule.YEARLY}>{t('rrule.yearly', 'Yearly')}</Select.Option>
-                              </Select>
+                            <Form.Item label={t('rrule.repeatEvery', 'Repeat every')} style={{ marginBottom: 8 }}>
+                              <Space.Compact block>
+                                <Form.Item name="_interval" initialValue={1} rules={[{ required: true, message: t('validation.valueMissing', 'Value') }]} noStyle>
+                                  <InputNumber min={1} style={{ width: '35%' }} defaultValue={1} />
+                                </Form.Item>
+                                <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unitMissing', 'Unit') }]} noStyle>
+                                  <Select style={{ width: '65%' }}>
+                                    <Select.Option value={RRule.DAILY}>{watchedInterval === 1 ? t('rrule.units.day', 'day') : t('rrule.units.days', 'days')}</Select.Option>
+                                    <Select.Option value={RRule.WEEKLY}>{watchedInterval === 1 ? t('rrule.units.week', 'week') : t('rrule.units.weeks', 'weeks')}</Select.Option>
+                                  </Select>
+                                </Form.Item>
+                              </Space.Compact>
                             </Form.Item>
 
-                            <Form.Item
-                              label={t('rrule.interval', 'Every')}
-                              name="_interval"
-                              initialValue={1}
-                              rules={[{ required: true, message: t('validation.intervalRequired', 'Interval required') }]}
-                              style={{ marginBottom: 8 }}
-                            >
-                              <InputNumber
-                                min={1}
-                                style={{ width: '100%' }}
-                                addonAfter={
-                                  watchedFreq === RRule.WEEKLY
-                                    ? t('rrule.weeks', 'week(s)')
-                                    : watchedFreq === RRule.DAILY
-                                    ? t('rrule.days', 'day(s)')
-                                    : watchedFreq === RRule.MONTHLY
-                                    ? t('rrule.months', 'month(s)')
-                                    : watchedFreq === RRule.YEARLY
-                                    ? t('rrule.years', 'year(s)')
-                                    : ''
-                                }
-                              />
-                            </Form.Item>
-
-                            {/* Conditional display for BYDAY based on frequency */}
-                            {Form.useWatch('_freq', form) === RRule.WEEKLY && (
+                            {watchedFreq === RRule.WEEKLY && (
                               <Form.Item
                                 label={t('rrule.onDays', 'On days')}
-                                name="_byday" // This will hold an array of strings like ["MO", "TU"]
+                                name="_byday"
                                 style={{ marginBottom: 8 }}
+                                rules={[{ required: true, message: t('validation.daysRequired', 'Please select at least one day') }]}
                               >
-                                <Checkbox.Group options={RRuleWeekdays.map((day) => ({ label: day.short, value: day.value }))} />
+                                <Select mode="multiple" allowClear style={{ width: '100%' }} placeholder={t('placeholders.selectDays', 'Select days...')}>
+                                  {RRuleWeekdays.map((day) => (
+                                    <Select.Option key={day.value} value={day.value} label={day.label}>
+                                      {day.label}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
                               </Form.Item>
                             )}
-                            {/* Add more conditional UI for MONTHLY (BYMONTHDAY, BYSETPOS) or YEARLY if needed */}
                           </Space>
                         )
                       } else {
-                        // DISPLAY MODE
                         if (!rruleString) {
                           return <Tag>{t('status.notSet', 'Not set')}</Tag>
                         }
                         try {
-                          // For rrule.toText() to work well with i18n, you might need to pass a language function.
-                          // See rrule.js documentation for toText() options.
-                          // A dtstart is technically required for RRule.fromString to be fully spec-compliant,
-                          // though many simple rules parse fine without it.
-                          // If your RRULE strings might not have DTSTART, provide a default context:
-                          const rule = RRule.fromString(`DTSTART:${dayjs().format('YYYYMMDD')}T000000Z\n${rruleString}`)
-                          // Or if your RRULEs always are generated with a DTSTART by rrule.js:
-                          // const rule = RRule.fromString(rruleString);
-                          return <span title={rruleString}>{rule.toText()}</span>
+                          const langOpts = getCurrentRruleLanguageOptions()
+
+                          const parsedRuleComponents = RRule.parseString(rruleString)
+                          if (parsedRuleComponents.freq === undefined) {
+                            throw new Error('Frequency cannot be parsed')
+                          }
+
+                          // 2. Create the options object for new RRule() ensuring all required types are met
+                          const optionsForToText: Partial<Options> = {
+                            dtstart: new Date(new Date().setHours(0, 0, 0, 0)), // Consistent context for toText()
+                            freq: parsedRuleComponents.freq as Frequency,
+                            ...(parsedRuleComponents.interval !== undefined && { interval: parsedRuleComponents.interval }),
+                            ...(parsedRuleComponents.byweekday && { byweekday: parsedRuleComponents.byweekday }),
+                          }
+
+                          const ruleForText = new RRule(optionsForToText)
+                          const displayText = ruleForText.toText(rruleGettextAdapter, langOpts)
+                          // console.log(`RRULE: '${rruleString}' -> toText(): '${displayText}' using options:`, optionsForToText);
+                          return <span title={rruleString}>{displayText}</span>
                         } catch (e) {
-                          console.error('Error parsing RRULE for display:', e, rruleString)
+                          console.error('Error processing RRULE for display:', e, rruleString)
                           return (
                             <Tag color="red" title={rruleString}>
                               {t('status.invalidRule', 'Invalid Rule')}
@@ -500,7 +563,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.hours')}
                     dataIndex="hours"
                     key="hours"
-                    width={'17%'}
+                    width={'15%'}
                     render={(hoursArray: TimeTableHour[] | undefined, record: TimeTableItem) => {
                       const editable = isEditing(record)
 
@@ -625,7 +688,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.availability')}
                     dataIndex="unavailable"
                     key="unavailable"
-                    width={'17%'}
+                    width={'15%'}
                     render={(isUnavailable: boolean | undefined, record: TimeTableItem) => {
                       const editable = isEditing(record)
 
@@ -651,7 +714,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                   <Column
                     title={t('content.number_of_slots')}
                     key="numberOfSlots"
-                    width={'17%'}
+                    width={'15%'}
                     render={(_textFromTable, record: TimeTableItem) => {
                       const editable = isEditing(record)
 
@@ -693,14 +756,14 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
                       if (editable) {
                         return (
-                          <Space size="middle">
+                          <Space size="middle" className="actionButtons">
                             <Button onClick={() => tableHandleUpdate(record)}>{t('content.update')}</Button>
                             <Button onClick={() => tableHandleCancel(record)}>{t('content.cancel')}</Button>
                           </Space>
                         )
                       } else {
                         return (
-                          <Space size="middle">
+                          <Space size="middle" className="actionButtons">
                             <Button onClick={() => tableHandleEdit(record)}>{t('content.edit')}</Button>
                             <Button
                               onClick={() => {

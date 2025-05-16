@@ -119,18 +119,26 @@
     "rule_delete_failed": "We konden de regel niet verwijderen!",
     "rule_delete_error": "Er is een fout opgetreden bij het verwijderen van de regel."
   },
-  "months": {
-    "januray": "Januari",
-    "february": "Februari",
-    "march": "Maart",
-    "april": "April",
-    "may": "Mei",
-    "june": "Juni",
-    "july": "Juli",
-    "august": "Augustus",
-    "september": "September",
-    "october": "Oktober",
-    "november": "November",
-    "december": "December"
+  "rrule": {
+    "every": "elke",
+    "day": "dag",
+    "days": "dagen",
+    "week": "week",
+    "weeks": "weken",
+    "on": "op",
+    "monday": "maandag",
+    "tuesday": "dinsdag",
+    "wednesday": "woensdag",
+    "thursday": "donderdag",
+    "friday": "vrijdag",
+    "saturday": "zaterdag",
+    "sunday": "zondag",
+    "monday_upper": "Maandag",
+    "tuesday_upper": "Dinsdag",
+    "wednesday_upper": "Woensdag",
+    "thursday_upper": "Donderdag",
+    "friday_upper": "Vrijdag",
+    "saturday_upper": "Zaterdag",
+    "sunday_upper": "Zondag"
   }
 }

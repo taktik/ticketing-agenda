@@ -119,18 +119,26 @@
     "rule_delete_failed": "Nous n'avons pas pu supprimer la règle !",
     "rule_delete_error": "Une erreur s'est produite lors de la suppression de la règle."
   },
-  "months": {
-    "january": "Janvier",
-    "february": "Février",
-    "march": "Mars",
-    "april": "Avril",
-    "may": "Mai",
-    "june": "Juin",
-    "july": "Juillet",
-    "august": "Aout",
-    "september": "Septembre",
-    "october": "Octobre",
-    "november": "Novembre",
-    "december": "Décembre"
+  "rrule": {
+    "every": "tous les",
+    "day": "jour",
+    "days": "jours",
+    "week": "semaine",
+    "weeks": "semaines",
+    "on": "le",
+    "monday": "lundi",
+    "tuesday": "mardi",
+    "wednesday": "mercredi",
+    "thursday": "jeudi",
+    "friday": "vendredi",
+    "saturday": "samedi",
+    "sunday": "dimanche",
+    "monday_upper": "Lundi",
+    "tuesday_upper": "Mardi",
+    "wednesday_upper": "Mercredi",
+    "thursday_upper": "Jeudi",
+    "friday_upper": "Vendredi",
+    "saturday_upper": "Samedi",
+    "sunday_upper": "Dimanche"
   }
 }

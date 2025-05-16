@@ -146,4 +146,15 @@ body * {
   display: flex;
   justify-content: flex-end;
 }
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.actionButtons > * {
+  width: 100%;
+}
+.actionButtons .ant-btn {
+  width: 100%;
+}
 /*# sourceMappingURL=index.css.map */

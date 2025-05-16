@@ -119,18 +119,26 @@
     "rule_delete_failed": "We could not delete the rule!",
     "rule_delete_error": "An error occurred while deleting the rule."
   },
-  "months": {
-    "januray": "January",
-    "february": "February",
-    "march": "March",
-    "april": "April",
-    "may": "May",
-    "june": "June",
-    "july": "July",
-    "august": "August",
-    "september": "September",
-    "october": "October",
-    "november": "November",
-    "december": "December"
+  "rrule": {
+    "every": "every",
+    "day": "day",
+    "days": "days",
+    "week": "week",
+    "weeks": "weeks",
+    "on": "on",
+    "monday": "monday",
+    "tuesday": "tuesday",
+    "wednesday": "wednesday",
+    "thursday": "thursday",
+    "friday": "friday",
+    "saturday": "saturday",
+    "sunday": "sunday",
+    "monday_upper": "Monday",
+    "tuesday_upper": "Tuesday",
+    "wednesday_upper": "Wednesday",
+    "thursday_upper": "Thursday",
+    "friday_upper": "Friday",
+    "saturday_upper": "Saturday",
+    "sunday_upper": "Sunday"
   }
 }
