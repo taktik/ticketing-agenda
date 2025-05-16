@@ -18,6 +18,7 @@ import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
 import { Frequency, Options, RRule, RRuleSet, rrulestr, Weekday } from 'rrule'
 import { Language } from 'rrule/dist/esm/nlp/i18n'
+import { TOKENS } from '../../../constants'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -189,46 +190,18 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     }
   }, [watchedFreq, watchedInterval, watchedByDay, form])
 
-  const tokens: { [k: string]: RegExp } = {
-    // Copied from a version of rrule.js default nlp tokens (may vary)
-    SKIP: /^[ \r\n\t]+|^\.$/,
-    INVALID: /.*/,
-    SECOND: /^second(s)?/i,
-    MINUTE: /^minute(s)?/i,
-    HOUR: /^hour(s)?/i,
-    DAY: /^day(s)?/i,
-    WEEK: /^week(s)?/i,
-    MONTH: /^month(s)?/i,
-    YEAR: /^year(s)?/i,
-    // ... and many others for parsing text.
-  }
-
   const getCurrentRruleLanguageOptions = (): Language => {
-    // rrule.js expects dayNames: [Monday, Tuesday, ..., Sunday]
-    // date-fns getDay(): Sunday is 0, Monday is 1, ..., Saturday is 6.
-    // We use RRule.MO, etc. (which are Weekday instances) to ensure correct order and mapping.
-    // RRule.MO.weekday is 0 (Monday), RRule.TU.weekday is 1 (Tuesday), ..., RRule.SU.weekday is 6 (Sunday).
     const rruleWeekdaysOrdered = [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR, RRule.SA, RRule.SU]
-
     const dayNames = rruleWeekdaysOrdered.map((rruleWd) => {
-      // We need a date that falls on that specific weekday to format its name.
-      // dateFnsSetDay: 0 for Sunday, 1 for Monday... 6 for Saturday.
-      // So, rruleWd.weekday (Mon=0, ... Sun=6) maps to dateFnsSetDay index by:
-      // (rruleWd.weekday + 1) % 7 maps MO(0)->1, TU(1)->2, ..., SA(5)->6, SU(6)->0
       const dayIndexForDateFns = (rruleWd.weekday + 1) % 7
       return format(setDay(new Date(), dayIndexForDateFns), 'EEEE', { locale: dateFnsLocale }) // EEEE for full day name
     })
-
-    const monthNames = [...Array(12)].map(
-      (_, i) =>
-        // date-fns setMonth: month is 0-indexed (0 for January).
-        format(setMonth(new Date(), i), 'LLLL', { locale: dateFnsLocale }), // LLLL for full month name
-    )
+    const monthNames = [...Array(12)].map((_, i) => format(setMonth(new Date(), i), 'LLLL', { locale: dateFnsLocale }))
 
     return {
       dayNames,
       monthNames,
-      tokens,
+      tokens: TOKENS,
     }
   }
 
@@ -241,6 +214,17 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       // and potentially "st", "nd", "rd", "th" for ordinals if rrule.js passes them as strings.
       translationKeySeed = id
       fallbackText = id
+      if (dateFnsLocale === fr) {
+        if (watchedFreq === Frequency.DAILY) {
+          translationKeySeed = id === 'day' ? 'days' : id
+        } else if (watchedFreq === Frequency.WEEKLY) {
+          if (id === 'every') {
+            translationKeySeed = 'weekly_plural_every'
+          } else if (id === 'week') {
+            translationKeySeed = 'weeks'
+          }
+        }
+      }
     } else if (typeof id === 'number') {
       // rrule.js might pass numbers in a few contexts:
       // 1. For ordinals (e.g., it might pass 1, 2, 3, 21, 22, 23, 31) expecting
@@ -248,8 +232,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       //    or the full ordinal ("1st", "2nd"). This depends on the rrule.js version and how it forms sentences.
       // 2. For counts if it doesn't use a string like "times".
       // A simple approach is to try and translate it as a numeric key, or just return the number as a string.
-      // You'll need to observe what numbers are passed to translate them effectively.
-      // For now, we'll treat it as a generic number that might be part of a phrase.
+      // We need to observe what numbers are passed to translate them effectively.
+      // We'll treat it as a generic number that might be part of a phrase.
       translationKeySeed = `num_${id}` // e.g., rrule:num_1, rrule:num_2
       fallbackText = String(id)
     } else if (id instanceof Weekday) {

@@ -120,7 +120,8 @@
     "rule_delete_error": "Er is een fout opgetreden bij het verwijderen van de regel."
   },
   "rrule": {
-    "every": "elke",
+    "every": "Elke",
+    "weekly_plural_every": "Elke",
     "day": "dag",
     "days": "dagen",
     "week": "week",

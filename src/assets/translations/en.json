@@ -120,7 +120,8 @@
     "rule_delete_error": "An error occurred while deleting the rule."
   },
   "rrule": {
-    "every": "every",
+    "every": "Every",
+    "weekly_plural_every": "Every",
     "day": "day",
     "days": "days",
     "week": "week",

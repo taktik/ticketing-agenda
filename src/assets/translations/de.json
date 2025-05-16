@@ -120,7 +120,8 @@
     "rule_delete_error": "Beim Löschen der Regel ist ein Fehler aufgetreten."
   },
   "rrule": {
-    "every": "alle",
+    "every": "Alle",
+    "weekly_plural_every": "Alle",
     "day": "Tag",
     "days": "Tage",
     "week": "Woche",

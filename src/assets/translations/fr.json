@@ -120,10 +120,11 @@
     "rule_delete_error": "Une erreur s'est produite lors de la suppression de la règle."
   },
   "rrule": {
-    "every": "tous les",
-    "day": "jour",
+    "every": "Tout(es) les",
+    "weekly_plural_every": "Toutes les",
+    "day": "jours",
     "days": "jours",
-    "week": "semaine",
+    "week": "semaines",
     "weeks": "semaines",
     "on": "le",
     "monday": "lundi",
