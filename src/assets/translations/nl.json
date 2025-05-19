@@ -72,7 +72,17 @@
     "slots": "Slots",
     "slot_required_at_least_one": "Minstens 1 slot is vereist.",
     "slots_required": "Slots zijn vereist!",
-    "not_set": "Niet ingesteld"
+    "not_set": "Niet ingesteld",
+    "select_days_placeholder": "Dagen selecteren...",
+    "recurrence_required": "Herhaling is vereist",
+    "select_at_least_one_day": "Selecteer alstublieft minstens één dag",
+    "invalid_rule": "Ongeldige regel",
+    "select_procedure_required": "Selecteer alstublieft een procedure!",
+    "select_procedure_placeholder": "Procedure selecteren",
+    "end_time_after_start_time": "Eindtijd moet na starttijd zijn!",
+    "add_hours": "Uren toevoegen",
+    "start_hour": "Begin",
+    "end_hour": "Einde"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -140,6 +150,9 @@
     "thursday_upper": "Donderdag",
     "friday_upper": "Vrijdag",
     "saturday_upper": "Zaterdag",
-    "sunday_upper": "Zondag"
+    "sunday_upper": "Zondag",
+    "repeat_every": "Herhaal elke",
+    "on_days": "Op dagen",
+    "from_date": "vanaf"
   }
 }

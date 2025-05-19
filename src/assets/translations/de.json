@@ -72,7 +72,17 @@
     "slots": "Zeitfenster",
     "slot_required_at_least_one": "Mindestens 1 Zeitfenster ist erforderlich.",
     "slots_required": "Zeitfenster sind erforderlich!",
-    "not_set": "Nicht festgelegt"
+    "not_set": "Nicht festgelegt",
+    "select_days_placeholder": "Tage auswählen...",
+    "recurrence_required": "Wiederholung ist erforderlich",
+    "select_at_least_one_day": "Bitte wählen Sie mindestens einen Tag aus",
+    "invalid_rule": "Ungültige Regel",
+    "select_procedure_required": "Bitte wählen Sie ein Verfahren aus!",
+    "select_procedure_placeholder": "Verfahren auswählen",
+    "end_time_after_start_time": "Die Endzeit muss nach der Startzeit liegen!",
+    "add_hours": "Stunden hinzufügen",
+    "start_hour": "Beginn",
+    "end_hour": "Ende"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -140,6 +150,9 @@
     "thursday_upper": "Donnerstag",
     "friday_upper": "Freitag",
     "saturday_upper": "Samstag",
-    "sunday_upper": "Sonntag"
+    "sunday_upper": "Sonntag",
+    "repeat_every": "Wiederholen alle",
+    "on_days": "An Tagen",
+    "from_date": "ab"
   }
 }

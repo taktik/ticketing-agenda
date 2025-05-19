@@ -72,7 +72,17 @@
     "slots": "Slots",
     "slot_required_at_least_one": "At least 1 slot is required.",
     "slots_required": "Slots are required!",
-    "not_set": "Not set"
+    "not_set": "Not set",
+    "select_days_placeholder": "Select days...",
+    "recurrence_required": "Recurrence is required",
+    "select_at_least_one_day": "Please select at least one day",
+    "invalid_rule": "Invalid Rule",
+    "select_procedure_required": "Please select a procedure!",
+    "select_procedure_placeholder": "Select a procedure",
+    "end_time_after_start_time": "End time must be after start time!",
+    "add_hours": "Add hours",
+    "start_hour": "Start",
+    "end_hour": "End"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -140,6 +150,9 @@
     "thursday_upper": "Thursday",
     "friday_upper": "Friday",
     "saturday_upper": "Saturday",
-    "sunday_upper": "Sunday"
+    "sunday_upper": "Sunday",
+    "repeat_every": "Repeat every",
+    "on_days": "On days",
+    "from_date": "starting from"
   }
 }

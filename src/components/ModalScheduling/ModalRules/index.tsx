@@ -30,13 +30,7 @@ const localeMap: Record<string, Locale> = {
 interface UIRrulePartsForForm {
   _freq: Frequency // RRule.WEEKLY, RRule.DAILY etc. are numbers (0-4)
   _interval: number
-  _byday: string[]
-}
-
-interface RRuleLanguageOptions {
-  dayNames: string[]
-  monthNames: string[]
-  ordinal: (dayOfMonth: number) => string
+  _byday: string[] // The days (Monday, ...)
 }
 
 type TableHours = {
@@ -52,6 +46,7 @@ interface FormValues {
   unavailable: boolean
   numberOfSlots: number
   hours: TableHours[]
+  rruleStartDate: dayjs.Dayjs
   rrule: string
   _freq: Frequency
   _interval: number
@@ -305,11 +300,14 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         endHour: minutesToDayjs(h.endHour),
       }))
 
+      const rruleStartDateForForm = dayjs(timeTableItem.rruleStartDate)
+
       form.setFieldsValue({
         calendarItemTypeId: timeTableItem.calendarItemTypeId,
         unavailable: timeTableItem.unavailable,
         numberOfSlots: 1,
         hours: hoursForForm,
+        rruleStartDate: rruleStartDateForForm,
         rrule: initialRruleString,
         _freq: uiRruleParts._freq,
         _interval: uiRruleParts._interval,
@@ -347,7 +345,11 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       }))
 
       setTimeTableItems((prev) =>
-        prev.map((item) => (item.placeId === timeTableItem.placeId ? { ...item, calendarItemTypeId: rowValues.calendarItemTypeId, unavailable: rowValues.unavailable, hours: hoursToSave, rrule: rowValues.rrule } : item)),
+        prev.map((item) =>
+          item.placeId === timeTableItem.placeId
+            ? { ...item, calendarItemTypeId: rowValues.calendarItemTypeId, unavailable: rowValues.unavailable, hours: hoursToSave, rrule: rowValues.rrule, rruleStartDate: rowValues.rruleStartDate.valueOf() }
+            : item,
+        ),
       )
       setEditingKey('')
     } catch (error) {
@@ -443,8 +445,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                       if (editable) {
                         // Edit mode
                         return (
-                          <Form.Item name="calendarItemTypeId" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select a procedure!' }]}>
-                            <Select placeholder="Select a type" style={{ width: '100%' }} loading={!procedures}>
+                          <Form.Item name="calendarItemTypeId" style={{ margin: 0 }} rules={[{ required: true, message: t('content.select_procedure_required') }]}>
+                            <Select placeholder={t('content.select_procedure_placeholder')} style={{ width: '100%' }} loading={!procedures}>
                               {(procedures || []).map((type) => (
                                 <Select.Option key={type.id} value={type.id}>
                                   {type.name}
@@ -472,32 +474,27 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                       if (editable) {
                         return (
                           <Space direction="vertical" style={{ width: '100%' }}>
-                            <Form.Item name="rrule" noStyle rules={[{ required: true, message: 'Recurrence is required' }]}>
+                            <Form.Item name="rrule" noStyle rules={[{ required: true, message: t('content.recurrence_required') }]}>
                               <Input type="hidden" />
                             </Form.Item>
 
-                            <Form.Item label={t('rrule.repeatEvery', 'Repeat every')} style={{ marginBottom: 8 }}>
+                            <Form.Item label={t('rrule.repeat_every')} style={{ marginBottom: 8 }}>
                               <Space.Compact block>
                                 <Form.Item name="_interval" initialValue={1} rules={[{ required: true, message: t('validation.valueMissing', 'Value') }]} noStyle>
                                   <InputNumber min={1} style={{ width: '35%' }} defaultValue={1} />
                                 </Form.Item>
                                 <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unitMissing', 'Unit') }]} noStyle>
                                   <Select style={{ width: '65%' }}>
-                                    <Select.Option value={RRule.DAILY}>{watchedInterval === 1 ? t('rrule.units.day', 'day') : t('rrule.units.days', 'days')}</Select.Option>
-                                    <Select.Option value={RRule.WEEKLY}>{watchedInterval === 1 ? t('rrule.units.week', 'week') : t('rrule.units.weeks', 'weeks')}</Select.Option>
+                                    <Select.Option value={RRule.DAILY}>{watchedInterval === 1 ? t('rrule.day') : t('rrule.days')}</Select.Option>
+                                    <Select.Option value={RRule.WEEKLY}>{watchedInterval === 1 ? t('rrule.week') : t('rrule.weeks')}</Select.Option>
                                   </Select>
                                 </Form.Item>
                               </Space.Compact>
                             </Form.Item>
 
                             {watchedFreq === RRule.WEEKLY && (
-                              <Form.Item
-                                label={t('rrule.onDays', 'On days')}
-                                name="_byday"
-                                style={{ marginBottom: 8 }}
-                                rules={[{ required: true, message: t('validation.daysRequired', 'Please select at least one day') }]}
-                              >
-                                <Select mode="multiple" allowClear style={{ width: '100%' }} placeholder={t('placeholders.selectDays', 'Select days...')}>
+                              <Form.Item label={t('rrule.on_days')} name="_byday" style={{ marginBottom: 8 }} rules={[{ required: true, message: t('content.select_at_least_one_day') }]}>
+                                <Select mode="multiple" allowClear style={{ width: '100%' }} placeholder={t('content.select_days_placeholder')}>
                                   {RRuleWeekdays.map((day) => (
                                     <Select.Option key={day.value} value={day.value} label={day.label}>
                                       {day.label}
@@ -506,11 +503,15 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                 </Select>
                               </Form.Item>
                             )}
+
+                            <Form.Item label={t('content.start')} name="rruleStartDate" rules={[{ required: true, message: 'Start date of the rule' }]}>
+                              <DatePicker style={{ width: '100%' }} />
+                            </Form.Item>
                           </Space>
                         )
                       } else {
                         if (!rruleString) {
-                          return <Tag>{t('status.notSet', 'Not set')}</Tag>
+                          return <Tag>{t('content.not_set')}</Tag>
                         }
                         try {
                           const langOpts = getCurrentRruleLanguageOptions()
@@ -519,24 +520,42 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                           if (parsedRuleComponents.freq === undefined) {
                             throw new Error('Frequency cannot be parsed')
                           }
+                          let rruleDtStart: Date
+                          if (record.rruleStartDate && typeof record.rruleStartDate === 'number') {
+                            rruleDtStart = new Date(record.rruleStartDate)
+                          } else {
+                            rruleDtStart = new Date(new Date().setHours(0, 0, 0, 0)) // Default to today
+                          }
 
                           // 2. Create the options object for new RRule() ensuring all required types are met
                           const optionsForToText: Partial<Options> = {
-                            dtstart: new Date(new Date().setHours(0, 0, 0, 0)), // Consistent context for toText()
+                            dtstart: rruleDtStart,
                             freq: parsedRuleComponents.freq as Frequency,
                             ...(parsedRuleComponents.interval !== undefined && { interval: parsedRuleComponents.interval }),
                             ...(parsedRuleComponents.byweekday && { byweekday: parsedRuleComponents.byweekday }),
                           }
 
                           const ruleForText = new RRule(optionsForToText)
-                          const displayText = ruleForText.toText(rruleGettextAdapter, langOpts)
-                          // console.log(`RRULE: '${rruleString}' -> toText(): '${displayText}' using options:`, optionsForToText);
+                          let displayText = ruleForText.toText(rruleGettextAdapter, langOpts)
+
+                          if (record.rruleStartDate && typeof record.rruleStartDate === 'number') {
+                            const startDate = new Date(record.rruleStartDate)
+
+                            if (!isNaN(startDate.getTime())) {
+                              const formattedStartDate = format(startDate, 'P', { locale: dateFnsLocale })
+
+                              const fromDatePrefix = t('rrule.from_date')
+
+                              displayText = `${displayText} ${fromDatePrefix} ${formattedStartDate}`
+                            }
+                          }
+
                           return <span title={rruleString}>{displayText}</span>
                         } catch (e) {
                           console.error('Error processing RRULE for display:', e, rruleString)
                           return (
                             <Tag color="red" title={rruleString}>
-                              {t('status.invalidRule', 'Invalid Rule')}
+                              {t('content.invalid_rule')}
                             </Tag>
                           )
                         }
@@ -568,8 +587,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                         <TimePicker
                                           showNow={false}
                                           format="HH:mm"
-                                          minuteStep={15} // Or 5, 10, 30, or 1 for per-minute
-                                          placeholder={t('placeholders.startTime', 'Start')}
+                                          minuteStep={5}
+                                          placeholder={t('content.start_hour')}
                                           style={{ width: '100px' }}
                                           changeOnScroll // allows changing time with mouse scroll
                                           onPickerValueChange={(timeValue) => handleTimeValueUpdate(name, 'startHour', timeValue)}
@@ -578,7 +597,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                       <span>-</span>
                                       <Form.Item
                                         {...restField}
-                                        name={[name, 'endHour']} // Form value will be a dayjs object
+                                        name={[name, 'endHour']}
                                         noStyle
                                         rules={[
                                           { required: true, message: t('validation.endTimeRequired', 'End!') },
@@ -592,7 +611,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                               if (value && startHourValue && dayjs.isDayjs(value) && dayjs.isDayjs(startHourValue)) {
                                                 if (!value.isAfter(startHourValue)) {
                                                   // Check if endHour is NOT after startHour
-                                                  return Promise.reject(new Error(t('validation.endTimeAfterStartTime', 'End time must be after start time!')))
+                                                  return Promise.reject(new Error(t('content.end_time_after_start_time')))
                                                 }
                                               }
                                               return Promise.resolve()
@@ -604,7 +623,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                           showNow={false}
                                           format="HH:mm"
                                           minuteStep={15}
-                                          placeholder={t('placeholders.endTime', 'End')}
+                                          placeholder={t('content.end_hour')}
                                           style={{ width: '100px' }}
                                           changeOnScroll
                                           onPickerValueChange={(timeValue) => handleTimeValueUpdate(name, 'endHour', timeValue)}
@@ -629,7 +648,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                   block
                                   icon={<PlusOutlined />}
                                 >
-                                  {t('actions.addHours', 'Add hours')}
+                                  {t('content.add_hours')}
                                 </Button>
                                 <Form.ErrorList errors={errors} />
                               </div>
