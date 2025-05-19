@@ -77,9 +77,9 @@
     "recurrence_required": "Wiederholung ist erforderlich",
     "select_at_least_one_day": "Bitte wählen Sie mindestens einen Tag aus",
     "invalid_rule": "Ungültige Regel",
-    "select_procedure_required": "Bitte wählen Sie ein Verfahren aus!",
+    "select_procedure_required": "Bitte wählen Sie ein Verfahren aus",
     "select_procedure_placeholder": "Verfahren auswählen",
-    "end_time_after_start_time": "Die Endzeit muss nach der Startzeit liegen!",
+    "end_time_after_start_time": "Die Endzeit muss nach der Startzeit liegen",
     "add_hours": "Stunden hinzufügen",
     "start_hour": "Beginn",
     "end_hour": "Ende"
@@ -153,6 +153,12 @@
     "sunday_upper": "Sonntag",
     "repeat_every": "Wiederholen alle",
     "on_days": "An Tagen",
-    "from_date": "ab"
+    "from_date": "Ab",
+    "weekday": "wochentage"
+  },
+  "validation": {
+    "check_highlighted_fields_correct_errors": "Bitte überprüfen Sie die markierten Felder und korrigieren Sie die Fehler.",
+    "validation_failed": "Validierung fehlgeschlagen",
+    "select_date_required": "Bitte wählen Sie ein Datum aus"
   }
 }

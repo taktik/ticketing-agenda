@@ -77,9 +77,9 @@
     "recurrence_required": "Recurrence is required",
     "select_at_least_one_day": "Please select at least one day",
     "invalid_rule": "Invalid Rule",
-    "select_procedure_required": "Please select a procedure!",
+    "select_procedure_required": "Please select a procedure",
     "select_procedure_placeholder": "Select a procedure",
-    "end_time_after_start_time": "End time must be after start time!",
+    "end_time_after_start_time": "End time must be after start time",
     "add_hours": "Add hours",
     "start_hour": "Start",
     "end_hour": "End"
@@ -153,6 +153,12 @@
     "sunday_upper": "Sunday",
     "repeat_every": "Repeat every",
     "on_days": "On days",
-    "from_date": "starting from"
+    "from_date": "Starting from",
+    "weekday": "weekday"
+  },
+  "validation": {
+    "check_highlighted_fields_correct_errors": "Please check the highlighted fields and correct the errors.",
+    "validation_failed": "Validation Failed",
+    "select_date_required": "Please select a date"
   }
 }

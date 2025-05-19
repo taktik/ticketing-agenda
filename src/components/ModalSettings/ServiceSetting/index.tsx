@@ -4,12 +4,7 @@ import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Tooltip, List, Row, Col, notification, message, Empty, Typography } from 'antd'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import './index.css'
-import {
-  useCreateUpdateHealthcarePartyMutation,
-  useDeleteHealthcarePartyMutation,
-  useGetHealthcarePartiesByParentQuery,
-  useRecursiveHcpDeletion,
-} from '../../../core/api/healthcarePartyApi'
+import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
 import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
@@ -85,23 +80,18 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
 
   const servicesList = useMemo(() => {
-    return [...(procedures ?? [])]
-      .filter((proc) => !proc.deletionDate) // Exclude deleted items
-      .sort((a, b) => {
-        const nameA = a.name ?? ''
-        const nameB = b.name ?? ''
-        return nameA.localeCompare(nameB)
-      })
+    return [...(procedures ?? [])].sort((a, b) => {
+      const nameA = a.name ?? ''
+      const nameB = b.name ?? ''
+      return nameA.localeCompare(nameB)
+    })
   }, [procedures])
 
   const [form] = Form.useForm()
 
-  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] =
-    useCreateUpdateHealthcarePartyMutation()
-  const [
-    createUpdateProcedure,
-    { data: createdUpdatedCalendarItemTypeData, isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading },
-  ] = useCreateUpdateCalendarItemTypeMutation()
+  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateProcedure, { data: createdUpdatedCalendarItemTypeData, isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading }] =
+    useCreateUpdateCalendarItemTypeMutation()
 
   const [deleteProcedure, { isError: isDeleteDemarcheError, isSuccess: isDeleteDemarcheSuccess, isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypeMutation()
   const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading, isSuccess: isDeleteServiceSuccess, error: isDeleteServiceError } = useRecursiveHcpDeletion()
@@ -260,20 +250,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
           </Form.Item>
         </Form>
         <Tooltip title={t('content.save_service')}>
-          <Button
-            icon={<SaveOutlined />}
-            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-            disabled={nameValue === service?.name}
-            onClick={handleSubmit}
-          />
+          <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={nameValue === service?.name} onClick={handleSubmit} />
         </Tooltip>
         <Tooltip title={t('content.delete_service')}>
-          <Button
-            icon={<DeleteOutlined />}
-            disabled={!service}
-            onClick={() => setShowDeleteServiceModal(true)}
-            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-          />
+          <Button icon={<DeleteOutlined />} disabled={!service} onClick={() => setShowDeleteServiceModal(true)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
         </Tooltip>
       </div>
       <div className="procedures-list">
@@ -283,19 +263,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
           locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}
           renderItem={(item) => (
             <List.Item>
-              {editItem?.id === item.id ? (
-                <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveProcedure(item)} autoFocus />
-              ) : (
-                item.name
-              )}
+              {editItem?.id === item.id ? <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveProcedure(item)} autoFocus /> : item.name}
               {editItem?.id !== item.id && (
                 <Tooltip title={t('content.edit_procedure')}>
-                  <Button
-                    className="edit-button"
-                    icon={<EditOutlined />}
-                    style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                    onClick={() => handleEditService(item)}
-                  />
+                  <Button className="edit-button" icon={<EditOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={() => handleEditService(item)} />
                 </Tooltip>
               )}
               {editItem?.id === item.id && (
@@ -304,18 +275,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                     <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
                   </Tooltip>
                   <Tooltip title={t('content.save_procedure')}>
-                    <Button
-                      icon={<SaveOutlined />}
-                      style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      onClick={() => handleSaveProcedure(item)}
-                    />
+                    <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={() => handleSaveProcedure(item)} />
                   </Tooltip>
                   <Tooltip title={t('content.delete_procedure')}>
-                    <Button
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleDeleteService(item)}
-                      style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                    />
+                    <Button icon={<DeleteOutlined />} onClick={() => handleDeleteService(item)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
                   </Tooltip>
                 </div>
               )}

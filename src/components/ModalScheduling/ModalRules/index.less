@@ -2,12 +2,13 @@
 
 .modalRule {
   width: 100%;
-  height: 70vh;
+  height: 75vh;
   display: flex;
   align-self: stretch;
   position: relative;
   flex-direction: column;
   padding: 12px 24px 24px 24px;
+  overflow: auto;
 
   .media-breakpoint-down(@md,
     {
@@ -38,12 +39,21 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-
   > * {
     width: 100%;
   }
-
   .ant-btn {
     width: 100%;
   }
+}
+.custom-table .ant-table-tbody .ant-table-cell {
+  padding: 8px;
+}
+.rrule-repeat {
+  align-items: baseline;
+}
+.rrule-start {
+  display: flex;
+  align-items: baseline;
+  width: 100%;
 }

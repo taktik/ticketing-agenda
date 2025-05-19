@@ -43,8 +43,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const { data: timeTables } = useGetTimeTablesQuery({ skip: !agenda, agendaId: agenda?.id ?? '' })
 
   const [deleteTimeTable, { isError: isDeleteTimeTableError, isSuccess: isDeleteTimeTableSuccess, isLoading: isDeleteTimeTableLoading }] = useDeleteTimeTableMutation()
-  const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] =
-    useCreateUpdateTimeTableMutation()
+  const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -161,7 +160,14 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
         </div>
 
         <div className="antTable">
-          <Table<TimeTable> dataSource={timeTables ?? []} rowKey="id" locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}>
+          <Table<TimeTable>
+            pagination={{
+              pageSize: 5,
+            }}
+            dataSource={timeTables ?? []}
+            rowKey="id"
+            locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
+          >
             <ColumnGroup
               title={
                 <Tooltip title={selectedService ? null : t('content.select_service_for_schedule')}>
@@ -172,20 +178,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               }
             >
               <Column title={t('content.name')} dataIndex="name" key="name" width={'28%'} />
-              <Column
-                title={t('content.start')}
-                dataIndex="startTime"
-                key="startTime"
-                width={'28%'}
-                render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })}
-              />
-              <Column
-                title={t('content.end')}
-                dataIndex="endTime"
-                key="endTime"
-                width={'28%'}
-                render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })}
-              />
+              <Column title={t('content.start')} dataIndex="startTime" key="startTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
+              <Column title={t('content.end')} dataIndex="endTime" key="endTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
 
               <Column
                 title={t('content.actions')}
@@ -201,8 +195,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             </ColumnGroup>
           </Table>
         </div>
-        {showRulesModal &&
-          createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} timeTableId={selectedTimeTable} agenda={agenda} />, document.body)}
+        {showRulesModal && createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} timeTableId={selectedTimeTable} agenda={agenda} />, document.body)}
         {showDeleteTimeTableModal &&
           createPortal(
             <ModalConfirmAction

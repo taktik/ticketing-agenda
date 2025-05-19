@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 // Import Ant Design locales
 import frFR from 'antd/locale/fr_FR'
 import nlNL from 'antd/locale/nl_NL'
-import enUS from 'antd/locale/en_US'
+import enGB from 'antd/locale/en_GB'
 import deDE from 'antd/locale/de_DE'
 
 // Import dayjs and its locale data
@@ -23,10 +23,10 @@ import 'dayjs/locale/en'
 import 'dayjs/locale/de'
 
 // Mapping from i18n language codes to antd locale objects
-const antdLocales: { [key: string]: typeof enUS } = {
+const antdLocales: { [key: string]: typeof enGB } = {
   fr: frFR,
   nl: nlNL,
-  en: enUS,
+  en: enGB,
   de: deDE,
 }
 
@@ -45,7 +45,7 @@ const AppContent: React.FC = () => {
 
   // Determine Ant Design locale
   const antdLocale = useMemo(() => {
-    return antdLocales[currentLangCode] || enUS // Fallback
+    return antdLocales[currentLangCode] || enGB // Fallback
   }, [currentLangCode])
 
   // Configure dayjs locale

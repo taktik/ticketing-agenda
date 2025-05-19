@@ -77,9 +77,9 @@
     "recurrence_required": "Herhaling is vereist",
     "select_at_least_one_day": "Selecteer alstublieft minstens één dag",
     "invalid_rule": "Ongeldige regel",
-    "select_procedure_required": "Selecteer alstublieft een procedure!",
+    "select_procedure_required": "Selecteer alstublieft een procedure",
     "select_procedure_placeholder": "Procedure selecteren",
-    "end_time_after_start_time": "Eindtijd moet na starttijd zijn!",
+    "end_time_after_start_time": "Eindtijd moet na starttijd zijn",
     "add_hours": "Uren toevoegen",
     "start_hour": "Begin",
     "end_hour": "Einde"
@@ -153,6 +153,12 @@
     "sunday_upper": "Zondag",
     "repeat_every": "Herhaal elke",
     "on_days": "Op dagen",
-    "from_date": "vanaf"
+    "from_date": "Vanaf",
+    "weekday": "weekdagen"
+  },
+  "validation": {
+    "check_highlighted_fields_correct_errors": "Controleer de gemarkeerde velden en corrigeer de fouten.",
+    "validation_failed": "Validatie mislukt",
+    "select_date_required": "Selecteer alstublieft een datum"
   }
 }
