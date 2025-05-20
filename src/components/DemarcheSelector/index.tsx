@@ -6,21 +6,21 @@ import './index.css'
 import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
 import { useTranslation } from 'react-i18next'
 
-interface DemarcheSelectorProps {
-  demarches: CalendarItemType[]
-  selectedDemarche: CalendarItemType | undefined
-  setSelectedDemarche: React.Dispatch<React.SetStateAction<CalendarItemType | undefined>>
+interface ProcedureSelectorProps {
+  procedures: CalendarItemType[]
+  selectedProcedure: CalendarItemType | undefined
+  setSelectedProcedure: React.Dispatch<React.SetStateAction<CalendarItemType | undefined>>
 }
 
-export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemarche }: DemarcheSelectorProps): ReactElement => {
+export const ProcedureSelector = ({ procedures, selectedProcedure, setSelectedProcedure }: ProcedureSelectorProps): ReactElement => {
   const { t } = useTranslation()
 
   const handleSelectDemarcheClick = useCallback(
     (demarche: CalendarItemType) => {
-      const toSelect = demarche.id === selectedDemarche?.id ? undefined : demarche
-      setSelectedDemarche(toSelect)
+      const toSelect = demarche.id === selectedProcedure?.id ? undefined : demarche
+      setSelectedProcedure(toSelect)
     },
-    [selectedDemarche],
+    [selectedProcedure],
   )
 
   return (
@@ -34,14 +34,14 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
       <Divider style={{ margin: 0 }} />
 
       <div className="DemarchesContent">
-        {demarches.map((demarche) => {
-          const isSelected = selectedDemarche?.id === demarche.id
+        {procedures.map((procedure) => {
+          const isSelected = selectedProcedure?.id === procedure.id
           return (
             <Button
-              key={demarche.id}
+              key={procedure.id}
               type={isSelected ? 'primary' : 'default'}
               onClick={() => {
-                handleSelectDemarcheClick(demarche)
+                handleSelectDemarcheClick(procedure)
               }}
               style={{
                 whiteSpace: 'nowrap',
@@ -53,7 +53,7 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
                 }),
               }}
             >
-              {demarche.name}
+              {procedure.name}
             </Button>
           )
         })}
@@ -61,22 +61,3 @@ export const DemarcheSelector = ({ demarches, selectedDemarche, setSelectedDemar
     </div>
   )
 }
-
-/*
-
- <Tooltip title="Delete the demarche">
-            <Button
-              type="primary"
-              icon={<DeleteOutlined />}
-              danger
-              disabled={!selectedDemarche}
-              onClick={() => {
-                if (selectedDemarche) {
-                  deleteDemarche(selectedDemarche)
-                  setSelectedDemarche(undefined)
-                }
-              }}
-            />
-          </Tooltip>
-
-          */

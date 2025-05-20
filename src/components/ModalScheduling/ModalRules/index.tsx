@@ -107,7 +107,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
   const [showDeleteTimeTableItemModal, setShowDeleteTimeTableItemModal] = useState<boolean>(false)
   const [timeTableItemToBeDeleted, setTimeTableItemToBeDeleted] = useState<TimeTableItem | undefined>(undefined)
-  const [slotsData, setSlotsData] = useState<{ [placeId: string]: number }>({})
   const [timeTableItems, setTimeTableItems] = useState<TimeTableItem[]>([])
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: TimeTableItem) => record.placeId === editingKey, [editingKey])
@@ -120,34 +119,44 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }, [procedures])
 
   const filteredDataSource = useMemo(() => {
+    // Datasource for the table
     if (!Array.isArray(timeTableItems)) {
       return []
     }
 
-    // Step A
+    // Step A - Getting uniques calendarItemTypeId - rrule - hours
     // Use a Map to store the first encountered item for each unique composite key
     const uniqueConfigMap = new Map<string, TimeTableItem>()
 
     for (const item of timeTableItems) {
-      // 1. Create a stable string representation for calendarItemTypeId
-      const typeIdKeyPart = `TYPE:${
-        item.calendarItemTypeId === null || item.calendarItemTypeId === undefined
-          ? String(item.calendarItemTypeId) // "null" or "undefined"
-          : item.calendarItemTypeId
-      }`
+      let compositeKey: string
 
-      // 2. Create a stable string representation for rrule
-      const rruleKeyPart = `RRULE:${item.rrule || 'EMPTY_RRULE'}` // Handle null/undefined rrule
+      const isUnconfigured = item.calendarItemTypeId === null || item.calendarItemTypeId === undefined
 
-      // 3. Create a canonical string representation for the hours array
-      // Sorting ensures order doesn't affect uniqueness.
-      // Stringifying ensures deep content comparison for the key.
-      const sortedHours = item.hours ? sortTimeTableHours(item.hours) : []
-      const hoursKeyPart = `HOURS:${JSON.stringify(sortedHours.map((h) => ({ s: h.startHour, e: h.endHour })))}`
-      // Using a simpler map for stringify to avoid issues if TimeTableHour has other complex properties
+      if (isUnconfigured) {
+        // For unconfigured items, make their key unique using placeId so each appears as a separate row.
+        compositeKey = `UNCONFIGURED_ITEM:${item.placeId}`
+      } else {
+        // 1. Create a stable string representation for calendarItemTypeId
+        const typeIdKeyPart = `TYPE:${
+          item.calendarItemTypeId === null || item.calendarItemTypeId === undefined
+            ? String(item.calendarItemTypeId) // "null" or "undefined"
+            : item.calendarItemTypeId
+        }`
 
-      // 4. Combine into a single composite key
-      const compositeKey = `${typeIdKeyPart}|${rruleKeyPart}|${hoursKeyPart}`
+        // 2. Create a stable string representation for rrule
+        const rruleKeyPart = `RRULE:${item.rrule || 'EMPTY_RRULE'}` // Handle null/undefined rrule
+
+        // 3. Create a canonical string representation for the hours array
+        // Sorting ensures order doesn't affect uniqueness.
+        // Stringifying ensures deep content comparison for the key.
+        const sortedHours = item.hours ? sortTimeTableHours(item.hours) : []
+        const hoursKeyPart = `HOURS:${JSON.stringify(sortedHours.map((h) => ({ s: h.startHour, e: h.endHour })))}`
+        // Using a simpler map for stringify to avoid issues if TimeTableHour has other complex properties
+
+        // 4. Combine into a single composite key
+        compositeKey = `${typeIdKeyPart}|${rruleKeyPart}|${hoursKeyPart}`
+      }
 
       if (!uniqueConfigMap.has(compositeKey)) {
         uniqueConfigMap.set(compositeKey, item) // Store the first complete item for this unique config
@@ -171,6 +180,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }, [timeTableItems, procedureMap])
 
   const countMatchingRuleConfigurations = useCallback(
+    // Counting the number of slots. Meant for the numberOfSlots table column.
     (targetConfig: RuleConfiguration): number => {
       if (!timeTableItems || !targetConfig || targetConfig.calendarItemTypeId === undefined) return 1
 
@@ -183,6 +193,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   )
 
   const RRuleWeekdays = [
+    // rrule days
     { label: t('rrule.monday_upper'), short: 'Mon', value: 'MO', rruleConst: RRule.MO },
     { label: t('rrule.tuesday_upper'), short: 'Tue', value: 'TU', rruleConst: RRule.TU },
     { label: t('rrule.wednesday_upper'), short: 'Wed', value: 'WE', rruleConst: RRule.WE },
@@ -199,6 +210,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const initialName = useMemo(() => timeTable?.name || '', [timeTable])
 
   useEffect(() => {
+    // On fetch update the state and form values
     if (timeTable) {
       form.setFieldsValue({
         name: timeTable.name,
@@ -232,7 +244,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       content,
       duration: 0,
     })
-    // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
 
@@ -242,6 +253,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }
 
   const addRule = () => {
+    // Add new rule with default values
     try {
       if (!timeTable) throw new Error('No schedule selected')
       const newRule = new TimeTableItem({
@@ -261,6 +273,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const watchedByDay = Form.useWatch('_byday', form)
 
   useEffect(() => {
+    // Building the rule whenever one of the rule values is changed. Could be moved in the update function.
     // This check ensures we only try to build an RRULE if a frequency is actually selected.
     // It also prevents running when the form is first initializing and these values might be transient.
     if (watchedFreq !== undefined && form.isFieldsTouched(['_freq', '_interval', '_byday'])) {
@@ -270,14 +283,13 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         // dtstart is often important for rrule.js, especially for BYDAY in MONTHLY.
         // For simple WEEKLY rules, its exact date might be less critical.
         // Use a consistent or relevant dtstart. For now, using today.
-        // You might need to pass a real start date from your event/schedule if relevant.
+        // might need to pass a real start date from your event/schedule if relevant.
         dtstart: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today, or a relevant date
       }
 
       if (watchedFreq === RRule.WEEKLY && watchedByDay && watchedByDay.length > 0) {
         rruleOptions.byweekday = watchedByDay.map((dayValue: string) => RRuleWeekdays.find((d) => d.value === dayValue)?.rruleConst).filter(Boolean) as Weekday[] // Filter out undefined and cast
       }
-      // Handle other FREQ options and their specific BY... rules if you add them
 
       try {
         if (rruleOptions.freq === undefined) {
@@ -295,6 +307,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }, [watchedFreq, watchedInterval, watchedByDay, form])
 
   const getCurrentRruleLanguageOptions = (): Language => {
+    // Used to translate the rrule
     const rruleWeekdaysOrdered = [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR, RRule.SA, RRule.SU]
     const dayNames = rruleWeekdaysOrdered.map((rruleWd) => {
       const dayIndexForDateFns = (rruleWd.weekday + 1) % 7
@@ -310,6 +323,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }
 
   const rruleGettextAdapter = (id: string | number | Weekday): string => {
+    // Used to translate the rrule.
     let translationKeySeed: string
     let fallbackText: string
 
@@ -353,14 +367,15 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
     // Construct the final i18n key, e.g., "rrule:every", "rrule:Monday", "rrule:num_1"
     const i18nKey = `rrule.${translationKeySeed}`
-    //console.log(`Attempting to translate: key='${i18nKey}', fallback='${fallbackText}' (original id from rrule: ${JSON.stringify(id)})`)
-    return t(i18nKey, fallbackText) // Use your app's t() function
+    return t(i18nKey, fallbackText)
   }
 
   const tableHandleEdit = (timeTableItem: TimeTableItem) => {
+    // Edit the row
     try {
       if (!timeTableItem.placeId) throw new Error('No rule selected')
 
+      // First we initialize the rrule
       let initialRruleString = timeTableItem.rrule
       let uiRruleParts: UIRrulePartsForForm = {
         _freq: RRule.WEEKLY,
@@ -404,19 +419,23 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         }
       }
 
+      // Then we initialize the hours
       const hoursForForm = (timeTableItem.hours || []).map((h) => ({
         startHour: minutesToDayjs(h.startHour),
         endHour: minutesToDayjs(h.endHour),
       }))
 
+      // Start of the rule
       const rruleStartDateForForm = dayjs(timeTableItem.rruleStartDate)
 
+      // Getting the number of slots
       const numberOfSlotsbyConfig = countMatchingRuleConfigurations({
         calendarItemTypeId: timeTableItem.calendarItemTypeId,
         rrule: timeTableItem.rrule,
         hours: timeTableItem.hours,
       })
 
+      // Finally set the state with the values
       form.setFieldsValue({
         calendarItemTypeId: timeTableItem.calendarItemTypeId,
         unavailable: timeTableItem.unavailable,
@@ -437,6 +456,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const tableHandleDelete = () => {
     try {
       if (!timeTableItemToBeDeleted) throw new Error('No rule selected')
+      // Simply remove it from the state. When user save the form it will be 'deleted'
       setTimeTableItems((prev) => prev.filter((item) => item.placeId !== timeTableItemToBeDeleted.placeId))
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
@@ -451,6 +471,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }
 
   const tableHandleUpdate = async (timeTableItem: TimeTableItem) => {
+    // Updates the row
     try {
       const rowValues = await form.validateFields()
 

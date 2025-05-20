@@ -14,7 +14,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Header } from '../../components/common/Header'
-import { DemarcheSelector } from '../../components/DemarcheSelector'
+import { ProcedureSelector } from '../../components/DemarcheSelector'
 import { ModalScheduling } from '../../components/ModalScheduling'
 import { ModalSettings } from '../../components/ModalSettings'
 import { ServiceSelector } from '../../components/ServiceSelector'
@@ -24,6 +24,7 @@ import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi
 import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
+import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
@@ -42,11 +43,11 @@ export default function DashboardPage() {
   const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
 
-  const { data: demarches } = useGetCalendarItemTypesQuery({
-    agendaId: selectedSite?.id ?? '',
-    skip: skip,
-  })
-  const [selectedDemarche, setSelectedDemarche] = useState<CalendarItemType | undefined>(demarches?.[0])
+  const { data: agenda } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
+
+  const { data: procedures } = useGetCalendarItemTypesQuery({ skip: skip || !agenda || !selectedService, agendaId: agenda?.id ?? '' })
+
+  const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(procedures?.[0])
 
   useEffect(() => {
     if (!selectedSite && sites?.length) {
@@ -91,18 +92,14 @@ export default function DashboardPage() {
           <div className="SiteSelectorRow">
             <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
             <Tooltip title={t('content.settings')}>
-              <Button
-                icon={<SettingOutlined />}
-                onClick={() => setSettingsModalOpen(true)}
-                style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-              />
+              <Button icon={<SettingOutlined />} onClick={() => setSettingsModalOpen(true)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
             </Tooltip>
           </div>
           <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', zIndex: '1' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
           <ServiceSelector services={services ?? []} selectedService={selectedService} setSelectedService={setSelectedService} />
-          <DemarcheSelector demarches={demarches ?? []} selectedDemarche={selectedDemarche} setSelectedDemarche={setSelectedDemarche} />
+          <ProcedureSelector procedures={procedures ?? []} selectedProcedure={selectedProcedure} setSelectedProcedure={setSelectedProcedure} />
         </div>
         <div className="RightPanel">
           <FullCalendar
@@ -151,8 +148,7 @@ export default function DashboardPage() {
           </SettingContextProvider>,
           document.body,
         )}
-      {schedulingModalOpen &&
-        createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} services={services ?? []} />, document.body)}
+      {schedulingModalOpen && createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} services={services ?? []} />, document.body)}
     </div>
   )
 }
