@@ -1,5 +1,5 @@
 import { Agenda, TimeTable, TimeTableHour, TimeTableItem } from '@icure/cardinal-sdk'
-import React, { ReactElement, useEffect, useMemo, useState } from 'react'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { CustomModal } from '../../common/CustomModal'
 import './index.css'
 import { Button, DatePicker, Form, Input, Table, Space, Empty, notification, message, Select, Radio, Tag, InputNumber, TimePicker, Checkbox, Typography } from 'antd'
@@ -27,6 +27,11 @@ const localeMap: Record<string, Locale> = {
   nl: nl,
 }
 
+interface RuleConfiguration {
+  calendarItemTypeId: string | undefined
+  rrule: string | undefined
+  hours: TimeTableHour[] | undefined
+}
 interface UIRrulePartsForForm {
   _freq: Frequency // RRule.WEEKLY, RRule.DAILY etc. are numbers (0-4)
   _interval: number
@@ -59,6 +64,43 @@ interface ModalRulesProps {
   timeTableId: string | undefined
   agenda: Agenda | undefined
 }
+const sortTimeTableHours = (hours?: TimeTableHour[]): TimeTableHour[] => {
+  if (!hours || hours.length === 0) {
+    return []
+  }
+  // Create a copy before sorting to avoid mutating the original array
+  return [...hours].sort((a, b) => {
+    // Handle null/undefined by treating them as very large numbers to sort them last,
+    // or filter them out beforehand if they represent invalid entries.
+    // For this sort, let's assume lower start times come first.
+    const startA = a.startHour ?? Number.POSITIVE_INFINITY
+    const startB = b.startHour ?? Number.POSITIVE_INFINITY
+    const endA = a.endHour ?? Number.POSITIVE_INFINITY
+    const endB = b.endHour ?? Number.POSITIVE_INFINITY
+
+    if (startA !== startB) {
+      return startA - startB // Sort by startHour primarily
+    }
+    return endA - endB // Then by endHour for tie-breaking
+  })
+}
+
+const areHoursEqual = (hoursA?: TimeTableHour[], hoursB?: TimeTableHour[]): boolean => {
+  if (hoursA === hoursB) return true // Same reference or both undefined/null
+  if (!hoursA || !hoursB) return false // One is undefined/null, the other isn't
+  if (hoursA.length !== hoursB.length) return false
+  if (hoursA.length === 0) return true // Both are empty arrays
+
+  const sortedA = sortTimeTableHours(hoursA)
+  const sortedB = sortTimeTableHours(hoursB)
+
+  for (let i = 0; i < sortedA.length; i++) {
+    if (sortedA[i].startHour !== sortedB[i].startHour || sortedA[i].endHour !== sortedB[i].endHour) {
+      return false
+    }
+  }
+  return true
+}
 
 export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRulesProps): ReactElement => {
   const { t, i18n } = useTranslation()
@@ -69,21 +111,76 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const [timeTableItems, setTimeTableItems] = useState<TimeTableItem[]>([])
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: TimeTableItem) => record.placeId === editingKey, [editingKey])
+
+  const { data: timeTable } = useGetTimeTableQuery(timeTableId ?? '')
+
+  const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !timeTable || !agenda, agendaId: agenda?.id ?? '' })
+  const procedureMap = useMemo(() => {
+    return new Map((procedures ?? []).map((p) => [p.id, p.name]))
+  }, [procedures])
+
   const filteredDataSource = useMemo(() => {
-    const seen = new Set<string>()
+    if (!Array.isArray(timeTableItems)) {
+      return []
+    }
 
-    return timeTableItems.filter((item) => {
-      const key = item.calendarItemTypeId
+    // Step A
+    // Use a Map to store the first encountered item for each unique composite key
+    const uniqueConfigMap = new Map<string, TimeTableItem>()
 
-      if (key == null) return true
+    for (const item of timeTableItems) {
+      // 1. Create a stable string representation for calendarItemTypeId
+      const typeIdKeyPart = `TYPE:${
+        item.calendarItemTypeId === null || item.calendarItemTypeId === undefined
+          ? String(item.calendarItemTypeId) // "null" or "undefined"
+          : item.calendarItemTypeId
+      }`
 
-      const keyStr = String(key)
-      if (seen.has(keyStr)) return false
+      // 2. Create a stable string representation for rrule
+      const rruleKeyPart = `RRULE:${item.rrule || 'EMPTY_RRULE'}` // Handle null/undefined rrule
 
-      seen.add(keyStr)
-      return true
+      // 3. Create a canonical string representation for the hours array
+      // Sorting ensures order doesn't affect uniqueness.
+      // Stringifying ensures deep content comparison for the key.
+      const sortedHours = item.hours ? sortTimeTableHours(item.hours) : []
+      const hoursKeyPart = `HOURS:${JSON.stringify(sortedHours.map((h) => ({ s: h.startHour, e: h.endHour })))}`
+      // Using a simpler map for stringify to avoid issues if TimeTableHour has other complex properties
+
+      // 4. Combine into a single composite key
+      const compositeKey = `${typeIdKeyPart}|${rruleKeyPart}|${hoursKeyPart}`
+
+      if (!uniqueConfigMap.has(compositeKey)) {
+        uniqueConfigMap.set(compositeKey, item) // Store the first complete item for this unique config
+      }
+    }
+
+    const uniqueRows = Array.from(uniqueConfigMap.values())
+
+    // Step B: Sort the unique rows by procedure name using your comparator
+    const sortedRows = [...uniqueRows].sort((a, b) => {
+      const typeIdA = a.calendarItemTypeId ?? ''
+      const typeIdB = b.calendarItemTypeId ?? ''
+
+      const nameA = procedureMap.get(typeIdA) || ''
+      const nameB = procedureMap.get(typeIdB) || ''
+
+      return nameA.localeCompare(nameB)
     })
-  }, [timeTableItems])
+
+    return sortedRows
+  }, [timeTableItems, procedureMap])
+
+  const countMatchingRuleConfigurations = useCallback(
+    (targetConfig: RuleConfiguration): number => {
+      if (!timeTableItems || !targetConfig || targetConfig.calendarItemTypeId === undefined) return 1
+
+      return timeTableItems.reduce((acc, item) => {
+        const isMatch = item.calendarItemTypeId === targetConfig.calendarItemTypeId && item.rrule === targetConfig.rrule && areHoursEqual(item.hours, targetConfig.hours)
+        return isMatch ? acc + 1 : acc
+      }, 0)
+    },
+    [timeTableItems],
+  )
 
   const RRuleWeekdays = [
     { label: t('rrule.monday_upper'), short: 'Mon', value: 'MO', rruleConst: RRule.MO },
@@ -94,10 +191,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     { label: t('rrule.saturday_upper'), short: 'Sat', value: 'SA', rruleConst: RRule.SA },
     { label: t('rrule.sunday_upper'), short: 'Sun', value: 'SU', rruleConst: RRule.SU },
   ]
-
-  const { data: timeTable } = useGetTimeTableQuery(timeTableId ?? '')
-
-  const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !timeTable || !agenda, agendaId: agenda?.id ?? '' })
 
   const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
 
@@ -318,14 +411,16 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
       const rruleStartDateForForm = dayjs(timeTableItem.rruleStartDate)
 
-      const countNumberOfSlots = timeTableItems.reduce((acc, item) => {
-        return item.calendarItemTypeId === timeTableItem.calendarItemTypeId ? acc + 1 : acc
-      }, 0)
+      const numberOfSlotsbyConfig = countMatchingRuleConfigurations({
+        calendarItemTypeId: timeTableItem.calendarItemTypeId,
+        rrule: timeTableItem.rrule,
+        hours: timeTableItem.hours,
+      })
 
       form.setFieldsValue({
         calendarItemTypeId: timeTableItem.calendarItemTypeId,
         unavailable: timeTableItem.unavailable,
-        numberOfSlots: countNumberOfSlots,
+        numberOfSlots: numberOfSlotsbyConfig,
         hours: hoursForForm,
         rruleStartDate: rruleStartDateForForm,
         rrule: initialRruleString,
@@ -364,14 +459,22 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         endHour: dayjsToMinutes(h.endHour),
       }))
 
+      const filteredHoursToSave = sortTimeTableHours(hoursToSave)
+
       const updatedTimeTableItem = new TimeTableItem({
         ...timeTableItem,
         calendarItemTypeId: rowValues.calendarItemTypeId,
         unavailable: rowValues.unavailable,
-        hours: hoursToSave,
+        hours: filteredHoursToSave,
         rrule: rowValues.rrule,
         rruleStartDate: rowValues.rruleStartDate.valueOf(),
       })
+
+      const newRuleConfig: RuleConfiguration = {
+        calendarItemTypeId: rowValues.calendarItemTypeId,
+        rrule: rowValues.rrule,
+        hours: filteredHoursToSave,
+      }
 
       const numCopies = rowValues.numberOfSlots && typeof rowValues.numberOfSlots === 'number' && rowValues.numberOfSlots > 0 ? Math.floor(rowValues.numberOfSlots) : 1
 
@@ -380,8 +483,12 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         placeId: v4(),
       }))
 
-      setTimeTableItems((prevTimeTableItems) => {
-        const itemsWithoutOriginal = prevTimeTableItems.filter((item) => item.placeId !== timeTableItem.placeId)
+      const itemsWithoutOriginal = timeTableItems.filter((itemInState) => {
+        const isPartOfOriginalGroup = itemInState.calendarItemTypeId === timeTableItem.calendarItemTypeId && itemInState.rrule === timeTableItem.rrule && areHoursEqual(itemInState.hours, timeTableItem.hours)
+        return !isPartOfOriginalGroup
+      })
+
+      setTimeTableItems(() => {
         return [...itemsWithoutOriginal, ...newCopies]
       })
       setEditingKey('')
@@ -799,16 +906,15 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                           </Form.Item>
                         )
                       } else {
-                        const countNumberOfSlots =
-                          record.calendarItemTypeId === undefined
-                            ? 1
-                            : timeTableItems.reduce((acc, item) => {
-                                return item.calendarItemTypeId === record.calendarItemTypeId ? acc + 1 : acc
-                              }, 0)
-                        if (typeof countNumberOfSlots === 'number' && !isNaN(countNumberOfSlots)) {
+                        const numberOfSlotsbyConfig = countMatchingRuleConfigurations({
+                          calendarItemTypeId: record.calendarItemTypeId,
+                          rrule: record.rrule,
+                          hours: record.hours,
+                        })
+                        if (typeof numberOfSlotsbyConfig === 'number' && !isNaN(numberOfSlotsbyConfig)) {
                           return (
-                            <Tag color={countNumberOfSlots > 0 ? 'geekblue' : 'default'}>
-                              {countNumberOfSlots} {countNumberOfSlots < 2 ? t('content.slot') : t('content.slots')}
+                            <Tag color={numberOfSlotsbyConfig > 0 ? 'geekblue' : 'default'}>
+                              {numberOfSlotsbyConfig} {numberOfSlotsbyConfig < 2 ? t('content.slot') : t('content.slots')}
                             </Tag>
                           )
                         } else {

@@ -42,6 +42,10 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const { data: agenda } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
   const { data: timeTables } = useGetTimeTablesQuery({ skip: !agenda, agendaId: agenda?.id ?? '' })
 
+  const sortedTimeTables = useMemo(() => {
+    return [...(timeTables ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+  }, [timeTables])
+
   const [deleteTimeTable, { isError: isDeleteTimeTableError, isSuccess: isDeleteTimeTableSuccess, isLoading: isDeleteTimeTableLoading }] = useDeleteTimeTableMutation()
   const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
 
@@ -164,7 +168,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             pagination={{
               pageSize: 5,
             }}
-            dataSource={timeTables ?? []}
+            dataSource={sortedTimeTables}
             rowKey="id"
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
           >
