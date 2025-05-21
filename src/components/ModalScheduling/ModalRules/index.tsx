@@ -102,6 +102,11 @@ const areHoursEqual = (hoursA?: TimeTableHour[], hoursB?: TimeTableHour[]): bool
   return true
 }
 
+const isItemInDefaultState = (item: TimeTableItem): boolean => {
+  const defaultHours = [{ startHour: undefined, endHour: undefined }]
+  return (item.calendarItemTypeId === null || item.calendarItemTypeId === undefined) && (item.rrule === null || item.rrule === undefined) && areHoursEqual(item.hours, defaultHours)
+}
+
 export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRulesProps): ReactElement => {
   const { t, i18n } = useTranslation()
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
@@ -457,7 +462,24 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     try {
       if (!timeTableItemToBeDeleted) throw new Error('No rule selected')
       // Simply remove it from the state. When user save the form it will be 'deleted'
-      setTimeTableItems((prev) => prev.filter((item) => item.placeId !== timeTableItemToBeDeleted.placeId))
+      setTimeTableItems((prevTimeTableItems) => {
+        const itemWasInDefaultState = isItemInDefaultState(timeTableItemToBeDeleted)
+
+        if (itemWasInDefaultState) {
+          // If the item to delete was in a "new/default" state,
+          // only remove that specific instance by its placeId.
+          // Other new/default items with different placeIds will remain.
+          return prevTimeTableItems.filter((item) => item.placeId !== timeTableItemToBeDeleted.placeId)
+        } else {
+          // If the item to delete was a "configured" item,
+          // remove ALL items that share its exact configuration.
+          return prevTimeTableItems.filter((itemInState) => {
+            const isPartOfTheGroupToDelete =
+              itemInState.calendarItemTypeId === timeTableItemToBeDeleted.calendarItemTypeId && itemInState.rrule === timeTableItemToBeDeleted.rrule && areHoursEqual(itemInState.hours, timeTableItemToBeDeleted.hours)
+            return !isPartOfTheGroupToDelete // Keep items that are NOT part of the group
+          })
+        }
+      })
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     } finally {
@@ -491,12 +513,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         rruleStartDate: rowValues.rruleStartDate.valueOf(),
       })
 
-      const newRuleConfig: RuleConfiguration = {
-        calendarItemTypeId: rowValues.calendarItemTypeId,
-        rrule: rowValues.rrule,
-        hours: filteredHoursToSave,
-      }
-
       const numCopies = rowValues.numberOfSlots && typeof rowValues.numberOfSlots === 'number' && rowValues.numberOfSlots > 0 ? Math.floor(rowValues.numberOfSlots) : 1
 
       const newCopies = Array.from({ length: numCopies }, (_, index) => ({
@@ -504,10 +520,12 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         placeId: v4(),
       }))
 
-      const itemsWithoutOriginal = timeTableItems.filter((itemInState) => {
-        const isPartOfOriginalGroup = itemInState.calendarItemTypeId === timeTableItem.calendarItemTypeId && itemInState.rrule === timeTableItem.rrule && areHoursEqual(itemInState.hours, timeTableItem.hours)
-        return !isPartOfOriginalGroup
-      })
+      const itemsWithoutOriginal = isItemInDefaultState(timeTableItem)
+        ? timeTableItems.filter((itemInState) => itemInState.placeId !== timeTableItem.placeId)
+        : timeTableItems.filter((itemInState) => {
+            const isPartOfOriginalGroup = itemInState.calendarItemTypeId === timeTableItem.calendarItemTypeId && itemInState.rrule === timeTableItem.rrule && areHoursEqual(itemInState.hours, timeTableItem.hours)
+            return !isPartOfOriginalGroup
+          })
 
       setTimeTableItems(() => {
         return [...itemsWithoutOriginal, ...newCopies]

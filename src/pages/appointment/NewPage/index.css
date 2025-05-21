@@ -1,0 +1,115 @@
+/* Reset:
+  ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  font-size: 100%;
+  box-sizing: border-box;
+}
+a {
+  text-decoration: none;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ul,
+li {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: 100%;
+}
+html,
+body {
+  box-sizing: border-box;
+  font-size: 16px;
+  background-color: #F5F5F5;
+}
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+:focus {
+  outline: 0;
+}
+img,
+audio,
+video {
+  max-width: 100%;
+  height: auto;
+}
+iframe {
+  border: 0;
+}
+textarea {
+  resize: none;
+  /*remove the resize handle on the bottom right*/
+  overflow: auto;
+  vertical-align: top;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+}
+input,
+textarea,
+select,
+button {
+  outline: none;
+  border: none;
+  font-size: 100%;
+  margin: 0;
+}
+button,
+input {
+  line-height: normal;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000000;
+  transition: background-color 5000s ease-in-out 0s;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+td,
+th {
+  padding: 0;
+  text-align: left;
+}
+/* Responsive media queries:
+ ========================================================================== */
+@font-face {
+  font-family: "Lato700";
+  /*Can be any text*/
+  src: local("Inter-Bold"), url("/public/fonts/Lato/Lato-Bold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Lato400";
+  /*Can be any text*/
+  src: local("Inter-Regular"), url("/public/fonts/Lato/Lato-Regular.ttf") format("truetype");
+}
+body {
+  width: 100vw;
+  height: 100vh;
+}
+body * {
+  font-family: Lato400, sans-serif;
+}
+/*# sourceMappingURL=index.css.map */
