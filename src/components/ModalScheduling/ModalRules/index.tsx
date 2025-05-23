@@ -37,11 +37,6 @@ interface TimeTableItemRow {
   unavailable: boolean
 }
 
-interface RuleConfiguration {
-  calendarItemTypeIds: string[] | undefined
-  rrule: string | undefined
-  hours: TimeTableHour[] | undefined
-}
 interface UIRrulePartsForForm {
   _freq: Frequency // RRule.WEEKLY, RRule.DAILY etc. are numbers (0-4)
   _interval: number
@@ -95,23 +90,6 @@ const sortTimeTableHours = (hours?: TimeTableHour[]): TimeTableHour[] => {
   })
 }
 
-const areHoursEqual = (hoursA?: TimeTableHour[], hoursB?: TimeTableHour[]): boolean => {
-  if (hoursA === hoursB) return true // Same reference or both undefined/null
-  if (!hoursA || !hoursB) return false // One is undefined/null, the other isn't
-  if (hoursA.length !== hoursB.length) return false
-  if (hoursA.length === 0) return true // Both are empty arrays
-
-  const sortedA = sortTimeTableHours(hoursA)
-  const sortedB = sortTimeTableHours(hoursB)
-
-  for (let i = 0; i < sortedA.length; i++) {
-    if (sortedA[i].startHour !== sortedB[i].startHour || sortedA[i].endHour !== sortedB[i].endHour) {
-      return false
-    }
-  }
-  return true
-}
-
 export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRulesProps): ReactElement => {
   const { t, i18n } = useTranslation()
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
@@ -160,15 +138,13 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       if (!groupedConfigMap.has(compositeConfigKey)) {
         // First time seeing this configuration, create a new group
         const newGroup: TimeTableItemRow = {
-          rowId: v4(), // Generate a unique ID for this display row/group
+          rowId: v4(),
           calendarItemTypeIds: [],
           numberOfSlots: 0, // Will be incremented
           rrule: item.rrule,
           hours: sortedHours, // Store the sorted version
           rruleStartDate: item.rruleStartDate,
           unavailable: item.unavailable,
-          // Copy other common properties if they are part of the group definition
-          // (e.g., zoneId if it was part of common config you want to preserve on the row)
         }
         if (item.calendarItemTypeId && typeof item.calendarItemTypeId === 'string') {
           newGroup.calendarItemTypeIds.push(item.calendarItemTypeId)
@@ -181,11 +157,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
         if (item.calendarItemTypeId && typeof item.calendarItemTypeId === 'string' && !existingGroup.calendarItemTypeIds.includes(item.calendarItemTypeId)) {
           existingGroup.calendarItemTypeIds.push(item.calendarItemTypeId)
-          // Optional: sort selectedCalendarItemTypeIds if their display order matters
           existingGroup.calendarItemTypeIds.sort()
         }
         existingGroup.numberOfSlots += 1
-        // No need to groupedConfigMap.set() again as we are mutating the object reference
       }
     }
 
@@ -219,25 +193,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         numberOfSlots: correctedSlotsPerType,
       }
     })
-
-    // The sorting by name based on calendarItemTypeId is removed as requested.
-    // If you need to sort these TimeTableItemRow objects later (e.g., by one of their properties),
-    // you can do it here on Array.from(groupedConfigMap.values()).
     setTimeTableItemsRows(finalTimeTableItemRows)
   }, [timeTableItems])
-
-  const countMatchingRuleConfigurations = useCallback(
-    // Counting the number of slots. Meant for the numberOfSlots table column.
-    (targetConfig: RuleConfiguration): number => {
-      if (!timeTableItems || !targetConfig || targetConfig.calendarItemTypeIds === undefined || targetConfig.calendarItemTypeIds.length === 0) return 1
-
-      return timeTableItems.reduce((acc, item) => {
-        const isMatch = item.calendarItemTypeId === targetConfig.calendarItemTypeIds && item.rrule === targetConfig.rrule && areHoursEqual(item.hours, targetConfig.hours)
-        return isMatch ? acc + 1 : acc
-      }, 0)
-    },
-    [timeTableItems],
-  )
 
   const RRuleWeekdays = [
     // rrule days
@@ -257,7 +214,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const initialName = useMemo(() => timeTable?.name || '', [timeTable])
 
   useEffect(() => {
-    // On fetch update the state and form values
+    // Fetch update the state and form values
     if (timeTable) {
       form.setFieldsValue({
         name: timeTable.name,
@@ -361,7 +318,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     // Used to translate the rrule
     const rruleWeekdaysOrdered = [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR, RRule.SA, RRule.SU]
     const dayNames = rruleWeekdaysOrdered.map((rruleWd) => {
-      const dayIndexForDateFns = (rruleWd.weekday + 1) % 7
+      const dayIndexForDateFns = rruleWd.weekday % 7
       return format(setDay(new Date(), dayIndexForDateFns), 'EEEE', { locale: dateFnsLocale }) // EEEE for full day name
     })
     const monthNames = [...Array(12)].map((_, i) => format(setMonth(new Date(), i), 'LLLL', { locale: dateFnsLocale }))

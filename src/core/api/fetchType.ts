@@ -27,3 +27,8 @@ export type GetAllServiceBySiteIdParameters = {
   sitesIds: string[]
   skip?: boolean
 }
+
+export type AllCalendarItemTypeServiceParameters = {
+  skip: boolean
+  agendaIds: string[]
+}

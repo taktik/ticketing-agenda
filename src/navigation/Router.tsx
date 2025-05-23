@@ -6,6 +6,7 @@ import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/authentication/LoginPage'
 import RegisterPage from '../pages/authentication/RegisterPage'
 import AppointmentLayout from '../layout/AppointmentLayout'
+import NewPage from '../pages/appointment/NewPage'
 
 export const routes = {
   dashboard: '/dashboard',
@@ -30,7 +31,7 @@ export const Router = () => (
         <Route path={routes.dashboard} element={<DashboardPage />} />
       </Route>
       <Route element={<AppointmentLayout />}>
-        <Route path={routes.appointmentNew} />
+        <Route path={routes.appointmentNew} element={<NewPage />} />
       </Route>
     </Routes>
   </BrowserRouter>

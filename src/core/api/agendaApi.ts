@@ -131,6 +131,19 @@ export const agendaApiRtk = createApi({
 
 export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
 
+export const useGetAllAgendaByAuthorIds = (params: { skip: boolean; authorIds: string[] }) => {
+  const { data, ...rest } = useGetAgendasQuery(undefined, {
+    skip: params.skip,
+  })
+
+  const result = data?.filter((item) => item.author && params.authorIds.includes(item.author)) ?? []
+
+  return {
+    data: result,
+    ...rest,
+  }
+}
+
 export const useGetAgendaByAuthorId = (params: { skip: boolean; authorId: string }) => {
   const { data, ...rest } = useGetAgendasQuery(undefined, {
     skip: params.skip,

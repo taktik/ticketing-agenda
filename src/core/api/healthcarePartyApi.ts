@@ -92,19 +92,15 @@ export const healthcarePartyApiRtk = createApi({
   }),
 })
 
-export const {
-  useGetHealthcarePartiesQuery,
-  useGetHealthcarePartiesByParentQuery,
-  useGetRootHealthcarePartyQuery,
-  useGetHealthcarePartyQuery,
-  useCreateUpdateHealthcarePartyMutation,
-  useDeleteHealthcarePartyMutation,
-} = healthcarePartyApiRtk
+export const { useGetHealthcarePartiesQuery, useGetHealthcarePartiesByParentQuery, useGetRootHealthcarePartyQuery, useGetHealthcarePartyQuery, useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation } =
+  healthcarePartyApiRtk
 
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {
   const { data, ...rest } = useGetRootHealthcarePartyQuery(undefined, {
     skip: params.skip,
   })
+
+  console.log('data', data)
 
   const root = data ? data[0] : undefined
 
