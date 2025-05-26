@@ -33,7 +33,6 @@ interface TimeTableItemRow {
   numberOfSlots: number
   rrule: string | undefined
   hours: TimeTableHour[]
-  rruleStartDate: number | undefined
   publicTimeTableItem: boolean
 }
 
@@ -41,6 +40,7 @@ interface UIRrulePartsForForm {
   _freq: Frequency // RRule.WEEKLY, RRule.DAILY etc. are numbers (0-4)
   _interval: number
   _byday: string[] // The days (Monday, ...)
+  _dtstart: dayjs.Dayjs
 }
 
 type TableHours = {
@@ -56,11 +56,11 @@ interface FormValues {
   publicTimeTableItem: boolean
   numberOfSlots: number
   hours: TableHours[]
-  rruleStartDate: dayjs.Dayjs
   rrule: string
   _freq: Frequency
   _interval: number
   _byday: string[]
+  _dtstart: dayjs.Dayjs
 }
 
 interface ModalRulesProps {
@@ -116,7 +116,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     }
 
     // Use a Map to group items by their common configuration
-    // Key: string representing the common config (rrule, hours, publicTimeTableItem, rruleStartDate)
+    // Key: string representing the common config (rrule, hours, publicTimeTableItem, _dtstart)
     // Value: The aggregated TimeTableItemRow
     const groupedConfigMap = new Map<string, TimeTableItemRow>()
 
@@ -128,11 +128,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       const sortedHours = item.hours ? sortTimeTableHours(item.hours) : []
       const hoursKeyPart = `HOURS:${JSON.stringify(sortedHours.map((h) => ({ s: h.startHour ?? 'u', e: h.endHour ?? 'u' })))}` // 'u' for undefined/null
 
-      const startDateKeyPart = `STARTDATE:${item.rruleStartDate === null || item.rruleStartDate === undefined ? String(item.rruleStartDate) : item.rruleStartDate}`
-
       const publicTimeTableItemKeyPart = `publicTimeTableItem:${item.publicTimeTableItem}`
 
-      const compositeConfigKey = `${rruleKeyPart}|${hoursKeyPart}|${startDateKeyPart}|${publicTimeTableItemKeyPart}`
+      const compositeConfigKey = `${rruleKeyPart}|${hoursKeyPart}|${publicTimeTableItemKeyPart}`
 
       // --- Grouping logic ---
       if (!groupedConfigMap.has(compositeConfigKey)) {
@@ -143,7 +141,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
           numberOfSlots: 0, // Will be incremented
           rrule: item.rrule,
           hours: sortedHours, // Store the sorted version
-          rruleStartDate: item.rruleStartDate,
           publicTimeTableItem: item.publicTimeTableItem,
         }
         if (item.calendarItemTypeId && typeof item.calendarItemTypeId === 'string') {
@@ -252,7 +249,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }
 
   const handleNameCancel = () => {
-    form.resetFields(['publicTimeTableItem', 'numberOfSlots', 'hours', 'rruleStartDate', 'rrule', '_byday', '_freq', '_interval', 'calendarItemTypeIds'])
+    form.resetFields(['publicTimeTableItem', 'numberOfSlots', 'hours', '_dtstart', 'rrule', '_byday', '_freq', '_interval', 'calendarItemTypeIds'])
     form.setFieldsValue({ name: initialName })
   }
 
@@ -265,7 +262,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         numberOfSlots: 1,
         rowId: v4(),
         calendarItemTypeIds: [],
-        rruleStartDate: timeTable.startTime,
         publicTimeTableItem: true,
         hours: [new TimeTableHour({ startHour: undefined, endHour: undefined })],
       }
@@ -279,12 +275,15 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const watchedFreq = Form.useWatch('_freq', form)
   const watchedInterval = Form.useWatch('_interval', form)
   const watchedByDay = Form.useWatch('_byday', form)
+  const watchedDtStart = Form.useWatch('_dtstart', form)
+  const watchedTimeTableStart = Form.useWatch('start', form)
+  const watchedTimeTableEnd = Form.useWatch('end', form)
 
   useEffect(() => {
     // Building the rule whenever one of the rule values is changed. Could be moved in the update function.
     // This check ensures we only try to build an RRULE if a frequency is actually selected.
     // It also prevents running when the form is first initializing and these values might be transient.
-    if (watchedFreq !== undefined && form.isFieldsTouched(['_freq', '_interval', '_byday'])) {
+    if (watchedFreq !== undefined && form.isFieldsTouched(['_freq', '_interval', '_byday', '_dtstart'])) {
       const rruleOptions: Partial<Options> = {
         freq: watchedFreq as Frequency, // Cast because Select value is number
         interval: watchedInterval || 1,
@@ -292,7 +291,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         // For simple WEEKLY rules, its exact date might be less critical.
         // Use a consistent or relevant dtstart. For now, using today.
         // might need to pass a real start date from your event/schedule if relevant.
-        dtstart: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today, or a relevant date
+        dtstart: watchedDtStart.toDate() ?? watchedTimeTableStart.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0)),
+        until: watchedTimeTableEnd.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0)),
       }
 
       if (watchedFreq === RRule.WEEKLY && watchedByDay && watchedByDay.length > 0) {
@@ -312,7 +312,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         form.setFieldsValue({ rrule: undefined }) // Set to undefined or handle error state
       }
     }
-  }, [watchedFreq, watchedInterval, watchedByDay, form])
+  }, [watchedFreq, watchedInterval, watchedByDay, watchedDtStart, watchedTimeTableStart, watchedTimeTableEnd, form])
 
   const getCurrentRruleLanguageOptions = (): Language => {
     // Used to translate the rrule
@@ -389,6 +389,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         _freq: RRule.WEEKLY,
         _interval: 1,
         _byday: [],
+        _dtstart: watchedTimeTableStart || dayjs(),
       }
 
       if (initialRruleString) {
@@ -397,6 +398,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
           const options = rruleObj.options
           uiRruleParts._freq = options.freq // This will be a number (RRule.Frequency)
           uiRruleParts._interval = options.interval || 1
+          uiRruleParts._dtstart = dayjs(options.dtstart) || watchedTimeTableStart
 
           if (options.byweekday !== null && options.byweekday !== undefined) {
             // Normalize options.byweekday to always be an array for mapping
@@ -423,7 +425,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
           console.error('Error parsing existing RRULE string:', error, initialRruleString)
           initialRruleString = undefined // Clear if invalid to avoid issues
           // Reset to defaults if parsing failed
-          uiRruleParts = { _freq: RRule.WEEKLY, _interval: 1, _byday: [] }
+          uiRruleParts = { _freq: RRule.WEEKLY, _interval: 1, _byday: [], _dtstart: watchedTimeTableStart || dayjs() }
         }
       }
 
@@ -433,16 +435,13 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         endHour: minutesToDayjs(h.endHour),
       }))
 
-      // Start of the rule
-      const rruleStartDateForForm = dayjs(timeTableItemRow.rruleStartDate)
-
       // Finally set the state with the values
       form.setFieldsValue({
         calendarItemTypeIds: timeTableItemRow.calendarItemTypeIds,
         publicTimeTableItem: timeTableItemRow.publicTimeTableItem,
         numberOfSlots: timeTableItemRow.numberOfSlots,
         hours: hoursForForm,
-        rruleStartDate: rruleStartDateForForm,
+        _dtstart: uiRruleParts._dtstart,
         rrule: initialRruleString,
         _freq: uiRruleParts._freq,
         _interval: uiRruleParts._interval,
@@ -484,8 +483,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
       const sortedHoursToSave = sortTimeTableHours(hoursToSave)
 
-      const rruleStartDateToSave = rowValues.rruleStartDate.valueOf()
-
       setTimeTableItemsRows((prevRows: TimeTableItemRow[]) =>
         prevRows.map((row) => {
           if (row.rowId === timeTableItemRow.rowId) {
@@ -495,7 +492,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
               numberOfSlots: rowValues.numberOfSlots || 1, // Default to 1 if undefined
               rrule: rowValues.rrule,
               hours: sortedHoursToSave,
-              rruleStartDate: rruleStartDateToSave,
               publicTimeTableItem: rowValues.publicTimeTableItem,
             }
           }
@@ -553,7 +549,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
             // Data for the new TimeTableItem instance
             const newItemData: Partial<TimeTableItem> = {
               // Common properties from the group definition
-              rruleStartDate: groupRow.rruleStartDate,
               rrule: groupRow.rrule, // Use rruleString from the group
               hours: groupRow.hours, // Use hoursConfig (numeric, sorted)
               publicTimeTableItem: groupRow.publicTimeTableItem,
@@ -740,14 +735,14 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                             <div className="rrule-start">
                               <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.from_date', 'A partir du')}:</Typography.Text>
                               <Form.Item
-                                name="rruleStartDate"
+                                name="_dtstart"
                                 rules={[{ required: true, message: t('validation.select_date_required') }]}
                                 style={{
                                   marginBottom: '8px',
                                   flexGrow: 1,
                                 }}
                               >
-                                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" minDate={watchedTimeTableStart} maxDate={watchedTimeTableEnd} />
                               </Form.Item>
                             </div>
                           </Space>
@@ -767,35 +762,24 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                           if (parsedRuleComponents.freq === undefined) {
                             throw new Error('Frequency cannot be parsed')
                           }
-                          let rruleDtStart: Date
-                          if (record.rruleStartDate && typeof record.rruleStartDate === 'number') {
-                            rruleDtStart = new Date(record.rruleStartDate)
-                          } else {
-                            rruleDtStart = new Date(new Date().setHours(0, 0, 0, 0)) // Default to today
-                          }
+
+                          const dtStart = parsedRuleComponents.dtstart ?? new Date(new Date().setHours(0, 0, 0, 0))
 
                           // 2. Create the options object for new RRule() ensuring all required types are met
                           const optionsForToText: Partial<Options> = {
-                            dtstart: rruleDtStart,
+                            dtstart: dtStart,
                             freq: parsedRuleComponents.freq as Frequency,
                             ...(parsedRuleComponents.interval !== undefined && { interval: parsedRuleComponents.interval }),
                             ...(parsedRuleComponents.byweekday && { byweekday: parsedRuleComponents.byweekday }),
                           }
 
                           const ruleForText = new RRule(optionsForToText)
-                          let displayText = ruleForText.toText(rruleGettextAdapter, langOpts)
 
-                          if (record.rruleStartDate && typeof record.rruleStartDate === 'number') {
-                            const startDate = new Date(record.rruleStartDate)
+                          const formattedStartDate = format(dtStart, 'P', { locale: dateFnsLocale })
+                          const fromDatePrefix = t('rrule.from_date').toLowerCase()
 
-                            if (!isNaN(startDate.getTime())) {
-                              const formattedStartDate = format(startDate, 'P', { locale: dateFnsLocale })
-
-                              const fromDatePrefix = t('rrule.from_date').toLowerCase()
-
-                              displayText = `${displayText} ${fromDatePrefix} ${formattedStartDate}`
-                            }
-                          }
+                          const rruleTranslation = ruleForText.toText(rruleGettextAdapter, langOpts)
+                          const displayText = `${rruleTranslation} ${fromDatePrefix} ${formattedStartDate}`
 
                           return <span title={rruleString}>{displayText}</span>
                         } catch (e) {
