@@ -34,7 +34,7 @@ interface TimeTableItemRow {
   rrule: string | undefined
   hours: TimeTableHour[]
   rruleStartDate: number | undefined
-  unavailable: boolean
+  publicTimeTableItem: boolean
 }
 
 interface UIRrulePartsForForm {
@@ -53,7 +53,7 @@ interface FormValues {
   start: dayjs.Dayjs
   end: dayjs.Dayjs
   calendarItemTypeIds: string[]
-  unavailable: boolean
+  publicTimeTableItem: boolean
   numberOfSlots: number
   hours: TableHours[]
   rruleStartDate: dayjs.Dayjs
@@ -116,7 +116,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     }
 
     // Use a Map to group items by their common configuration
-    // Key: string representing the common config (rrule, hours, unavailable, rruleStartDate)
+    // Key: string representing the common config (rrule, hours, publicTimeTableItem, rruleStartDate)
     // Value: The aggregated TimeTableItemRow
     const groupedConfigMap = new Map<string, TimeTableItemRow>()
 
@@ -130,9 +130,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
       const startDateKeyPart = `STARTDATE:${item.rruleStartDate === null || item.rruleStartDate === undefined ? String(item.rruleStartDate) : item.rruleStartDate}`
 
-      const unavailableKeyPart = `UNAVAILABLE:${item.unavailable}`
+      const publicTimeTableItemKeyPart = `publicTimeTableItem:${item.publicTimeTableItem}`
 
-      const compositeConfigKey = `${rruleKeyPart}|${hoursKeyPart}|${startDateKeyPart}|${unavailableKeyPart}`
+      const compositeConfigKey = `${rruleKeyPart}|${hoursKeyPart}|${startDateKeyPart}|${publicTimeTableItemKeyPart}`
 
       // --- Grouping logic ---
       if (!groupedConfigMap.has(compositeConfigKey)) {
@@ -144,7 +144,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
           rrule: item.rrule,
           hours: sortedHours, // Store the sorted version
           rruleStartDate: item.rruleStartDate,
-          unavailable: item.unavailable,
+          publicTimeTableItem: item.publicTimeTableItem,
         }
         if (item.calendarItemTypeId && typeof item.calendarItemTypeId === 'string') {
           newGroup.calendarItemTypeIds.push(item.calendarItemTypeId)
@@ -252,7 +252,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }
 
   const handleNameCancel = () => {
-    form.resetFields(['unavailable', 'numberOfSlots', 'hours', 'rruleStartDate', 'rrule', '_byday', '_freq', '_interval', 'calendarItemTypeIds'])
+    form.resetFields(['publicTimeTableItem', 'numberOfSlots', 'hours', 'rruleStartDate', 'rrule', '_byday', '_freq', '_interval', 'calendarItemTypeIds'])
     form.setFieldsValue({ name: initialName })
   }
 
@@ -266,7 +266,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         rowId: v4(),
         calendarItemTypeIds: [],
         rruleStartDate: timeTable.startTime,
-        unavailable: true,
+        publicTimeTableItem: true,
         hours: [new TimeTableHour({ startHour: undefined, endHour: undefined })],
       }
       setTimeTableItemsRows((prev) => [...prev, newRule])
@@ -439,7 +439,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       // Finally set the state with the values
       form.setFieldsValue({
         calendarItemTypeIds: timeTableItemRow.calendarItemTypeIds,
-        unavailable: timeTableItemRow.unavailable,
+        publicTimeTableItem: timeTableItemRow.publicTimeTableItem,
         numberOfSlots: timeTableItemRow.numberOfSlots,
         hours: hoursForForm,
         rruleStartDate: rruleStartDateForForm,
@@ -496,7 +496,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
               rrule: rowValues.rrule,
               hours: sortedHoursToSave,
               rruleStartDate: rruleStartDateToSave,
-              unavailable: rowValues.unavailable,
+              publicTimeTableItem: rowValues.publicTimeTableItem,
             }
           }
           return row
@@ -556,7 +556,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
               rruleStartDate: groupRow.rruleStartDate,
               rrule: groupRow.rrule, // Use rruleString from the group
               hours: groupRow.hours, // Use hoursConfig (numeric, sorted)
-              unavailable: groupRow.unavailable,
+              publicTimeTableItem: groupRow.publicTimeTableItem,
               // Specific calendarItemTypeId for this instance
               calendarItemTypeId: procedureId,
 
@@ -935,15 +935,15 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                   />
                   <Column
                     title={t('content.availability')}
-                    dataIndex="unavailable"
-                    key="unavailable"
+                    dataIndex="publicTimeTableItem"
+                    key="publicTimeTableItem"
                     width={'13%'}
-                    render={(isUnavailable: boolean | undefined, record: TimeTableItemRow) => {
+                    render={(ispublicTimeTableItem: boolean | undefined, record: TimeTableItemRow) => {
                       const editable = isEditing(record)
 
                       if (editable) {
                         return (
-                          <Form.Item name="unavailable" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select availability!' }]}>
+                          <Form.Item name="publicTimeTableItem" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select availability!' }]}>
                             <Radio.Group>
                               <Radio value={false}>{t('content.activate')}</Radio>
                               <Radio value={true}>{t('content.deactivate')}</Radio>
@@ -951,9 +951,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                           </Form.Item>
                         )
                       } else {
-                        if (isUnavailable === true) {
+                        if (ispublicTimeTableItem === true) {
                           return <Tag color="red">{t('content.deactivated')}</Tag>
-                        } else if (isUnavailable === false) {
+                        } else if (ispublicTimeTableItem === false) {
                           return <Tag color="green">{t('content.activated')}</Tag>
                         }
                         return <Tag color="orange">{t('content.unknown')}</Tag>
