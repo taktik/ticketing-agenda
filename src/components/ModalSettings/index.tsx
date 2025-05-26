@@ -39,8 +39,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
-  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] =
-    useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -139,9 +138,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
         if (!('label' in item)) return null
 
         const normalizedSearch = normalize(search)
-        const normalizedItemLabel = normalize(
-          typeof item.label === 'string' ? item.label : React.isValidElement(item.label) && typeof item.label.props?.children === 'string' ? item.label.props.children : '',
-        )
+        const normalizedItemLabel = normalize(typeof item.label === 'string' ? item.label : React.isValidElement(item.label) && typeof item.label.props?.children === 'string' ? item.label.props.children : '')
 
         const matchService = normalizedItemLabel.includes(normalizedSearch)
 
@@ -225,7 +222,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   }, [selectedKey, sites, services])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.settings')} blockAntModalBodyVerticalScroll noFooter>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.settings')} blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modalSettings">
         {notificationContextHolder}
         {messageContextHolder}
@@ -234,16 +231,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
             <div className="SearchInput">
               <Input placeholder={t('content.search_site_or_service')} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Menu
-              onClick={onServiceClick}
-              onOpenChange={onSiteClick}
-              selectedKeys={[selectedKey]}
-              openKeys={openKeys}
-              style={{ width: 250 }}
-              defaultSelectedKeys={['default']}
-              mode="inline"
-              items={filteredItems}
-            />
+            <Menu onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ width: 250 }} defaultSelectedKeys={['default']} mode="inline" items={filteredItems} />
           </div>
           <div className="bottomFooter">
             <Button onClick={handleAddSite}>{t('content.add_site')}</Button>

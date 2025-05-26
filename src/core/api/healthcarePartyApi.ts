@@ -100,8 +100,6 @@ export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParamete
     skip: params.skip,
   })
 
-  console.log('data', data)
-
   const root = data ? data[0] : undefined
 
   return {

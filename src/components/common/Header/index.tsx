@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
 import { ModalSettings } from '../../ModalUserSettings'
+import { LanguageSelector } from '../LanguageSelector'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,
@@ -79,31 +80,33 @@ export const Header = () => {
         <div className="header__logoHolder">
           <img src={mouscronLogo} alt="mouscron logo" />
         </div>
-        {!isPractitionerFetching && (
-          <Dropdown menu={{ items, onClick }} placement="bottomRight" arrow onOpenChange={(open: boolean) => setUserDropdownOpen(open)}>
-            <div className={`header__userDropdown ${isUserDropdownOpen && 'header__userDropdown--active'}`}>
-              <div className="header__userDropdown__heading">
-                <p className="header__userDropdown__heading__name">{practitioner?.firstName + ' ' + practitioner?.lastName}</p>
-                <p className="header__userDropdown__heading__speciality">{practitioner?.speciality ?? 'Speciality'}</p>
-              </div>
-              {userAvatarSrc ? (
-                <div className="header__userDropdown__picture">
-                  <img src={userAvatarSrc} alt={user?.name ?? 'Dear User!'} />
+        <div className="right-side">
+          {!isPractitionerFetching && (
+            <Dropdown menu={{ items, onClick }} placement="bottomRight" arrow onOpenChange={(open: boolean) => setUserDropdownOpen(open)}>
+              <div className={`header__userDropdown ${isUserDropdownOpen && 'header__userDropdown--active'}`}>
+                <div className="header__userDropdown__heading">
+                  <p className="header__userDropdown__heading__name">{practitioner?.firstName + ' ' + practitioner?.lastName}</p>
+                  <p className="header__userDropdown__heading__speciality">{practitioner?.speciality ?? 'Speciality'}</p>
                 </div>
-              ) : (
-                <div className="header__userDropdown__userAvatarPlaceholder">
-                  <Icon component={userIcn} />
+                {userAvatarSrc ? (
+                  <div className="header__userDropdown__picture">
+                    <img src={userAvatarSrc} alt={user?.name ?? 'Dear User!'} />
+                  </div>
+                ) : (
+                  <div className="header__userDropdown__userAvatarPlaceholder">
+                    <Icon component={userIcn} />
+                  </div>
+                )}
+                <div className="header__userDropdown__arrow">
+                  <Icon component={arrowDownIcn} />
                 </div>
-              )}
-              <div className="header__userDropdown__arrow">
-                <Icon component={arrowDownIcn} />
               </div>
-            </div>
-          </Dropdown>
-        )}
+            </Dropdown>
+          )}
+          <LanguageSelector />
+        </div>
       </div>
-      {isModalManageAccountFormOpen &&
-        createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUser={practitioner} />, document.body)}
+      {isModalManageAccountFormOpen && createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUser={practitioner} />, document.body)}
     </>
   )
 }

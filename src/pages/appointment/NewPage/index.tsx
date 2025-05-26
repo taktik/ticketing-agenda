@@ -4,14 +4,17 @@ import mouscronLogo from '../../../assets/mouscronLogo.png'
 import { useTranslation } from 'react-i18next'
 import { LanguageSelector } from '../../../components/common/LanguageSelector'
 import { Divider } from 'antd'
-import { useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../../core/api/healthcarePartyApi'
+import { useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery, useGetHealthcarePartiesQuery, useGetRootHealthcareParty } from '../../../core/api/healthcarePartyApi'
 import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
+import { useAppSelector } from '../../../core/hooks'
 
 export default function NewPage() {
   const { t, i18n } = useTranslation()
 
-  const { data: rootHcp } = useGetRootHealthcareParty({ skip: false })
+  const appState = useAppSelector((state) => state.app)
+  const { data: all } = useGetHealthcarePartiesQuery(undefined)
+  const { data: rootHcp } = useGetRootHealthcareParty({ skip: !appState })
   const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: !rootHcp, parentId: rootHcp?.id ?? '' })
   const sitesIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
 
@@ -22,8 +25,6 @@ export default function NewPage() {
   const agendaIds = useMemo(() => (services ?? []).map((service) => service.id), [services])
 
   const { data: procedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ skip: !rootHcp || !services || !agendas || agendaIds.length === 0, agendaIds: agendaIds })
-
-  useEffect(() => console.log('rootHcp', rootHcp), [rootHcp])
 
   return (
     <div className="new-appointment">

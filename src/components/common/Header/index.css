@@ -243,4 +243,10 @@ body * {
 .header .header__logoHolder {
   width: 15%;
 }
+.right-side {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
 /*# sourceMappingURL=index.css.map */

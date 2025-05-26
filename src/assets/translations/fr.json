@@ -82,7 +82,11 @@
     "end_time_after_start_time": "L'heure de fin doit être postérieure à l'heure de début",
     "add_hours": "Ajouter des heures",
     "start_hour": "Début",
-    "end_hour": "Fin"
+    "end_hour": "Fin",
+    "appointment_duration": "Durée des rendez-vous",
+    "person": "Personne",
+    "persons": "Personnes",
+    "add_appointment_duration": "Ajouter une durée de rendez-vous"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -159,6 +163,8 @@
   "validation": {
     "check_highlighted_fields_correct_errors": "Veuillez vérifier les champs surlignés et corriger les erreurs.",
     "validation_failed": "Échec de la validation",
-    "select_date_required": "Veuillez sélectionner une date"
+    "select_date_required": "Veuillez sélectionner une date",
+    "at_least_one_duration_required": "Au moins une durée est requise",
+    "all_durations_must_be_positive": "Toutes les durées doivent être des nombres positifs."
   }
 }

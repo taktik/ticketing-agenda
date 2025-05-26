@@ -12,7 +12,10 @@
   width: 100%;
   justify-content: center;
   align-items: center;
-  padding: 12px 24px 24px 24px;
+  padding: 12px;
+  :first-child {
+    width: 100%;
+  }
 }
 .procedures-list {
   display: flex;
@@ -52,10 +55,6 @@
 .ant-list-item:hover .edit-button {
   opacity: 1;
 }
-.action-buttons {
-  display: flex;
-  gap: 4px;
-}
 .input-buttons {
   display: flex;
   flex-direction: row;
@@ -68,4 +67,27 @@
   top: 0;
   background-color: white !important;
   z-index: 10;
+}
+.ant-table-custom {
+  width: auto;
+  height: auto;
+  padding-top: 12px;
+}
+.appointment-duration {
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+  > :first-child {
+    min-width: 100px;
+  }
+}
+.appointment-duration-input {
+  display: flex;
+  align-items: center;
+}
+.actions-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: end;
+  padding: 0 12px 12px 0;
 }

@@ -2,7 +2,7 @@
 
 .modalSettings {
   width: 100%;
-  height: 60vh;
+  height: 70vh;
   display: flex;
   align-self: stretch;
   position: relative;
@@ -17,7 +17,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 12px 24px 24px 24px;
+  padding-bottom: 12px;
 }
 .content {
   display: flex;
@@ -37,7 +37,9 @@
 .selectedSetting {
   display: flex;
   flex-direction: column;
-  width: 80%;
+  width: auto;
+  flex-grow: 1;
+  overflow: hidden;
 }
 .ant-menu-inline {
   border-right: none !important;
@@ -57,7 +59,7 @@
 }
 .SearchInput {
   width: 100%;
-  padding: 0.5rem 0.5rem 0 0.5rem;
+  padding: 12px 12px 0 12px;
 }
 .defaultRender {
   height: 100%;
