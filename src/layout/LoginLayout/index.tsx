@@ -15,7 +15,7 @@ const combinedSelector = createSelector([selectRestApiData, selectAppData], (car
   lsToken: app?.savedCredentials?.token,
 }))
 
-function DashboardLayout() {
+function LoginLayout() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
 
@@ -42,4 +42,4 @@ function DashboardLayout() {
   )
 }
 
-export default DashboardLayout
+export default LoginLayout

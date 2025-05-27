@@ -38,6 +38,19 @@ export const healthcarePartyApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
+    getHealthcarePartiesByIds: builder.query<HealthcareParty[] | undefined, string[]>({
+      async queryFn(ids, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
+          const hcps = await hcpApi?.getHealthcareParties(ids)
+          if (!hcps) {
+            throw new Error('HealthcareParty does not exist')
+          }
+          return hcps
+        })
+      },
+      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+    }),
     getRootHealthcareParty: builder.query<HealthcareParty[] | undefined, undefined>({
       async queryFn(_, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
@@ -55,7 +68,7 @@ export const healthcarePartyApiRtk = createApi({
           if (!hcp) {
             throw new Error('HealthcareParty does not exist')
           }
-          return new HealthcareParty(hcp)
+          return hcp
         })
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: res.id }] : []),
@@ -68,7 +81,7 @@ export const healthcarePartyApiRtk = createApi({
           if (!updatedHcp) {
             throw new Error('HealthcareParty creation failed')
           }
-          return new HealthcareParty(updatedHcp)
+          return updatedHcp
         })
       },
       invalidatesTags: () => [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }],
@@ -92,8 +105,15 @@ export const healthcarePartyApiRtk = createApi({
   }),
 })
 
-export const { useGetHealthcarePartiesQuery, useGetHealthcarePartiesByParentQuery, useGetRootHealthcarePartyQuery, useGetHealthcarePartyQuery, useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation } =
-  healthcarePartyApiRtk
+export const {
+  useGetHealthcarePartiesQuery,
+  useGetHealthcarePartiesByParentQuery,
+  useGetHealthcarePartiesByIdsQuery,
+  useGetRootHealthcarePartyQuery,
+  useGetHealthcarePartyQuery,
+  useCreateUpdateHealthcarePartyMutation,
+  useDeleteHealthcarePartyMutation,
+} = healthcarePartyApiRtk
 
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {
   const { data, ...rest } = useGetRootHealthcarePartyQuery(undefined, {

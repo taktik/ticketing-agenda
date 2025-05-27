@@ -1,21 +1,26 @@
 import './index.css'
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import mouscronLogo from '../../../assets/mouscronLogo.png'
 import { useTranslation } from 'react-i18next'
 import { LanguageSelector } from '../../../components/common/LanguageSelector'
 import { Divider } from 'antd'
 import { useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery, useGetHealthcarePartiesQuery, useGetRootHealthcareParty } from '../../../core/api/healthcarePartyApi'
-import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
-import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
+import { useGetAgendaByAuthorId, useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
+import { useGetCalendarItemTypesForMultipleAgendasQuery, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { useAppSelector } from '../../../core/hooks'
+import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 
 export default function NewPage() {
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date())
+  const [schedulingModalOpen, setSchedulingModalOpen] = useState<boolean>(false)
+  const [settingsModalOpen, setSettingsModalOpen] = useState<boolean>(false)
+  const user = useAppSelector((state) => state.cardinalApi.user)
+  const skip = !user
   const { t, i18n } = useTranslation()
 
-  const appState = useAppSelector((state) => state.app)
   const { data: all } = useGetHealthcarePartiesQuery(undefined)
-  const { data: rootHcp } = useGetRootHealthcareParty({ skip: !appState })
-  const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: !rootHcp, parentId: rootHcp?.id ?? '' })
+  const { data: rootHcp } = useGetRootHealthcareParty({ skip: skip })
+  const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
   const sitesIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
 
   const { data: services } = useGetAllServiceBySiteId({ skip: !rootHcp || !sitesIds || sitesIds.length === 0, sitesIds: sitesIds ?? [] })
@@ -25,6 +30,9 @@ export default function NewPage() {
   const agendaIds = useMemo(() => (services ?? []).map((service) => service.id), [services])
 
   const { data: procedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ skip: !rootHcp || !services || !agendas || agendaIds.length === 0, agendaIds: agendaIds })
+
+  useEffect(() => console.log('user', user), [all])
+  useEffect(() => console.log('all', all), [all])
 
   return (
     <div className="new-appointment">

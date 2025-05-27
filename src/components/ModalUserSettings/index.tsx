@@ -9,7 +9,8 @@ import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import '../ModalUserSettings/index.css'
 import { AccountSetting } from './Settings/AccountSetting'
-import { AgendaSetting } from './Settings/AgendaSetting'
+import { ProfileOutlined, UsergroupAddOutlined } from '@ant-design/icons'
+import { ManagerUsers } from './Settings/ManageUsers'
 
 interface ModalSettingsProps {
   isVisible: boolean
@@ -20,34 +21,12 @@ interface ModalSettingsProps {
 type MenuItem = Required<MenuProps>['items'][number]
 
 const items: MenuItem[] = [
-  {
-    key: 'g1',
-    label: 'Compte',
-    type: 'group',
-    children: [
-      { key: 'utilisateur', label: 'Utilisateur' },
-      { key: 'droits', label: 'Droits' },
-    ],
-  },
-  {
-    key: 'g2',
-    label: 'Préférence',
-    type: 'group',
-    children: [
-      { key: 'affichage', label: 'Affichage' },
-      { key: 'agenda', label: 'Agenda' },
-    ],
-  },
-  {
-    key: 'g3',
-    label: 'Autre',
-    type: 'group',
-    children: [{ key: 'license', label: 'License' }],
-  },
+  { key: 'profil', icon: <ProfileOutlined />, label: 'Votre profil' },
+  { key: 'manageUsers', icon: <UsergroupAddOutlined />, label: 'Gérer les utilisateurs' },
 ]
 
 export const ModalSettings = ({ isVisible, onClose, currentUser }: ModalSettingsProps): ReactElement => {
-  const [selectedKey, setSelectedKey] = useState<string>('utilisateur')
+  const [selectedKey, setSelectedKey] = useState<string>('profil')
 
   const onClick: MenuProps['onClick'] = ({ key }) => {
     setSelectedKey(key)
@@ -55,26 +34,20 @@ export const ModalSettings = ({ isVisible, onClose, currentUser }: ModalSettings
 
   const renderSetting = useCallback(() => {
     switch (selectedKey) {
-      case 'utilisateur':
+      case 'profil':
         return <AccountSetting currentUser={currentUser} onClose={onClose} />
-      case 'droits':
-        return <div>Permissions info form here</div>
-      case 'affichage':
-        return <div>Affichage settings here</div>
-      case 'agenda':
-        return <AgendaSetting onClose={onClose} />
-      case 'license':
-        return <div>License settings here</div>
+      case 'manageUsers':
+        return <ManagerUsers currentUser={currentUser} onClose={onClose} />
       default:
         return <AccountSetting currentUser={currentUser} onClose={onClose} />
     }
   }, [selectedKey, currentUser])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings">
+    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings" noFooter blockAntModalBodyVerticalScroll width={1300}>
       <div className="modalSettings">
         <div className="settingsTitle">
-          <Menu onClick={onClick} style={{ width: 150 }} defaultSelectedKeys={['utilisateur']} defaultOpenKeys={['sub1']} mode="inline" items={items} />
+          <Menu onClick={onClick} style={{ width: 200 }} defaultSelectedKeys={['profil']} mode="inline" items={items} />
         </div>
         <Divider type="vertical" variant="solid" style={{ height: '100%' }} />
         <div className="selectedSetting">{renderSetting()}</div>

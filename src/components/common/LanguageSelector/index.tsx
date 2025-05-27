@@ -27,7 +27,6 @@ export const LanguageSelector = () => {
   const handleLanguageChange = (value: string) => {
     i18n.changeLanguage(value)
     setCurrentLanguage(value)
-    console.log('i 18n lang', i18n.language)
   }
 
   return (

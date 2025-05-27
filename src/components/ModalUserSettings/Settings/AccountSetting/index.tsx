@@ -34,8 +34,8 @@ export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): R
           },
         ],
   )
-  const handleSubmit = (value: { firstName: string; lastName: string; emailAddress: string; speciality: string }) => {
-    const { firstName, lastName, emailAddress, speciality } = value
+  const handleSubmit = (value: { firstName: string; lastName: string; emailAddress: string }) => {
+    const { firstName, lastName, emailAddress } = value
     const address = new DecryptedAddress({
       addressType: AddressType.Home,
       telecoms: [
@@ -46,7 +46,7 @@ export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): R
       ],
     })
     const picture = patientPictureAsBase64 ?? currentUser?.picture
-    updatePractitioner(new HealthcareParty({ ...currentUser, firstName, lastName, speciality, addresses: [address], picture }))
+    updatePractitioner(new HealthcareParty({ ...currentUser, firstName, lastName, addresses: [address], picture }))
     form.resetFields()
   }
 
@@ -92,7 +92,6 @@ export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): R
           emailAddress: currentUserEmail,
           firstName: currentUser?.firstName,
           lastName: currentUser?.lastName,
-          speciality: currentUser?.speciality,
           file: currentUser?.picture,
         }}
       >
@@ -106,9 +105,7 @@ export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): R
           <Form.Item name="emailAddress" label="Email address" rules={[{ required: true, message: 'Email address is required' }]}>
             <Input placeholder="Email address" size="large" style={{ fontSize: 13 }} />
           </Form.Item>
-          <Form.Item name="speciality" label="Speciality" rules={[{ required: true, message: 'Speciality is required' }]}>
-            <Input placeholder="Speciality" size="large" style={{ fontSize: 13 }} />
-          </Form.Item>
+
           <Form.Item label="Picture" valuePropName="file">
             <ImgCrop rotationSlider modalClassName="PatientImgCrop">
               <Upload {...fileUploaderProps} {...getFileUploaderCommonProps((data: Int8Array | undefined) => setPatientPictureAsBase64(data))}>
