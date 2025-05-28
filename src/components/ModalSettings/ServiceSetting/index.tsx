@@ -112,7 +112,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }
 
-  const tableHandleUpdate = async (procedureRow: ProcedureRow) => {
+  const tableRowUpdate = async (procedureRow: ProcedureRow) => {
     // Updates the row
     try {
       const rowValues = await form.validateFields()
@@ -142,15 +142,15 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }
 
-  const tableHandleCancel = (procedureRow: ProcedureRow) => {
+  const tableRowCancel = (procedureRow: ProcedureRow) => {
     setEditingKey('')
   }
 
-  const tableHandleEdit = (procedureRow: ProcedureRow) => {
+  const tableRowEdit = (procedureRow: ProcedureRow) => {
     // Edit the row
     try {
       if (!procedureRow.rowId) throw new Error('No rule selected')
-      // Finally set the state with the values
+      // Set the state with the values
       form.setFieldsValue({
         procedureName: procedureRow.procedureName,
         appointmentDurations: procedureRow.appointmentDurations,
@@ -161,7 +161,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }
 
-  const handleServiceDelete = () => {
+  const handleDeleteService = () => {
     try {
       if (!service) throw new Error('No site selected')
       deleteService(service)
@@ -172,7 +172,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }
 
-  const handleProcedureDelete = () => {
+  const tableRowDelete = () => {
     try {
       if (!procedureRowToBeDeleted) throw new Error('No procedure selected')
       // Simply remove it from the state. When user save the form it will be 'deleted'
@@ -263,10 +263,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             <Table<ProcedureRow>
               className="custom-table"
               pagination={{
-                pageSize: 4,
+                pageSize: 8,
                 simple: true,
               }}
-              scroll={{ y: 390, x: 'max-content' }}
+              scroll={{ y: 400, x: 'max-content' }}
               dataSource={tableRows}
               rowKey="rowId"
               locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}
@@ -282,7 +282,8 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   title={t('content.procedure')}
                   dataIndex="procedureName"
                   key="procedureName"
-                  width="auto"
+                  width="50%"
+                  sorter={(a, b) => a.procedureName.localeCompare(b.procedureName)}
                   render={(currentValue: string, record: ProcedureRow) => {
                     const editable = isEditing(record)
                     if (editable) {
@@ -303,7 +304,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   title={t('content.appointment_duration')}
                   dataIndex="appointmentDurations"
                   key="appointmentDurations"
-                  width={'auto'}
+                  width={'30%'}
                   render={(durations: number[] | undefined, record: ProcedureRow) => {
                     const editable = isEditing(record)
 
@@ -408,15 +409,15 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
                     if (editable) {
                       return (
-                        <Space size="middle" className="actionButtons">
-                          <Button onClick={() => tableHandleUpdate(record)}>{t('content.update')}</Button>
-                          <Button onClick={() => tableHandleCancel(record)}>{t('content.cancel')}</Button>
+                        <Space size="middle">
+                          <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
+                          <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
                         </Space>
                       )
                     } else {
                       return (
-                        <Space size="middle" className="actionButtons">
-                          <Button onClick={() => tableHandleEdit(record)}>{t('content.edit')}</Button>
+                        <Space size="middle">
+                          <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
                           <Button
                             onClick={() => {
                               setProcedureRowToBeDeleted(record)
@@ -458,7 +459,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             yesBtnTitle={t('content.delete')}
             noBtnTitle={t('content.close')}
             onYesClick={() => {
-              handleServiceDelete()
+              handleDeleteService()
               setShowDeleteServiceModal(false)
             }}
             onNoClick={() => setShowDeleteServiceModal(false)}
@@ -481,7 +482,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             yesBtnTitle={t('content.delete')}
             noBtnTitle={t('content.close')}
             onYesClick={() => {
-              handleProcedureDelete()
+              tableRowDelete()
               setShowDeleteProcedureModal(false)
             }}
             onNoClick={() => setShowDeleteProcedureModal(false)}

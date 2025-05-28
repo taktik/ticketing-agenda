@@ -162,7 +162,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             }}
           />
         </div>
-
+        
         <div className="antTable">
           <Table<TimeTable>
             pagination={{
@@ -181,7 +181,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
                 </Tooltip>
               }
             >
-              <Column title={t('content.name')} dataIndex="name" key="name" width={'28%'} />
+              <Column title={t('content.name')} dataIndex="name" key="name" width={'28%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
               <Column title={t('content.start')} dataIndex="startTime" key="startTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
               <Column title={t('content.end')} dataIndex="endTime" key="endTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
 

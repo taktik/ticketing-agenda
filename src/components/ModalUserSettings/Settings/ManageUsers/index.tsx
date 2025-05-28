@@ -2,11 +2,13 @@ import { HealthcareParty, User, UserFilters } from '@icure/cardinal-sdk'
 import React, { ReactElement, useEffect, useMemo, useState } from 'react'
 import { useCreateUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery, useGetHealthcarePartiesQuery } from '../../../../core/api/healthcarePartyApi'
-import { Button, Empty, Form, Input, Table, message, notification } from 'antd'
+import { Button, Empty, Form, Input, Space, Table, message, notification } from 'antd'
 import { useTranslation } from 'react-i18next'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
 import Column from 'antd/es/table/Column'
 import { v4 } from 'uuid'
+import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+import { createPortal } from 'react-dom'
 
 interface UserRow {
   rowId: string
@@ -29,7 +31,8 @@ interface ManagerUsersProps {
 export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): ReactElement => {
   const { t, i18n } = useTranslation()
   const [tableRows, setTableRows] = useState<UserRow[]>([])
-  const [usersList, setUsersList] = useState<User[]>([])
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState<boolean>(false)
+  const [userRowToBeDeleted, setUserRowToBeDeleted] = useState<UserRow | undefined>(undefined)
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: UserRow) => record.rowId === editingKey, [editingKey])
   const [form] = Form.useForm<FormValues>()
@@ -45,58 +48,37 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
 
   const { data: hcps } = useGetHealthcarePartiesByIdsQuery(usersHcpIds)
 
-  const sortedUsers = useMemo(() => {
-    return [...(users ?? [])].sort((a, b) => {
-      const nameA = a.name ?? ''
-      const nameB = b.name ?? ''
-      return nameA.localeCompare(nameB)
-    })
-  }, [users])
-
   const mergedList = useMemo(() => {
     if (!users || !hcps) return []
 
     const hcpMap = new Map(hcps.map((hcp) => [hcp.id, hcp]))
 
-    const pairs = users.flatMap((user) => {
+    const mergedPairs: Array<[User, HealthcareParty]> = users.flatMap((user) => {
       if (!user.healthcarePartyId) return []
       const hcp = hcpMap.get(user.healthcarePartyId)
       return hcp ? [[user, hcp]] : []
     })
 
-    const sortedPairs = [...pairs].sort((pairA, pairB) => {
-      // pairA and pairB are [User, HealthcareParty]
-      const hcpA = pairA[1] // This is the HealthcareParty object
-      const hcpB = pairB[1] // This is the HealthcareParty object
-
-      // Access firstName for sorting
-      const nameA = hcpA.name?.toLowerCase() ?? '' // Use optional chaining and nullish coalescing
-      const nameB = hcpB.name?.toLowerCase() ?? ''
-
-      return nameA.localeCompare(nameB)
-    })
-
-    return sortedPairs
+    return mergedPairs
   }, [users, hcps])
 
-  useEffect(() => console.log('mergedList', mergedList), [mergedList])
-
   useEffect(() => {
-    setUsersList(sortedUsers)
-    setEditingKey('')
-  }, [sortedUsers, form])
-
-  useEffect(() => {
-    const tableRowsList: UserRow[] = usersList.map((user) => {
+    const tableRowsList: UserRow[] = mergedList.map((pair) => {
       return {
         rowId: v4(),
-        firstName: user.name,
-        lastName: user.name,
-        email: user.email,
+        firstName: pair[1].firstName,
+        lastName: pair[1].lastName,
+        email: pair[0].email,
       } as UserRow
     })
+
+    tableRowsList.sort((a, b) => {
+      const nameA = a.firstName ?? ''
+      const nameB = b.firstName ?? ''
+      return nameA.localeCompare(nameB)
+    })
     setTableRows(tableRowsList)
-  }, [usersList])
+  }, [mergedList])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -122,9 +104,27 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
     setTimeout(messageApi.destroy, 2500)
   }
 
-  useEffect(() => console.log('users', users), [users])
+  const addUser = () => {
+    try {
+      const newUser: UserRow = {
+        rowId: v4(),
+        firstName: t('content.firstName'),
+        lastName: t('content.lastName'),
+        email: t('content.email'),
+      }
+      setTableRows((prev) => [...prev, newUser])
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    }
+  }
 
-  const addUser = () => {}
+  const tableRowDelete = () => {}
+
+  const tableRowUpdate = (record: UserRow) => {}
+
+  const tableRowCancel = (record: UserRow) => {}
+
+  const tableRowEdit = (record: UserRow) => {}
 
   return (
     <div className="root">
@@ -154,7 +154,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                 title={t('content.firstName')}
                 dataIndex="firstName"
                 key="firstName"
-                width="auto"
+                width="15%"
                 sorter={(a, b) => a.firstName.localeCompare(b.firstName)}
                 render={(currentValue: string, record: UserRow) => {
                   const editable = isEditing(record)
@@ -172,10 +172,32 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                 }}
               />
               <Column
+                title={t('content.lastName')}
+                dataIndex="lastName"
+                key="lastName"
+                width="15%"
+                sorter={(a, b) => a.lastName.localeCompare(b.lastName)}
+                render={(currentValue: string, record: UserRow) => {
+                  const editable = isEditing(record)
+                  if (editable) {
+                    return (
+                      <>
+                        <Form.Item name="lastName" style={{ margin: 0 }} rules={[{ required: true, message: t('content.procedure_name_required') }]}>
+                          <Input autoFocus />
+                        </Form.Item>
+                      </>
+                    )
+                  } else {
+                    return currentValue
+                  }
+                }}
+              />
+              <Column
                 title={t('content.email')}
                 dataIndex="email"
                 key="email"
-                width="auto"
+                width="20%"
+                sorter={(a, b) => a.email.localeCompare(b.email)}
                 render={(currentValue: string, record: UserRow) => {
                   const editable = isEditing(record)
                   if (editable) {
@@ -191,10 +213,85 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                   }
                 }}
               />
+              <Column
+                title={t('content.roles')}
+                dataIndex="email"
+                key="email"
+                width="30%"
+                render={(currentValue: string, record: UserRow) => {
+                  const editable = isEditing(record)
+                  if (editable) {
+                    return (
+                      <>
+                        <Form.Item name="email" style={{ margin: 0 }} rules={[{ required: true, message: t('content.procedure_name_required') }]}>
+                          <Input autoFocus />
+                        </Form.Item>
+                      </>
+                    )
+                  } else {
+                    return currentValue
+                  }
+                }}
+              />
+              <Column
+                title={t('content.actions')}
+                key="action"
+                fixed="right"
+                width={'20%'}
+                render={(_: unknown, record: UserRow) => {
+                  const editable = isEditing(record)
+
+                  if (editable) {
+                    return (
+                      <Space size="middle">
+                        <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
+                        <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
+                      </Space>
+                    )
+                  } else {
+                    return (
+                      <Space size="middle">
+                        <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
+                        <Button
+                          onClick={() => {
+                            setUserRowToBeDeleted(record)
+                            setShowDeleteUserModal(true)
+                          }}
+                        >
+                          {t('content.delete')}
+                        </Button>
+                      </Space>
+                    )
+                  }
+                }}
+              />
             </ColumnGroup>
           </Table>
         </div>
       </Form>
+      {showDeleteUserModal &&
+        createPortal(
+          <ModalConfirmAction
+            title={t('delete_modal.confirm_delete_procedure_prompt')}
+            description=""
+            content={
+              <>
+                <p>{t('delete_modal.delete_procedure_warning_details')}</p>
+                <p>{t('delete_modal.delete_permanent_warning')}</p>
+              </>
+            }
+            yesBtnTitle={t('content.delete')}
+            noBtnTitle={t('content.close')}
+            onYesClick={() => {
+              tableRowDelete()
+              setShowDeleteUserModal(false)
+            }}
+            onNoClick={() => setShowDeleteUserModal(false)}
+            isVisible={showDeleteUserModal}
+            mode="danger"
+          />,
+          document.body,
+        )}
     </div>
   )
 }
