@@ -16,6 +16,7 @@ import { createPortal } from 'react-dom'
 import { ModalConfirmAction } from '../common/ModalConfirmAction'
 import { ModalRules } from './ModalRules'
 import { v4 } from 'uuid'
+import { formatDateToYYYYMMDDHHmmssNumber, numberTimestampToDate } from '../common/helpers'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -77,8 +78,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     try {
       if (!agenda) throw new Error('No service selected')
       const today = startOfDay(new Date())
-      const start = today.getTime()
-      const end = addMonths(today, 1).getTime()
+      const start = formatDateToYYYYMMDDHHmmssNumber(today)
+      const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(today, 1))
       createUpdateTimeTable(new TimeTable({ name: t('content.new_schedule'), agendaId: agenda.id, startTime: start, endTime: end, id: v4() }))
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
@@ -162,11 +163,11 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             }}
           />
         </div>
-        
+
         <div className="antTable">
           <Table<TimeTable>
             pagination={{
-              pageSize: 5,
+              pageSize: 6,
             }}
             dataSource={sortedTimeTables}
             rowKey="id"
@@ -182,8 +183,26 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               }
             >
               <Column title={t('content.name')} dataIndex="name" key="name" width={'28%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
-              <Column title={t('content.start')} dataIndex="startTime" key="startTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
-              <Column title={t('content.end')} dataIndex="endTime" key="endTime" width={'28%'} render={(value: number) => format(new Date(value), 'P', { locale: dateFnsLocale })} />
+              <Column
+                title={t('content.start')}
+                dataIndex="startTime"
+                key="startTime"
+                width={'28%'}
+                render={(value: number) => {
+                  const startDate = numberTimestampToDate(value) ?? new Date()
+                  return format(startDate, 'P', { locale: dateFnsLocale })
+                }}
+              />
+              <Column
+                title={t('content.end')}
+                dataIndex="endTime"
+                key="endTime"
+                width={'28%'}
+                render={(value: number) => {
+                  const endDate = numberTimestampToDate(value) ?? new Date()
+                  return format(endDate, 'P', { locale: dateFnsLocale })
+                }}
+              />
 
               <Column
                 title={t('content.actions')}

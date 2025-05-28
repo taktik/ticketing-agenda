@@ -10,6 +10,7 @@ import { SpinLoader } from '../../../common/SpinLoader'
 import ImgCrop from 'antd-img-crop'
 
 import './index.css'
+import { useTranslation } from 'react-i18next'
 
 interface AccountSettingProps {
   onClose: () => void
@@ -18,6 +19,7 @@ interface AccountSettingProps {
 export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): ReactElement => {
   const [form] = Form.useForm()
   const [updatePractitioner, { isSuccess: isPractitionerUpdatedSuccessfully, isLoading: isPractitionerUpdatingLoading }] = useCreateOrUpdatePractitionerMutation()
+  const { t } = useTranslation()
 
   const userAvatarSrc = getImgSRC(currentUser?.picture)
 
@@ -96,20 +98,20 @@ export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): R
         }}
       >
         <div className="modalManageAccountForm__form__inputs">
-          <Form.Item name="firstName" label="First name" rules={[{ required: true, message: 'First name is required' }]}>
-            <Input placeholder="First name" size="large" style={{ fontSize: 13 }} />
+          <Form.Item name="firstName" label={t('content.firstname')} rules={[{ required: true, message: t('validation.firstname_required') }]}>
+            <Input placeholder={t('content.firstname')} size="large" style={{ fontSize: 13 }} />
           </Form.Item>
-          <Form.Item name="lastName" label="Last name" rules={[{ required: true, message: 'Last name is required' }]}>
-            <Input placeholder="Last name" size="large" style={{ fontSize: 13 }} />
+          <Form.Item name="lastName" label={t('content.lastname')} rules={[{ required: true, message: t('validation.lastname_required') }]}>
+            <Input placeholder={t('content.lastname')} size="large" style={{ fontSize: 13 }} />
           </Form.Item>
-          <Form.Item name="emailAddress" label="Email address" rules={[{ required: true, message: 'Email address is required' }]}>
-            <Input placeholder="Email address" size="large" style={{ fontSize: 13 }} />
+          <Form.Item name="emailAddress" label={t('content.email')} rules={[{ required: true, message: t('validation.email_required') }]}>
+            <Input placeholder={t('content.email')} size="large" style={{ fontSize: 13 }} />
           </Form.Item>
 
-          <Form.Item label="Picture" valuePropName="file">
+          <Form.Item label={t('content.picture')} valuePropName="file">
             <ImgCrop rotationSlider modalClassName="PatientImgCrop">
               <Upload {...fileUploaderProps} {...getFileUploaderCommonProps((data: Int8Array | undefined) => setPatientPictureAsBase64(data))}>
-                {fileList.length === 0 ? '+ Upload' : '+ Replace'}
+                {fileList.length === 0 ? '+' + t('content.upload') : '+' + t('content.replace')}
               </Upload>
             </ImgCrop>
           </Form.Item>
@@ -117,10 +119,10 @@ export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): R
         <div className="agendaFormFooter">
           <Form.Item>
             <Button htmlType="button" onClick={handleCancel}>
-              Cancel
+              {t('content.cancel')}
             </Button>
             <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
-              Save
+              {t('content.save')}
             </Button>
           </Form.Item>
         </div>

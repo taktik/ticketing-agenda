@@ -274,7 +274,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               <ColumnGroup
                 title={
                   <Button style={{ width: '100%' }} onClick={addProcedure}>
-                    {t('content.new_procedure')}
+                    {t('content.add_procedure')}
                   </Button>
                 }
               >

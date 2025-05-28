@@ -86,7 +86,20 @@
     "appointment_duration": "Durée des rendez-vous",
     "person": "Personne",
     "persons": "Personnes",
-    "add_appointment_duration": "Ajouter une durée de rendez-vous"
+    "add_appointment_duration": "Ajouter une durée de rendez-vous",
+    "add_procedure": "Ajouter une démarche",
+    "add_user": "Ajouter un utilisateur",
+    "firstname": "Prénom",
+    "lastname": "Nom de famille",
+    "email": "E-mail",
+    "roles": "Rôles",
+    "no_user_yet": "Aucun utilisateur pour l'instant",
+    "log_out": "Se déconnecter",
+    "your_settings": "Vos paramètres",
+    "save": "Enregistrer",
+    "upload": "Télécharger",
+    "replace": "Remplacer",
+    "picture": "Image"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -94,11 +107,13 @@
     "confirm_delete_procedure_prompt": "Êtes-vous sûr de vouloir supprimer cette démarche ?",
     "confirm_delete_schedule_prompt": "Êtes-vous sûr de vouloir supprimer cet horaire ?",
     "confirm_delete_rule_prompt": "Êtes-vous sûr de vouloir supprimer cette règle ?",
+    "confirm_delete_user_prompt": "Êtes-vous sûr de vouloir supprimer cet utilisateur ?",
     "delete_site_warning_details": "Cette action supprimera les services, les démarches et tous les horaires associés à ce site.",
     "delete_service_warning_details": "Cette action supprimera les démarches et tous les horaires associés à ce service.",
     "delete_procedure_warning_details": "Cette action supprimera tous les horaires associés à cette démarche.",
     "delete_schedule_warning_details": "Cette action supprimera les règles associées à cet horaire.",
     "delete_rule_warning_details": "Cette action supprimera définitivement cette règle.",
+    "delete_user_warning_details": "Cette action supprimera l'utilisateur et toutes ses données associées.",
     "delete_permanent_warning": "Une fois supprimées, leurs informations ne pourront plus être récupérées, il s'agit donc d'une action permanente."
   },
   "notification": {
@@ -165,6 +180,9 @@
     "validation_failed": "Échec de la validation",
     "select_date_required": "Veuillez sélectionner une date",
     "at_least_one_duration_required": "Au moins une durée est requise",
-    "all_durations_must_be_positive": "Toutes les durées doivent être des nombres positifs."
+    "all_durations_must_be_positive": "Toutes les durées doivent être des nombres positifs.",
+    "firstname_required": "Le prénom est requis",
+    "lastname_required": "Le nom de famille est requis",
+    "email_required": "L'adresse e-mail est requise"
   }
 }

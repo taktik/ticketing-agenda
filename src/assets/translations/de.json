@@ -86,7 +86,20 @@
     "appointment_duration": "Termindauern",
     "person": "Person",
     "persons": "Personen",
-    "add_appointment_duration": "Termindauer hinzufügen"
+    "add_appointment_duration": "Termindauer hinzufügen",
+    "add_procedure": "Verfahren hinzufügen",
+    "add_user": "Benutzer hinzufügen",
+    "firstname": "Vorname",
+    "lastname": "Nachname",
+    "email": "E-Mail",
+    "roles": "Rollen",
+    "no_user_yet": "Noch kein Benutzer vorhanden",
+    "log_out": "Abmelden",
+    "your_settings": "Ihre Einstellungen",
+    "save": "Speichern",
+    "upload": "Hochladen",
+    "replace": "Ersetzen",
+    "picture": "Bild"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -94,11 +107,13 @@
     "confirm_delete_procedure_prompt": "Sind Sie sicher, dass Sie dieses Verfahren löschen möchten?",
     "confirm_delete_schedule_prompt": "Sind Sie sicher, dass Sie diesen Zeitplan löschen möchten?",
     "confirm_delete_rule_prompt": "Sind Sie sicher, dass Sie diese Regel löschen möchten?",
+    "confirm_delete_user_prompt": "Sind Sie sicher, dass Sie diesen Benutzer löschen möchten?",
     "delete_site_warning_details": "Diese Aktion löscht die Dienste, Verfahren und alle Zeitpläne, die mit diesem Standort verbunden sind.",
     "delete_service_warning_details": "Diese Aktion löscht die Verfahren und alle Zeitpläne, die mit diesem Dienst verbunden sind.",
     "delete_procedure_warning_details": "Diese Aktion löscht alle Zeitpläne, die mit diesem Verfahren verbunden sind.",
     "delete_schedule_warning_details": "Diese Aktion löscht die Regeln, die mit diesem Zeitplan verbunden sind.",
     "delete_rule_warning_details": "Diese Aktion löscht diese Regel endgültig.",
+    "delete_user_warning_details": "Diese Aktion löscht den Benutzer und alle zugehörigen Daten.",
     "delete_permanent_warning": "Einmal gelöscht, können ihre Informationen nicht wiederhergestellt werden, es handelt sich also um eine endgültige Aktion."
   },
   "notification": {
@@ -165,6 +180,9 @@
     "validation_failed": "Validierung fehlgeschlagen",
     "select_date_required": "Bitte wählen Sie ein Datum aus",
     "at_least_one_duration_required": "Mindestens eine Dauer ist erforderlich",
-    "all_durations_must_be_positive": "Alle Dauern müssen positive Zahlen sein."
+    "all_durations_must_be_positive": "Alle Dauern müssen positive Zahlen sein.",
+    "firstname_required": "Vorname ist erforderlich",
+    "lastname_required": "Nachname ist erforderlich",
+    "email_required": "E-Mail-Adresse ist erforderlich"
   }
 }

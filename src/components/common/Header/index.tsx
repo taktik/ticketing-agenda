@@ -13,6 +13,7 @@ import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
 import { ModalSettings } from '../../ModalUserSettings'
 import { LanguageSelector } from '../LanguageSelector'
+import { useTranslation } from 'react-i18next'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,
@@ -25,6 +26,7 @@ export const Header = () => {
   const [isUserDropdownOpen, setUserDropdownOpen] = useState(false)
   const [isModalManageAccountFormOpen, setModalManageAccountFormOpen] = useState(false)
   const dispatch = useAppDispatch()
+  const { t } = useTranslation()
 
   const { user, healthcarePartyId } = useAppSelector(reduxSelector)
 
@@ -41,7 +43,7 @@ export const Header = () => {
       label: (
         <div className="header__userDropdown__item">
           <Icon component={manageUserIcn} />
-          <span>Your settings</span>
+          <span>{t('content.your_settings')}</span>
         </div>
       ),
     },
@@ -51,7 +53,7 @@ export const Header = () => {
       label: (
         <div className="header__userDropdown__item">
           <Icon component={logOutIcn} />
-          <span>Log out</span>
+          <span>{t('content.log_out')}</span>
         </div>
       ),
     },
@@ -71,11 +73,6 @@ export const Header = () => {
 
   return (
     <>
-      {/*<div className="headerBanner">*/}
-      {/*  <p>*/}
-      {/*  </p>*/}
-      {/*</div>*/}
-
       <div className="header">
         <div className="header__logoHolder">
           <img src={mouscronLogo} alt="mouscron logo" />
@@ -86,7 +83,6 @@ export const Header = () => {
               <div className={`header__userDropdown ${isUserDropdownOpen && 'header__userDropdown--active'}`}>
                 <div className="header__userDropdown__heading">
                   <p className="header__userDropdown__heading__name">{practitioner?.firstName + ' ' + practitioner?.lastName}</p>
-                  <p className="header__userDropdown__heading__speciality">{practitioner?.speciality ?? 'Speciality'}</p>
                 </div>
                 {userAvatarSrc ? (
                   <div className="header__userDropdown__picture">

@@ -108,8 +108,8 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
     try {
       const newUser: UserRow = {
         rowId: v4(),
-        firstName: t('content.firstName'),
-        lastName: t('content.lastName'),
+        firstName: t('content.firstname'),
+        lastName: t('content.lastname'),
         email: t('content.email'),
       }
       setTableRows((prev) => [...prev, newUser])
@@ -135,10 +135,10 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
           <Table<UserRow>
             className="custom-table"
             pagination={{
-              pageSize: 4,
+              pageSize: 8,
               simple: true,
             }}
-            scroll={{ y: 390, x: 'max-content' }}
+            scroll={{ y: 400, x: 'max-content' }}
             dataSource={tableRows}
             rowKey="rowId"
             locale={{ emptyText: <Empty description={t('content.no_user_yet')} /> }}
@@ -146,12 +146,12 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
             <ColumnGroup
               title={
                 <Button style={{ width: '100%' }} onClick={addUser}>
-                  {t('content.new_user')}
+                  {t('content.add_user')}
                 </Button>
               }
             >
               <Column
-                title={t('content.firstName')}
+                title={t('content.firstname')}
                 dataIndex="firstName"
                 key="firstName"
                 width="15%"
@@ -172,7 +172,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                 }}
               />
               <Column
-                title={t('content.lastName')}
+                title={t('content.lastname')}
                 dataIndex="lastName"
                 key="lastName"
                 width="15%"
@@ -272,11 +272,11 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
       {showDeleteUserModal &&
         createPortal(
           <ModalConfirmAction
-            title={t('delete_modal.confirm_delete_procedure_prompt')}
+            title={t('delete_modal.confirm_delete_user_prompt')}
             description=""
             content={
               <>
-                <p>{t('delete_modal.delete_procedure_warning_details')}</p>
+                <p>{t('delete_modal.delete_user_warning_details')}</p>
                 <p>{t('delete_modal.delete_permanent_warning')}</p>
               </>
             }

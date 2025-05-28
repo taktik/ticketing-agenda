@@ -86,7 +86,20 @@
     "appointment_duration": "Afspraakduren",
     "person": "Persoon",
     "persons": "Personen",
-    "add_appointment_duration": "Afspraakduur toevoegen"
+    "add_appointment_duration": "Afspraakduur toevoegen",
+    "add_procedure": "Procedure toevoegen",
+    "add_user": "Gebruiker toevoegen",
+    "firstname": "Voornaam",
+    "lastname": "Achternaam",
+    "email": "E-mail",
+    "roles": "Rollen",
+    "no_user_yet": "Nog geen gebruiker",
+    "log_out": "Uitloggen",
+    "your_settings": "Uw instellingen",
+    "save": "Opslaan",
+    "upload": "Uploaden",
+    "replace": "Vervangen",
+    "picture": "Afbeelding"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -94,11 +107,13 @@
     "confirm_delete_procedure_prompt": "Weet u zeker dat u deze procedure wilt verwijderen?",
     "confirm_delete_schedule_prompt": "Weet u zeker dat u deze planning wilt verwijderen?",
     "confirm_delete_rule_prompt": "Weet u zeker dat u deze regel wilt verwijderen?",
+    "confirm_delete_user_prompt": "Weet u zeker dat u deze gebruiker wilt verwijderen?",
     "delete_site_warning_details": "Deze actie verwijdert de diensten, procedures en alle planningen die aan deze locatie zijn gekoppeld.",
     "delete_service_warning_details": "Deze actie verwijdert de procedures en alle planningen die aan deze dienst zijn gekoppeld.",
     "delete_procedure_warning_details": "Deze actie verwijdert alle planningen die aan deze procedure zijn gekoppeld.",
     "delete_schedule_warning_details": "Deze actie verwijdert de regels die aan deze planning zijn gekoppeld.",
     "delete_rule_warning_details": "Deze actie verwijdert deze regel definitief.",
+    "delete_user_warning_details": "Deze actie verwijdert de gebruiker en al hun bijbehorende gegevens.",
     "delete_permanent_warning": "Eenmaal verwijderd, kan hun informatie niet worden hersteld, dus het is een permanente actie."
   },
   "notification": {
@@ -165,6 +180,9 @@
     "validation_failed": "Validatie mislukt",
     "select_date_required": "Selecteer alstublieft een datum",
     "at_least_one_duration_required": "Minstens één duur is vereist",
-    "all_durations_must_be_positive": "Alle duren moeten positieve getallen zijn."
+    "all_durations_must_be_positive": "Alle duren moeten positieve getallen zijn.",
+    "firstname_required": "Voornaam is vereist",
+    "lastname_required": "Achternaam is vereist",
+    "email_required": "E-mailadres is vereist"
   }
 }

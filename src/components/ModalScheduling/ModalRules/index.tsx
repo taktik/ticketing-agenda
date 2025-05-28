@@ -19,6 +19,7 @@ import { createPortal } from 'react-dom'
 import { Frequency, Options, RRule, RRuleSet, rrulestr, Weekday } from 'rrule'
 import { Language } from 'rrule/dist/esm/nlp/i18n'
 import { TOKENS } from '../../../constants'
+import { formatDayjsToYYYYMMDDHHmmssNumber, numberTimestampToDayjs } from '../../common/helpers'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -215,8 +216,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     if (timeTable) {
       form.setFieldsValue({
         name: timeTable.name,
-        start: timeTable.startTime ? dayjs(timeTable.startTime) : undefined,
-        end: timeTable.endTime ? dayjs(timeTable.endTime) : undefined,
+        start: timeTable.startTime ? (numberTimestampToDayjs(timeTable.startTime) ?? dayjs()) : undefined,
+        end: timeTable.endTime ? (numberTimestampToDayjs(timeTable.endTime) ?? dayjs()) : undefined,
       })
       setTimeTableItems(timeTable.items)
     } else {
@@ -566,7 +567,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         return itemsGeneratedFromGroup
       })
 
-      createUpdateTimeTable({ ...timeTable, name: name, startTime: start.valueOf(), endTime: end.valueOf(), items: finalFlatTimeTableItems })
+      createUpdateTimeTable({ ...timeTable, name: name, startTime: formatDayjsToYYYYMMDDHHmmssNumber(start), endTime: formatDayjsToYYYYMMDDHHmmssNumber(end), items: finalFlatTimeTableItems })
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
