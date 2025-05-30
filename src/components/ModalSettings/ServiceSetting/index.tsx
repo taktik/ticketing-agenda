@@ -17,6 +17,7 @@ import Column from 'antd/es/table/Column'
 
 interface ProcedureRow {
   rowId: string
+  procedureId: string
   procedureName: string
   appointmentDurations: number[]
 }
@@ -65,6 +66,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     const tableRowsList: ProcedureRow[] = proceduresList.map((procedure) => {
       return {
         rowId: v4(),
+        procedureId: procedure.id,
         procedureName: procedure.name,
         appointmentDurations: [15],
       } as ProcedureRow
@@ -101,19 +103,21 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const addProcedure = () => {
     try {
       if (!service) throw new Error('No service selected')
-      const newProcedure: ProcedureRow = {
-        rowId: v4(),
-        procedureName: t('content.new_procedure'),
-        appointmentDurations: [15],
-      }
-      setTableRows((prev) => [...prev, newProcedure])
+      const procedure = new CalendarItemType({
+        name: t('content.new_procedure'),
+        defaultCalendarItemType: true,
+        duration: 15,
+        healthcarePartyId: service.id,
+        agendaId: agenda?.id,
+        id: v4(),
+      })
+      createUpdateProcedure(procedure)
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
   }
 
   const tableRowUpdate = async (procedureRow: ProcedureRow) => {
-    // Updates the row
     try {
       const rowValues = await form.validateFields()
 
@@ -147,7 +151,6 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   }
 
   const tableRowEdit = (procedureRow: ProcedureRow) => {
-    // Edit the row
     try {
       if (!procedureRow.rowId) throw new Error('No rule selected')
       // Set the state with the values
@@ -176,7 +179,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     try {
       if (!procedureRowToBeDeleted) throw new Error('No procedure selected')
       // Simply remove it from the state. When user save the form it will be 'deleted'
-      setTableRows((prev) => prev.filter((item) => item.rowId !== procedureRowToBeDeleted.rowId))
+      const proceduresToDelete = procedures?.filter((item) => (item.name === t('content.new_procedure') ? item.id === procedureRowToBeDeleted.procedureId : item.name === procedureRowToBeDeleted.procedureName))
+      if (!proceduresToDelete) throw new Error('No procedure selected')
+      const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
+      deleteProcedure(proceduresToDeleteIds)
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     } finally {
@@ -257,16 +263,22 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             <Form.Item name="serviceName" rules={[{ required: true, message: 'Name of the service' }]}>
               <Input suffix={<CloseOutlined disabled={nameValue === service?.name} onClick={handleNameCancel} />} />
             </Form.Item>
+            <Tooltip title={t('content.save_service')}>
+              <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={nameValue === service?.name} onClick={handleSubmit} />
+            </Tooltip>
+            <Tooltip title={t('content.delete_service')}>
+              <Button icon={<DeleteOutlined />} danger disabled={!service} onClick={() => setShowDeleteServiceModal(true)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
+            </Tooltip>
           </div>
 
           <div className="ant-table-custom">
             <Table<ProcedureRow>
               className="custom-table"
               pagination={{
-                pageSize: 8,
+                pageSize: 9,
                 simple: true,
               }}
-              scroll={{ y: 400, x: 'max-content' }}
+              scroll={{ y: 'calc(100vh - 500px)', x: 'max-content' }}
               dataSource={tableRows}
               rowKey="rowId"
               locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}
@@ -434,14 +446,6 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               </ColumnGroup>
             </Table>
           </div>
-        </div>
-        <div className="actions-buttons">
-          <Button disabled={!service} onClick={() => setShowDeleteServiceModal(true)} danger>
-            {t('content.delete_service')}
-          </Button>
-          <Button disabled={nameValue === service?.name} onClick={handleSubmit}>
-            {t('content.save_service')}
-          </Button>
         </div>
       </Form>
 

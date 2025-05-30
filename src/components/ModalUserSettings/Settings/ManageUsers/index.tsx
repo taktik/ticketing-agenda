@@ -135,10 +135,10 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
           <Table<UserRow>
             className="custom-table"
             pagination={{
-              pageSize: 8,
+              pageSize: 10,
               simple: true,
             }}
-            scroll={{ y: 400, x: 'max-content' }}
+            scroll={{ y: 'calc(100vh - 450px)', x: 'max-content' }}
             dataSource={tableRows}
             rowKey="rowId"
             locale={{ emptyText: <Empty description={t('content.no_user_yet')} /> }}

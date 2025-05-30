@@ -169,6 +169,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             pagination={{
               pageSize: 6,
             }}
+            scroll={{ y: 'calc(100vh - 500px)', x: 'max-content' }}
             dataSource={sortedTimeTables}
             rowKey="id"
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
@@ -182,12 +183,12 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
                 </Tooltip>
               }
             >
-              <Column title={t('content.name')} dataIndex="name" key="name" width={'28%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
+              <Column title={t('content.name')} dataIndex="name" key="name" width={'23%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
               <Column
                 title={t('content.start')}
                 dataIndex="startTime"
                 key="startTime"
-                width={'28%'}
+                width={'23%'}
                 render={(value: number) => {
                   const startDate = numberTimestampToDate(value) ?? new Date()
                   return format(startDate, 'P', { locale: dateFnsLocale })
@@ -197,7 +198,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
                 title={t('content.end')}
                 dataIndex="endTime"
                 key="endTime"
-                width={'28%'}
+                width={'23%'}
                 render={(value: number) => {
                   const endDate = numberTimestampToDate(value) ?? new Date()
                   return format(endDate, 'P', { locale: dateFnsLocale })

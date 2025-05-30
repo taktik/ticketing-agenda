@@ -612,7 +612,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                   pageSize: 4,
                   simple: true,
                 }}
-                scroll={{ y: 400, x: 'max-content' }}
+                scroll={{ y: 'calc(100vh - 530px)', x: 'max-content' }}
                 dataSource={timeTableItemsRows}
                 rowKey="rowId"
                 locale={{ emptyText: <Empty description={t('content.no_rule_yet')} /> }}

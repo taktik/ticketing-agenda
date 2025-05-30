@@ -4,12 +4,7 @@ import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Tooltip, List, Row, Col, notification, message, Empty } from 'antd'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import './index.css'
-import {
-  useCreateUpdateHealthcarePartyMutation,
-  useDeleteHealthcarePartyMutation,
-  useGetHealthcarePartiesByParentQuery,
-  useRecursiveHcpDeletion,
-} from '../../../core/api/healthcarePartyApi'
+import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
 import { useDeleteCalendarItemTypeMutation } from '../../../core/api/calendarItemTypeApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { createPortal } from 'react-dom'
@@ -83,14 +78,11 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
 
   const [form] = Form.useForm()
 
-  const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] =
-    useCreateUpdateAgendaMutation()
+  const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
 
   // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
-  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] =
-    useCreateUpdateHealthcarePartyMutation()
-  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] =
-    useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateHealthcarePartyMutation()
 
   // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading, isSuccess: isDeleteSiteSuccess, error: isDeleteSiteError } = useRecursiveHcpDeletion()
@@ -264,20 +256,10 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
           </Form.Item>
         </Form>
         <Tooltip title={t('content.save_site')}>
-          <Button
-            icon={<SaveOutlined />}
-            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-            disabled={nameValue === site?.name}
-            onClick={handleSubmit}
-          />
+          <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={nameValue === site?.name} onClick={handleSubmit} />
         </Tooltip>
         <Tooltip title={t('content.delete_site')}>
-          <Button
-            icon={<DeleteOutlined />}
-            disabled={!site}
-            onClick={() => setShowDeleteSiteModal(true)}
-            style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-          />
+          <Button icon={<DeleteOutlined />} disabled={!site} danger onClick={() => setShowDeleteSiteModal(true)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
         </Tooltip>
       </div>
       <div className="services-list">
@@ -287,19 +269,10 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
           locale={{ emptyText: <Empty description={t('content.no_service_yet')} /> }}
           renderItem={(item) => (
             <List.Item>
-              {editItem?.id === item.id ? (
-                <Input defaultValue={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveService(item)} autoFocus />
-              ) : (
-                item.name
-              )}
+              {editItem?.id === item.id ? <Input defaultValue={inputValue} onChange={(e) => setInputValue(e.target.value)} onPressEnter={() => handleSaveService(item)} autoFocus /> : item.name}
               {editItem?.id !== item.id && (
                 <Tooltip title={t('content.edit_service')}>
-                  <Button
-                    className="edit-button"
-                    icon={<EditOutlined />}
-                    style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                    onClick={() => handleEditService(item)}
-                  />
+                  <Button className="edit-button" icon={<EditOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={() => handleEditService(item)} />
                 </Tooltip>
               )}
               {editItem?.id === item.id && (
@@ -308,18 +281,10 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
                     <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={cancelEditService} />
                   </Tooltip>
                   <Tooltip title={t('content.save_service')}>
-                    <Button
-                      icon={<SaveOutlined />}
-                      style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                      onClick={() => handleSaveService(item)}
-                    />
+                    <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={() => handleSaveService(item)} />
                   </Tooltip>
                   <Tooltip title={t('content.delete_service')}>
-                    <Button
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleDeleteService(item)}
-                      style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }}
-                    />
+                    <Button icon={<DeleteOutlined />} danger onClick={() => handleDeleteService(item)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
                   </Tooltip>
                 </div>
               )}
