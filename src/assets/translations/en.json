@@ -117,6 +117,9 @@
     "delete_permanent_warning": "Once deleted, their information can’t be recovered, so it’s a permanent action."
   },
   "notification": {
+    "procedure_modified": "The procedure was modified!",
+    "procedure_modify_failed": "We could not modify the procedure!",
+    "procedure_modify_error": "An error occurred while modifying the procedure.",
     "procedure_deleted": "The procedure was deleted!",
     "procedure_saved": "The procedure was saved!",
     "procedure_save_failed": "We could not save the procedure!",

@@ -1,31 +1,48 @@
-import { DeleteOutlined, PlusOutlined, EditOutlined, SaveOutlined, RollbackOutlined, CloseOutlined, MinusCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import { SettingContext } from '../../../contexts/SettingContext'
-import { HealthcareParty, CalendarItemType, Agenda } from '@icure/cardinal-sdk'
-import { Button, Form, Input, Tooltip, List, Row, Col, notification, message, Empty, Typography, Table, Space, InputNumber, Tag } from 'antd'
-import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import './index.css'
-import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
-import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
-import { ModalConfirmAction } from '../../common/ModalConfirmAction'
-import { createPortal } from 'react-dom'
-import { v4 } from 'uuid'
-import { useCreateUpdateAgendaMutation, useDeleteAgendaByAuthorId, useDeleteAgendaMutation, useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
-import { useGetCalendarItemQuery } from '../../../core/api/calendarItemApi'
-import { useTranslation } from 'react-i18next'
-import ColumnGroup from 'antd/es/table/ColumnGroup'
+import { CloseOutlined, DeleteOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
+import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
+import { Button, Empty, Form, Input, InputNumber, message, notification, Radio, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
+import ColumnGroup from 'antd/es/table/ColumnGroup'
+import React, { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
+import { v4 } from 'uuid'
+import { SettingContext } from '../../../contexts/SettingContext'
+import { useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
+import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
+import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
+import { ModalConfirmAction } from '../../common/ModalConfirmAction'
+import './index.css'
+
+const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
+  const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
+  const sortedMatchingProcedures = sortByOtherInfosOrder(matchingProcedures)
+  const allDurations = sortedMatchingProcedures.map((item) => item.duration)
+
+  return allDurations
+}
+
+const sortByOtherInfosOrder = (items: CalendarItemType[]): CalendarItemType[] => {
+  return [...items].sort((a, b) => {
+    const aOrder = parseInt(a.otherInfos?.order ?? '9999', 10)
+    const bOrder = parseInt(b.otherInfos?.order ?? '9999', 10)
+    return aOrder - bOrder
+  })
+}
 
 interface ProcedureRow {
   rowId: string
   procedureId: string
   procedureName: string
   appointmentDurations: number[]
+  isPublic: string
 }
 
 interface FormValues {
   serviceName: string
   procedureName: string
   appointmentDurations: number[]
+  isPublic: string
 }
 
 interface ServiceSettingProps {
@@ -34,7 +51,8 @@ interface ServiceSettingProps {
 
 export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement => {
   const { setSelectedKey } = useContext(SettingContext)
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const [isModification, setIsModification] = useState<boolean>(false)
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const [showDeleteProcedureModal, setShowDeleteProcedureModal] = useState<boolean>(false)
   const [procedureRowToBeDeleted, setProcedureRowToBeDeleted] = useState<ProcedureRow | undefined>(undefined)
@@ -47,12 +65,16 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
 
+  useEffect(() => console.log('procedures', procedures), [procedures])
+
   const sortedProcedures = useMemo(() => {
-    return [...(procedures ?? [])].sort((a, b) => {
-      const nameA = a.name ?? ''
-      const nameB = b.name ?? ''
-      return nameA.localeCompare(nameB)
-    })
+    return [...(procedures ?? [])]
+      .sort((a, b) => {
+        const nameA = a.name ?? ''
+        const nameB = b.name ?? ''
+        return nameA.localeCompare(nameB)
+      })
+      .filter((item) => item.defaultCalendarItemType === true)
   }, [procedures])
 
   const [form] = Form.useForm<FormValues>()
@@ -64,11 +86,14 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   useEffect(() => {
     const tableRowsList: ProcedureRow[] = proceduresList.map((procedure) => {
+      const allDurations = getAllDurations(procedures, procedure.name)
+
       return {
         rowId: v4(),
         procedureId: procedure.id,
         procedureName: procedure.name,
-        appointmentDurations: [15],
+        appointmentDurations: allDurations,
+        isPublic: procedure.otherInfos.isPublic === 'true' ? 'true' : 'false',
       } as ProcedureRow
     })
     setTableRows(tableRowsList)
@@ -109,6 +134,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         duration: 15,
         healthcarePartyId: service.id,
         agendaId: agenda?.id,
+        otherInfos: {
+          order: '0',
+          isPublic: 'true',
+        },
         id: v4(),
       })
       createUpdateProcedure(procedure)
@@ -119,22 +148,80 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const tableRowUpdate = async (procedureRow: ProcedureRow) => {
     try {
+      setIsModification(true)
+      // Step 1 : We first make sure everything is valid
+      if (!service) throw new Error('No service selected')
+      if (!agenda) throw new Error('No agenda selected')
+
       const rowValues = await form.validateFields()
 
-      setTableRows((prev) =>
-        prev.map((row) => {
-          if (row.rowId === procedureRow.rowId) {
-            return {
-              ...row,
-              procedureName: rowValues.procedureName,
-              appointmentDurations: rowValues.appointmentDurations,
-            }
-          }
-          return row
-        }),
+      // Step 2 : We get our current procedures and sort them by their order
+      const matchingProcedures = (procedures ?? []).filter((item) => item.name === procedureRow.procedureName)
+      const sortedMatchingProcedures = sortByOtherInfosOrder(matchingProcedures)
+
+      // Step 3 : We make our desired Array as the user has chosen
+      const desiredArray = rowValues.appointmentDurations.map(
+        (duration, index) =>
+          new CalendarItemType({
+            name: rowValues.procedureName,
+            duration: duration,
+            defaultCalendarItemType: index === 0,
+            healthcarePartyId: service.id,
+            agendaId: agenda.id,
+            otherInfos: {
+              order: String(index),
+              isPublic: rowValues.isPublic,
+            },
+            id: v4(),
+          }),
       )
 
-      setEditingKey('')
+      // Step 4 : We will compare both our current array and our desired array and UPDATE, CREATE or DELETE as needed.
+      const mutationPromises: Promise<unknown>[] = []
+      const maxLen = Math.max(desiredArray.length, sortedMatchingProcedures.length)
+
+      for (let i = 0; i < maxLen; i++) {
+        const desiredProps = desiredArray[i] // Target state for this slot (order i)
+        const existingItem = sortedMatchingProcedures[i] // Current item at this slot (order i)
+
+        if (desiredProps && existingItem) {
+          // === Both exist: Potential UPDATE ===
+          // Check if an update is actually needed by comparing relevant fields.
+          if (
+            existingItem.duration !== desiredProps.duration ||
+            existingItem.defaultCalendarItemType !== desiredProps.defaultCalendarItemType ||
+            existingItem.name !== desiredProps.name ||
+            existingItem.otherInfos?.order !== desiredProps.otherInfos.order ||
+            existingItem.otherInfos?.isPublic !== desiredProps.otherInfos.isPublic
+          ) {
+            const procedure = new CalendarItemType({
+              name: desiredProps.name,
+              duration: desiredProps.duration,
+              defaultCalendarItemType: desiredProps.defaultCalendarItemType,
+              otherInfos: desiredProps.otherInfos,
+              healthcarePartyId: desiredProps.healthcarePartyId,
+              agendaId: desiredProps.agendaId,
+              id: existingItem.id,
+              rev: existingItem.rev,
+            })
+            mutationPromises.push(createUpdateProcedure(procedure).unwrap())
+          }
+        } else if (desiredProps && !existingItem) {
+          // === Desired, but no corresponding existing item: CREATE ===
+          mutationPromises.push(createUpdateProcedure(desiredProps).unwrap())
+        } else if (!desiredProps && existingItem) {
+          // === No longer desired at this position, but exists: DELETE ===
+          mutationPromises.push(deleteProcedure([existingItem.id]).unwrap())
+        }
+      }
+
+      // 3. Execute all collected mutations
+      try {
+        await Promise.allSettled(mutationPromises) // Use allSettled to attempt all operations
+      } catch (e) {
+        console.error('Error during sync/mutation execution:', e)
+        openNotification('error', 'Update Failed', 'Some operations may have failed.')
+      }
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error && Array.isArray(error.errorFields) && error.errorFields.length > 0) {
         openNotification('error', t('validation.validation_failed'), t('validation.check_highlighted_fields_correct_errors'))
@@ -143,6 +230,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       } else {
         openNotification('error', 'Update Failed', 'An unexpected error occurred.')
       }
+    } finally {
+      // Step 5: we return the row to its display mode
+      setEditingKey('')
+      setIsModification(false)
     }
   }
 
@@ -157,6 +248,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       form.setFieldsValue({
         procedureName: procedureRow.procedureName,
         appointmentDurations: procedureRow.appointmentDurations,
+        isPublic: procedureRow.isPublic,
       })
       setEditingKey(procedureRow.rowId)
     } catch (error) {
@@ -179,7 +271,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     try {
       if (!procedureRowToBeDeleted) throw new Error('No procedure selected')
       // Simply remove it from the state. When user save the form it will be 'deleted'
-      const proceduresToDelete = procedures?.filter((item) => (item.name === t('content.new_procedure') ? item.id === procedureRowToBeDeleted.procedureId : item.name === procedureRowToBeDeleted.procedureName))
+      const proceduresToDelete = procedures?.filter((item) => item.name === procedureRowToBeDeleted.procedureName)
       if (!proceduresToDelete) throw new Error('No procedure selected')
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
       deleteProcedure(proceduresToDeleteIds)
@@ -193,13 +285,17 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   //  Two pairs of useffects : First pair handles the delete and create/update of procedures
   useEffect(() => {
-    if (isDeleteDemarcheSuccess) showMessageFeedback('success', t('notification.procedure_deleted'))
-    if (isDeleteDemarcheError) openNotification('error', t('notification.procedure_delete_failed'), t('notification.procedure_delete_error'))
+    if (isDeleteDemarcheError && isModification) openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
+    else if (isDeleteDemarcheError) openNotification('error', t('notification.procedure_delete_failed'), t('notification.procedure_delete_error'))
+    if (isDeleteDemarcheSuccess && isModification) showMessageFeedback('success', t('notification.procedure_modified'))
+    else if (isDeleteDemarcheSuccess) showMessageFeedback('success', t('notification.procedure_deleted'))
   }, [isDeleteDemarcheSuccess, isDeleteDemarcheError])
 
   useEffect(() => {
-    if (isCreateUpdateDemarcheSuccess) showMessageFeedback('success', t('notification.procedure_saved'))
-    if (isCreateUpdateDemarcheError) openNotification('error', t('notification.procedure_save_failed'), t('notification.procedure_save_error'))
+    if (isCreateUpdateDemarcheError && isModification) openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
+    else if (isCreateUpdateDemarcheError) openNotification('error', t('notification.procedure_save_failed'), t('notification.procedure_save_error'))
+    if (isCreateUpdateDemarcheSuccess && isModification) showMessageFeedback('success', t('notification.procedure_modified'))
+    else if (isCreateUpdateDemarcheSuccess) showMessageFeedback('success', t('notification.procedure_saved'))
   }, [isCreateUpdateDemarcheSuccess, isCreateUpdateDemarcheError])
 
   // Second pair handles the delete and update of the service
@@ -408,6 +504,33 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                           ))}
                         </Space>
                       )
+                    }
+                  }}
+                />
+                <Column
+                  title={t('content.isPublic')}
+                  dataIndex="isPublic"
+                  key="isPublic"
+                  width="50%"
+                  render={(currentValue: string | undefined, record: ProcedureRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      return (
+                        <Form.Item name="isPublic" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select privacy mode!' }]}>
+                          <Radio.Group>
+                            <Radio value={'true'}>{t('content.public')}</Radio>
+                            <Radio value={'false'}>{t('content.private')}</Radio>
+                          </Radio.Group>
+                        </Form.Item>
+                      )
+                    } else {
+                      if (currentValue === 'true') {
+                        return <Tag color="green">{t('content.public')}</Tag>
+                      } else if (currentValue === 'false') {
+                        return <Tag color="red">{t('content.private')}</Tag>
+                      }
+                      return <Tag color="orange">{t('content.unknown')}</Tag>
                     }
                   }}
                 />

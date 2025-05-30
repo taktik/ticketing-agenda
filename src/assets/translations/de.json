@@ -117,6 +117,9 @@
     "delete_permanent_warning": "Einmal gelöscht, können ihre Informationen nicht wiederhergestellt werden, es handelt sich also um eine endgültige Aktion."
   },
   "notification": {
+    "procedure_modified": "Das Verfahren wurde geändert!",
+    "procedure_modify_failed": "Wir konnten das Verfahren nicht ändern!",
+    "procedure_modify_error": "Beim Ändern des Verfahrens ist ein Fehler aufgetreten.",
     "procedure_deleted": "Das Verfahren wurde gelöscht!",
     "procedure_saved": "Das Verfahren wurde gespeichert!",
     "procedure_save_failed": "Wir konnten das Verfahren nicht speichern!",

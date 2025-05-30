@@ -105,7 +105,17 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
   const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !timeTable || !agenda, agendaId: agenda?.id ?? '' })
 
-  const allProcedureIds = useMemo(() => (procedures || []).map((p) => p.id), [procedures])
+  const sortedProcedures = useMemo(() => {
+    return [...(procedures ?? [])]
+      .sort((a, b) => {
+        const nameA = a.name ?? ''
+        const nameB = b.name ?? ''
+        return nameA.localeCompare(nameB)
+      })
+      .filter((item) => item.defaultCalendarItemType === true)
+  }, [procedures])
+
+  const allProcedureIds = useMemo(() => (sortedProcedures || []).map((p) => p.id), [sortedProcedures])
 
   const procedureMap = useMemo(() => {
     return new Map((procedures ?? []).map((p) => [p.id, p.name]))
@@ -379,7 +389,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     return t(i18nKey, fallbackText)
   }
 
-  const tableHandleEdit = (timeTableItemRow: TimeTableItemRow) => {
+  const tableRowEdit = (timeTableItemRow: TimeTableItemRow) => {
     // Edit the row
     try {
       if (!timeTableItemRow.rowId) throw new Error('No rule selected')
@@ -468,12 +478,11 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     }
   }
 
-  const tableHandleCancel = (timeTableItemRow: TimeTableItemRow) => {
+  const tableRowCancel = (timeTableItemRow: TimeTableItemRow) => {
     setEditingKey('')
   }
 
-  const tableHandleUpdate = async (timeTableItemRow: TimeTableItemRow) => {
-    // Updates the row
+  const tableRowUpdate = async (timeTableItemRow: TimeTableItemRow) => {
     try {
       const rowValues = await form.validateFields()
 
@@ -490,7 +499,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
             return {
               ...row,
               calendarItemTypeIds: rowValues.calendarItemTypeIds || [],
-              numberOfSlots: rowValues.numberOfSlots || 1, // Default to 1 if undefined
+              numberOfSlots: rowValues.numberOfSlots || 1,
               rrule: rowValues.rrule,
               hours: sortedHoursToSave,
               publicTimeTableItem: rowValues.publicTimeTableItem,
@@ -519,7 +528,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   // Helper function to update the specific time field within the 'hours' array in the form
   const handleTimeValueUpdate = (itemIndexInFormList: number, fieldName: 'startHour' | 'endHour', timeValue: dayjs.Dayjs | null) => {
     const currentHoursArray = form.getFieldValue('hours') || []
-    const newHoursArray = [...currentHoursArray] // Create a mutable copy
+    const newHoursArray = [...currentHoursArray]
 
     // Ensure the item object exists at the index
     if (!newHoursArray[itemIndexInFormList]) {
@@ -541,27 +550,20 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
       if (!timeTable) throw new Error('No schedule selected')
       const { name, start, end } = form.getFieldsValue()
 
+      // For each table row we create a numberOfSlots number of TimeTableItem
       const finalFlatTimeTableItems: TimeTableItem[] = timeTableItemsRows.flatMap((groupRow: TimeTableItemRow) => {
         const itemsGeneratedFromGroup: TimeTableItem[] = []
         // Ensure numberOfSlots is a positive integer, defaulting to 1
         const numInstances = groupRow.numberOfSlots && groupRow.numberOfSlots > 0 ? Math.floor(groupRow.numberOfSlots) : 1
         ;(groupRow.calendarItemTypeIds || []).forEach((procedureId: string) => {
           for (let i = 0; i < numInstances; i++) {
-            // Data for the new TimeTableItem instance
-            const newItemData: Partial<TimeTableItem> = {
-              // Common properties from the group definition
-              rrule: groupRow.rrule, // Use rruleString from the group
-              hours: groupRow.hours, // Use hoursConfig (numeric, sorted)
+            const newTimeTableItem: Partial<TimeTableItem> = {
+              rrule: groupRow.rrule,
+              hours: groupRow.hours,
               publicTimeTableItem: groupRow.publicTimeTableItem,
-              // Specific calendarItemTypeId for this instance
               calendarItemTypeId: procedureId,
-
-              // Include other properties for TimeTableItem if they are part of TimeTableItemRow
-              // or if they should have default values set by your TimeTableItem constructor.
-              // For example, if TimeTableItemRow also carried 'zoneId':
-              // zoneId: groupRow.zoneId,
             }
-            itemsGeneratedFromGroup.push(new TimeTableItem(newItemData))
+            itemsGeneratedFromGroup.push(new TimeTableItem(newTimeTableItem))
           }
         })
         return itemsGeneratedFromGroup
@@ -637,8 +639,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                         return (
                           <>
                             <Form.Item name="calendarItemTypeIds" style={{ margin: 0 }} rules={[{ required: true, message: t('content.select_procedure_required') }]}>
-                              <Select mode="multiple" allowClear placeholder={t('content.select_procedure_placeholder')} style={{ width: '100%' }} loading={!procedures}>
-                                {(procedures || []).map((type) => (
+                              <Select mode="multiple" allowClear placeholder={t('content.select_procedure_placeholder')} style={{ width: '100%' }} loading={!sortedProcedures}>
+                                {(sortedProcedures || []).map((type) => (
                                   <Select.Option key={type.id} value={type.id}>
                                     {type.name}
                                   </Select.Option>
@@ -650,7 +652,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                 type="link"
                                 size="small"
                                 onClick={handleSelectAll}
-                                disabled={(allProcedureIds.length > 0 && watchedCalendarItemTypeIds && watchedCalendarItemTypeIds.length === allProcedureIds.length) || !procedures || procedures.length === 0}
+                                disabled={(allProcedureIds.length > 0 && watchedCalendarItemTypeIds && watchedCalendarItemTypeIds.length === allProcedureIds.length) || !sortedProcedures || sortedProcedures.length === 0}
                               >
                                 {t('actions.selectAll', 'Select All')}
                               </Button>
@@ -708,7 +710,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                             <Space.Compact block className="rrule-repeat">
                               <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.repeat_every')}:</Typography.Text>
                               <Form.Item name="_interval" initialValue={1} rules={[{ required: true, message: t('validation.valueMissing', 'Value') }]} noStyle>
-                                <InputNumber min={1} style={{ width: '35%' }} defaultValue={1} />
+                                <InputNumber min={1} style={{ width: '35%' }} />
                               </Form.Item>
                               <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unitMissing', 'Unit') }]} noStyle>
                                 <Select style={{ width: '65%' }}>
@@ -810,12 +812,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                 {fields.map(({ key, name, ...restField }) => {
                                   return (
                                     <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                                      <Form.Item
-                                        {...restField}
-                                        name={[name, 'startHour']} // Form value will be a dayjs object
-                                        rules={[{ required: true, message: t('validation.startTimeRequired', 'Start!') }]}
-                                        noStyle
-                                      >
+                                      <Form.Item {...restField} name={[name, 'startHour']} rules={[{ required: true, message: t('validation.startTimeRequired', 'Start!') }]} noStyle>
                                         <TimePicker
                                           showNow={false}
                                           format="HH:mm"
@@ -995,14 +992,14 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                       if (editable) {
                         return (
                           <Space size="middle" className="actionButtons">
-                            <Button onClick={() => tableHandleUpdate(record)}>{t('content.update')}</Button>
-                            <Button onClick={() => tableHandleCancel(record)}>{t('content.cancel')}</Button>
+                            <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
+                            <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
                           </Space>
                         )
                       } else {
                         return (
                           <Space size="middle" className="actionButtons">
-                            <Button onClick={() => tableHandleEdit(record)}>{t('content.edit')}</Button>
+                            <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
                             <Button
                               onClick={() => {
                                 setTimeTableItemRowToBeDeleted(record)

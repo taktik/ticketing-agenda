@@ -117,6 +117,9 @@
     "delete_permanent_warning": "Une fois supprimées, leurs informations ne pourront plus être récupérées, il s'agit donc d'une action permanente."
   },
   "notification": {
+    "procedure_modified": "La démarche a été modifiée !",
+    "procedure_modify_failed": "Nous n'avons pas pu modifier la démarche !",
+    "procedure_modify_error": "Une erreur s'est produite lors de la modification de la démarche.",
     "procedure_deleted": "La démarche a été supprimée !",
     "procedure_saved": "La démarche a été enregistrée !",
     "procedure_save_failed": "Nous n'avons pas pu enregistrer la démarche !",
