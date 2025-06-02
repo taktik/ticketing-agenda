@@ -99,7 +99,11 @@
     "save": "Save",
     "upload": "Upload",
     "replace": "Replace",
-    "picture": "Picture"
+    "picture": "Picture",
+    "public": "Public",
+    "private": "Private",
+    "is_public": "Is public",
+    "visibility": "Visibility"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -176,7 +180,10 @@
     "repeat_every": "Repeat every",
     "on_days": "On days",
     "from_date": "Starting from",
-    "weekday": "weekday"
+    "weekday": "weekday",
+    "until": "Until",
+    "rrule_time_min": "Book at least (min. prior)",
+    "rrule_time_max": "Book at most (min. prior)"
   },
   "validation": {
     "check_highlighted_fields_correct_errors": "Please check the highlighted fields and correct the errors.",

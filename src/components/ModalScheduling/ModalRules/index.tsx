@@ -1,25 +1,24 @@
-import { Agenda, TimeTable, TimeTableHour, TimeTableItem } from '@icure/cardinal-sdk'
-import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
-import { CustomModal } from '../../common/CustomModal'
-import './index.css'
-import { Button, DatePicker, Form, Input, Table, Space, Empty, notification, message, Select, Radio, Tag, InputNumber, TimePicker, Checkbox, Typography } from 'antd'
 import { CloseOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { Agenda, TimeTableHour, TimeTableItem } from '@icure/cardinal-sdk'
+import { Button, DatePicker, Empty, Form, Input, InputNumber, message, notification, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
-import { addDays, addMonths, format, Locale, setDay, setMonth, startOfDay } from 'date-fns'
-import { enUS, fr, de, nl } from 'date-fns/locale'
-import { useTranslation } from 'react-i18next'
-import { useCreateUpdateTimeTableMutation, useGetTimeTableQuery } from '../../../core/api/timeTableApi'
-import { v4 } from 'uuid'
-import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
-import { dayjsToMinutes, formatMinutesToHHMM, minutesToDayjs } from '../../common/helpers'
-import { ModalConfirmAction } from '../../common/ModalConfirmAction'
+import { format, Locale, setDay, setMonth } from 'date-fns'
+import { de, enUS, fr, nl } from 'date-fns/locale'
+import dayjs from 'dayjs'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Frequency, Options, RRule, RRuleSet, rrulestr, Weekday } from 'rrule'
+import { useTranslation } from 'react-i18next'
+import { Frequency, Options, RRule, Weekday } from 'rrule'
 import { Language } from 'rrule/dist/esm/nlp/i18n'
-import { TOKENS } from '../../../constants'
-import { formatDayjsToYYYYMMDDHHmmssNumber, numberTimestampToDayjs } from '../../common/helpers'
+import { v4 } from 'uuid'
+import { NOT_AFTER_IN_MINUTES, NOT_BEFORE_IN_MINUTES, TOKENS } from '../../../constants'
+import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
+import { useCreateUpdateTimeTableMutation, useGetTimeTableQuery } from '../../../core/api/timeTableApi'
+import { CustomModal } from '../../common/CustomModal'
+import { dayjsToMinutes, formatDayjsToYYYYMMDDHHmmssNumber, formatMinutesToHHMM, minutesToDayjs, numberTimestampToDayjs } from '../../common/helpers'
+import { ModalConfirmAction } from '../../common/ModalConfirmAction'
+import './index.css'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -35,6 +34,7 @@ interface TimeTableItemRow {
   rrule: string | undefined
   hours: TimeTableHour[]
   publicTimeTableItem: boolean
+  timeConstraints: number[]
 }
 
 interface UIRrulePartsForForm {
@@ -42,6 +42,7 @@ interface UIRrulePartsForForm {
   _interval: number
   _byday: string[] // The days (Monday, ...)
   _dtstart: dayjs.Dayjs
+  _until: dayjs.Dayjs
 }
 
 type TableHours = {
@@ -56,12 +57,15 @@ interface FormValues {
   calendarItemTypeIds: string[]
   publicTimeTableItem: boolean
   numberOfSlots: number
+  notBeforeInMinutes: number
+  notAfterInMinutes: number
   hours: TableHours[]
   rrule: string
   _freq: Frequency
   _interval: number
   _byday: string[]
   _dtstart: dayjs.Dayjs
+  _until: dayjs.Dayjs
 }
 
 interface ModalRulesProps {
@@ -127,7 +131,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     }
 
     // Use a Map to group items by their common configuration
-    // Key: string representing the common config (rrule, hours, publicTimeTableItem, _dtstart)
+    // Key: string representing the common config (rrule, hours, publicTimeTableItem,  notBeforeInMinutes, notAfterInMinutes)
     // Value: The aggregated TimeTableItemRow
     const groupedConfigMap = new Map<string, TimeTableItemRow>()
 
@@ -137,11 +141,14 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
       // For hours, sort and then stringify for a consistent key
       const sortedHours = item.hours ? sortTimeTableHours(item.hours) : []
-      const hoursKeyPart = `HOURS:${JSON.stringify(sortedHours.map((h) => ({ s: h.startHour ?? 'u', e: h.endHour ?? 'u' })))}` // 'u' for undefined/null
+      const hoursKeyPart = `HOURS:${JSON.stringify(sortedHours.map((h) => ({ s: h.startHour ?? 'undefined', e: h.endHour ?? 'undefined' })))}`
 
       const publicTimeTableItemKeyPart = `publicTimeTableItem:${item.publicTimeTableItem}`
 
-      const compositeConfigKey = `${rruleKeyPart}|${hoursKeyPart}|${publicTimeTableItemKeyPart}`
+      const notBeforeInMinutesKeyPart = `notBeforeInMinutes:${item.notBeforeInMinutes ?? NOT_BEFORE_IN_MINUTES}`
+      const notAfterInMinutesKeyPart = `notAfterInMinutes:${item.notAfterInMinutes ?? NOT_AFTER_IN_MINUTES}`
+
+      const compositeConfigKey = `${rruleKeyPart}|${hoursKeyPart}|${publicTimeTableItemKeyPart}|${notBeforeInMinutesKeyPart}|${notAfterInMinutesKeyPart}`
 
       // --- Grouping logic ---
       if (!groupedConfigMap.has(compositeConfigKey)) {
@@ -153,6 +160,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
           rrule: item.rrule,
           hours: sortedHours, // Store the sorted version
           publicTimeTableItem: item.publicTimeTableItem,
+          timeConstraints: [item.notBeforeInMinutes ?? NOT_BEFORE_IN_MINUTES, item.notAfterInMinutes ?? NOT_AFTER_IN_MINUTES],
         }
         if (item.calendarItemTypeId && typeof item.calendarItemTypeId === 'string') {
           newGroup.calendarItemTypeIds.push(item.calendarItemTypeId)
@@ -260,7 +268,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   }
 
   const handleNameCancel = () => {
-    form.resetFields(['publicTimeTableItem', 'numberOfSlots', 'hours', '_dtstart', 'rrule', '_byday', '_freq', '_interval', 'calendarItemTypeIds'])
+    form.resetFields(['publicTimeTableItem', 'numberOfSlots', 'hours', '_dtstart', 'rrule', '_until', '_byday', '_freq', '_interval', 'calendarItemTypeIds', 'notBeforeInMinutes', 'notAfterInMinutes'])
     form.setFieldsValue({ name: initialName })
   }
 
@@ -275,6 +283,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         calendarItemTypeIds: [],
         publicTimeTableItem: true,
         hours: [new TimeTableHour({ startHour: undefined, endHour: undefined })],
+        timeConstraints: [NOT_BEFORE_IN_MINUTES, NOT_AFTER_IN_MINUTES],
       }
       setTimeTableItemsRows((prev) => [...prev, newRule])
     } catch (error) {
@@ -287,6 +296,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const watchedInterval = Form.useWatch('_interval', form)
   const watchedByDay = Form.useWatch('_byday', form)
   const watchedDtStart = Form.useWatch('_dtstart', form)
+  const watchedUntil = Form.useWatch('_until', form)
   const watchedTimeTableStart = Form.useWatch('start', form)
   const watchedTimeTableEnd = Form.useWatch('end', form)
 
@@ -294,7 +304,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     // Building the rule whenever one of the rule values is changed. Could be moved in the update function.
     // This check ensures we only try to build an RRULE if a frequency is actually selected.
     // It also prevents running when the form is first initializing and these values might be transient.
-    if (watchedFreq !== undefined && form.isFieldsTouched(['_freq', '_interval', '_byday', '_dtstart'])) {
+    if (watchedFreq !== undefined && form.isFieldsTouched(['_freq', '_interval', '_byday', '_dtstart', '_until'])) {
       const rruleOptions: Partial<Options> = {
         freq: watchedFreq as Frequency, // Cast because Select value is number
         interval: watchedInterval || 1,
@@ -302,8 +312,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         // For simple WEEKLY rules, its exact date might be less critical.
         // Use a consistent or relevant dtstart. For now, using today.
         // might need to pass a real start date from your event/schedule if relevant.
-        dtstart: watchedDtStart.toDate() ?? watchedTimeTableStart.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0)),
-        until: watchedTimeTableEnd.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0)),
+        dtstart: watchedDtStart?.toDate() ?? watchedTimeTableStart?.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0)),
+        until: watchedUntil?.toDate() ?? watchedTimeTableEnd?.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0)),
       }
 
       if (watchedFreq === RRule.WEEKLY && watchedByDay && watchedByDay.length > 0) {
@@ -323,7 +333,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         form.setFieldsValue({ rrule: undefined }) // Set to undefined or handle error state
       }
     }
-  }, [watchedFreq, watchedInterval, watchedByDay, watchedDtStart, watchedTimeTableStart, watchedTimeTableEnd, form])
+  }, [watchedFreq, watchedInterval, watchedByDay, watchedDtStart, watchedUntil, watchedTimeTableStart, watchedTimeTableEnd, form])
 
   const getCurrentRruleLanguageOptions = (): Language => {
     // Used to translate the rrule
@@ -401,6 +411,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         _interval: 1,
         _byday: [],
         _dtstart: watchedTimeTableStart || dayjs(),
+        _until: watchedTimeTableEnd || dayjs(),
       }
 
       if (initialRruleString) {
@@ -410,6 +421,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
           uiRruleParts._freq = options.freq // This will be a number (RRule.Frequency)
           uiRruleParts._interval = options.interval || 1
           uiRruleParts._dtstart = dayjs(options.dtstart) || watchedTimeTableStart
+          uiRruleParts._until = dayjs(options.until) || watchedTimeTableEnd
 
           if (options.byweekday !== null && options.byweekday !== undefined) {
             // Normalize options.byweekday to always be an array for mapping
@@ -436,7 +448,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
           console.error('Error parsing existing RRULE string:', error, initialRruleString)
           initialRruleString = undefined // Clear if invalid to avoid issues
           // Reset to defaults if parsing failed
-          uiRruleParts = { _freq: RRule.WEEKLY, _interval: 1, _byday: [], _dtstart: watchedTimeTableStart || dayjs() }
+          uiRruleParts = { _freq: RRule.WEEKLY, _interval: 1, _byday: [], _dtstart: watchedTimeTableStart || dayjs(), _until: watchedTimeTableEnd || dayjs() }
         }
       }
 
@@ -451,9 +463,12 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
         calendarItemTypeIds: timeTableItemRow.calendarItemTypeIds,
         publicTimeTableItem: timeTableItemRow.publicTimeTableItem,
         numberOfSlots: timeTableItemRow.numberOfSlots,
+        notBeforeInMinutes: timeTableItemRow.timeConstraints[0],
+        notAfterInMinutes: timeTableItemRow.timeConstraints[1],
         hours: hoursForForm,
-        _dtstart: uiRruleParts._dtstart,
         rrule: initialRruleString,
+        _dtstart: uiRruleParts._dtstart,
+        _until: uiRruleParts._until,
         _freq: uiRruleParts._freq,
         _interval: uiRruleParts._interval,
         _byday: uiRruleParts._byday,
@@ -503,6 +518,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
               rrule: rowValues.rrule,
               hours: sortedHoursToSave,
               publicTimeTableItem: rowValues.publicTimeTableItem,
+              notBeforeInMinutes: rowValues.notBeforeInMinutes,
+              notAfterInMinutes: rowValues.notAfterInMinutes,
             }
           }
           return row
@@ -561,6 +578,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
               rrule: groupRow.rrule,
               hours: groupRow.hours,
               publicTimeTableItem: groupRow.publicTimeTableItem,
+              notBeforeInMinutes: groupRow.timeConstraints[0],
+              notAfterInMinutes: groupRow.timeConstraints[1],
               calendarItemTypeId: procedureId,
             }
             itemsGeneratedFromGroup.push(new TimeTableItem(newTimeTableItem))
@@ -736,9 +755,22 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                             )}
 
                             <div className="rrule-start">
-                              <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.from_date', 'A partir du')}:</Typography.Text>
+                              <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.from_date')}:</Typography.Text>
                               <Form.Item
                                 name="_dtstart"
+                                rules={[{ required: true, message: t('validation.select_date_required') }]}
+                                style={{
+                                  marginBottom: '8px',
+                                  flexGrow: 1,
+                                }}
+                              >
+                                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" minDate={watchedTimeTableStart} maxDate={watchedTimeTableEnd} />
+                              </Form.Item>
+                            </div>
+                            <div className="rrule-start">
+                              <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.until')}:</Typography.Text>
+                              <Form.Item
+                                name="_until"
                                 rules={[{ required: true, message: t('validation.select_date_required') }]}
                                 style={{
                                   marginBottom: '8px',
@@ -910,6 +942,67 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                 )
                               }
                             })}
+                          </div>
+                        )
+                      }
+                    }}
+                  />
+                  <Column
+                    title={t('rrule.rrule_time_min')}
+                    dataIndex="timeConstraints"
+                    key="timeConstraints"
+                    width={'13%'}
+                    render={(timeConstraintsArray: number[] | undefined, record: TimeTableItemRow) => {
+                      const editable = isEditing(record)
+
+                      if (editable) {
+                        return (
+                          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                            <Form.Item
+                              label={t('rrule.rrule_time_min')}
+                              name="notBeforeInMinutes" // Form field name for the first input
+                              labelCol={{ span: 24 }}
+                              wrapperCol={{ span: 24 }}
+                              style={{ marginBottom: 2 }}
+                              rules={[{ type: 'number', min: 0, message: 'Must be 0 or positive' }]}
+                            >
+                              <InputNumber addonAfter="min" style={{ width: '100%' }} placeholder="e.g., 0" />
+                            </Form.Item>
+                            <Form.Item
+                              label={t('rrule.rrule_time_max')}
+                              name="notAfterInMinutes" // Form field name for the second input
+                              labelCol={{ span: 24 }}
+                              wrapperCol={{ span: 24 }}
+                              style={{ marginBottom: 0 }}
+                              rules={[{ type: 'number', min: 0, message: 'Must be 0 or positive' }]}
+                            >
+                              <InputNumber addonAfter="min" style={{ width: '100%' }} placeholder="e.g., 120" />
+                            </Form.Item>
+                          </Space>
+                        )
+                      } else {
+                        const notBefore = timeConstraintsArray?.[0]
+                        const notAfter = timeConstraintsArray?.[1]
+
+                        // More robust display handling null/undefined explicitly
+                        const notBeforeDisplay = notBefore !== null && notBefore !== undefined ? `${notBefore} min` : t('content.not_set_short', 'N/A')
+                        const notAfterDisplay = notAfter !== null && notAfter !== undefined ? `${notAfter} min` : t('content.not_set_short', 'N/A')
+
+                        // Handle case where the entire array is undefined or empty
+                        if (!timeConstraintsArray || timeConstraintsArray.every((val) => val === null || val === undefined)) {
+                          return <Tag>{t('content.time_constraints_not_set', 'No constraints')}</Tag>
+                        }
+
+                        return (
+                          <div>
+                            <div style={{ whiteSpace: 'nowrap' }}>
+                              <Typography.Text strong>{t('content.notBeforeShort', 'Before')}: </Typography.Text>
+                              <Tag>{notBeforeDisplay}</Tag>
+                            </div>
+                            <div style={{ whiteSpace: 'nowrap', marginTop: '4px' }}>
+                              <Typography.Text strong>{t('content.notAfterShort', 'After')}: </Typography.Text>
+                              <Tag>{notAfterDisplay}</Tag>
+                            </div>
                           </div>
                         )
                       }

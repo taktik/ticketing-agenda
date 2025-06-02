@@ -65,8 +65,6 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
 
-  useEffect(() => console.log('procedures', procedures), [procedures])
-
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
       .sort((a, b) => {
@@ -338,7 +336,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   }
 
   const watchedDurations = Form.useWatch('appointmentDurations', form)
-  const nameValue = Form.useWatch('name', form)
+  const nameValue = Form.useWatch('serviceName', form)
   const initialName = useMemo(() => service?.name || '', [service])
 
   return (
@@ -360,7 +358,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               <Input suffix={<CloseOutlined disabled={nameValue === service?.name} onClick={handleNameCancel} />} />
             </Form.Item>
             <Tooltip title={t('content.save_service')}>
-              <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={nameValue === service?.name} onClick={handleSubmit} />
+              <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={nameValue === initialName} onClick={handleSubmit} />
             </Tooltip>
             <Tooltip title={t('content.delete_service')}>
               <Button icon={<DeleteOutlined />} danger disabled={!service} onClick={() => setShowDeleteServiceModal(true)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
@@ -508,7 +506,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   }}
                 />
                 <Column
-                  title={t('content.isPublic')}
+                  title={t('content.visibility')}
                   dataIndex="isPublic"
                   key="isPublic"
                   width="50%"
