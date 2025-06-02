@@ -1,14 +1,14 @@
-import { HealthcareParty, User, UserFilters } from '@icure/cardinal-sdk'
-import React, { ReactElement, useEffect, useMemo, useState } from 'react'
-import { useCreateUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
-import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery, useGetHealthcarePartiesQuery } from '../../../../core/api/healthcarePartyApi'
+import { HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, Space, Table, message, notification } from 'antd'
-import { useTranslation } from 'react-i18next'
-import ColumnGroup from 'antd/es/table/ColumnGroup'
 import Column from 'antd/es/table/Column'
-import { v4 } from 'uuid'
-import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+import ColumnGroup from 'antd/es/table/ColumnGroup'
+import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
+import { v4 } from 'uuid'
+import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery } from '../../../../core/api/healthcarePartyApi'
+import { useCreateUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
+import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
 
 interface UserRow {
   rowId: string

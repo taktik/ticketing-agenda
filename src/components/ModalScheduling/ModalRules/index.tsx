@@ -6,7 +6,7 @@ import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { format, Locale, setDay, setMonth } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs from 'dayjs'
-import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Frequency, Options, RRule, Weekday } from 'rrule'
@@ -16,10 +16,10 @@ import { NOT_AFTER_IN_MINUTES, NOT_BEFORE_IN_MINUTES, TOKENS } from '../../../co
 import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateUpdateTimeTableMutation, useGetTimeTableQuery } from '../../../core/api/timeTableApi'
 import { CustomModal } from '../../common/CustomModal'
+import { DurationInput } from '../../common/DurationInput'
 import { dayjsToMinutes, formatDayjsToYYYYMMDDHHmmssNumber, formatMinutesToHHMM, formatTotalMinutesForDisplay, minutesToDayjs, numberTimestampToDayjs } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
-import { DurationInput } from '../../common/DurationInput'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,

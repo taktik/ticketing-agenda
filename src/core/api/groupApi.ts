@@ -1,7 +1,6 @@
+import { DesignDocument } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
-import { DesignDocument, Device, DeviceFilters } from '@icure/cardinal-sdk'
-import { loadFromIterator, tagsByIds } from './utils'
 
 export const groupApiRtk = createApi({
   reducerPath: 'groupApi',

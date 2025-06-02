@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { DecryptedHealthElement, DecryptedPatient } from '@icure/cardinal-sdk'
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 
 export const healthElementApiRtk = createApi({

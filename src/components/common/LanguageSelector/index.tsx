@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react'
-import flagUK from '../../../assets/flag_kingdom_united.png'
-import flagFrance from '../../../assets/flag_france.png'
-import flagDutch from '../../../assets/flag_netherlands.png'
-import flagGermany from '../../../assets/flag_germany.png'
-import { useTranslation } from 'react-i18next'
 import { Select, Space } from 'antd'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import flagFrance from '../../../assets/flag_france.png'
+import flagGermany from '../../../assets/flag_germany.png'
+import flagUK from '../../../assets/flag_kingdom_united.png'
+import flagDutch from '../../../assets/flag_netherlands.png'
 
 interface LanguageOption {
   code: string

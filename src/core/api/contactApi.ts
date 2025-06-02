@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { DecryptedContact, DecryptedPatient, Patient } from '@icure/cardinal-sdk'
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator, tagsByIds } from './utils'
 

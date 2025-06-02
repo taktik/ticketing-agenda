@@ -20,11 +20,11 @@ import { ModalSettings } from '../../components/ModalSettings'
 import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
+import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
-import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())

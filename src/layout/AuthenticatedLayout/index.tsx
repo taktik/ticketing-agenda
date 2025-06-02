@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { createSelector } from '@reduxjs/toolkit'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
-
 import { useAppSelector } from '../../core/hooks'
 import { CardinalApiState } from '../../core/services/auth.api'
 import { routes } from '../../navigation/Router'

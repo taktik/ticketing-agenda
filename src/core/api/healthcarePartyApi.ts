@@ -1,13 +1,11 @@
 import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
-import { loadFromIterator } from './utils'
-import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters } from './fetchType'
-import { agendaApiRtk, useDeleteAgendaByAuthorId, useDeleteAgendaMutation, useGetAgendaByAuthorId } from './agendaApi'
 import { useState } from 'react'
-import { useDispatch } from 'react-redux'
-import { healthElementApiRtk } from './healthElementApi'
 import { useAppDispatch } from '../hooks'
+import { cardinalApi, guard } from '../services/auth.api'
+import { agendaApiRtk, useDeleteAgendaMutation } from './agendaApi'
+import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters } from './fetchType'
+import { loadFromIterator } from './utils'
 
 enum HealthcarePartyTags {
   HealthcareParty = 'HealthcareParty',

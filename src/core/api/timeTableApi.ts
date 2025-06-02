@@ -1,8 +1,8 @@
 import { DocIdentifier, TimeTable, TimeTableFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
-import { loadFromIterator } from './utils'
 import { TimeTablesServiceParameters } from './fetchType'
+import { loadFromIterator } from './utils'
 
 enum TimeTableTags {
   TimeTable = 'TimeTable',

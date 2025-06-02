@@ -1,8 +1,8 @@
 import { HealthcareParty } from '@icure/cardinal-sdk'
-import { Select as AntSelect, message, notification } from 'antd'
+import { Select as AntSelect } from 'antd'
 import React, { ReactElement, useEffect, useMemo } from 'react'
-import './index.css'
 import { useTranslation } from 'react-i18next'
+import './index.css'
 
 interface SiteSelectorProps {
   sites: HealthcareParty[]

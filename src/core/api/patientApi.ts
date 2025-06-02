@@ -89,19 +89,12 @@ export const patientApiRtk = createApi({
             .trim()
             .split(/\s+/)
             .map((word) => {
-              const matchingTags = allPatientsTagsEnum
-                .filter((e) => e.toLowerCase().includes(word.toLowerCase()))
-                .map((c) => PatientFilters.byTagForDataOwner(practitionerId, 'PREVENTI', c))
+              const matchingTags = allPatientsTagsEnum.filter((e) => e.toLowerCase().includes(word.toLowerCase())).map((c) => PatientFilters.byTagForDataOwner(practitionerId, 'PREVENTI', c))
               const partailFilter = matchingTags.length
-                ? union(
-                    PatientFilters.byFuzzyNameForDataOwner(practitionerId, word),
-                    matchingTags.length == 1 ? matchingTags[0] : union(matchingTags[0], matchingTags[1], ...matchingTags.slice(2)),
-                  )
+                ? union(PatientFilters.byFuzzyNameForDataOwner(practitionerId, word), matchingTags.length == 1 ? matchingTags[0] : union(matchingTags[0], matchingTags[1], ...matchingTags.slice(2)))
                 : PatientFilters.byFuzzyNameForDataOwner(practitionerId, word)
 
-              const filterWithPostalCode = word.match(/[0-9]+/)
-                ? union(partailFilter, PatientFilters.byAddressPostalCodeHouseNumberForDataOwner(practitionerId, '', word))
-                : partailFilter
+              const filterWithPostalCode = word.match(/[0-9]+/) ? union(partailFilter, PatientFilters.byAddressPostalCodeHouseNumberForDataOwner(practitionerId, '', word)) : partailFilter
 
               return filterWithPostalCode
             })

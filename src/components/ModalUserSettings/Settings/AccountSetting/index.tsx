@@ -1,16 +1,12 @@
 import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType } from '@icure/cardinal-sdk'
-import { Form, UploadFile, UploadProps, Input, Upload, Button } from 'antd'
-import React, { ReactElement, useEffect, useState } from 'react'
+import { Button, Form, Input, Upload, UploadFile, UploadProps } from 'antd'
+import ImgCrop from 'antd-img-crop'
+import { ReactElement, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCreateOrUpdatePractitionerMutation } from '../../../../core/api/practitionerApi'
 import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileToBase64'
-
-import './index.css'
 import { SpinLoader } from '../../../common/SpinLoader'
-
-import ImgCrop from 'antd-img-crop'
-
 import './index.css'
-import { useTranslation } from 'react-i18next'
 
 interface AccountSettingProps {
   onClose: () => void

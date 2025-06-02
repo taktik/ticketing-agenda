@@ -1,6 +1,6 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { guard, cardinalApi } from '../services/auth.api'
 import { randomUuid, User, UserFilters } from '@icure/cardinal-sdk'
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
 
 enum UserTags {

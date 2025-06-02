@@ -1,19 +1,19 @@
 import Icon from '@ant-design/icons'
 import { createSelector } from '@reduxjs/toolkit'
-import mouscronLogo from '../../../assets/mouscronLogo.png'
-import './index.css'
 import type { MenuProps } from 'antd'
 import { Dropdown } from 'antd'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { arrowDownIcn, logOutIcn, manageUserIcn, userIcn } from '../../../assets/CustomIcons'
+import mouscronLogo from '../../../assets/mouscronLogo.png'
 import { useGetPractitionerQuery } from '../../../core/api/practitionerApi'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
 import { ModalSettings } from '../../ModalUserSettings'
 import { LanguageSelector } from '../LanguageSelector'
-import { useTranslation } from 'react-i18next'
+import './index.css'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,

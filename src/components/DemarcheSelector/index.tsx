@@ -1,10 +1,8 @@
-import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
-import { Agenda, CalendarItemType, TimeTable } from '@icure/cardinal-sdk'
-import { Select as AntSelect, Button, Divider, Typography, notification, message, Tooltip } from 'antd'
-import React, { ReactElement, useCallback, useEffect } from 'react'
-import './index.css'
-import { useDeleteTimeTableMutation } from '../../core/api/timeTableApi'
+import { CalendarItemType } from '@icure/cardinal-sdk'
+import { Button, Divider, Typography } from 'antd'
+import React, { ReactElement, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import './index.css'
 
 interface ProcedureSelectorProps {
   procedures: CalendarItemType[]

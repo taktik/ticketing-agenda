@@ -1,12 +1,10 @@
-import { Agenda, AgendaFilters, TimeTableItem, CalendarItem, CalendarItemType, TimeTable, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, AgendaFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
-import { loadFromIterator } from './utils'
 import { useEffect, useMemo, useState } from 'react'
-import { DeleteAgendaByIdParameters } from './fetchType'
-import { calendarItemApiRtk } from './calendarItemApi'
+import { cardinalApi, guard } from '../services/auth.api'
 import { calendarItemTypeApiRtk } from './calendarItemTypeApi'
 import { timeTableApiRtk } from './timeTableApi'
+import { loadFromIterator } from './utils'
 
 enum AgendaTags {
   Agenda = 'Agenda',

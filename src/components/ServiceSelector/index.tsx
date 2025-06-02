@@ -1,10 +1,8 @@
-import { DeleteOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons'
-import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Divider, Typography, notification, message, Tooltip } from 'antd'
-import React, { useCallback, useEffect } from 'react'
-import './index.css'
-import { useDeleteHealthcarePartyMutation } from '../../core/api/healthcarePartyApi'
+import { HealthcareParty } from '@icure/cardinal-sdk'
+import { Button, Divider, Typography } from 'antd'
+import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import './index.css'
 
 interface ServiceSelectorProps {
   services: HealthcareParty[]
