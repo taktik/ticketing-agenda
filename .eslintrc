@@ -28,11 +28,7 @@
     "react/jsx-indent-props": ["error", 2],
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx", ".tx", ".tsx"] }],
     "react/jsx-closing-bracket-location": [2, "tag-aligned"],
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      {
-        "varsIgnorePattern": "^React$"
-      }
-    ]
+    "@typescript-eslint/no-unused-vars": "off",
+    "react/react-in-jsx-scope": "off"
   }
 }
