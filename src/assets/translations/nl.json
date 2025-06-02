@@ -103,7 +103,17 @@
     "private": "Privé",
     "is_public": "Is openbaar",
     "public": "Openbaar",
-    "visibility": "Zichtbaarheid"
+    "visibility": "Zichtbaarheid",
+    "booking_window_min": "Reserveringsvenster (min)",
+    "before": "Voor",
+    "after": "Na",
+    "all_procedures": "Alle procedures",
+    "select_all": "Alles selecteren",
+    "enterValue": "Waarde invoeren",
+    "unit_minutes": "Minuut(en)",
+    "unit_hours": "Uur/Uren",
+    "unit_days": "Dag(en)",
+    "unit_weeks": "Week/Weken"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

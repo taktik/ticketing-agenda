@@ -103,7 +103,17 @@
     "private": "Privat",
     "is_public": "Ist öffentlich",
     "public": "Öffentlich",
-    "visibility": "Sichtbarkeit"
+    "visibility": "Sichtbarkeit",
+    "booking_window_min": "Buchungsfenster (Min.)",
+    "before": "Vor",
+    "after": "Nach",
+    "all_procedures": "Alle Verfahren",
+    "select_all": "Alle auswählen",
+    "enterValue": "Wert eingeben",
+    "unit_minutes": "Minute(n)",
+    "unit_hours": "Stunde(n)",
+    "unit_days": "Tag(e)",
+    "unit_weeks": "Woche(n)"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

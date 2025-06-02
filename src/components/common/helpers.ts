@@ -69,3 +69,27 @@ export const formatDayjsToYYYYMMDDHHmmssNumber = (dayjsInput: dayjs.Dayjs): numb
 
   return Number(formated)
 }
+
+export function formatTotalMinutesForDisplay(totalMinutes: number | undefined, t: (key: string) => string): string {
+  if (totalMinutes === null || totalMinutes === undefined || isNaN(totalMinutes) || totalMinutes < 0) {
+    return t('content.not_set')
+  }
+  if (totalMinutes === 0) return `0 ${t('content.min')}`
+
+  // Find the largest unit that makes sense (e.g., whole numbers)
+  const units = [
+    { nameKey: 'weeks', labelKey: 'unit_weeks', multiplier: 7 * 24 * 60 },
+    { nameKey: 'days', labelKey: 'unit_days', multiplier: 24 * 60 },
+    { nameKey: 'hours', labelKey: 'unit_hours', multiplier: 60 },
+    { nameKey: 'minutes', labelKey: 'unit_minutes', multiplier: 1 },
+  ]
+
+  for (const unit of units) {
+    if (totalMinutes >= unit.multiplier && totalMinutes % unit.multiplier === 0) {
+      const quantity = totalMinutes / unit.multiplier
+      return `${quantity} ${t(`content.${unit.labelKey}`)}`
+    }
+  }
+  // Fallback to minutes if no clean larger unit
+  return `${totalMinutes} ${t('content.unit_minutes')}`
+}

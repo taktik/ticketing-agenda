@@ -103,7 +103,17 @@
     "private": "Privé",
     "public": "Public",
     "is_public": "Est public",
-    "visibility": "Visibilité"
+    "visibility": "Visibilité",
+    "booking_window_min": "Fenêtre de réservation (min)",
+    "before": "Avant",
+    "after": "Après",
+    "all_procedures": "Toutes les démarches",
+    "select_all": "Tout sélectionner",
+    "enterValue": "Saisir une valeur",
+    "unit_minutes": "Minute(s)",
+    "unit_hours": "Heure(s)",
+    "unit_days": "Jour(s)",
+    "unit_weeks": "Semaine(s)"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

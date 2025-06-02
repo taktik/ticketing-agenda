@@ -55,5 +55,5 @@ export const TOKENS = {
   comma: /^(,\s*|(and|or)\s*)+/i,
 }
 
-export const NOT_BEFORE_IN_MINUTES = 44000 // Can book an appointment one month in advance (44000 minutes = 1 month)
-export const NOT_AFTER_IN_MINUTES = 30 // Cannot book an appointment 30 minutes before the appointment
+export const NOT_BEFORE_IN_MINUTES = 10080 // Can book an appointment 7 days in advance
+export const NOT_AFTER_IN_MINUTES = 1440 // Cannot book an appointment 1 day before the appointment

@@ -16,9 +16,10 @@ import { NOT_AFTER_IN_MINUTES, NOT_BEFORE_IN_MINUTES, TOKENS } from '../../../co
 import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateUpdateTimeTableMutation, useGetTimeTableQuery } from '../../../core/api/timeTableApi'
 import { CustomModal } from '../../common/CustomModal'
-import { dayjsToMinutes, formatDayjsToYYYYMMDDHHmmssNumber, formatMinutesToHHMM, minutesToDayjs, numberTimestampToDayjs } from '../../common/helpers'
+import { dayjsToMinutes, formatDayjsToYYYYMMDDHHmmssNumber, formatMinutesToHHMM, formatTotalMinutesForDisplay, minutesToDayjs, numberTimestampToDayjs } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
+import { DurationInput } from '../../common/DurationInput'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -232,10 +233,13 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   useEffect(() => {
     // Fetch update the state and form values
     if (timeTable) {
+      const parsedStart = numberTimestampToDayjs(timeTable.startTime ?? 0) ?? dayjs()
+      const parsedEnd = numberTimestampToDayjs(timeTable.endTime ?? 0) ?? dayjs()
+
       form.setFieldsValue({
         name: timeTable.name,
-        start: timeTable.startTime ? (numberTimestampToDayjs(timeTable.startTime) ?? dayjs()) : undefined,
-        end: timeTable.endTime ? (numberTimestampToDayjs(timeTable.endTime) ?? dayjs()) : undefined,
+        start: timeTable.startTime ? parsedStart : undefined,
+        end: timeTable.endTime ? parsedEnd : undefined,
       })
       setTimeTableItems(timeTable.items)
     } else {
@@ -508,6 +512,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
       const sortedHoursToSave = sortTimeTableHours(hoursToSave)
 
+      console.log('rowValues.notBeforeInMinutes', rowValues.notBeforeInMinutes)
+      console.log('rowValues.notAfterInMinutes', rowValues.notAfterInMinutes)
+
       setTimeTableItemsRows((prevRows: TimeTableItemRow[]) =>
         prevRows.map((row) => {
           if (row.rowId === timeTableItemRow.rowId) {
@@ -518,8 +525,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
               rrule: rowValues.rrule,
               hours: sortedHoursToSave,
               publicTimeTableItem: rowValues.publicTimeTableItem,
-              notBeforeInMinutes: rowValues.notBeforeInMinutes,
-              notAfterInMinutes: rowValues.notAfterInMinutes,
+              timeConstraints: [rowValues.notBeforeInMinutes, rowValues.notAfterInMinutes],
             }
           }
           return row
@@ -673,7 +679,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                 onClick={handleSelectAll}
                                 disabled={(allProcedureIds.length > 0 && watchedCalendarItemTypeIds && watchedCalendarItemTypeIds.length === allProcedureIds.length) || !sortedProcedures || sortedProcedures.length === 0}
                               >
-                                {t('actions.selectAll', 'Select All')}
+                                {t('content.select_all')}
                               </Button>
                             </Space>
                           </>
@@ -682,7 +688,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                         // Display mode
                         const everythingSelected = allProcedureIds.length > 0 && allProcedureIds.length === record.calendarItemTypeIds.length
                         if (everythingSelected) {
-                          return <Tag color="purple">{t('content.all_procedures_selected', 'All Procedures')}</Tag>
+                          return <Tag color="purple">{t('content.all_procedures')}</Tag>
                         } else if (record.calendarItemTypeIds.length === 0) {
                           return (
                             <Tag icon={<ExclamationCircleOutlined />} color="warning">
@@ -832,7 +838,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.hours')}
                     dataIndex="hours"
                     key="hours"
-                    width={'15%'}
+                    width={'13%'}
                     render={(hoursArray: TimeTableHour[] | undefined, record: TimeTableItemRow) => {
                       const editable = isEditing(record)
 
@@ -948,60 +954,56 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     }}
                   />
                   <Column
-                    title={t('rrule.rrule_time_min')}
+                    title={t('content.booking_window_min')}
                     dataIndex="timeConstraints"
                     key="timeConstraints"
-                    width={'13%'}
+                    width={'12%'}
                     render={(timeConstraintsArray: number[] | undefined, record: TimeTableItemRow) => {
                       const editable = isEditing(record)
 
                       if (editable) {
                         return (
-                          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                             <Form.Item
                               label={t('rrule.rrule_time_min')}
-                              name="notBeforeInMinutes" // Form field name for the first input
+                              name="notBeforeInMinutes" // This form field will store total minutes
                               labelCol={{ span: 24 }}
                               wrapperCol={{ span: 24 }}
-                              style={{ marginBottom: 2 }}
+                              style={{ marginBottom: 8 }}
                               rules={[{ type: 'number', min: 0, message: 'Must be 0 or positive' }]}
                             >
-                              <InputNumber addonAfter="min" style={{ width: '100%' }} placeholder="e.g., 0" />
+                              <DurationInput defaultUnit="weeks" placeholder={t('placeholders.enterValue', 'Enter value')} />
                             </Form.Item>
+
                             <Form.Item
                               label={t('rrule.rrule_time_max')}
-                              name="notAfterInMinutes" // Form field name for the second input
+                              name="notAfterInMinutes" // This form field will store total minutes
                               labelCol={{ span: 24 }}
                               wrapperCol={{ span: 24 }}
                               style={{ marginBottom: 0 }}
                               rules={[{ type: 'number', min: 0, message: 'Must be 0 or positive' }]}
                             >
-                              <InputNumber addonAfter="min" style={{ width: '100%' }} placeholder="e.g., 120" />
+                              <DurationInput defaultUnit="weeks" placeholder={t('placeholders.enterValue', 'Enter value')} />
                             </Form.Item>
                           </Space>
                         )
                       } else {
-                        const notBefore = timeConstraintsArray?.[0]
-                        const notAfter = timeConstraintsArray?.[1]
+                        const notBeforeMins = timeConstraintsArray?.[0]
+                        const notAfterMins = timeConstraintsArray?.[1]
 
-                        // More robust display handling null/undefined explicitly
-                        const notBeforeDisplay = notBefore !== null && notBefore !== undefined ? `${notBefore} min` : t('content.not_set_short', 'N/A')
-                        const notAfterDisplay = notAfter !== null && notAfter !== undefined ? `${notAfter} min` : t('content.not_set_short', 'N/A')
-
-                        // Handle case where the entire array is undefined or empty
-                        if (!timeConstraintsArray || timeConstraintsArray.every((val) => val === null || val === undefined)) {
-                          return <Tag>{t('content.time_constraints_not_set', 'No constraints')}</Tag>
+                        if (!timeConstraintsArray || ((notBeforeMins === null || notBeforeMins === undefined) && (notAfterMins === null || notAfterMins === undefined))) {
+                          return <Tag>{t('content.not_set', 'Not set')}</Tag>
                         }
 
                         return (
                           <div>
                             <div style={{ whiteSpace: 'nowrap' }}>
-                              <Typography.Text strong>{t('content.notBeforeShort', 'Before')}: </Typography.Text>
-                              <Tag>{notBeforeDisplay}</Tag>
+                              <Typography.Text strong>{t('content.before')}: </Typography.Text>
+                              <Tag>{formatTotalMinutesForDisplay(notBeforeMins, t)}</Tag>
                             </div>
                             <div style={{ whiteSpace: 'nowrap', marginTop: '4px' }}>
-                              <Typography.Text strong>{t('content.notAfterShort', 'After')}: </Typography.Text>
-                              <Tag>{notAfterDisplay}</Tag>
+                              <Typography.Text strong>{t('content.after')}: </Typography.Text>
+                              <Tag>{formatTotalMinutesForDisplay(notAfterMins, t)}</Tag>
                             </div>
                           </div>
                         )
@@ -1012,13 +1014,13 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.availability')}
                     dataIndex="publicTimeTableItem"
                     key="publicTimeTableItem"
-                    width={'13%'}
+                    width={'12%'}
                     render={(ispublicTimeTableItem: boolean | undefined, record: TimeTableItemRow) => {
                       const editable = isEditing(record)
 
                       if (editable) {
                         return (
-                          <Form.Item name="publicTimeTableItem" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select availability!' }]}>
+                          <Form.Item name="publicTimeTableItem" style={{ display: 'flex', flexDirection: 'column', margin: 0 }} rules={[{ required: true, message: 'Please select availability!' }]}>
                             <Radio.Group>
                               <Radio value={false}>{t('content.activate')}</Radio>
                               <Radio value={true}>{t('content.deactivate')}</Radio>
