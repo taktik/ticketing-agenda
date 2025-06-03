@@ -43,7 +43,33 @@ export const userApiRtk = createApi({
       },
       invalidatesTags: (res) => (res ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
+    createUpdateUser: builder.mutation<User | undefined, User>({
+      async queryFn(user, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async (): Promise<User> => {
+          const updatedUser = !!user.rev ? await userApi?.modifyUser(user) : await userApi?.createUser(user)
+          if (!updatedUser) {
+            throw new Error('User creation/update failed')
+          }
+          return updatedUser
+        })
+      },
+      invalidatesTags: () => [{ type: UserTags.User, id: 'all' }],
+    }),
+    deleteUser: builder.mutation<string | undefined, User>({
+      async queryFn(user, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async () => {
+          const result = await userApi?.deleteUser(user)
+          if (!result) {
+            throw new Error('User deletion failed')
+          }
+          return result.id
+        })
+      },
+      invalidatesTags: () => [{ type: UserTags.User, id: 'all' }],
+    }),
   }),
 })
 
-export const { useGetUsersQuery, useCreateUserMutation } = userApiRtk
+export const { useGetUsersQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation } = userApiRtk

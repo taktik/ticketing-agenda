@@ -113,7 +113,9 @@
     "unit_minutes": "Minuut(en)",
     "unit_hours": "Uur/Uren",
     "unit_days": "Dag(en)",
-    "unit_weeks": "Week/Weken"
+    "unit_weeks": "Week/Weken",
+    "your_profile": "Uw profiel",
+    "manage_users": "Gebruikers beheren"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -163,7 +165,16 @@
     "rule_save_failed": "We konden de regel niet opslaan!",
     "rule_save_error": "Er is een fout opgetreden bij het opslaan van de regel.",
     "rule_delete_failed": "We konden de regel niet verwijderen!",
-    "rule_delete_error": "Er is een fout opgetreden bij het verwijderen van de regel."
+    "rule_delete_error": "Er is een fout opgetreden bij het verwijderen van de regel.",
+    "user_modified": "De gebruiker is gewijzigd!",
+    "user_modify_failed": "We konden de gebruiker niet wijzigen!",
+    "user_modify_error": "Er is een fout opgetreden bij het wijzigen van de gebruiker.",
+    "user_deleted": "De gebruiker is verwijderd!",
+    "user_saved": "De gebruiker is opgeslagen!",
+    "user_save_failed": "We konden de gebruiker niet opslaan!",
+    "user_save_error": "Er is een fout opgetreden bij het opslaan van de gebruiker.",
+    "user_delete_failed": "We konden de gebruiker niet verwijderen!",
+    "user_delete_error": "Er is een fout opgetreden bij het verwijderen van de gebruiker."
   },
   "rrule": {
     "every": "Elke",

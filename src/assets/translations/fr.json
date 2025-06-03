@@ -113,7 +113,9 @@
     "unit_minutes": "Minute(s)",
     "unit_hours": "Heure(s)",
     "unit_days": "Jour(s)",
-    "unit_weeks": "Semaine(s)"
+    "unit_weeks": "Semaine(s)",
+    "your_profile": "Votre profil",
+    "manage_users": "Gérer les utilisateurs"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -163,7 +165,16 @@
     "rule_save_failed": "Nous n'avons pas pu enregistrer la règle !",
     "rule_save_error": "Une erreur s'est produite lors de l'enregistrement de la règle.",
     "rule_delete_failed": "Nous n'avons pas pu supprimer la règle !",
-    "rule_delete_error": "Une erreur s'est produite lors de la suppression de la règle."
+    "rule_delete_error": "Une erreur s'est produite lors de la suppression de la règle.",
+    "user_modified": "L'utilisateur a été modifié !",
+    "user_modify_failed": "Nous n'avons pas pu modifier l'utilisateur !",
+    "user_modify_error": "Une erreur s'est produite lors de la modification de l'utilisateur.",
+    "user_deleted": "L'utilisateur a été supprimé !",
+    "user_saved": "L'utilisateur a été enregistré !",
+    "user_save_failed": "Nous n'avons pas pu enregistrer l'utilisateur !",
+    "user_save_error": "Une erreur s'est produite lors de l'enregistrement de l'utilisateur.",
+    "user_delete_failed": "Nous n'avons pas pu supprimer l'utilisateur !",
+    "user_delete_error": "Une erreur s'est produite lors de la suppression de l'utilisateur."
   },
   "rrule": {
     "every": "Tout(es) les",

@@ -299,15 +299,9 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
   }
 
   try {
-    const api = await CardinalSdk.initialize(
-      undefined,
-      NIGHTLY_ICURE_CLOUD_URL,
-      new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token),
-      StorageFacade.usingBrowserLocalStorage(),
-      {
-        useHierarchicalDataOwners: false,
-      },
-    )
+    const api = await CardinalSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
+      useHierarchicalDataOwners: false,
+    })
 
     const user = await api.user.getCurrentUser()
 
@@ -410,15 +404,5 @@ export const cardinalApiRtk = createSlice({
   },
 })
 
-export const {
-  setNewlyCreatedRecoveryKey,
-  askForRecoveryKey,
-  provideRecoveryKey,
-  markRecoveryKeyAsLost,
-  setRegistrationInformation,
-  setToken,
-  setEmail,
-  resetCredentials,
-  setLoginProcessStarted,
-  setWaitingForToken,
-} = cardinalApiRtk.actions
+export const { setNewlyCreatedRecoveryKey, askForRecoveryKey, provideRecoveryKey, markRecoveryKeyAsLost, setRegistrationInformation, setToken, setEmail, resetCredentials, setLoginProcessStarted, setWaitingForToken } =
+  cardinalApiRtk.actions

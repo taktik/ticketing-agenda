@@ -509,14 +509,14 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   title={t('content.visibility')}
                   dataIndex="isPublic"
                   key="isPublic"
-                  width="50%"
+                  width="25%"
                   render={(currentValue: string | undefined, record: ProcedureRow) => {
                     const editable = isEditing(record)
 
                     if (editable) {
                       return (
                         <Form.Item name="isPublic" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select privacy mode!' }]}>
-                          <Radio.Group>
+                          <Radio.Group className="radio-group">
                             <Radio value={'true'}>{t('content.public')}</Radio>
                             <Radio value={'false'}>{t('content.private')}</Radio>
                           </Radio.Group>

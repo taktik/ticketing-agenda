@@ -53,7 +53,7 @@ export const healthcarePartyApiRtk = createApi({
       async queryFn(_, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
         return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
-          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byName('Mouscron')), 1000)
+          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byTag('root-hcp')), 1000)
         })
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
@@ -100,6 +100,22 @@ export const healthcarePartyApiRtk = createApi({
         { type: HealthcarePartyTags.HealthcareParty, id },
       ],
     }),
+    unDeleteHealthcareParty: builder.mutation<string | undefined, HealthcareParty>({
+      async queryFn(hcp, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async () => {
+          const result = await hcpApi?.undeleteHealthcareParty(hcp)
+          if (!result) {
+            throw new Error('HealthcareParty can’t be recovered')
+          }
+          return result.id
+        })
+      },
+      invalidatesTags: (id) => [
+        { type: HealthcarePartyTags.HealthcareParty, id: 'all' },
+        { type: HealthcarePartyTags.HealthcareParty, id },
+      ],
+    }),
   }),
 })
 
@@ -111,6 +127,7 @@ export const {
   useGetHealthcarePartyQuery,
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
+  useUnDeleteHealthcarePartyMutation,
 } = healthcarePartyApiRtk
 
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {

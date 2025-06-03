@@ -43,9 +43,7 @@ export default function RegisterPage() {
       </div>
       <SignupForm
         state={loginProcessStarted ? 'loading' : waitingForToken ? 'waitingForToken' : 'initialised'}
-        submitEmailForTokenRequest={(firstName: string, lastName: string, email: string, captchaToken: Solution) =>
-          startAuthenticationProcessWithEmailAndCaptchaToken(firstName, lastName, email, captchaToken)
-        }
+        submitEmailForTokenRequest={(firstName: string, lastName: string, email: string, captchaToken: Solution) => startAuthenticationProcessWithEmailAndCaptchaToken(firstName, lastName, email, captchaToken)}
         submitEmailAndValidationTokenForAuthentication={(_email: string, validationCode: string) => completeAuthenticationProcessWithEmailAndValidationCode(_email, validationCode)}
       />
     </div>

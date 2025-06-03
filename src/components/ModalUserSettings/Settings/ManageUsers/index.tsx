@@ -1,20 +1,23 @@
-import { HealthcareParty, User } from '@icure/cardinal-sdk'
-import { Button, Empty, Form, Input, Space, Table, message, notification } from 'antd'
+import { CodeStub, HealthcareParty, User } from '@icure/cardinal-sdk'
+import { Button, Empty, Form, Input, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery } from '../../../../core/api/healthcarePartyApi'
-import { useCreateUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
+import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery } from '../../../../core/api/healthcarePartyApi'
+import { useCreateUpdateUserMutation, useCreateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+import { ExclamationCircleOutlined } from '@ant-design/icons'
 
 interface UserRow {
   rowId: string
-  firstName: string
-  lastName: string
-  email: string
+  user: User | undefined
+  hcp: HealthcareParty | undefined
+  firstName: string | undefined
+  lastName: string | undefined
+  email: string | undefined
 }
 
 interface FormValues {
@@ -29,7 +32,7 @@ interface ManagerUsersProps {
 }
 
 export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): ReactElement => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [tableRows, setTableRows] = useState<UserRow[]>([])
   const [showDeleteUserModal, setShowDeleteUserModal] = useState<boolean>(false)
   const [userRowToBeDeleted, setUserRowToBeDeleted] = useState<UserRow | undefined>(undefined)
@@ -37,8 +40,11 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
   const isEditing = useMemo(() => (record: UserRow) => record.rowId === editingKey, [editingKey])
   const [form] = Form.useForm<FormValues>()
 
-  const [createUser, { isError: isUserError, isSuccess: isUserSuccess, isLoading: isUserLoading }] = useCreateUserMutation()
-  const [createUpdateHcp, { isError: isHcpError, isSuccess: isHcpSuccessfull, isLoading: isHcpLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
+  const [createUpdateHcp, { isError: isCreateUpdateHcpError, isSuccess: isCreateUpdateHcpSuccess, isLoading: isCreateUpdateHcpLoading }] = useCreateUpdateHealthcarePartyMutation()
+
+  const [deleteUser, { isError: isDeleteUserError, isSuccess: isDeleteUserSuccess, isLoading: isDeleteUserLoading }] = useDeleteUserMutation()
+  const [deleteHcp, { isError: isDeleteHcpError, isSuccess: isDeleteHcpSuccess, isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
 
   const { data: users } = useGetUsersQuery(undefined)
   const usersHcpIds = useMemo(() => {
@@ -64,11 +70,15 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
 
   useEffect(() => {
     const tableRowsList: UserRow[] = mergedList.map((pair) => {
+      const user = pair[0]
+      const hcp = pair[1]
       return {
         rowId: v4(),
-        firstName: pair[1].firstName,
-        lastName: pair[1].lastName,
-        email: pair[0].email,
+        user: user,
+        hcp: hcp,
+        firstName: hcp.firstName,
+        lastName: hcp.lastName,
+        email: user.email,
       } as UserRow
     })
 
@@ -104,13 +114,27 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
     setTimeout(messageApi.destroy, 2500)
   }
 
+  // User create/update notifications
+  useEffect(() => {
+    if (isCreateUpdateUserSuccess && isCreateUpdateHcpSuccess) showMessageFeedback('success', t('notification.user_saved'))
+    if (isCreateUpdateUserError || isCreateUpdateHcpError) openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
+  }, [isCreateUpdateUserSuccess, isCreateUpdateHcpSuccess, isCreateUpdateHcpError, isCreateUpdateUserError])
+
+  // User delete notifications
+  useEffect(() => {
+    if (isDeleteUserSuccess && isDeleteHcpSuccess) showMessageFeedback('success', t('notification.user_deleted'))
+    if (isDeleteUserError || isDeleteHcpError) openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
+  }, [isDeleteUserSuccess, isDeleteHcpSuccess, isDeleteHcpError, isDeleteUserError])
+
   const addUser = () => {
     try {
       const newUser: UserRow = {
         rowId: v4(),
-        firstName: t('content.firstname'),
-        lastName: t('content.lastname'),
-        email: t('content.email'),
+        user: undefined,
+        hcp: undefined,
+        firstName: undefined,
+        lastName: undefined,
+        email: undefined,
       }
       setTableRows((prev) => [...prev, newUser])
     } catch (error) {
@@ -120,11 +144,41 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
 
   const tableRowDelete = () => {}
 
-  const tableRowUpdate = (record: UserRow) => {}
+  const tableRowUpdate = (record: UserRow) => {
+    try {
+      if (record.user?.rev) {
+      } else {
+        const hcpId = v4()
+        const newHcp = new HealthcareParty({ id: hcpId, firstName: record.firstName, lastName: record.lastName, name: record.lastName })
+        const newUser = new User({ id: v4(), email: record.email, name: record.lastName, login: record.email, healthcarePartyId: hcpId })
+      }
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } finally {
+      setEditingKey('')
+    }
+  }
 
-  const tableRowCancel = (record: UserRow) => {}
+  const tableRowCancel = (record: UserRow) => {
+    setEditingKey('')
+  }
 
-  const tableRowEdit = (record: UserRow) => {}
+  const tableRowEdit = (record: UserRow) => {
+    try {
+      if (!record.rowId) throw new Error('No user selected')
+      console.log('user', record.user)
+      console.log('hcp', record.hcp)
+      // Set the state with the values
+      form.setFieldsValue({
+        firstName: record.firstName,
+        lastName: record.lastName,
+        email: record.email,
+      })
+      setEditingKey(record.rowId)
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    }
+  }
 
   return (
     <div className="root">
@@ -155,8 +209,8 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                 dataIndex="firstName"
                 key="firstName"
                 width="15%"
-                sorter={(a, b) => a.firstName.localeCompare(b.firstName)}
-                render={(currentValue: string, record: UserRow) => {
+                sorter={(a, b) => (a.firstName ?? '').localeCompare(b.firstName ?? '')}
+                render={(currentValue: string | undefined, record: UserRow) => {
                   const editable = isEditing(record)
                   if (editable) {
                     return (
@@ -167,7 +221,13 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                       </>
                     )
                   } else {
-                    return currentValue
+                    return currentValue ? (
+                      currentValue
+                    ) : (
+                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                        {t('content.not_set')}
+                      </Tag>
+                    )
                   }
                 }}
               />
@@ -176,8 +236,8 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                 dataIndex="lastName"
                 key="lastName"
                 width="15%"
-                sorter={(a, b) => a.lastName.localeCompare(b.lastName)}
-                render={(currentValue: string, record: UserRow) => {
+                sorter={(a, b) => (a.lastName ?? '').localeCompare(b.lastName ?? '')}
+                render={(currentValue: string | undefined, record: UserRow) => {
                   const editable = isEditing(record)
                   if (editable) {
                     return (
@@ -188,7 +248,13 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                       </>
                     )
                   } else {
-                    return currentValue
+                    return currentValue ? (
+                      currentValue
+                    ) : (
+                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                        {t('content.not_set')}
+                      </Tag>
+                    )
                   }
                 }}
               />
@@ -197,8 +263,8 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                 dataIndex="email"
                 key="email"
                 width="20%"
-                sorter={(a, b) => a.email.localeCompare(b.email)}
-                render={(currentValue: string, record: UserRow) => {
+                sorter={(a, b) => (a.email ?? '').localeCompare(b.email ?? '')}
+                render={(currentValue: string | undefined, record: UserRow) => {
                   const editable = isEditing(record)
                   if (editable) {
                     return (
@@ -209,7 +275,13 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                       </>
                     )
                   } else {
-                    return currentValue
+                    return currentValue ? (
+                      currentValue
+                    ) : (
+                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                        {t('content.not_set')}
+                      </Tag>
+                    )
                   }
                 }}
               />
@@ -224,12 +296,18 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                     return (
                       <>
                         <Form.Item name="email" style={{ margin: 0 }} rules={[{ required: true, message: t('content.procedure_name_required') }]}>
-                          <Input autoFocus />
+                          <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                            {t('content.not_set')}
+                          </Tag>
                         </Form.Item>
                       </>
                     )
                   } else {
-                    return currentValue
+                    return (
+                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                        {t('content.not_set')}
+                      </Tag>
+                    )
                   }
                 }}
               />

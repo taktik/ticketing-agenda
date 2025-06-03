@@ -1020,8 +1020,8 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
                       if (editable) {
                         return (
-                          <Form.Item name="publicTimeTableItem" style={{ display: 'flex', flexDirection: 'column', margin: 0 }} rules={[{ required: true, message: 'Please select availability!' }]}>
-                            <Radio.Group>
+                          <Form.Item name="publicTimeTableItem" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select availability!' }]}>
+                            <Radio.Group className="radio-group">
                               <Radio value={false}>{t('content.activate')}</Radio>
                               <Radio value={true}>{t('content.deactivate')}</Radio>
                             </Radio.Group>

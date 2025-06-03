@@ -113,7 +113,9 @@
     "unit_minutes": "Minute(s)",
     "unit_hours": "Hour(s)",
     "unit_days": "Day(s)",
-    "unit_weeks": "Week(s)"
+    "unit_weeks": "Week(s)",
+    "your_profile": "Your profile",
+    "manage_users": "Manage users"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -163,7 +165,16 @@
     "rule_save_failed": "We could not save the rule!",
     "rule_save_error": "An error occurred while saving the rule.",
     "rule_delete_failed": "We could not delete the rule!",
-    "rule_delete_error": "An error occurred while deleting the rule."
+    "rule_delete_error": "An error occurred while deleting the rule.",
+    "user_modified": "The user was modified!",
+    "user_modify_failed": "We could not modify the user!",
+    "user_modify_error": "An error occurred while modifying the user.",
+    "user_deleted": "The user was deleted!",
+    "user_saved": "The user was saved!",
+    "user_save_failed": "We could not save the user!",
+    "user_save_error": "An error occurred while saving the user.",
+    "user_delete_failed": "We could not delete the user!",
+    "user_delete_error": "An error occurred while deleting the user."
   },
   "rrule": {
     "every": "Every",

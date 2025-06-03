@@ -11,6 +11,7 @@ import '../ModalUserSettings/index.css'
 import { AccountSetting } from './Settings/AccountSetting'
 import { ProfileOutlined, UsergroupAddOutlined } from '@ant-design/icons'
 import { ManagerUsers } from './Settings/ManageUsers'
+import { useTranslation } from 'react-i18next'
 
 interface ModalSettingsProps {
   isVisible: boolean
@@ -20,13 +21,15 @@ interface ModalSettingsProps {
 
 type MenuItem = Required<MenuProps>['items'][number]
 
-const items: MenuItem[] = [
-  { key: 'profil', icon: <ProfileOutlined />, label: 'Votre profil' },
-  { key: 'manageUsers', icon: <UsergroupAddOutlined />, label: 'Gérer les utilisateurs' },
-]
-
 export const ModalSettings = ({ isVisible, onClose, currentUser }: ModalSettingsProps): ReactElement => {
   const [selectedKey, setSelectedKey] = useState<string>('profil')
+
+  const { t } = useTranslation()
+
+  const items: MenuItem[] = [
+    { key: 'profil', icon: <ProfileOutlined />, label: t('content.your_profile') },
+    { key: 'manageUsers', icon: <UsergroupAddOutlined />, label: t('content.manage_users') },
+  ]
 
   const onClick: MenuProps['onClick'] = ({ key }) => {
     setSelectedKey(key)
