@@ -6,7 +6,7 @@ import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery } from '../../../../core/api/healthcarePartyApi'
+import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery, useUnDeleteHealthcarePartyMutation } from '../../../../core/api/healthcarePartyApi'
 import { useCreateUpdateUserMutation, useCreateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
@@ -45,6 +45,9 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
 
   const [deleteUser, { isError: isDeleteUserError, isSuccess: isDeleteUserSuccess, isLoading: isDeleteUserLoading }] = useDeleteUserMutation()
   const [deleteHcp, { isError: isDeleteHcpError, isSuccess: isDeleteHcpSuccess, isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
+  const [deleteSilentHcp] = useDeleteHealthcarePartyMutation()
+
+  const [unDeleteHcp] = useUnDeleteHealthcarePartyMutation()
 
   const { data: users } = useGetUsersQuery(undefined)
   const usersHcpIds = useMemo(() => {
@@ -126,36 +129,114 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
     if (isDeleteUserError || isDeleteHcpError) openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
   }, [isDeleteUserSuccess, isDeleteHcpSuccess, isDeleteHcpError, isDeleteUserError])
 
-  const addUser = () => {
+  const addUser = async () => {
+    const hcpId = v4()
+    const newHcp = new HealthcareParty({ id: hcpId, firstName: undefined, lastName: undefined, name: undefined })
+    const newUser = new User({ id: v4(), email: undefined, name: undefined, healthcarePartyId: hcpId })
+
+    const newUserRow: UserRow = {
+      rowId: v4(),
+      user: newUser,
+      hcp: newHcp,
+      firstName: undefined,
+      lastName: undefined,
+      email: undefined,
+    }
+
+    setTableRows((prev) => [...prev, newUserRow])
+  }
+
+  const tableRowDelete = async () => {
     try {
-      const newUser: UserRow = {
-        rowId: v4(),
-        user: undefined,
-        hcp: undefined,
-        firstName: undefined,
-        lastName: undefined,
-        email: undefined,
+      if (!userRowToBeDeleted?.hcp || !userRowToBeDeleted.user) throw new Error('No user selected')
+      // Step 1: Delete HealthcareParty
+      const deletedHcpResult = await deleteHcp(userRowToBeDeleted.hcp).unwrap()
+      try {
+        // Step 2: If HCP deletion was successful, try to create User
+        const createdUserResult = await deleteUser(userRowToBeDeleted.user).unwrap()
+      } catch (userError) {
+        // User deletion failed, but HCP was deleted. This is where rollback is needed.
+        console.error('Failed to delete user:', userError)
+
+        // Attempt to roll back the HCP creation
+        if (deletedHcpResult) {
+          console.warn(`Attempting to roll back HCP deletion for ID: ${deletedHcpResult}`)
+          try {
+            await unDeleteHcp(userRowToBeDeleted.hcp).unwrap()
+          } catch (rollbackError) {
+            console.error(`Failed to roll back HCP deletion (ID: ${deletedHcpResult}):`, rollbackError)
+          }
+        }
       }
-      setTableRows((prev) => [...prev, newUser])
-    } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } catch (hcpError) {
+      // HealthcareParty deletion failed, so User deletion was not attempted.
+      console.error('Failed to delete HealthcareParty:', hcpError)
     }
   }
 
-  const tableRowDelete = () => {}
-
-  const tableRowUpdate = (record: UserRow) => {
+  const createUser = async (record: UserRow) => {
     try {
-      if (record.user?.rev) {
-      } else {
-        const hcpId = v4()
-        const newHcp = new HealthcareParty({ id: hcpId, firstName: record.firstName, lastName: record.lastName, name: record.lastName })
-        const newUser = new User({ id: v4(), email: record.email, name: record.lastName, login: record.email, healthcarePartyId: hcpId })
+      console.log('CREATE')
+
+      if (!record.hcp || !record.user) throw new Error('No user selected')
+      const rowValues = await form.validateFields()
+
+      // Step 1: Create HealthcareParty
+      const updatedHcpResult = await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
+      try {
+        // Step 2: If HCP creation was successful, try to create User
+        const updatedUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
+        setEditingKey('')
+      } catch (userError) {
+        // User creation failed, but HCP was created. This is where rollback is needed.
+        console.error('Failed to create user:', userError, userError)
+
+        // Attempt to roll back the HCP creation
+        if (updatedHcpResult && updatedHcpResult.id) {
+          console.warn(`Attempting to roll back HCP creation for ID: ${updatedHcpResult.id}`)
+          try {
+            await deleteSilentHcp(updatedHcpResult).unwrap()
+          } catch (rollbackError) {
+            console.error(`Failed to roll back HCP creation (ID: ${updatedHcpResult.id}):`, rollbackError)
+          }
+        }
       }
-    } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-    } finally {
-      setEditingKey('')
+    } catch (hcpError) {
+      // HealthcareParty creation failed, so User creation was not attempted.
+      console.error('Failed to create HealthcareParty:', hcpError)
+    }
+  }
+
+  const updateUser = async (record: UserRow) => {
+    try {
+      console.log('UPDATE')
+      if (!record.hcp || !record.user) throw new Error('No user selected')
+      const rowValues = await form.validateFields()
+      // Step 1: Update HealthcareParty
+      const createdHcpResult = await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
+      try {
+        // Step 2: If HCP update was successful, try to update User
+        const createdUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
+        setEditingKey('')
+      } catch (userError) {
+        // User creation failed, but HCP was created.
+        console.error('Failed to create user:', userError)
+      }
+    } catch (hcpError) {
+      // HealthcareParty creation failed, so User update was not attempted.
+      console.error('Failed to create HealthcareParty:', hcpError)
+    }
+  }
+
+  const tableRowUpdate = async (record: UserRow) => {
+    if (!record.hcp || !record.user) throw new Error('No user selected')
+    else if (!record.hcp.rev && !record.hcp.rev) {
+      createUser(record)
+    } else if (record.hcp.rev && record.user.rev) {
+      updateUser(record)
+    } else {
+      console.error('Failed to create/update user, missing user or hcp')
+      openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
     }
   }
 
@@ -166,8 +247,6 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
   const tableRowEdit = (record: UserRow) => {
     try {
       if (!record.rowId) throw new Error('No user selected')
-      console.log('user', record.user)
-      console.log('hcp', record.hcp)
       // Set the state with the values
       form.setFieldsValue({
         firstName: record.firstName,
@@ -215,7 +294,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                   if (editable) {
                     return (
                       <>
-                        <Form.Item name="firstName" style={{ margin: 0 }} rules={[{ required: true, message: t('content.procedure_name_required') }]}>
+                        <Form.Item name="firstName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('content.firstname_required') }]}>
                           <Input autoFocus />
                         </Form.Item>
                       </>
@@ -242,7 +321,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                   if (editable) {
                     return (
                       <>
-                        <Form.Item name="lastName" style={{ margin: 0 }} rules={[{ required: true, message: t('content.procedure_name_required') }]}>
+                        <Form.Item name="lastName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('content.lastname_required') }]}>
                           <Input autoFocus />
                         </Form.Item>
                       </>
@@ -269,7 +348,14 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                   if (editable) {
                     return (
                       <>
-                        <Form.Item name="email" style={{ margin: 0 }} rules={[{ required: true, message: t('content.procedure_name_required') }]}>
+                        <Form.Item
+                          name="email"
+                          style={{ margin: 0, padding: '6px 0 12px 0' }}
+                          rules={[
+                            { required: true, message: t('content.email_required') },
+                            { type: 'email', message: t('content.invalid_email') },
+                          ]}
+                        >
                           <Input autoFocus />
                         </Form.Item>
                       </>

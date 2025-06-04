@@ -41,7 +41,7 @@ export const userApiRtk = createApi({
           return new User(createdUser)
         })
       },
-      invalidatesTags: (res) => (res ? [{ type: UserTags.User, id: 'all' }] : []),
+      invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
     createUpdateUser: builder.mutation<User | undefined, User>({
       async queryFn(user, { getState }) {
@@ -54,7 +54,7 @@ export const userApiRtk = createApi({
           return updatedUser
         })
       },
-      invalidatesTags: () => [{ type: UserTags.User, id: 'all' }],
+      invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
     deleteUser: builder.mutation<string | undefined, User>({
       async queryFn(user, { getState }) {
@@ -67,7 +67,7 @@ export const userApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: () => [{ type: UserTags.User, id: 'all' }],
+      invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
   }),
 })

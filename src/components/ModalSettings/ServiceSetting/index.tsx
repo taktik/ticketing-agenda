@@ -216,8 +216,8 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       // 3. Execute all collected mutations
       try {
         await Promise.allSettled(mutationPromises) // Use allSettled to attempt all operations
-      } catch (e) {
-        console.error('Error during sync/mutation execution:', e)
+      } catch (error) {
+        console.error('Error during sync/mutation execution:', error)
         openNotification('error', 'Update Failed', 'Some operations may have failed.')
       }
     } catch (error) {
