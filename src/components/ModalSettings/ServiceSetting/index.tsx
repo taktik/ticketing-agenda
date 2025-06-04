@@ -61,9 +61,9 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
 
-  const { data: agenda } = useGetAgendaByAuthorId({ skip: !service, authorId: service?.id ?? '' })
+  const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !service, authorId: service?.id ?? '' })
 
-  const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
 
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
@@ -98,11 +98,17 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   }, [proceduresList])
 
   const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateHealthcarePartyMutation()
-  const [createUpdateProcedure, { data: createdUpdatedCalendarItemTypeData, isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading }] =
-    useCreateUpdateCalendarItemTypeMutation()
+  const [createUpdateProcedure, { isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading }] = useCreateUpdateCalendarItemTypeMutation()
 
   const [deleteProcedure, { isError: isDeleteDemarcheError, isSuccess: isDeleteDemarcheSuccess, isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypeMutation()
   const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading, isSuccess: isDeleteServiceSuccess, error: isDeleteServiceError } = useRecursiveHcpDeletion()
+
+  const isFetching = useMemo(() => isAgendaLoading || isProceduresLoading, [isAgendaLoading, isProceduresLoading])
+  const isMutating = useMemo(
+    () => isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading || isDeleteServiceLoading,
+    [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading, isDeleteServiceLoading],
+  )
+  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   const handleSubmit = () => {
     try {
@@ -376,6 +382,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               dataSource={tableRows}
               rowKey="rowId"
               locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}
+              loading={isLoading}
             >
               <ColumnGroup
                 title={

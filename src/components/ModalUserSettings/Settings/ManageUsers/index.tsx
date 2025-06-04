@@ -1,4 +1,5 @@
-import { CodeStub, HealthcareParty, User } from '@icure/cardinal-sdk'
+import { ExclamationCircleOutlined } from '@ant-design/icons'
+import { HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
@@ -6,10 +7,15 @@ import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByIdsQuery, useUnDeleteHealthcarePartyMutation } from '../../../../core/api/healthcarePartyApi'
-import { useCreateUpdateUserMutation, useCreateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
+import {
+  useCreateUpdateHealthcarePartyMutation,
+  useDeleteHealthcarePartyMutation,
+  useGetHealthcarePartiesByIdsQuery,
+  useSilentDeleteHealthcarePartyMutation,
+  useSilentUnDeleteHealthcarePartyMutation,
+} from '../../../../core/api/healthcarePartyApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
-import { ExclamationCircleOutlined } from '@ant-design/icons'
 
 interface UserRow {
   rowId: string
@@ -31,7 +37,7 @@ interface ManagerUsersProps {
   currentUser?: HealthcareParty
 }
 
-export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): ReactElement => {
+export const ManagerUsers = (): ReactElement => {
   const { t } = useTranslation()
   const [tableRows, setTableRows] = useState<UserRow[]>([])
   const [showDeleteUserModal, setShowDeleteUserModal] = useState<boolean>(false)
@@ -45,17 +51,24 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
 
   const [deleteUser, { isError: isDeleteUserError, isSuccess: isDeleteUserSuccess, isLoading: isDeleteUserLoading }] = useDeleteUserMutation()
   const [deleteHcp, { isError: isDeleteHcpError, isSuccess: isDeleteHcpSuccess, isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
-  const [deleteSilentHcp] = useDeleteHealthcarePartyMutation()
 
-  const [unDeleteHcp] = useUnDeleteHealthcarePartyMutation()
+  const [deleteSilentHcp, { isLoading: isSilentDeleteHcpLading }] = useSilentDeleteHealthcarePartyMutation()
+  const [unDeleteHcp, { isLoading: isSilentUndeleteHcpLoading }] = useSilentUnDeleteHealthcarePartyMutation()
 
-  const { data: users } = useGetUsersQuery(undefined)
+  const { data: users, isLoading: isUsersLoading } = useGetUsersQuery(undefined)
   const usersHcpIds = useMemo(() => {
     if (!users) return []
     return users.map((user) => user.healthcarePartyId).filter((id): id is string => id !== undefined)
   }, [users])
 
-  const { data: hcps } = useGetHealthcarePartiesByIdsQuery(usersHcpIds)
+  const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds)
+
+  const isFetching = useMemo(() => isUsersLoading || isHcpsLoading, [isUsersLoading, isHcpsLoading])
+  const isMutating = useMemo(
+    () => isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLading || isSilentUndeleteHcpLoading,
+    [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLading, isSilentUndeleteHcpLoading],
+  )
+  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   const mergedList = useMemo(() => {
     if (!users || !hcps) return []
@@ -120,14 +133,12 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
   // User create/update notifications
   useEffect(() => {
     if (isCreateUpdateUserSuccess && isCreateUpdateHcpSuccess) showMessageFeedback('success', t('notification.user_saved'))
-    if (isCreateUpdateUserError || isCreateUpdateHcpError) openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
-  }, [isCreateUpdateUserSuccess, isCreateUpdateHcpSuccess, isCreateUpdateHcpError, isCreateUpdateUserError])
+  }, [isCreateUpdateUserSuccess, isCreateUpdateHcpSuccess])
 
   // User delete notifications
   useEffect(() => {
     if (isDeleteUserSuccess && isDeleteHcpSuccess) showMessageFeedback('success', t('notification.user_deleted'))
-    if (isDeleteUserError || isDeleteHcpError) openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
-  }, [isDeleteUserSuccess, isDeleteHcpSuccess, isDeleteHcpError, isDeleteUserError])
+  }, [isDeleteUserSuccess, isDeleteHcpSuccess])
 
   const addUser = async () => {
     const hcpId = v4()
@@ -157,6 +168,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
       } catch (userError) {
         // User deletion failed, but HCP was deleted. This is where rollback is needed.
         console.error('Failed to delete user:', userError)
+        openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
 
         // Attempt to roll back the HCP creation
         if (deletedHcpResult) {
@@ -171,6 +183,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
     } catch (hcpError) {
       // HealthcareParty deletion failed, so User deletion was not attempted.
       console.error('Failed to delete HealthcareParty:', hcpError)
+      openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
     }
   }
 
@@ -186,10 +199,11 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
       try {
         // Step 2: If HCP creation was successful, try to create User
         const updatedUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
-        setEditingKey('')
+        //setEditingKey('')
       } catch (userError) {
         // User creation failed, but HCP was created. This is where rollback is needed.
-        console.error('Failed to create user:', userError, userError)
+        console.error('Failed to create user:', userError)
+        openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
 
         // Attempt to roll back the HCP creation
         if (updatedHcpResult && updatedHcpResult.id) {
@@ -204,6 +218,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
     } catch (hcpError) {
       // HealthcareParty creation failed, so User creation was not attempted.
       console.error('Failed to create HealthcareParty:', hcpError)
+      openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
     }
   }
 
@@ -217,14 +232,16 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
       try {
         // Step 2: If HCP update was successful, try to update User
         const createdUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
-        setEditingKey('')
+        //setEditingKey('')
       } catch (userError) {
         // User creation failed, but HCP was created.
-        console.error('Failed to create user:', userError)
+        console.error('Failed to update user:', userError)
+        openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
       }
     } catch (hcpError) {
       // HealthcareParty creation failed, so User update was not attempted.
-      console.error('Failed to create HealthcareParty:', hcpError)
+      console.error('Failed to update HealthcareParty:', hcpError)
+      openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
     }
   }
 
@@ -275,6 +292,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
             dataSource={tableRows}
             rowKey="rowId"
             locale={{ emptyText: <Empty description={t('content.no_user_yet')} /> }}
+            loading={isLoading}
           >
             <ColumnGroup
               title={
@@ -381,7 +399,7 @@ export const ManagerUsers = ({ onClose, currentUser }: ManagerUsersProps): React
                   if (editable) {
                     return (
                       <>
-                        <Form.Item name="email" style={{ margin: 0 }} rules={[{ required: true, message: t('content.procedure_name_required') }]}>
+                        <Form.Item name="email" style={{ margin: 0 }}>
                           <Tag icon={<ExclamationCircleOutlined />} color="warning">
                             {t('content.not_set')}
                           </Tag>

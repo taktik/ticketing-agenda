@@ -21,7 +21,20 @@ export const userApiRtk = createApi({
           return await loadFromIterator(await userApi!.filterUsersBy(UserFilters.all()), 1000)
         })
       },
-      providesTags: (res) => (res ? [{ type: UserTags.User, id: 'all' }] : []),
+      providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
+    }),
+    getUserByEmail: builder.query<User | undefined, string>({
+      async queryFn(email, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async (): Promise<User> => {
+          const result = await userApi?.getUserByEmail(email)
+          if (!result) {
+            throw new Error('Cannot find user')
+          }
+          return result
+        })
+      },
+      providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
     createUser: builder.mutation<User | undefined, { email: string; id: string; name: string }>({
       async queryFn({ email, id, name }, { getState }) {
@@ -72,4 +85,4 @@ export const userApiRtk = createApi({
   }),
 })
 
-export const { useGetUsersQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation } = userApiRtk
+export const { useGetUsersQuery, useGetUserByEmailQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation } = userApiRtk

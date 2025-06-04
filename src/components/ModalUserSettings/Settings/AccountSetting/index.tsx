@@ -1,19 +1,21 @@
-import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType } from '@icure/cardinal-sdk'
+import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType, User } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Upload, UploadFile, UploadProps } from 'antd'
 import ImgCrop from 'antd-img-crop'
-import { ReactElement, useEffect, useState } from 'react'
+import { ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCreateOrUpdatePractitionerMutation } from '../../../../core/api/practitionerApi'
 import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileToBase64'
 import { SpinLoader } from '../../../common/SpinLoader'
 import './index.css'
+import { useCreateUpdateUserMutation, useGetUserByEmailQuery } from '../../../../core/api/userApi'
 
 interface AccountSettingProps {
-  onClose: () => void
   currentUser?: HealthcareParty
+  user?: User
 }
-export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): ReactElement => {
+export const AccountSetting = ({ currentUser, user }: AccountSettingProps): ReactElement => {
   const [form] = Form.useForm()
+  const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
   const [updatePractitioner, { isSuccess: isPractitionerUpdatedSuccessfully, isLoading: isPractitionerUpdatingLoading }] = useCreateOrUpdatePractitionerMutation()
   const { t } = useTranslation()
 
@@ -34,27 +36,13 @@ export const AccountSetting = ({ onClose, currentUser }: AccountSettingProps): R
   )
   const handleSubmit = (value: { firstName: string; lastName: string; emailAddress: string }) => {
     const { firstName, lastName, emailAddress } = value
-    const address = new DecryptedAddress({
-      addressType: AddressType.Home,
-      telecoms: [
-        new DecryptedTelecom({
-          telecomType: TelecomType.Email,
-          telecomNumber: emailAddress,
-        }),
-      ],
-    })
     const picture = patientPictureAsBase64 ?? currentUser?.picture
-    updatePractitioner(new HealthcareParty({ ...currentUser, firstName, lastName, addresses: [address], picture }))
+    updatePractitioner(new HealthcareParty({ ...currentUser, firstName, lastName, picture }))
+    createUpdateUser(new User({ ...user, email: emailAddress }))
     form.resetFields()
   }
 
-  useEffect(() => {
-    if (isPractitionerUpdatedSuccessfully) {
-      onClose()
-    }
-  }, [isPractitionerUpdatedSuccessfully])
-
-  const currentUserEmail = currentUser?.addresses[0].telecoms.find((item) => item.telecomType === TelecomType.Email)?.telecomNumber
+  const currentUserEmail = user?.email
 
   const fileUploaderProps: UploadProps = {
     listType: 'picture-card',

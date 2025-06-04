@@ -1,16 +1,17 @@
 import { CalendarItemType } from '@icure/cardinal-sdk'
-import { Button, Divider, Typography } from 'antd'
+import { Button, Divider, Spin, Typography } from 'antd'
 import React, { ReactElement, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
 
 interface ProcedureSelectorProps {
   procedures: CalendarItemType[]
+  isProceduresLoading: boolean
   selectedProcedure: CalendarItemType | undefined
   setSelectedProcedure: React.Dispatch<React.SetStateAction<CalendarItemType | undefined>>
 }
 
-export const ProcedureSelector = ({ procedures, selectedProcedure, setSelectedProcedure }: ProcedureSelectorProps): ReactElement => {
+export const ProcedureSelector = ({ procedures, isProceduresLoading, selectedProcedure, setSelectedProcedure }: ProcedureSelectorProps): ReactElement => {
   const { t } = useTranslation()
 
   const handleSelectDemarcheClick = useCallback(
@@ -31,31 +32,37 @@ export const ProcedureSelector = ({ procedures, selectedProcedure, setSelectedPr
 
       <Divider style={{ margin: 0 }} />
 
-      <div className="DemarchesContent">
-        {procedures.map((procedure) => {
-          const isSelected = selectedProcedure?.id === procedure.id
-          return (
-            <Button
-              key={procedure.id}
-              type={isSelected ? 'primary' : 'default'}
-              onClick={() => {
-                handleSelectDemarcheClick(procedure)
-              }}
-              style={{
-                whiteSpace: 'nowrap',
-                minWidth: '80px',
-                ...(isSelected && {
-                  backgroundColor: '#1890ff',
-                  color: 'white',
-                  borderColor: '#1890ff',
-                }),
-              }}
-            >
-              {procedure.name}
-            </Button>
-          )
-        })}
-      </div>
+      {isProceduresLoading ? (
+        <div className="selector-spin">
+          <Spin />
+        </div>
+      ) : (
+        <div className="DemarchesContent">
+          {procedures.map((procedure) => {
+            const isSelected = selectedProcedure?.id === procedure.id
+            return (
+              <Button
+                key={procedure.id}
+                type={isSelected ? 'primary' : 'default'}
+                onClick={() => {
+                  handleSelectDemarcheClick(procedure)
+                }}
+                style={{
+                  whiteSpace: 'nowrap',
+                  minWidth: '80px',
+                  ...(isSelected && {
+                    backgroundColor: '#1890ff',
+                    color: 'white',
+                    borderColor: '#1890ff',
+                  }),
+                }}
+              >
+                {procedure.name}
+              </Button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

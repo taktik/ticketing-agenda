@@ -10,7 +10,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { Calendar as AntCalendar, Button, Tooltip } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Header } from '../../components/common/Header'
@@ -22,9 +22,18 @@ import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import {
+  useDeleteHealthcarePartyMutation,
+  useGetHealthcarePartiesByIdsQuery,
+  useGetHealthcarePartiesByParentQuery,
+  useGetHealthcarePartiesQuery,
+  useGetRootHealthcareParty,
+  useSilentUnDeleteHealthcarePartyMutation,
+  useUnDeleteHealthcarePartyByIdMutation,
+} from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
+import { useCreateUpdateUserMutation, useGetUserByEmailQuery } from '../../core/api/userApi'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
@@ -35,18 +44,35 @@ export default function DashboardPage() {
   const skip = !user
   const { t, i18n } = useTranslation()
 
-  const { data: rootHcp } = useGetRootHealthcareParty({ skip: skip })
+  const { data: hcps } = useGetHealthcarePartiesByIdsQuery([user?.healthcarePartyId ?? '', 'd3927cfe-6a86-4dbe-a70c-12af9b8daa9e'])
+  const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
 
-  const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
+  useEffect(() => console.log('current user', user), [user])
+  useEffect(() => console.log('current hcp', hcps), [hcps])
+
+  const { data: rootHcp, isLoading: isRootHcpLoading } = useGetRootHealthcareParty({ skip: skip })
+
+  const { data: allHcps } = useGetHealthcarePartiesQuery(undefined, {
+    skip: !user,
+  })
+
+  useEffect(() => console.log('rootHcp', rootHcp), [rootHcp])
+  useEffect(() => console.log('allHcps', allHcps), [allHcps])
+
+  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
 
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
-  const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
+  const { data: services, isLoading: isServicesLoading } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
 
-  const { data: agenda } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
+  const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
 
-  const { data: procedures } = useGetCalendarItemTypesQuery({ skip: skip || !agenda || !selectedService, agendaId: agenda?.id ?? '' })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: skip || !agenda || !selectedService, agendaId: agenda?.id ?? '' })
+
+  const isSitesRelatedLoading = useMemo(() => isSitesLoading || isRootHcpLoading, [isSitesLoading, isRootHcpLoading])
+  const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
+  const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
 
   const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(procedures?.[0])
 
@@ -91,16 +117,27 @@ export default function DashboardPage() {
         <div className="svg-background" />
         <div className="LeftPanel">
           <div className="SiteSelectorRow">
-            <SiteSelector sites={sites ?? []} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
+            <SiteSelector sites={sites ?? []} isSitesLoading={isSitesRelatedLoading} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
             <Tooltip title={t('content.settings')}>
               <Button icon={<SettingOutlined />} onClick={() => setSettingsModalOpen(true)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
             </Tooltip>
+            <Button
+              onClick={() => {
+                console.log('clicked do things')
+                if (user) {
+                  console.log('user')
+                  createUpdateUser({ ...user, healthcarePartyId: 'd3927cfe-6a86-4dbe-a70c-12af9b8daa9e' })
+                }
+              }}
+            >
+              Do things
+            </Button>
           </div>
           <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', zIndex: '1' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
-          <ServiceSelector services={services ?? []} selectedService={selectedService} setSelectedService={setSelectedService} />
-          <ProcedureSelector procedures={procedures ?? []} selectedProcedure={selectedProcedure} setSelectedProcedure={setSelectedProcedure} />
+          <ServiceSelector services={services ?? []} isServicesLoading={isServicesRelatedLoading} selectedService={selectedService} setSelectedService={setSelectedService} />
+          <ProcedureSelector procedures={procedures ?? []} isProceduresLoading={isProceduresRelatedLoading} selectedProcedure={selectedProcedure} setSelectedProcedure={setSelectedProcedure} />
         </div>
         <div className="RightPanel">
           <FullCalendar

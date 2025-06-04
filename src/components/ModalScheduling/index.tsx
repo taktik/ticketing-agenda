@@ -38,8 +38,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const [timeTableToBeDelete, setTimeTableToBeDelete] = useState<TimeTable | undefined>(undefined)
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
 
-  const { data: agenda } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
-  const { data: timeTables } = useGetTimeTablesQuery({ skip: !agenda, agendaId: agenda?.id ?? '' })
+  const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
+  const { data: timeTables, isLoading: istimeTablesLoading } = useGetTimeTablesQuery({ skip: !agenda, agendaId: agenda?.id ?? '' })
 
   const sortedTimeTables = useMemo(() => {
     return [...(timeTables ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
@@ -47,6 +47,10 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
   const [deleteTimeTable, { isError: isDeleteTimeTableError, isSuccess: isDeleteTimeTableSuccess, isLoading: isDeleteTimeTableLoading }] = useDeleteTimeTableMutation()
   const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
+
+  const isFetching = useMemo(() => isAgendaLoading || istimeTablesLoading, [isAgendaLoading, istimeTablesLoading])
+  const isMutating = useMemo(() => isDeleteTimeTableLoading || isCreateUpdateTimeTableLoading, [isDeleteTimeTableLoading, isCreateUpdateTimeTableLoading])
+  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -171,6 +175,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             dataSource={sortedTimeTables}
             rowKey="id"
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
+            loading={isLoading}
           >
             <ColumnGroup
               title={

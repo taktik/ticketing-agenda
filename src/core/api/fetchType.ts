@@ -32,3 +32,9 @@ export type AllCalendarItemTypeServiceParameters = {
   skip: boolean
   agendaIds: string[]
 }
+
+export type UndeleteHcpByIdParameters = {
+  HcpId: string
+  rev: string
+  skip?: boolean
+}

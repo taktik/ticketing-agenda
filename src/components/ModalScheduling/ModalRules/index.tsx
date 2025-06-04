@@ -106,9 +106,19 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: TimeTableItemRow) => record.rowId === editingKey, [editingKey])
 
-  const { data: timeTable } = useGetTimeTableQuery(timeTableId ?? '')
+  const { data: timeTable, isLoading: isTimeTableLoading } = useGetTimeTableQuery(timeTableId ?? '')
 
-  const { data: procedures } = useGetCalendarItemTypesQuery({ skip: !timeTable || !agenda, agendaId: agenda?.id ?? '' })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: !timeTable || !agenda, agendaId: agenda?.id ?? '' })
+
+  const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
+
+  const [form] = Form.useForm<FormValues>()
+  const nameValue = Form.useWatch('name', form)
+  const initialName = useMemo(() => timeTable?.name || '', [timeTable])
+
+  const isFetching = useMemo(() => isProceduresLoading || isTimeTableLoading, [isProceduresLoading, isTimeTableLoading])
+  const isMutating = useMemo(() => isCreateUpdateTimeTableLoading, [isCreateUpdateTimeTableLoading])
+  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
@@ -223,12 +233,6 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
     { label: t('rrule.saturday_upper'), short: 'Sat', value: 'SA', rruleConst: RRule.SA },
     { label: t('rrule.sunday_upper'), short: 'Sun', value: 'SU', rruleConst: RRule.SU },
   ]
-
-  const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
-
-  const [form] = Form.useForm<FormValues>()
-  const nameValue = Form.useWatch('name', form)
-  const initialName = useMemo(() => timeTable?.name || '', [timeTable])
 
   useEffect(() => {
     // Fetch update the state and form values

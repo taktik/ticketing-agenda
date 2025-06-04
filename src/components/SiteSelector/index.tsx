@@ -6,11 +6,12 @@ import './index.css'
 
 interface SiteSelectorProps {
   sites: HealthcareParty[]
+  isSitesLoading: boolean
   selectedSite: HealthcareParty | undefined
   setSelectedSite: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
 }
 
-export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelectorProps): ReactElement => {
+export const SiteSelector = ({ sites, isSitesLoading, selectedSite, setSelectedSite }: SiteSelectorProps): ReactElement => {
   const { t } = useTranslation()
 
   const options = useMemo(
@@ -49,6 +50,7 @@ export const SiteSelector = ({ sites, selectedSite, setSelectedSite }: SiteSelec
             setSelectedSite(undefined)
           }
         }}
+        loading={isSitesLoading}
       />
     </div>
   )

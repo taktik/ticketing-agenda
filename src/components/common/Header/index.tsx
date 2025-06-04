@@ -102,7 +102,7 @@ export const Header = () => {
           <LanguageSelector />
         </div>
       </div>
-      {isModalManageAccountFormOpen && createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUser={practitioner} />, document.body)}
+      {isModalManageAccountFormOpen && createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUser={practitioner} user={user} />, document.body)}
     </>
   )
 }

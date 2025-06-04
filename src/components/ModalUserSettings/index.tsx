@@ -1,4 +1,4 @@
-import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType } from '@icure/cardinal-sdk'
+import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType, User } from '@icure/cardinal-sdk'
 import { Form, Input, Upload, UploadFile, UploadProps, Button, Col, Divider, Row, Typography, Menu, MenuProps } from 'antd'
 import ImgCrop from 'antd-img-crop'
 import React, { ReactElement, useCallback, useEffect, useState } from 'react'
@@ -17,11 +17,12 @@ interface ModalSettingsProps {
   isVisible: boolean
   onClose: () => void
   currentUser?: HealthcareParty
+  user?: User
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
 
-export const ModalSettings = ({ isVisible, onClose, currentUser }: ModalSettingsProps): ReactElement => {
+export const ModalSettings = ({ isVisible, onClose, currentUser, user }: ModalSettingsProps): ReactElement => {
   const [selectedKey, setSelectedKey] = useState<string>('profil')
 
   const { t } = useTranslation()
@@ -38,11 +39,11 @@ export const ModalSettings = ({ isVisible, onClose, currentUser }: ModalSettings
   const renderSetting = useCallback(() => {
     switch (selectedKey) {
       case 'profil':
-        return <AccountSetting currentUser={currentUser} onClose={onClose} />
+        return <AccountSetting currentUser={currentUser} user={user} />
       case 'manageUsers':
-        return <ManagerUsers currentUser={currentUser} onClose={onClose} />
+        return <ManagerUsers />
       default:
-        return <AccountSetting currentUser={currentUser} onClose={onClose} />
+        return <AccountSetting currentUser={currentUser} user={user} />
     }
   }, [selectedKey, currentUser])
 

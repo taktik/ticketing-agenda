@@ -132,4 +132,10 @@ body * {
   gap: 8px;
   padding: 16px;
 }
+.selector-spin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
 /*# sourceMappingURL=index.css.map */
