@@ -1,0 +1,65 @@
+@import '../../../style/less/index';
+
+.styled-button-rounded {
+  border-radius: 15px !important;
+}
+
+.styled-button-warning {
+  background-color: #faad14 !important;
+  border-color: #faad14 !important;
+  color: #fff !important;
+}
+.styled-button-warning:hover,
+.styled-button-warning:focus {
+  background-color: #ffc53d !important;
+  border-color: #ffc53d !important;
+  color: #fff !important;
+}
+
+.styled-button-success {
+  background-color: #52c41a !important;
+  border-color: #52c41a !important;
+  color: #fff !important;
+}
+.styled-button-success:hover,
+.styled-button-success:focus {
+  background-color: #73d13d !important;
+  border-color: #73d13d !important;
+  color: #fff !important;
+}
+
+.styled-button-no-border.ant-btn-text,
+.styled-button-no-border.ant-btn-link {
+  border: none !important;
+  box-shadow: none !important;
+}
+.styled-button-no-border.ant-btn-default,
+.styled-button-no-border.ant-btn-primary {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.styled-button-no-border.ant-btn-default:not(:disabled):hover,
+.styled-button-no-border.ant-btn-primary:not(:disabled):hover {
+  border-color: transparent !important;
+  background-color: #f0f0f0 !important;
+}
+.styled-button-no-border.ant-btn-primary:not(:disabled):hover {
+  background-color: #e6f7ff !important;
+}
+
+.styled-button-black-theme {
+  white-space: nowrap !important;
+  min-width: 80px !important;
+  &:hover {
+    border-color: gray !important;
+    color: black !important;
+  }
+}
+
+.styled-button-black-theme-active {
+  white-space: nowrap !important;
+  min-width: 80px !important;
+  background-color: black !important;
+  color: white !important;
+  border-color: black !important;
+}

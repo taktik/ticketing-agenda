@@ -4,6 +4,7 @@ import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
 import { SpinLoader } from '../common/SpinLoader'
+import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 
 interface ServiceSelectorProps {
   services: HealthcareParty[]
@@ -42,24 +43,15 @@ export const ServiceSelector = ({ services, isServicesLoading, selectedService, 
           {services.map((service) => {
             const isSelected = selectedService?.id === service.id
             return (
-              <Button
+              <StyledButton
                 key={service.id}
-                type={isSelected ? 'primary' : 'default'}
                 onClick={() => {
                   handleSelectServiceClick(service)
                 }}
-                style={{
-                  whiteSpace: 'nowrap',
-                  minWidth: '80px',
-                  ...(isSelected && {
-                    backgroundColor: '#1890ff',
-                    color: 'white',
-                    borderColor: '#1890ff',
-                  }),
-                }}
+                stylingType={isSelected ? ButtonStyleType.BlackThemeActive : ButtonStyleType.BlackTheme}
               >
                 {service.name}
-              </Button>
+              </StyledButton>
             )
           })}
         </div>
