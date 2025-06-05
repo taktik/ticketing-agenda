@@ -3,6 +3,7 @@ import { Button, Divider, Spin, Typography } from 'antd'
 import React, { ReactElement, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
+import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 
 interface ProcedureSelectorProps {
   procedures: CalendarItemType[]
@@ -14,9 +15,9 @@ interface ProcedureSelectorProps {
 export const ProcedureSelector = ({ procedures, isProceduresLoading, selectedProcedure, setSelectedProcedure }: ProcedureSelectorProps): ReactElement => {
   const { t } = useTranslation()
 
-  const handleSelectDemarcheClick = useCallback(
-    (demarche: CalendarItemType) => {
-      const toSelect = demarche.id === selectedProcedure?.id ? undefined : demarche
+  const handleSelectProcedureClick = useCallback(
+    (procedure: CalendarItemType) => {
+      const toSelect = procedure.id === selectedProcedure?.id ? undefined : procedure
       setSelectedProcedure(toSelect)
     },
     [selectedProcedure],
@@ -41,24 +42,15 @@ export const ProcedureSelector = ({ procedures, isProceduresLoading, selectedPro
           {procedures.map((procedure) => {
             const isSelected = selectedProcedure?.id === procedure.id
             return (
-              <Button
+              <StyledButton
                 key={procedure.id}
-                type={isSelected ? 'primary' : 'default'}
                 onClick={() => {
-                  handleSelectDemarcheClick(procedure)
+                  handleSelectProcedureClick(procedure)
                 }}
-                style={{
-                  whiteSpace: 'nowrap',
-                  minWidth: '80px',
-                  ...(isSelected && {
-                    backgroundColor: '#1890ff',
-                    color: 'white',
-                    borderColor: '#1890ff',
-                  }),
-                }}
+                stylingType={isSelected ? ButtonStyleType.BlackThemeActive : ButtonStyleType.BlackTheme}
               >
                 {procedure.name}
-              </Button>
+              </StyledButton>
             )
           })}
         </div>
