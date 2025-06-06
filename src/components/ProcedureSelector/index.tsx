@@ -1,6 +1,6 @@
 import { CalendarItemType } from '@icure/cardinal-sdk'
 import { Button, Divider, Spin, Typography } from 'antd'
-import React, { ReactElement, useCallback } from 'react'
+import React, { ReactElement, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
 import { ButtonStyleType, StyledButton } from '../common/StyledButton'
@@ -14,6 +14,16 @@ interface ProcedureSelectorProps {
 
 export const ProcedureSelector = ({ procedures, isProceduresLoading, selectedProcedure, setSelectedProcedure }: ProcedureSelectorProps): ReactElement => {
   const { t } = useTranslation()
+
+  const sortedProcedures = useMemo(() => {
+    return [...(procedures ?? [])]
+      .sort((a, b) => {
+        const nameA = a.name ?? ''
+        const nameB = b.name ?? ''
+        return nameA.localeCompare(nameB)
+      })
+      .filter((item) => item.defaultCalendarItemType === true)
+  }, [procedures])
 
   const handleSelectProcedureClick = useCallback(
     (procedure: CalendarItemType) => {
@@ -39,7 +49,7 @@ export const ProcedureSelector = ({ procedures, isProceduresLoading, selectedPro
         </div>
       ) : (
         <div className="DemarchesContent">
-          {procedures.map((procedure) => {
+          {sortedProcedures.map((procedure) => {
             const isSelected = selectedProcedure?.id === procedure.id
             return (
               <StyledButton
@@ -47,7 +57,7 @@ export const ProcedureSelector = ({ procedures, isProceduresLoading, selectedPro
                 onClick={() => {
                   handleSelectProcedureClick(procedure)
                 }}
-                stylingType={isSelected ? ButtonStyleType.BlackThemeActive : ButtonStyleType.BlackTheme}
+                stylingType={isSelected ? ButtonStyleType.DefaultActive : ButtonStyleType.Default}
               >
                 {procedure.name}
               </StyledButton>

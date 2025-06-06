@@ -43,7 +43,6 @@ export const LanguageSelector = () => {
                 style={{
                   width: '20px',
                   height: '15px',
-                  border: '0.5px solid #eee',
                   marginRight: '8px',
                   verticalAlign: 'middle',
                 }}
@@ -53,7 +52,7 @@ export const LanguageSelector = () => {
           }
         >
           <Space size="small" align="center">
-            <img src={lang.FlagComponent} alt={`${lang.name} flag`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', verticalAlign: 'middle', border: '0.5px solid #eee' }} />
+            <img src={lang.FlagComponent} alt={`${lang.name} flag`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', verticalAlign: 'middle' }} />
             <span>{lang.name}</span>
           </Space>
         </Select.Option>

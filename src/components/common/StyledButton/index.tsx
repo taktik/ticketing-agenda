@@ -5,6 +5,7 @@ import './index.css'
 
 export enum ButtonStyleType {
   Default = 'defaultAntd',
+  DefaultActive = 'defaultAntdActive',
   Icon = 'icon',
   Warning = 'warning',
   Success = 'success',
@@ -34,6 +35,8 @@ const getStylingClasses = (type: ButtonStyleType): string => {
       return 'styled-button-black-theme-active'
     case ButtonStyleType.RedTheme:
       return 'styled-button-red-theme'
+    case ButtonStyleType.DefaultActive:
+      return 'styled-button-default-active'
     case ButtonStyleType.Default:
     default:
       return ''

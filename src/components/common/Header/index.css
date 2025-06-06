@@ -156,6 +156,16 @@ body * {
   align-self: stretch;
   background: #ffffff;
 }
+.header .ant-menu-item,
+.header .ant-dropdown-menu-item,
+.header .ant-list-item {
+  width: auto !important;
+  margin-left: 0 !important;
+  text-align: left !important;
+  padding-left: 24px !important;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+}
 @media screen and (max-width: calc(768px - 1px)) {
   .header {
     padding: 0 12px;

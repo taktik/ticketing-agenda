@@ -115,7 +115,10 @@
     "unit_days": "Jour(s)",
     "unit_weeks": "Semaine(s)",
     "your_profile": "Votre profil",
-    "manage_users": "Gérer les utilisateurs"
+    "manage_users": "Gérer les utilisateurs",
+    "organize_hierarchy": "Organiser la hiérarchie",
+    "manage_planning": "Gérer la planification",
+    "hierarchical_organization": "Organisation hiérarchique"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

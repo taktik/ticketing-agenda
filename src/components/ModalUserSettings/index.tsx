@@ -48,7 +48,7 @@ export const ModalSettings = ({ isVisible, onClose, currentUser, user }: ModalSe
   }, [selectedKey, currentUser])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title="Settings" noFooter blockAntModalBodyVerticalScroll width={1300}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.your_settings')} noFooter blockAntModalBodyVerticalScroll width={1300}>
       <div className="modalSettings">
         <div className="settingsTitle">
           <Menu onClick={onClick} style={{ width: 200 }} defaultSelectedKeys={['profil']} mode="inline" items={items} />

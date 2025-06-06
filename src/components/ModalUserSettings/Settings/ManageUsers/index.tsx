@@ -160,25 +160,29 @@ export const ManagerUsers = (): ReactElement => {
   const tableRowDelete = async () => {
     try {
       if (!userRowToBeDeleted?.hcp || !userRowToBeDeleted.user) throw new Error('No user selected')
-      // Step 1: Delete HealthcareParty
-      const deletedHcpResult = await deleteHcp(userRowToBeDeleted.hcp).unwrap()
-      try {
-        // Step 2: If HCP deletion was successful, try to create User
-        const createdUserResult = await deleteUser(userRowToBeDeleted.user).unwrap()
-      } catch (userError) {
-        // User deletion failed, but HCP was deleted. This is where rollback is needed.
-        console.error('Failed to delete user:', userError)
-        openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
+      if (userRowToBeDeleted.hcp.rev && userRowToBeDeleted.user.rev) {
+        // Step 1: Delete HealthcareParty
+        const deletedHcpResult = await deleteHcp(userRowToBeDeleted.hcp).unwrap()
+        try {
+          // Step 2: If HCP deletion was successful, try to create User
+          const createdUserResult = await deleteUser(userRowToBeDeleted.user).unwrap()
+        } catch (userError) {
+          // User deletion failed, but HCP was deleted. This is where rollback is needed.
+          console.error('Failed to delete user:', userError)
+          openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
 
-        // Attempt to roll back the HCP creation
-        if (deletedHcpResult) {
-          console.warn(`Attempting to roll back HCP deletion for ID: ${deletedHcpResult}`)
-          try {
-            await unDeleteHcp(userRowToBeDeleted.hcp).unwrap()
-          } catch (rollbackError) {
-            console.error(`Failed to roll back HCP deletion (ID: ${deletedHcpResult}):`, rollbackError)
+          // Attempt to roll back the HCP creation
+          if (deletedHcpResult) {
+            console.warn(`Attempting to roll back HCP deletion for ID: ${deletedHcpResult}`)
+            try {
+              await unDeleteHcp(userRowToBeDeleted.hcp).unwrap()
+            } catch (rollbackError) {
+              console.error(`Failed to roll back HCP deletion (ID: ${deletedHcpResult}):`, rollbackError)
+            }
           }
         }
+      } else {
+        setTableRows((prev) => prev.filter((user) => user.rowId !== userRowToBeDeleted.rowId))
       }
     } catch (hcpError) {
       // HealthcareParty deletion failed, so User deletion was not attempted.

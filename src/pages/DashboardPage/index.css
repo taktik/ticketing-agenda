@@ -156,9 +156,13 @@ body * {
   height: 95%;
   width: 100%;
 }
+.card {
+  width: 400px;
+  border: 1px solid #d9d9d9;
+}
 .SiteSelectorRow {
   display: flex;
-  width: 400px;
+  width: 100%;
   flex-direction: row;
   gap: 1.5rem;
 }

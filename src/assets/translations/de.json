@@ -115,7 +115,10 @@
     "unit_days": "Tag(e)",
     "unit_weeks": "Woche(n)",
     "your_profile": "Ihr Profil",
-    "manage_users": "Benutzer verwalten"
+    "manage_users": "Benutzer verwalten",
+    "organize_hierarchy": "Hierarchie organisieren",
+    "manage_planning": "Planung verwalten",
+    "hierarchical_organization": "Hierarchische Organisation"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

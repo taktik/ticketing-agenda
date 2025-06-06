@@ -27,7 +27,6 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
-  const [search, setSearch] = useState('')
   const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
@@ -123,52 +122,6 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     [sites, sortedServices, selectedKey],
   )
 
-  const filteredItems = useMemo(() => {
-    const filtered = (items ?? [])
-      .map((item) => {
-        if (!item) return null
-        if (!('label' in item)) return null
-
-        const normalizedSearch = normalize(search)
-        const normalizedItemLabel = normalize(typeof item.label === 'string' ? item.label : React.isValidElement(item.label) && typeof item.label.props?.children === 'string' ? item.label.props.children : '')
-
-        const matchService = normalizedItemLabel.includes(normalizedSearch)
-
-        let matchingChildren: ItemType<MenuItemType>[] = []
-
-        if ('children' in item && Array.isArray(item.children)) {
-          matchingChildren = matchService
-            ? item.children
-            : item.children.filter((child) => {
-                if (!child || !('label' in child)) return false
-
-                const labelText = (() => {
-                  if (typeof child.label === 'string') {
-                    return normalize(child.label)
-                  }
-                  if (React.isValidElement(child.label) && typeof child.label.props?.children === 'string') {
-                    return normalize(child.label.props.children)
-                  }
-                  return ''
-                })()
-                return labelText.includes(normalize(search))
-              })
-        }
-
-        if (matchService || matchingChildren.length > 0) {
-          return {
-            ...item,
-            children: matchingChildren,
-          }
-        }
-
-        return null
-      })
-      .filter((item): item is Exclude<typeof item, null> => item !== null)
-
-    return filtered
-  }, [items, search])
-
   const onServiceClick: MenuProps['onClick'] = ({ key }) => {
     if (key === selectedKey) setSelectedKey('default')
     else setSelectedKey(key)
@@ -214,16 +167,13 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   }, [selectedKey, sites, services])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.settings')} blockAntModalBodyVerticalScroll noFooter width={1300}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modalSettings">
         {notificationContextHolder}
         {messageContextHolder}
         <div className="settingsTitle">
           <div className="content">
-            <div className="SearchInput">
-              <Input placeholder={t('content.search_site_or_service')} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-            <Menu onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ width: 250 }} defaultSelectedKeys={['default']} mode="inline" items={filteredItems} />
+            <Menu onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ width: 250 }} defaultSelectedKeys={['default']} mode="inline" items={items} />
           </div>
           <div className="bottomFooter">
             <Button onClick={handleAddSite}>{t('content.add_site')}</Button>

@@ -54,10 +54,10 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef }: Calendar
     <div className="calendar-root">
       <div className="calendar-header">
         <Space>
-          <Space>
+          <Space.Compact>
             <Button onClick={handlePrev} icon={<LeftOutlined />} />
             <Button onClick={handleNext} icon={<RightOutlined />} />
-          </Space>
+          </Space.Compact>
           <Button onClick={handleToday}>{t('content.today')}</Button>
         </Space>
 
@@ -75,14 +75,14 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef }: Calendar
             ]}
           />
 
-          <Space>
-            <Button type={timeRange === 'day' ? 'primary' : 'default'} onClick={() => setTimeRange('day')}>
-              {t('content.day')}
-            </Button>
-            <Button type={timeRange === 'week' ? 'primary' : 'default'} onClick={() => setTimeRange('week')}>
-              {t('content.week')}
-            </Button>
-          </Space>
+          <Segmented
+            value={timeRange}
+            onChange={(value) => setTimeRange(value as 'week' | 'day')}
+            options={[
+              { label: t('content.day', 'Day'), value: 'day' },
+              { label: t('content.week', 'Week'), value: 'week' },
+            ]}
+          />
         </Space>
       </div>
 

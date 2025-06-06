@@ -48,7 +48,7 @@ export const ServiceSelector = ({ services, isServicesLoading, selectedService, 
                 onClick={() => {
                   handleSelectServiceClick(service)
                 }}
-                stylingType={isSelected ? ButtonStyleType.BlackThemeActive : ButtonStyleType.BlackTheme}
+                stylingType={isSelected ? ButtonStyleType.DefaultActive : ButtonStyleType.Default}
               >
                 {service.name}
               </StyledButton>

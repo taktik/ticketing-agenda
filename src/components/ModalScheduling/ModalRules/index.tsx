@@ -725,7 +725,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.days')}
                     dataIndex="rrule"
                     key="rrule"
-                    width={'auto'}
+                    width={'20%'}
                     render={(rruleString: string | undefined, record: TimeTableItemRow) => {
                       const editable = isEditing(record)
 
@@ -1045,7 +1045,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                     title={t('content.number_of_slots')}
                     dataIndex="numberOfSlots"
                     key="numberOfSlots"
-                    width={'auto'}
+                    width={'10%'}
                     render={(_: unknown, record: TimeTableItemRow) => {
                       const editable = isEditing(record)
 

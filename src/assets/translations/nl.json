@@ -115,7 +115,10 @@
     "unit_days": "Dag(en)",
     "unit_weeks": "Week/Weken",
     "your_profile": "Uw profiel",
-    "manage_users": "Gebruikers beheren"
+    "manage_users": "Gebruikers beheren",
+    "organize_hierarchy": "Hiërarchie organiseren",
+    "manage_planning": "Planning beheren",
+    "hierarchical_organization": "Hiërarchische organisatie"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
