@@ -5,7 +5,7 @@ import './index.css'
 
 export enum ButtonStyleType {
   Default = 'defaultAntd',
-  Rounded = 'rounded',
+  Icon = 'icon',
   Warning = 'warning',
   Success = 'success',
   NoBorder = 'noBorder',
@@ -20,8 +20,8 @@ export interface StyledButtonProps extends ButtonProps {
 
 const getStylingClasses = (type: ButtonStyleType): string => {
   switch (type) {
-    case ButtonStyleType.Rounded:
-      return 'styled-button-rounded'
+    case ButtonStyleType.Icon:
+      return 'styled-button-icon'
     case ButtonStyleType.Warning:
       return 'styled-button-warning'
     case ButtonStyleType.Success:

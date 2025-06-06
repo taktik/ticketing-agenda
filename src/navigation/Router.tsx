@@ -1,12 +1,9 @@
-import React from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AuthenticatedLayout from '../layout/AuthenticatedLayout'
+import LoginLayout from '../layout/LoginLayout'
 import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/authentication/LoginPage'
 import RegisterPage from '../pages/authentication/RegisterPage'
-import AppointmentLayout from '../layout/AppointmentLayout'
-import NewPage from '../pages/appointment/NewPage'
-import LoginLayout from '../layout/LoginLayout'
 
 export const routes = {
   dashboard: '/dashboard',
@@ -33,5 +30,3 @@ export const Router = () => (
     </Routes>
   </BrowserRouter>
 )
-//<Route element={<AppointmentLayout />}></Route>
-//        <Route path={routes.appointmentNew} element={<DashboardPage />} />

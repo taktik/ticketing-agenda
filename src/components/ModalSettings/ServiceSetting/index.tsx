@@ -543,7 +543,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   title={t('content.actions')}
                   key="action"
                   fixed="right"
-                  width={'auto'}
+                  width={'12%'}
                   render={(_: unknown, record: ProcedureRow) => {
                     const editable = isEditing(record)
 
