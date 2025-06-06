@@ -11,6 +11,7 @@ import { Button, Segmented, Space, Typography } from 'antd'
 import { DatesSetArg } from 'fullcalendar'
 import React, { ReactElement, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import './index.css'
 
 interface CalendarProps {
   handleFullCalendarDateChange: () => void
@@ -50,9 +51,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef }: Calendar
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', padding: '1.5rem' }}>
-      {/* Our Custom Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+    <div className="calendar-root">
+      <div className="calendar-header">
         <Space>
           <Space>
             <Button onClick={handlePrev} icon={<LeftOutlined />} />
