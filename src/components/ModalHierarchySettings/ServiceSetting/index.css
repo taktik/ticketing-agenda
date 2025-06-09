@@ -71,7 +71,7 @@
 .ant-table-custom {
   width: auto;
   height: auto;
-  padding-top: 12px;
+  padding: 12px;
 }
 .appointment-duration {
   display: flex;

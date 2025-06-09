@@ -1,6 +1,6 @@
 @import '../../style/less/index';
 
-.modalSettings {
+.modal-settings {
   width: 100%;
   height: 70vh;
   display: flex;
@@ -33,24 +33,28 @@
 .content {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
   padding: 0;
   gap: 0;
 }
-.bottomFooter {
+.sider-footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0;
+  padding: 0 0 1.5rem 0;
   gap: 0;
   width: 100%;
-  padding: 0;
 }
-.selectedSetting {
+.selected-setting {
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   width: auto;
   flex-grow: 1;
   overflow: hidden;
+  background: white;
 }
 .ant-menu-inline {
   border-right: none !important;
@@ -74,4 +78,15 @@
   img {
     width: 40%;
   }
+}
+.site-title {
+  padding-bottom: 2rem;
+}
+.site-root {
+  padding: 1.5rem;
+}
+.site-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
 }

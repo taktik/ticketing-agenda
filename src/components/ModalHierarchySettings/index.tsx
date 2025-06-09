@@ -1,18 +1,18 @@
+import { AppstoreOutlined, BankOutlined } from '@ant-design/icons'
 import { HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Divider, Input, Menu, MenuProps, message, notification } from 'antd'
-import { ItemType, MenuItemType } from 'antd/es/menu/interface'
-import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { Button, Card, Empty, Layout, Menu, MenuProps, message, notification, Typography } from 'antd'
+import { Content } from 'antd/es/layout/layout'
+import Sider from 'antd/es/layout/Sider'
+import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import defaultLogo from '../../assets/undraw_choose_j1ds.svg'
 import { SettingContext } from '../../contexts/SettingContext'
 import { useCreateUpdateHealthcarePartyMutation, useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import { CustomModal } from '../common/CustomModal'
-import { normalize } from '../patient/modals/ModalImportPatients/utils/functionUtils'
 import './index.css'
 import { ServiceSetting } from './ServiceSetting'
-import { SiteSetting } from './SiteSetting'
+import emptyIcon from '../../assets/empty.svg'
 
 interface ModalSchedulingProps {
   isVisible: boolean
@@ -66,6 +66,9 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     })
   }, [services])
 
+  //const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
+  //const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: skip || !agenda || !selectedService, agendaId: agenda?.id ?? '' })
+
   const handleAddSite = useCallback(() => {
     try {
       if (!rootHcp) throw new Error('No root')
@@ -82,17 +85,16 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     if (isCreateUpdateSiteError) openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
   }, [isCreateUpdateSiteSuccess, isCreateUpdateSiteError])
 
-  const items: MenuItem[] = useMemo(
+  const menuItems: MenuItem[] = useMemo(
     () =>
       (sites ?? []).map((site) => {
-        const matchingParties = sortedServices?.filter((service) => service.parentId === site.id) ?? []
+        const matchingServices = sortedServices?.filter((service) => service.parentId === site.id) ?? []
 
-        const children: MenuItem[] = [
-          ...(matchingParties ?? []).map((service) => ({
-            key: `service-${service.id}`,
-            label: service.name,
-          })),
-        ]
+        const children: MenuItem[] = (matchingServices ?? []).map((service) => ({
+          key: `service-${service.id}`,
+          label: service.name,
+          icon: <AppstoreOutlined />,
+        }))
 
         return {
           key: `site-${site.id}`,
@@ -111,15 +113,17 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
             selectedKey === `site-${site.id}`
               ? {
                   backgroundColor: '#e30613',
+                  color: 'white',
                   margin: 13,
                 }
               : {
                   margin: 13,
                 },
+          icon: <BankOutlined />,
           children,
         }
       }),
-    [sites, sortedServices, selectedKey],
+    [sites, sortedServices],
   )
 
   const onServiceClick: MenuProps['onClick'] = ({ key }) => {
@@ -139,49 +143,64 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     setOpenKeys(keys)
   }
 
-  const renderSetting = useCallback(() => {
+  const renderSettingContent = useCallback(() => {
     const match = selectedKey.match(/^(site|service)-(.+)$/)
     const type = match?.[1]
     const id = match?.[2]
 
     if (!type || !id) {
+      return <Empty image={emptyIcon} description={t('content.select_site_or_service_to_edit', 'Sélectionnez un site ou un service pour commencer.')} style={{ paddingTop: '10rem' }} />
+    }
+
+    if (type === 'site') {
+      const matchingSite = sites?.find((site) => site.id === id)
+      if (!matchingSite) return <div>Site non trouvé</div>
+
+      const servicesOfThisSite = services?.filter((service) => service.parentId === matchingSite.id) ?? []
+
       return (
-        <div className="defaultRender">
-          {t('content.select_site_or_service_to_edit')} <img src={defaultLogo} />
+        <div className="site-root">
+          <div className="site-title">
+            <Typography.Title level={2}>{matchingSite.name}</Typography.Title>
+            <Typography.Text type="secondary">Sélectionnez un service ci-dessous pour configurer ses démarches.</Typography.Text>
+          </div>
+          <div className="site-grid">
+            {servicesOfThisSite.map((service) => (
+              <Card key={service.id} hoverable onClick={() => setSelectedKey(`service-${service.id}`)}>
+                <Card.Meta title={service.name} description={`${0} démarche(s)`} />
+              </Card>
+            ))}
+          </div>
         </div>
       )
     }
 
-    if (type === 'site') {
-      const groupedSites = sites ?? []
-      const matchingSite = groupedSites.find((site) => site.id === id)
-      return <SiteSetting site={matchingSite} />
-    }
-
     if (type === 'service') {
       const matchingService = services?.find((service) => service.id === id)
+      if (!matchingService) return <div>Service non trouvé</div>
       return <ServiceSetting service={matchingService} />
     }
 
-    return <div>{t('content.select_site_or_service_to_edit')}</div>
-  }, [selectedKey, sites, services])
+    return <div>{t('content.select_site_or_service_to_edit', 'Sélectionnez un site ou un service.')}</div>
+  }, [selectedKey, sites, services, t])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>
-      <div className="modalSettings">
+      <Layout className="modal-settings">
         {notificationContextHolder}
         {messageContextHolder}
-        <div className="settingsTitle">
+        <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
           <div className="content">
-            <Menu onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ width: 250 }} defaultSelectedKeys={['default']} mode="inline" items={items} />
+            <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} style={{ height: 'auto', borderRight: 0 }} />
+            <div className="sider-footer">
+              <Button onClick={handleAddSite}>{t('content.add_site')}</Button>
+            </div>
           </div>
-          <div className="bottomFooter">
-            <Button onClick={handleAddSite}>{t('content.add_site')}</Button>
-          </div>
-        </div>
-        <Divider type="vertical" variant="solid" style={{ height: '100%' }} />
-        <div className="selectedSetting">{renderSetting()}</div>
-      </div>
+        </Sider>
+        <Layout>
+          <Content className="selected-setting">{renderSettingContent()}</Content>
+        </Layout>
+      </Layout>
     </CustomModal>
   )
 }
