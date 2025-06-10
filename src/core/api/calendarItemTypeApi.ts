@@ -23,53 +23,34 @@ export const calendarItemTypeApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
     }),
-
     getCalendarItemTypesForMultipleAgendas: builder.query<CalendarItemType[][], AllCalendarItemTypeServiceParameters>({
       async queryFn(params, { getState, dispatch }) {
         const { agendaIds } = params
 
         if (!agendaIds || agendaIds.length === 0) {
-          return { data: [] as CalendarItemType[][] } // Return empty outer array
+          return { data: [] as CalendarItemType[][] }
         }
 
-        // Explicitly type the promises array. Each promise resolves to CalendarItemType[] | undefined.
         const promises: Promise<CalendarItemType[] | undefined>[] = agendaIds.map((agendaId) => {
           if (!agendaId) {
-            // Handle null, undefined, or empty string agendaIds if they can occur
             console.warn('An invalid agendaId was provided in the list:', agendaId)
-            return Promise.resolve(undefined) // Treat as "no data found" for this specific ID
+            return Promise.resolve(undefined)
           }
-          return dispatch(
-            calendarItemTypeApiRtk.endpoints.getCalendarItemTypes.initiate(
-              { agendaId } as CalendarItemTypeServiceParameters,
-              // Optional: { forceRefetch: true } // if you want to bypass cache for sub-queries
-            ),
-          )
-            .unwrap() // This promise resolves with CalendarItemType[] | undefined or rejects
+          return dispatch(calendarItemTypeApiRtk.endpoints.getCalendarItemTypes.initiate({ agendaId } as CalendarItemTypeServiceParameters, { forceRefetch: true }))
+            .unwrap()
             .catch((error) => {
-              // If a specific sub-query fails, log it.
-              // To ensure Promise.all doesn't fail the entire batch immediately AND
-              // to match the CalendarItemType[][] output where failures become empty arrays,
-              // we can return 'undefined' here. Promise.all will collect these.
-              // Alternatively, if any failure should make the whole query fail, re-throw 'error'.
               console.error(`Failed to fetch CalendarItemTypes for agendaId ${agendaId}:`, error)
-              return undefined // Treat as "no data" for this specific ID on error
+              return undefined // Return undefined on failure so Promise.all doesn't fail fast
             })
         })
 
-        // Wait for all promises. `resultsArray` will be (CalendarItemType[] | undefined)[]
         const resultsArrayOfMaybeArrays = await Promise.all(promises)
-
-        // Transform into CalendarItemType[][], converting undefineds to empty arrays
-        const finalData: CalendarItemType[][] = resultsArrayOfMaybeArrays.map(
-          (result) => result || [], // If a sub-query result was undefined (due to error or explicit return), use []
-        )
+        const finalData: CalendarItemType[][] = resultsArrayOfMaybeArrays.map((result) => result || [])
 
         return { data: finalData }
       },
       providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
     }),
-
     getCalendarItemType: builder.query<CalendarItemType | undefined, string>({
       async queryFn(id, { getState }) {
         const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType

@@ -647,6 +647,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                 dataSource={timeTableItemsRows}
                 rowKey="rowId"
                 locale={{ emptyText: <Empty description={t('content.no_rule_yet')} /> }}
+                loading={isLoading}
               >
                 <ColumnGroup
                   title={

@@ -61,7 +61,6 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   }
 
   const { data: services } = useGetAllServiceBySiteId({ skip: skip || !rootHcp, sitesIds: sitesIds ?? [] })
-  const servicesIds = useMemo(() => services?.map((service) => service.id), [services])
 
   const sortedServices = useMemo(() => {
     return [...(services ?? [])].sort((a, b) => {
@@ -70,14 +69,6 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
       return nameA.localeCompare(nameB)
     })
   }, [services])
-
-  const { data: allAgendas } = useGetAllAgendaByAuthorIds({ skip: skip || !servicesIds, authorIds: servicesIds })
-  const agendaIds = useMemo(() => allAgendas?.map((agenda) => agenda.id), [allAgendas])
-
-  const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ skip: skip || !agendaIds, agendaIds: agendaIds })
-  const flatProceduresArray = useMemo(() => (allProcedures ?? []).flat(), [allProcedures])
-
-  const numberOfProcedures = (service: HealthcareParty) => {}
 
   const handleAddSite = useCallback(() => {
     try {
@@ -166,19 +157,19 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
       const matchingSite = sites?.find((site) => site.id === id)
       if (!matchingSite) return <div>Site non trouvé</div>
 
-      const servicesOfThisSite = services?.filter((service) => service.parentId === matchingSite.id) ?? []
+      const servicesOfThisSite = sortedServices?.filter((service) => service.parentId === matchingSite.id) ?? []
 
       return <SiteSetting site={matchingSite} services={servicesOfThisSite} />
     }
 
     if (type === 'service') {
-      const matchingService = services?.find((service) => service.id === id)
+      const matchingService = sortedServices?.find((service) => service.id === id)
       if (!matchingService) return <div>Service non trouvé</div>
       return <ServiceSetting service={matchingService} />
     }
 
     return <div>{t('content.select_site_or_service_to_edit', 'Sélectionnez un site ou un service.')}</div>
-  }, [selectedKey, sites, services, t])
+  }, [selectedKey, sites, sortedServices, t, sortedServices])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>

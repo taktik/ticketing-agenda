@@ -78,6 +78,8 @@
   align-items: center;
 }
 .site-title {
+  display: flex;
+  flex-direction: column;
   padding-bottom: 2rem;
 }
 .site-grid {
@@ -87,4 +89,15 @@
 }
 .site-card {
   background: #fdfdfd;
+}
+.site-rename-form {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  .ant-form-item {
+    width: 250px;
+  }
+}
+.site-rename-root {
+  width: 100%;
 }
