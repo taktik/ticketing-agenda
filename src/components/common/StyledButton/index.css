@@ -164,6 +164,10 @@ body * {
   color: white !important;
   border-color: black !important;
 }
+.styled-button-black-theme-active:hover {
+  background-color: #696969 !important;
+  border-color: #696969 !important;
+}
 .styled-button-default-active {
   background: #1f608f;
   border-color: #1f608f;

@@ -16,6 +16,7 @@ import {
 } from '../../../../core/api/healthcarePartyApi'
 import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+import { ButtonStyleType, StyledButton } from '../../../common/StyledButton'
 
 interface UserRow {
   rowId: string
@@ -300,9 +301,9 @@ export const ManagerUsers = (): ReactElement => {
           >
             <ColumnGroup
               title={
-                <Button style={{ width: '100%' }} onClick={addUser}>
+                <StyledButton stylingType={ButtonStyleType.BlackTheme} style={{ width: '100%' }} onClick={addUser}>
                   {t('content.add_user')}
-                </Button>
+                </StyledButton>
               }
             >
               <Column
@@ -430,22 +431,29 @@ export const ManagerUsers = (): ReactElement => {
                   if (editable) {
                     return (
                       <Space size="middle">
-                        <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
-                        <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
+                        <StyledButton stylingType={ButtonStyleType.BlackTheme} onClick={() => tableRowUpdate(record)}>
+                          {t('content.update')}
+                        </StyledButton>
+                        <StyledButton stylingType={ButtonStyleType.BlackTheme} onClick={() => tableRowCancel(record)}>
+                          {t('content.cancel')}
+                        </StyledButton>
                       </Space>
                     )
                   } else {
                     return (
                       <Space size="middle">
-                        <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
-                        <Button
+                        <StyledButton stylingType={ButtonStyleType.BlackTheme} onClick={() => tableRowEdit(record)}>
+                          {t('content.edit')}
+                        </StyledButton>
+                        <StyledButton
+                          stylingType={ButtonStyleType.BlackTheme}
                           onClick={() => {
                             setUserRowToBeDeleted(record)
                             setShowDeleteUserModal(true)
                           }}
                         >
                           {t('content.delete')}
-                        </Button>
+                        </StyledButton>
                       </Space>
                     )
                   }

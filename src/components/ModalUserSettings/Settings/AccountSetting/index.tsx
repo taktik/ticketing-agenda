@@ -8,6 +8,7 @@ import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileT
 import { SpinLoader } from '../../../common/SpinLoader'
 import './index.css'
 import { useCreateUpdateUserMutation, useGetUserByEmailQuery } from '../../../../core/api/userApi'
+import { ButtonStyleType, StyledButton } from '../../../common/StyledButton'
 
 interface AccountSettingProps {
   currentUser?: HealthcareParty
@@ -102,12 +103,12 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
         </div>
         <div className="agendaFormFooter">
           <Form.Item>
-            <Button htmlType="button" onClick={handleCancel}>
+            <StyledButton stylingType={ButtonStyleType.BlackTheme} htmlType="button" onClick={handleCancel}>
               {t('content.cancel')}
-            </Button>
-            <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+            </StyledButton>
+            <StyledButton stylingType={ButtonStyleType.BlackThemeActive} htmlType="submit" style={{ marginRight: 8 }}>
               {t('content.save')}
-            </Button>
+            </StyledButton>
           </Form.Item>
         </div>
       </Form>

@@ -1,6 +1,6 @@
 import { CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined, RollbackOutlined, SaveOutlined } from '@ant-design/icons'
 import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Empty, Form, Input, List, message, notification, Tooltip } from 'antd'
+import { Button, Card, Empty, Form, Input, List, message, notification, Tooltip, Typography } from 'antd'
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +10,7 @@ import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
+import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 
 interface ListHeaderProps {
   site: HealthcareParty | undefined
@@ -54,28 +55,14 @@ const ListHeader = React.memo(({ site, handleCreateNewService }: ListHeaderProps
 })
 
 interface SiteSettingProps {
-  site: HealthcareParty | undefined
+  site: HealthcareParty
+  services: HealthcareParty[]
 }
 
-export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
-  const { setSelectedKey } = useContext(SettingContext)
-  const { t, i18n } = useTranslation()
+export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement => {
+  const { selectedKeyId, setSelectedKey } = useContext(SettingContext)
+  const { t } = useTranslation()
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
-  const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
-  const [editItem, setEditItem] = useState<HealthcareParty | undefined>(undefined) // The service being edited in the list
-  const [inputValue, setInputValue] = useState<string>(t('content.new_service')) // Input value of the service being edited
-
-  const { data: services } = useGetHealthcarePartiesByParentQuery({ skip: !site, parentId: site?.id ?? '' })
-  const servicesList = useMemo(() => {
-    // Sorting the services alphabetically
-    return [...(services ?? [])].sort((a, b) => {
-      const nameA = a.name ?? ''
-      const nameB = b.name ?? ''
-      return nameA.localeCompare(nameB)
-    })
-  }, [services])
-
-  const [form] = Form.useForm()
 
   const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
 
@@ -86,25 +73,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
   // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading, isSuccess: isDeleteSiteSuccess, error: isDeleteSiteError } = useRecursiveHcpDeletion()
   const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading, isSuccess: isDeleteServiceSuccess, error: isDeleteServiceError } = useRecursiveHcpDeletion()
-
-  const handleSubmit = () => {
-    try {
-      if (!site) throw new Error('No site selected')
-      const { name } = form.getFieldsValue()
-      createUpdateSite({ ...site, name: name })
-      form.submit()
-    } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-    }
-  }
-
-  useEffect(() => {
-    if (site) {
-      form.setFieldsValue({
-        name: site.name,
-      })
-    }
-  }, [site, form])
 
   const handleSiteDelete = () => {
     try {
@@ -117,54 +85,14 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     }
   }
 
-  const handleServiceDelete = () => {
+  const handleCreateNewService = async () => {
     try {
-      if (!editItem) throw new Error('No site selected')
-      deleteService(editItem)
+      const serviceHcp = new HealthcareParty({ name: t('content.new_service'), parentId: selectedKeyId, id: v4() })
+      await createUpdateService({ ...serviceHcp })
+      createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id }))
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-    } finally {
-      setEditItem(undefined)
     }
-  }
-
-  const handleCreateNewService = async (item: HealthcareParty) => {
-    try {
-      await createUpdateService({ ...item })
-      createUpdateAgendaMutation(new Agenda({ author: item.id }))
-    } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-    } finally {
-      setEditItem(undefined)
-    }
-  }
-
-  const handleSaveService = useCallback(
-    (item: HealthcareParty) => {
-      try {
-        createUpdateService({ ...item, name: inputValue })
-        setInputValue(t('content.new_service'))
-      } catch (error) {
-        openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-      } finally {
-        setEditItem(undefined)
-      }
-    },
-    [inputValue],
-  )
-
-  const handleEditService = (item: HealthcareParty) => {
-    setInputValue(item.name ?? '')
-    setEditItem(item)
-  }
-
-  const handleDeleteService = (item: HealthcareParty) => {
-    setShowDeleteServiceModal(true)
-  }
-
-  const cancelEditService = () => {
-    setEditItem(undefined)
-    setInputValue(t('content.new_service'))
   }
 
   // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
@@ -213,11 +141,57 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const handleCancel = () => {
-    form.resetFields()
-  }
+  return (
+    <div className="site-root">
+      {notificationContextHolder}
+      {messageContextHolder}
+      <div className="site-header">
+        <div className="site-title">
+          <Typography.Title level={2}>{site.name}</Typography.Title>
+          <Typography.Text type="secondary">Sélectionnez un service ci-dessous pour configurer ses démarches.</Typography.Text>
+        </div>
+        <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={() => handleCreateNewService()} style={{ alignSelf: 'baseline' }}>
+          {t('actions.add_service', 'Ajouter un service')}
+        </StyledButton>
+      </div>
 
-  const nameValue = Form.useWatch('name', form)
+      <div className="site-grid">
+        {services.map((service) => (
+          <Card key={service.id} hoverable onClick={() => setSelectedKey(`service-${service.id}`)} className="site-card">
+            <Card.Meta title={service.name} description={`${0} démarche(s)`} />
+          </Card>
+        ))}
+      </div>
+      {showDeleteSiteModal &&
+        createPortal(
+          <ModalConfirmAction
+            title={t('delete_modal.confirm_delete_site_prompt')}
+            description=""
+            content={
+              <>
+                <p>{t('delete_modal.delete_site_warning_details')}</p>
+                <p>{t('delete_modal.delete_permanent_warning')}</p>
+              </>
+            }
+            yesBtnTitle={t('content.delete')}
+            noBtnTitle={t('content.close')}
+            onYesClick={() => {
+              handleSiteDelete()
+              setShowDeleteSiteModal(false)
+            }}
+            onNoClick={() => setShowDeleteSiteModal(false)}
+            isVisible={showDeleteSiteModal}
+            mode="danger"
+          />,
+          document.body,
+        )}
+    </div>
+  )
+}
+
+/*
+
+
 
   return (
     <div className="root">
@@ -291,29 +265,7 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
           )}
         />
       </div>
-      {showDeleteSiteModal &&
-        createPortal(
-          <ModalConfirmAction
-            title={t('delete_modal.confirm_delete_site_prompt')}
-            description=""
-            content={
-              <>
-                <p>{t('delete_modal.delete_site_warning_details')}</p>
-                <p>{t('delete_modal.delete_permanent_warning')}</p>
-              </>
-            }
-            yesBtnTitle={t('content.delete')}
-            noBtnTitle={t('content.close')}
-            onYesClick={() => {
-              handleSiteDelete()
-              setShowDeleteSiteModal(false)
-            }}
-            onNoClick={() => setShowDeleteSiteModal(false)}
-            isVisible={showDeleteSiteModal}
-            mode="danger"
-          />,
-          document.body,
-        )}
+     
       {showDeleteServiceModal &&
         createPortal(
           <ModalConfirmAction
@@ -339,4 +291,6 @@ export const SiteSetting = ({ site }: SiteSettingProps): ReactElement => {
         )}
     </div>
   )
-}
+
+
+  */

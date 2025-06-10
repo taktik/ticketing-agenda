@@ -119,7 +119,7 @@ body * {
   align-self: stretch;
   position: relative;
   flex-direction: column;
-  padding: 12px 24px 24px 24px;
+  padding: 12px;
   overflow: hidden;
 }
 @media screen and (max-width: calc(768px - 1px)) {

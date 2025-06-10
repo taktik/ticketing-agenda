@@ -13,6 +13,10 @@ import { CustomModal } from '../common/CustomModal'
 import './index.css'
 import { ServiceSetting } from './ServiceSetting'
 import emptyIcon from '../../assets/empty.svg'
+import { useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
+import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../core/api/calendarItemTypeApi'
+import { SiteSetting } from './SiteSetting'
+import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 
 interface ModalSchedulingProps {
   isVisible: boolean
@@ -57,6 +61,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
   }
 
   const { data: services } = useGetAllServiceBySiteId({ skip: skip || !rootHcp, sitesIds: sitesIds ?? [] })
+  const servicesIds = useMemo(() => services?.map((service) => service.id), [services])
 
   const sortedServices = useMemo(() => {
     return [...(services ?? [])].sort((a, b) => {
@@ -66,8 +71,13 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     })
   }, [services])
 
-  //const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
-  //const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: skip || !agenda || !selectedService, agendaId: agenda?.id ?? '' })
+  const { data: allAgendas } = useGetAllAgendaByAuthorIds({ skip: skip || !servicesIds, authorIds: servicesIds })
+  const agendaIds = useMemo(() => allAgendas?.map((agenda) => agenda.id), [allAgendas])
+
+  const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ skip: skip || !agendaIds, agendaIds: agendaIds })
+  const flatProceduresArray = useMemo(() => (allProcedures ?? []).flat(), [allProcedures])
+
+  const numberOfProcedures = (service: HealthcareParty) => {}
 
   const handleAddSite = useCallback(() => {
     try {
@@ -158,21 +168,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
 
       const servicesOfThisSite = services?.filter((service) => service.parentId === matchingSite.id) ?? []
 
-      return (
-        <div className="site-root">
-          <div className="site-title">
-            <Typography.Title level={2}>{matchingSite.name}</Typography.Title>
-            <Typography.Text type="secondary">Sélectionnez un service ci-dessous pour configurer ses démarches.</Typography.Text>
-          </div>
-          <div className="site-grid">
-            {servicesOfThisSite.map((service) => (
-              <Card key={service.id} hoverable onClick={() => setSelectedKey(`service-${service.id}`)}>
-                <Card.Meta title={service.name} description={`${0} démarche(s)`} />
-              </Card>
-            ))}
-          </div>
-        </div>
-      )
+      return <SiteSetting site={matchingSite} services={servicesOfThisSite} />
     }
 
     if (type === 'service') {
@@ -193,7 +189,9 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           <div className="content">
             <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} style={{ height: 'auto', borderRight: 0 }} />
             <div className="sider-footer">
-              <Button onClick={handleAddSite}>{t('content.add_site')}</Button>
+              <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite}>
+                {t('content.add_site')}
+              </StyledButton>
             </div>
           </div>
         </Sider>
