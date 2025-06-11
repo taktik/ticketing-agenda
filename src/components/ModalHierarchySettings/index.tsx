@@ -188,16 +188,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
         {messageContextHolder}
         <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
           <div className="content">
-            <Menu
-              mode="inline"
-              items={menuItems}
-              onClick={onServiceClick}
-              onOpenChange={onSiteClick}
-              selectedKeys={[selectedKey]}
-              openKeys={openKeys}
-              style={{ height: 'auto', borderRight: 0 }}
-              expandIcon={renderExpandIcon}
-            />
+            <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ height: 'auto', borderRight: 0 }} />
             <div className="sider-footer">
               <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite}>
                 {t('content.add_site')}

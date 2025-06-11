@@ -190,4 +190,7 @@ body * {
 .defaultRender img {
   width: 40%;
 }
+.ant-menu-submenu-selected * {
+  color: white !important;
+}
 /*# sourceMappingURL=index.css.map */
