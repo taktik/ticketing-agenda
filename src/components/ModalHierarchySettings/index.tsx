@@ -102,6 +102,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           label: (
             <div
               style={{
+                color: selectedKey === `site-${site.id}` ? '#ffffff' : 'inherit',
                 padding: 0,
                 margin: 0,
               }}
@@ -118,7 +119,13 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
               : {
                   margin: 13,
                 },
-          icon: <BankOutlined />,
+          icon: (
+            <BankOutlined
+              style={{
+                color: selectedKey === `site-${site.id}` ? '#ffffff' : 'inherit',
+              }}
+            />
+          ),
           children,
         }
       }),
