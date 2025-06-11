@@ -102,7 +102,6 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           label: (
             <div
               style={{
-                color: selectedKey === `site-${site.id}` ? '#ffffff' : 'inherit',
                 padding: 0,
                 margin: 0,
               }}
@@ -119,14 +118,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
               : {
                   margin: 13,
                 },
-          icon: (
-            <BankOutlined
-              color={selectedKey === `site-${site.id}` ? 'white' : 'black'}
-              style={{
-                color: selectedKey === `site-${site.id}` ? '#ffffff' : 'inherit',
-              }}
-            />
-          ),
+          icon: <BankOutlined />,
           children,
         }
       }),
@@ -176,10 +168,6 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
 
     return <div>{t('content.select_site_or_service')}</div>
   }, [selectedKey, sites, sortedServices, t, sortedServices])
-
-  const renderExpandIcon: MenuProps['expandIcon'] = (props) => {
-    return <CaretDownOutlined style={{ color: 'white', fontSize: '12px' }} />
-  }
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>
