@@ -12,47 +12,7 @@ import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
 import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-
-type FormValues = {
-  name: string
-}
-interface renameSiteProps {
-  site: HealthcareParty
-  setShowRenameSiteInput: React.Dispatch<React.SetStateAction<boolean>>
-  renameSite: (name: string) => void
-}
-
-const RenameSite = React.memo(({ site, setShowRenameSiteInput, renameSite }: renameSiteProps) => {
-  const { t } = useTranslation()
-
-  const [form] = Form.useForm<FormValues>()
-  const watchName = Form.useWatch('name', form)
-
-  useEffect(() => {
-    form.setFieldValue('name', site.name)
-  }, [site, form])
-
-  const handleRename = (newName: string) => {
-    renameSite(newName)
-    form.resetFields()
-  }
-
-  return (
-    <div className="site-rename-root">
-      <Form form={form} className="site-rename-form">
-        <Form.Item name="name" rules={[{ required: true, message: 'Name of the site' }]}>
-          <Input autoFocus />
-        </Form.Item>
-        <Tooltip title={t('content.cancel')}>
-          <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={watchName !== site.name} onClick={() => setShowRenameSiteInput(false)} />
-        </Tooltip>
-        <Tooltip title={t('content.save_site')}>
-          <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={watchName === site.name} onClick={() => handleRename(watchName)} />
-        </Tooltip>
-      </Form>
-    </div>
-  )
-})
+import { RenameInput } from '../../common/RenameInput'
 
 interface SiteSettingProps {
   site: HealthcareParty
@@ -79,13 +39,13 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
   const siteActionItems: MenuProps['items'] = [
     {
       key: 'rename',
-      label: t('actions.rename_site', 'Renommer'),
+      label: t('content.rename'),
       icon: <EditOutlined />,
       onClick: () => setShowRenameSiteInput(true),
     },
     {
       key: 'delete',
-      label: t('actions.delete_site', 'Supprimer'),
+      label: t('content.delete'),
       icon: <DeleteOutlined />,
       danger: true,
       onClick: () => setShowDeleteSiteModal(true),
@@ -183,24 +143,24 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       <div className="site-header">
         <div className="site-title">
           <Space align="center">
-            {showRenameSiteInput ? <RenameSite site={site} setShowRenameSiteInput={setShowRenameSiteInput} renameSite={renameSite} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
+            {showRenameSiteInput ? <RenameInput hcp={site} setShowRenameInput={setShowRenameSiteInput} rename={renameSite} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
             {showRenameSiteInput ? null : (
               <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                 <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />
               </Dropdown>
             )}
           </Space>
-          <Typography.Text type="secondary">Sélectionnez un service ci-dessous pour configurer ses démarches.</Typography.Text>
+          <Typography.Text type="secondary">{t('content.select_service_to_configure_procedures')}</Typography.Text>
         </div>
         <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={() => handleCreateNewService()} style={{ alignSelf: 'baseline' }}>
-          {t('actions.add_service', 'Ajouter un service')}
+          {t('content.add_service')}
         </StyledButton>
       </div>
 
       <div className="site-grid">
         {serviceAndProcedures.map((service) => (
           <Card key={service[0].id} hoverable onClick={() => setSelectedKey(`service-${service[0].id}`)} className="site-card">
-            <Card.Meta title={service[0].name} description={`${service[1].length} démarche(s)`} />
+            <Card.Meta title={service[0].name} description={service[1].length && service[1].length > 1 ? `${service[1].length} ${t('content.procedures')}` : `${service[1].length} ${t('content.procedure')}`} />
           </Card>
         ))}
       </div>

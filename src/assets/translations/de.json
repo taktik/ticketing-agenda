@@ -118,7 +118,13 @@
     "manage_users": "Benutzer verwalten",
     "organize_hierarchy": "Hierarchie organisieren",
     "manage_planning": "Planung verwalten",
-    "hierarchical_organization": "Hierarchische Organisation"
+    "hierarchical_organization": "Hierarchische Organisation",
+    "service_not_found": "Dienst nicht gefunden",
+    "site_not_found": "Standort nicht gefunden",
+    "rename": "Umbenennen",
+    "select_service_to_configure_procedures": "Wählen Sie unten einen Dienst aus, um dessen Verfahren zu konfigurieren.",
+    "select_site_or_service_to_start": "Wählen Sie einen Standort oder einen Dienst aus, um zu beginnen.",
+    "select_site_or_service": "Wählen Sie einen Standort oder einen Dienst aus."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

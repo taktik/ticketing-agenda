@@ -1,6 +1,6 @@
-import { CloseOutlined, DeleteOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
+import { CloseOutlined, DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Empty, Form, Input, InputNumber, message, notification, Radio, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Button, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
@@ -13,6 +13,7 @@ import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutat
 import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
+import { RenameInput } from '../../common/RenameInput'
 
 const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
   const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
@@ -46,7 +47,7 @@ interface FormValues {
 }
 
 interface ServiceSettingProps {
-  service: HealthcareParty | undefined
+  service: HealthcareParty
 }
 
 export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement => {
@@ -58,6 +59,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const [procedureRowToBeDeleted, setProcedureRowToBeDeleted] = useState<ProcedureRow | undefined>(undefined)
   const [proceduresList, setProceduresList] = useState<CalendarItemType[]>([])
   const [tableRows, setTableRows] = useState<ProcedureRow[]>([])
+  const [showRenameSiteInput, setShowRenameSiteInput] = useState<boolean>(false)
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
 
@@ -341,9 +343,36 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     form.setFieldsValue({ serviceName: initialName })
   }
 
+  const renameService = (newName: string) => {
+    try {
+      if (!service) throw new Error('No service selected')
+      createUpdateService(new HealthcareParty({ ...service, name: newName }))
+    } catch (error) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+    } finally {
+      setShowRenameSiteInput(false)
+    }
+  }
+
   const watchedDurations = Form.useWatch('appointmentDurations', form)
   const nameValue = Form.useWatch('serviceName', form)
   const initialName = useMemo(() => service?.name || '', [service])
+
+  const siteActionItems: MenuProps['items'] = [
+    {
+      key: 'rename',
+      label: t('content.rename'),
+      icon: <EditOutlined />,
+      onClick: () => setShowRenameSiteInput(true),
+    },
+    {
+      key: 'delete',
+      label: t('content.delete'),
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => setShowDeleteServiceModal(true),
+    },
+  ]
 
   return (
     <div className="root">
@@ -359,16 +388,15 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between' }}
       >
         <div className="form-fields">
-          <div className="edit-service">
-            <Form.Item name="serviceName" rules={[{ required: true, message: 'Name of the service' }]}>
-              <Input suffix={<CloseOutlined disabled={nameValue === service?.name} onClick={handleNameCancel} />} />
-            </Form.Item>
-            <Tooltip title={t('content.save_service')}>
-              <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={nameValue === initialName} onClick={handleSubmit} />
-            </Tooltip>
-            <Tooltip title={t('content.delete_service')}>
-              <Button icon={<DeleteOutlined />} danger disabled={!service} onClick={() => setShowDeleteServiceModal(true)} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} />
-            </Tooltip>
+          <div className="site-title">
+            <Space align="center">
+              {showRenameSiteInput ? <RenameInput hcp={service} setShowRenameInput={setShowRenameSiteInput} rename={renameService} /> : <Typography.Title level={2}>{service.name}</Typography.Title>}
+              {showRenameSiteInput ? null : (
+                <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
+                  <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />
+                </Dropdown>
+              )}
+            </Space>
           </div>
 
           <div className="ant-table-custom">

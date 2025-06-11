@@ -118,7 +118,13 @@
     "manage_users": "Gérer les utilisateurs",
     "organize_hierarchy": "Organiser la hiérarchie",
     "manage_planning": "Gérer la planification",
-    "hierarchical_organization": "Organisation hiérarchique"
+    "hierarchical_organization": "Organisation hiérarchique",
+    "service_not_found": "Service non trouvé",
+    "site_not_found": "Site non trouvé",
+    "rename": "Renommer",
+    "select_service_to_configure_procedures": "Sélectionnez un service ci-dessous pour configurer ses démarches.",
+    "select_site_or_service_to_start": "Sélectionnez un site ou un service pour commencer.",
+    "select_site_or_service": "Sélectionnez un site ou un service."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

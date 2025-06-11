@@ -118,7 +118,13 @@
     "manage_users": "Manage users",
     "organize_hierarchy": "Organize Hierarchy",
     "manage_planning": "Manage Planning",
-    "hierarchical_organization": "Hierarchical Organization"
+    "hierarchical_organization": "Hierarchical Organization",
+    "service_not_found": "Service not found",
+    "site_not_found": "Site not found",
+    "rename": "Rename",
+    "select_service_to_configure_procedures": "Select a service below to configure its procedures.",
+    "select_site_or_service_to_start": "Select a site or a service to get started.",
+    "select_site_or_service": "Select a site or a service."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

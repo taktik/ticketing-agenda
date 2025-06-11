@@ -118,7 +118,13 @@
     "manage_users": "Gebruikers beheren",
     "organize_hierarchy": "Hiërarchie organiseren",
     "manage_planning": "Planning beheren",
-    "hierarchical_organization": "Hiërarchische organisatie"
+    "hierarchical_organization": "Hiërarchische organisatie",
+    "service_not_found": "Dienst niet gevonden",
+    "site_not_found": "Locatie niet gevonden",
+    "rename": "Hernoemen",
+    "select_service_to_configure_procedures": "Selecteer hieronder een dienst om de bijbehorende procedures te configureren.",
+    "select_site_or_service_to_start": "Selecteer een locatie of een dienst om te beginnen.",
+    "select_site_or_service": "Selecteer een locatie of een dienst."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

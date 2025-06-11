@@ -150,12 +150,12 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
     const id = match?.[2]
 
     if (!type || !id) {
-      return <Empty image={emptyIcon} description={t('content.select_site_or_service_to_edit', 'Sélectionnez un site ou un service pour commencer.')} style={{ paddingTop: '10rem' }} />
+      return <Empty image={emptyIcon} description={t('content.select_site_or_service_to_start')} style={{ paddingTop: '10rem' }} />
     }
 
     if (type === 'site') {
       const matchingSite = sites?.find((site) => site.id === id)
-      if (!matchingSite) return <div>Site non trouvé</div>
+      if (!matchingSite) return <div>{t('content.site_not_found')}</div>
 
       const servicesOfThisSite = sortedServices?.filter((service) => service.parentId === matchingSite.id) ?? []
 
@@ -164,11 +164,11 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
 
     if (type === 'service') {
       const matchingService = sortedServices?.find((service) => service.id === id)
-      if (!matchingService) return <div>Service non trouvé</div>
+      if (!matchingService) return <div>{t('cntent.service_not_found')}</div>
       return <ServiceSetting service={matchingService} />
     }
 
-    return <div>{t('content.select_site_or_service_to_edit', 'Sélectionnez un site ou un service.')}</div>
+    return <div>{t('content.select_site_or_service')}</div>
   }, [selectedKey, sites, sortedServices, t, sortedServices])
 
   return (
