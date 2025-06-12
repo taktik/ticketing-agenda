@@ -97,11 +97,14 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           icon: <AppstoreOutlined />,
         }))
 
+        const isSelected = selectedKey === `site-${site.id}`
+        const isOpen = openKeys.includes(`site-${site.id}`)
+
         return {
           key: `site-${site.id}`,
           label: (
             <div
-              className={selectedKey === `site-${site.id}` ? 'site-label-white' : 'site-label-black'}
+              className={isSelected ? 'site-label-white' : 'site-label-black'}
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -109,19 +112,18 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
               }}
             >
               <span>{site.name}</span>
-              {selectedKey === `site-${site.id}` ? <DownOutlined style={{ color: '#fff' }} /> : <RightOutlined style={{ color: 'black' }} />}
+              {isOpen ? <DownOutlined style={{ color: `${isSelected ? '#fff' : 'black'}` }} /> : <RightOutlined style={{ color: `${isSelected ? '#fff' : 'black'}` }} />}
             </div>
           ),
-          style:
-            selectedKey === `site-${site.id}`
-              ? {
-                  backgroundColor: '#e30613',
-                  margin: 13,
-                }
-              : {
-                  margin: 13,
-                },
-          icon: <BankOutlined className={selectedKey === `site-${site.id}` ? 'site-label-white' : 'site-label-black'} />,
+          style: isSelected
+            ? {
+                backgroundColor: '#e30613',
+                margin: 13,
+              }
+            : {
+                margin: 13,
+              },
+          icon: <BankOutlined className={isSelected ? 'site-label-white' : 'site-label-black'} />,
           children,
         }
       }),
