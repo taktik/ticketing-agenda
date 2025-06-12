@@ -1,4 +1,4 @@
-import { AppstoreOutlined, BankOutlined, CaretDownOutlined, CaretRightOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, BankOutlined, CaretDownOutlined, CaretRightOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
 import { HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Card, Empty, Layout, Menu, MenuProps, message, notification, Typography } from 'antd'
 import { Content } from 'antd/es/layout/layout'
@@ -101,13 +101,15 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           key: `site-${site.id}`,
           label: (
             <div
+              className={selectedKey === `site-${site.id}` ? 'site-label-white' : 'site-label-black'}
               style={{
-                color: selectedKey === `site-${site.id}` ? '#ffffff' : 'inherit',
-                padding: 0,
-                margin: 0,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              {site.name}
+              <span>{site.name}</span>
+              {selectedKey === `site-${site.id}` ? <DownOutlined style={{ color: '#fff' }} /> : <RightOutlined style={{ color: 'black' }} />}
             </div>
           ),
           style:
@@ -119,13 +121,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
               : {
                   margin: 13,
                 },
-          icon: (
-            <BankOutlined
-              style={{
-                color: selectedKey === `site-${site.id}` ? '#ffffff' : 'inherit',
-              }}
-            />
-          ),
+          icon: <BankOutlined className={selectedKey === `site-${site.id}` ? 'site-label-white' : 'site-label-black'} />,
           children,
         }
       }),
@@ -183,7 +179,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
         {messageContextHolder}
         <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
           <div className="content">
-            <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ height: 'auto', borderRight: 0 }} />
+            <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ height: 'auto', borderRight: 0 }} expandIcon={false} />
             <div className="sider-footer">
               <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite}>
                 {t('content.add_site')}

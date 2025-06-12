@@ -190,4 +190,10 @@ body * {
 .defaultRender img {
   width: 40%;
 }
+.site-label-black {
+  color: black !important;
+}
+.site-label-white {
+  color: white !important;
+}
 /*# sourceMappingURL=index.css.map */
