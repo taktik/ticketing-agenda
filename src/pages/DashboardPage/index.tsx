@@ -67,17 +67,24 @@ export default function DashboardPage() {
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
   const { data: services, isLoading: isServicesLoading } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
-  const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
+  const filteredServices = useMemo(() => (services && selectedSite ? services : []), [services, selectedSite])
+
+  const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(undefined)
 
   const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
+  const filteredAgenda = useMemo(() => (agenda && selectedService ? agenda : undefined), [agenda, selectedService])
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: skip || !agenda || !selectedService, agendaId: agenda?.id ?? '' })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: skip || !filteredAgenda || !selectedService, agendaId: filteredAgenda?.id ?? '' })
+  const filteredProcedures = useMemo(() => (procedures && filteredAgenda ? procedures : []), [procedures, filteredAgenda])
 
   const isSitesRelatedLoading = useMemo(() => isSitesLoading || isRootHcpLoading, [isSitesLoading, isRootHcpLoading])
   const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
   const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
 
-  const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(procedures?.[0])
+  const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
+
+  useEffect(() => setSelectedService(undefined), [services])
+  useEffect(() => setSelectedProcedure(undefined), [procedures])
 
   useEffect(() => {
     if (!selectedSite && sites?.length) {
@@ -132,8 +139,8 @@ export default function DashboardPage() {
           <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', zIndex: '1' }}>
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
-          <ServiceSelector services={services ?? []} isServicesLoading={isServicesRelatedLoading} selectedService={selectedService} setSelectedService={setSelectedService} />
-          <ProcedureSelector procedures={procedures ?? []} isProceduresLoading={isProceduresRelatedLoading} selectedProcedure={selectedProcedure} setSelectedProcedure={setSelectedProcedure} />
+          <ServiceSelector services={filteredServices} isServicesLoading={isServicesRelatedLoading} selectedService={selectedService} setSelectedService={setSelectedService} />
+          <ProcedureSelector procedures={filteredProcedures} isProceduresLoading={isProceduresRelatedLoading} selectedProcedure={selectedProcedure} setSelectedProcedure={setSelectedProcedure} />
         </div>
         <div className="right-panel">
           <Calendar calendarRef={calendarRef} handleFullCalendarDateChange={handleFullCalendarDateChange} />
@@ -146,7 +153,7 @@ export default function DashboardPage() {
           </SettingContextProvider>,
           document.body,
         )}
-      {schedulingModalOpen && createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} services={services ?? []} />, document.body)}
+      {schedulingModalOpen && createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} services={filteredServices} />, document.body)}
     </div>
   )
 }

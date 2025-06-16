@@ -196,8 +196,8 @@ body * {
 .header__userDropdown--active,
 .header__userDropdown:hover {
   border-radius: 6px;
-  border: 1px solid #084b83;
-  box-shadow: 0 0 0 2px rgba(8, 75, 131, 0.2);
+  border: 1px solid #e30613;
+  box-shadow: 0 0 0 2px #e306131a;
 }
 .header__userDropdown__heading {
   display: flex;

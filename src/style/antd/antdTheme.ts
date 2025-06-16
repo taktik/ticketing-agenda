@@ -1,9 +1,9 @@
 import { BorderHorizontalOutlined } from '@ant-design/icons'
-import { DatePicker } from 'antd'
+import { Calendar, DatePicker } from 'antd'
 
 export const ANTD_NEW_THEME = {
   token: {
-    colorPrimary: '#084B83',
+    colorPrimary: '#e30613',
   },
   components: {
     Button: {
@@ -14,6 +14,7 @@ export const ANTD_NEW_THEME = {
       primaryShadow: 'none',
       paddingInline: 16,
       contentFontSizeLG: 14,
+      colorPrimary: '#e30613',
     },
     DatePicker: {
       fontSizeLG: 13,
@@ -40,6 +41,9 @@ export const ANTD_NEW_THEME = {
       itemBg: '#ffffff',
       subMenuItemBg: '#ffffff',
       itemBorderRadius: 0,
+    },
+    Calendar: {
+      colorPrimary: '#e30613',
     },
     Modal: {
       margin: 0,
@@ -68,6 +72,7 @@ export const ANTD_NEW_THEME = {
       controlOutline: '#e306131a',
       optionSelectedColor: '#e30613',
       activeBorderColor: '#e30613',
+      colorPrimary: '#e30613',
     },
     Popconfirm: {
       colorWarning: '#EB3437',

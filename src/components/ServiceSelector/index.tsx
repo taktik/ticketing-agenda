@@ -43,15 +43,15 @@ export const ServiceSelector = ({ services, isServicesLoading, selectedService, 
           {services.map((service) => {
             const isSelected = selectedService?.id === service.id
             return (
-              <StyledButton
+              <Button
                 key={service.id}
                 onClick={() => {
                   handleSelectServiceClick(service)
                 }}
-                stylingType={isSelected ? ButtonStyleType.DefaultActive : ButtonStyleType.Default}
+                type={isSelected ? 'primary' : 'default'}
               >
                 {service.name}
-              </StyledButton>
+              </Button>
             )
           })}
         </div>

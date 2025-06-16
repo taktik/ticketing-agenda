@@ -103,12 +103,12 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
         </div>
         <div className="agendaFormFooter">
           <Form.Item>
-            <StyledButton stylingType={ButtonStyleType.BlackTheme} htmlType="button" onClick={handleCancel}>
+            <Button htmlType="button" onClick={handleCancel}>
               {t('content.cancel')}
-            </StyledButton>
-            <StyledButton stylingType={ButtonStyleType.BlackThemeActive} htmlType="submit" style={{ marginRight: 8 }}>
+            </Button>
+            <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
               {t('content.save')}
-            </StyledButton>
+            </Button>
           </Form.Item>
         </div>
       </Form>

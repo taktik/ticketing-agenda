@@ -388,7 +388,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between' }}
       >
         <div className="form-fields">
-          <div className="site-title">
+          <div className="service-title">
             <Space align="center">
               {showRenameSiteInput ? <RenameInput hcp={service} setShowRenameInput={setShowRenameSiteInput} rename={renameService} /> : <Typography.Title level={2}>{service.name}</Typography.Title>}
               {showRenameSiteInput ? null : (

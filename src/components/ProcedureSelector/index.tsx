@@ -52,15 +52,15 @@ export const ProcedureSelector = ({ procedures, isProceduresLoading, selectedPro
           {sortedProcedures.map((procedure) => {
             const isSelected = selectedProcedure?.id === procedure.id
             return (
-              <StyledButton
+              <Button
                 key={procedure.id}
                 onClick={() => {
                   handleSelectProcedureClick(procedure)
                 }}
-                stylingType={isSelected ? ButtonStyleType.DefaultActive : ButtonStyleType.Default}
+                type={isSelected ? 'primary' : 'default'}
               >
                 {procedure.name}
-              </StyledButton>
+              </Button>
             )
           })}
         </div>
