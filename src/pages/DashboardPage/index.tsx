@@ -45,7 +45,7 @@ export default function DashboardPage() {
   const calendarRef = useRef<FullCalendar | null>(null)
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   const { data: hcps } = useGetHealthcarePartiesByIdsQuery([user?.healthcarePartyId ?? '', 'd3927cfe-6a86-4dbe-a70c-12af9b8daa9e'])
   const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
@@ -121,7 +121,7 @@ export default function DashboardPage() {
     <div className="Dashboard">
       <Header />
       <div className="Panel">
-        <div className="svg-background" />
+        {/* <div className="svg-background" /> */}
         <div className="left-panel">
           <Card className="card">
             <div className="SiteSelectorRow">

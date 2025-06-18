@@ -1118,7 +1118,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
             </div>
           </div>
           <div className="submitButton">
-            <Button htmlType="submit">{t('content.save_schedule')}</Button>
+            <Button type="primary" htmlType="submit">
+              {t('content.save_schedule')}
+            </Button>
           </div>
         </Form>
         {showDeleteTimeTableItemModal &&

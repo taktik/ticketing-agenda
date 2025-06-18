@@ -17,11 +17,26 @@
   display: flex;
   flex-direction: column;
 }
-.selectedSetting {
+.selected-user-setting {
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  width: 90%;
+  width: auto;
+  flex-grow: 1;
+  overflow: hidden;
+  background: white;
+  padding: 12px;
 }
 .ant-menu-inline {
   border-right: none !important;
+}
+.menu-user {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0;
+  gap: 0;
+  margin: 13px;
 }

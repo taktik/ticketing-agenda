@@ -29,6 +29,11 @@ export const RenameInput = React.memo(({ hcp, setShowRenameInput, rename }: rena
     form.resetFields()
   }
 
+  const handleCancel = () => {
+    form.resetFields()
+    setShowRenameInput(false)
+  }
+
   return (
     <div className="site-rename-root">
       <Form form={form} className="site-rename-form">
@@ -36,7 +41,7 @@ export const RenameInput = React.memo(({ hcp, setShowRenameInput, rename }: rena
           <Input autoFocus />
         </Form.Item>
         <Tooltip title={t('content.cancel')}>
-          <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={watchName !== hcp.name} onClick={() => setShowRenameInput(false)} />
+          <Button icon={<RollbackOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} onClick={() => handleCancel()} />
         </Tooltip>
         <Tooltip title={t('content.save_site')}>
           <Button icon={<SaveOutlined />} style={{ padding: 0, background: 'transparent', border: 'none', fontSize: 'x-large' }} disabled={watchName === hcp.name} onClick={() => handleRename(watchName)} />

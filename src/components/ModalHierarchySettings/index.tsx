@@ -118,10 +118,9 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
           style: isSelected
             ? {
                 backgroundColor: '#e30613',
-                margin: 13,
               }
             : {
-                margin: 13,
+                backgroundColor: 'white',
               },
           icon: <BankOutlined className={isSelected ? 'site-label-white' : 'site-label-black'} />,
           children,
@@ -180,7 +179,7 @@ export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): Rea
         {notificationContextHolder}
         {messageContextHolder}
         <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
-          <div className="content">
+          <div className="menu-sites">
             <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ height: 'auto', borderRight: 0 }} expandIcon={false} />
             <div className="sider-footer">
               <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite}>

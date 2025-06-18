@@ -1,5 +1,6 @@
 import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType, User } from '@icure/cardinal-sdk'
-import { Form, Input, Upload, UploadFile, UploadProps, Button, Col, Divider, Row, Typography, Menu, MenuProps } from 'antd'
+import { Form, Input, Upload, UploadFile, UploadProps, Button, Col, Divider, Row, Typography, Menu, MenuProps, Layout } from 'antd'
+
 import ImgCrop from 'antd-img-crop'
 import React, { ReactElement, useCallback, useEffect, useState } from 'react'
 import { useCreateOrUpdatePractitionerMutation } from '../../core/api/practitionerApi'
@@ -12,6 +13,8 @@ import { AccountSetting } from './Settings/AccountSetting'
 import { ProfileOutlined, UsergroupAddOutlined } from '@ant-design/icons'
 import { ManagerUsers } from './Settings/ManageUsers'
 import { useTranslation } from 'react-i18next'
+import { Content } from 'antd/es/layout/layout'
+import Sider from 'antd/es/layout/Sider'
 
 interface ModalSettingsProps {
   isVisible: boolean
@@ -49,13 +52,16 @@ export const ModalSettings = ({ isVisible, onClose, currentUser, user }: ModalSe
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.your_settings')} noFooter blockAntModalBodyVerticalScroll width={1300}>
-      <div className="modalSettings">
-        <div className="settingsTitle">
-          <Menu onClick={onClick} style={{ width: 200 }} defaultSelectedKeys={['profil']} mode="inline" items={items} />
-        </div>
-        <Divider type="vertical" variant="solid" style={{ height: '100%' }} />
-        <div className="selectedSetting">{renderSetting()}</div>
-      </div>
+      <Layout className="modal-settings">
+        <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
+          <div className="menu-user">
+            <Menu onClick={onClick} defaultSelectedKeys={['profil']} mode="inline" items={items} style={{ height: 'auto', borderRight: 0 }} expandIcon={false} />
+          </div>
+        </Sider>
+        <Layout>
+          <Content className="selected-user-setting">{renderSetting()}</Content>
+        </Layout>
+      </Layout>
     </CustomModal>
   )
 }

@@ -1,6 +1,6 @@
 import { CloseOutlined, DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Button, Card, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
@@ -14,6 +14,38 @@ import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from 
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
 import { RenameInput } from '../../common/RenameInput'
+
+const SubjectDisplay = ({ subjects }: { subjects: { [key: string]: string } }): ReactElement => {
+  const { t } = useTranslation()
+  const availableLangs = useMemo(() => Object.keys(subjects || {}), [subjects])
+
+  const [viewedLang, setViewedLang] = useState<string | undefined>(availableLangs[0])
+
+  useEffect(() => {
+    if (availableLangs.length > 0 && !availableLangs.includes(viewedLang || '')) {
+      setViewedLang(availableLangs[0])
+    } else if (availableLangs.length === 0) {
+      setViewedLang(undefined)
+    }
+  }, [availableLangs, viewedLang])
+
+  if (availableLangs.length === 0) {
+    return (
+      <Tag icon={<ExclamationCircleOutlined />} color="warning">
+        {t('content.not_set')}
+      </Tag>
+    )
+  }
+
+  return (
+    <div style={{ minWidth: 350, maxHeight: 150, overflow: 'auto' }}>
+      <Segmented size="small" options={availableLangs.map((lang) => ({ label: lang, value: lang }))} value={viewedLang} onChange={(lang) => setViewedLang(lang as string)} style={{ marginBottom: 8 }} />
+      <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '6px', minHeight: '60px' }}>
+        <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{subjects[viewedLang || '']}</Typography.Paragraph>
+      </div>
+    </div>
+  )
+}
 
 const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
   const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
@@ -31,12 +63,18 @@ const sortByOtherInfosOrder = (items: CalendarItemType[]): CalendarItemType[] =>
   })
 }
 
+interface subjectByLanguageForm {
+  lang: string
+  subject: string
+}
+
 interface ProcedureRow {
   rowId: string
   procedureId: string
   procedureName: string
   appointmentDurations: number[]
   isPublic: string
+  subjectByLanguage: { [key: string]: string }
 }
 
 interface FormValues {
@@ -44,6 +82,8 @@ interface FormValues {
   procedureName: string
   appointmentDurations: number[]
   isPublic: string
+  emailTemplate: string
+  subjectByLanguage: subjectByLanguageForm[]
 }
 
 interface ServiceSettingProps {
@@ -94,6 +134,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         procedureName: procedure.name,
         appointmentDurations: allDurations,
         isPublic: procedure.otherInfos.isPublic === 'true' ? 'true' : 'false',
+        subjectByLanguage: procedure.subjectByLanguage,
       } as ProcedureRow
     })
     setTableRows(tableRowsList)
@@ -111,17 +152,6 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading, isDeleteServiceLoading],
   )
   const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
-
-  const handleSubmit = () => {
-    try {
-      if (!service) throw new Error('No service selected')
-      const { serviceName } = form.getFieldsValue()
-      createUpdateService({ ...service, name: serviceName })
-      form.submit()
-    } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-    }
-  }
 
   useEffect(() => {
     if (service) {
@@ -165,6 +195,13 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       const matchingProcedures = (procedures ?? []).filter((item) => item.name === procedureRow.procedureName)
       const sortedMatchingProcedures = sortByOtherInfosOrder(matchingProcedures)
 
+      const newSubjectByLanguage = rowValues.subjectByLanguage.reduce((acc: { [key: string]: string }, current: { lang?: string; subject?: string }) => {
+        if (current.lang) {
+          acc[current.lang.trim().toLowerCase()] = current.subject || ''
+        }
+        return acc
+      }, {})
+
       // Step 3 : We make our desired Array as the user has chosen
       const desiredArray = rowValues.appointmentDurations.map(
         (duration, index) =>
@@ -178,6 +215,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               order: String(index),
               isPublic: rowValues.isPublic,
             },
+            subjectByLanguage: newSubjectByLanguage,
             id: v4(),
           }),
       )
@@ -198,7 +236,8 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             existingItem.defaultCalendarItemType !== desiredProps.defaultCalendarItemType ||
             existingItem.name !== desiredProps.name ||
             existingItem.otherInfos?.order !== desiredProps.otherInfos.order ||
-            existingItem.otherInfos?.isPublic !== desiredProps.otherInfos.isPublic
+            existingItem.otherInfos?.isPublic !== desiredProps.otherInfos.isPublic ||
+            existingItem.subjectByLanguage !== desiredProps.subjectByLanguage
           ) {
             const procedure = new CalendarItemType({
               name: desiredProps.name,
@@ -209,6 +248,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               agendaId: desiredProps.agendaId,
               id: existingItem.id,
               rev: existingItem.rev,
+              subjectByLanguage: desiredProps.subjectByLanguage,
             })
             mutationPromises.push(createUpdateProcedure(procedure).unwrap())
           }
@@ -250,11 +290,13 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const tableRowEdit = (procedureRow: ProcedureRow) => {
     try {
       if (!procedureRow.rowId) throw new Error('No rule selected')
+      const subjectListForForm = Object.entries(procedureRow.subjectByLanguage || {}).map(([lang, subject]) => ({ lang, subject }))
       // Set the state with the values
       form.setFieldsValue({
         procedureName: procedureRow.procedureName,
         appointmentDurations: procedureRow.appointmentDurations,
         isPublic: procedureRow.isPublic,
+        subjectByLanguage: subjectListForForm,
       })
       setEditingKey(procedureRow.rowId)
     } catch (error) {
@@ -339,10 +381,6 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const handleNameCancel = () => {
-    form.setFieldsValue({ serviceName: initialName })
-  }
-
   const renameService = (newName: string) => {
     try {
       if (!service) throw new Error('No service selected')
@@ -355,8 +393,6 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   }
 
   const watchedDurations = Form.useWatch('appointmentDurations', form)
-  const nameValue = Form.useWatch('serviceName', form)
-  const initialName = useMemo(() => service?.name || '', [service])
 
   const siteActionItems: MenuProps['items'] = [
     {
@@ -424,6 +460,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   dataIndex="procedureName"
                   key="procedureName"
                   width="50%"
+                  minWidth={250}
                   sorter={(a, b) => a.procedureName.localeCompare(b.procedureName)}
                   render={(currentValue: string, record: ProcedureRow) => {
                     const editable = isEditing(record)
@@ -545,6 +582,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   dataIndex="isPublic"
                   key="isPublic"
                   width="25%"
+                  minWidth={120}
                   render={(currentValue: string | undefined, record: ProcedureRow) => {
                     const editable = isEditing(record)
 
@@ -564,6 +602,46 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                         return <Tag color="red">{t('content.private')}</Tag>
                       }
                       return <Tag color="orange">{t('content.unknown')}</Tag>
+                    }
+                  }}
+                />
+                <Column
+                  title={t('content.informations')}
+                  dataIndex="subjectByLanguage"
+                  key="subjectByLanguage"
+                  width="350px"
+                  render={(subjectsByLanguage: { [key: string]: string }, record: ProcedureRow) => {
+                    const editable = isEditing(record)
+                    if (editable) {
+                      return (
+                        <Form.List name="subjectByLanguage">
+                          {(fields, { add, remove }, { errors }) => (
+                            <div className="procedure-information-column">
+                              {fields.map(({ key, name, ...restField }, index) => (
+                                <Card size="small" key={key} className="procedure-information-card">
+                                  <Space align="start" style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }} direction="horizontal">
+                                    <div className="procedure-information-inputs">
+                                      <Form.Item {...restField} name={[name, 'lang']} label={t('content.language')} rules={[{ required: true }]} style={{ width: '100%' }}>
+                                        <Input placeholder="e.g., french, italian, en" style={{ width: '100%' }} />
+                                      </Form.Item>
+                                      <Form.Item {...restField} name={[name, 'subject']} label={t('content.procedure-informations')} rules={[{ required: true }]} style={{ width: '100%' }}>
+                                        <Input.TextArea autoSize={{ minRows: 3, maxRows: 6 }} placeholder="What the user need to bring with them" />
+                                      </Form.Item>
+                                    </div>
+                                    <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => remove(name)} disabled={fields.length === 1} />
+                                  </Space>
+                                </Card>
+                              ))}
+                              <Button type="dashed" onClick={() => add({ lang: '', subject: '' })} block icon={<PlusOutlined />}>
+                                Add Language Template
+                              </Button>
+                              <Form.ErrorList errors={errors} />
+                            </div>
+                          )}
+                        </Form.List>
+                      )
+                    } else {
+                      return <SubjectDisplay subjects={subjectsByLanguage} />
                     }
                   }}
                 />

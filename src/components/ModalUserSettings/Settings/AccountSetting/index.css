@@ -127,7 +127,6 @@ body * {
 .modalManageAccountForm__form {
   display: flex;
   flex-direction: column;
-  padding: 24px;
   flex: 1 0 0;
 }
 @media screen and (max-width: calc(768px - 1px)) {

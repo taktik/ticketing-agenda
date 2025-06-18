@@ -170,6 +170,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
           <Table<TimeTable>
             pagination={{
               pageSize: 6,
+              simple: true,
             }}
             scroll={{ y: 'calc(100vh - 500px)', x: 'max-content' }}
             dataSource={sortedTimeTables}

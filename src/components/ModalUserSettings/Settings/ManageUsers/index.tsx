@@ -301,9 +301,9 @@ export const ManagerUsers = (): ReactElement => {
           >
             <ColumnGroup
               title={
-                <StyledButton stylingType={ButtonStyleType.BlackTheme} style={{ width: '100%' }} onClick={addUser}>
+                <Button style={{ width: '100%' }} onClick={addUser}>
                   {t('content.add_user')}
-                </StyledButton>
+                </Button>
               }
             >
               <Column
@@ -431,29 +431,22 @@ export const ManagerUsers = (): ReactElement => {
                   if (editable) {
                     return (
                       <Space size="middle">
-                        <StyledButton stylingType={ButtonStyleType.BlackTheme} onClick={() => tableRowUpdate(record)}>
-                          {t('content.update')}
-                        </StyledButton>
-                        <StyledButton stylingType={ButtonStyleType.BlackTheme} onClick={() => tableRowCancel(record)}>
-                          {t('content.cancel')}
-                        </StyledButton>
+                        <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
+                        <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
                       </Space>
                     )
                   } else {
                     return (
                       <Space size="middle">
-                        <StyledButton stylingType={ButtonStyleType.BlackTheme} onClick={() => tableRowEdit(record)}>
-                          {t('content.edit')}
-                        </StyledButton>
-                        <StyledButton
-                          stylingType={ButtonStyleType.BlackTheme}
+                        <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
+                        <Button
                           onClick={() => {
                             setUserRowToBeDeleted(record)
                             setShowDeleteUserModal(true)
                           }}
                         >
                           {t('content.delete')}
-                        </StyledButton>
+                        </Button>
                       </Space>
                     )
                   }
