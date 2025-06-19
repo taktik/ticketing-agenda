@@ -124,7 +124,12 @@
     "rename": "Rename",
     "select_service_to_configure_procedures": "Select a service below to configure its procedures.",
     "select_site_or_service_to_start": "Select a site or a service to get started.",
-    "select_site_or_service": "Select a site or a service."
+    "select_site_or_service": "Select a site or a service.",
+    "information": "Information",
+    "language": "Language",
+    "procedure_information": "Procedure information",
+    "add_language": "Add language",
+    "remove_selection": "Remove the selection"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

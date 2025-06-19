@@ -124,7 +124,12 @@
     "rename": "Umbenennen",
     "select_service_to_configure_procedures": "Wählen Sie unten einen Dienst aus, um dessen Verfahren zu konfigurieren.",
     "select_site_or_service_to_start": "Wählen Sie einen Standort oder einen Dienst aus, um zu beginnen.",
-    "select_site_or_service": "Wählen Sie einen Standort oder einen Dienst aus."
+    "select_site_or_service": "Wählen Sie einen Standort oder einen Dienst aus.",
+    "information": "Informationen",
+    "language": "Sprache",
+    "procedure_information": "Verfahrensinformationen",
+    "add_language": "Sprache hinzufügen",
+    "remove_selection": "Auswahl entfernen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

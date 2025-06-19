@@ -124,7 +124,12 @@
     "rename": "Renommer",
     "select_service_to_configure_procedures": "Sélectionnez un service ci-dessous pour configurer ses démarches.",
     "select_site_or_service_to_start": "Sélectionnez un site ou un service pour commencer.",
-    "select_site_or_service": "Sélectionnez un site ou un service."
+    "select_site_or_service": "Sélectionnez un site ou un service.",
+    "information": "Informations",
+    "language": "Langue",
+    "procedure_information": "Informations sur la démarche",
+    "add_language": "Ajouter une langue",
+    "remove_selection": "Retirer la sélection"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
