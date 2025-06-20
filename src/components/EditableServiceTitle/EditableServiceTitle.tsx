@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import type { Dispatch, FC, SetStateAction } from 'react'
-import { Typography, Button, Input, Segmented, Space, Card, message, Divider, Form } from 'antd'
-import { EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
-import { LanguageDescription } from '../ModalHierarchySettings/ServiceSetting'
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { Button, Form, Input, message, Segmented, Space, Typography } from 'antd'
+import type { Dispatch, SetStateAction } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LanguageDescription } from '../ModalHierarchySettings/ServiceSetting'
 
 const { Paragraph } = Typography
 
@@ -19,7 +19,7 @@ export const EditableServiceTitle = ({ initialTitles, onSave, showEditServiceTit
   const [selectedLang, setSelectedLang] = useState('FR')
   const [form] = Form.useForm()
 
-  const languages = ['FR', 'EN', 'NDLS', 'DE']
+  const languages = ['FR', 'NL', 'EN', 'DE']
 
   useEffect(() => {
     if (showEditServiceTitle) {

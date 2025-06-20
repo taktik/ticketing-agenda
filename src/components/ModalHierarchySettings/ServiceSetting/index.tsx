@@ -17,7 +17,7 @@ import { RenameInput } from '../../common/RenameInput'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 
 const SubjectEdit = () => {
-  const languages = ['FR', 'NDLS', 'EN', 'DE']
+  const languages = ['FR', 'NL', 'EN', 'DE']
   const [selectedLang, setSelectedLang] = useState('FR')
 
   return (
@@ -195,7 +195,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         },
         subjectByLanguage: {
           FR: t('content.new_procedure'),
-          NDLS: '',
+          NL: '',
           EN: '',
           DE: '',
         },

@@ -133,8 +133,8 @@ export const ManagerUsers = (): ReactElement => {
 
   // User create/update notifications
   useEffect(() => {
-    if (isCreateUpdateUserSuccess && isCreateUpdateHcpSuccess) showMessageFeedback('success', t('notification.user_saved'))
-  }, [isCreateUpdateUserSuccess, isCreateUpdateHcpSuccess])
+    if (isCreateUpdateHcpSuccess) showMessageFeedback('success', t('notification.user_saved'))
+  }, [isCreateUpdateHcpSuccess])
 
   // User delete notifications
   useEffect(() => {
@@ -194,29 +194,26 @@ export const ManagerUsers = (): ReactElement => {
 
   const createUser = async (record: UserRow) => {
     try {
-      console.log('CREATE')
-
       if (!record.hcp || !record.user) throw new Error('No user selected')
       const rowValues = await form.validateFields()
 
       // Step 1: Create HealthcareParty
-      const updatedHcpResult = await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
+      const createdHcpResult = await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
       try {
         // Step 2: If HCP creation was successful, try to create User
-        const updatedUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
-        //setEditingKey('')
+        const createdUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
       } catch (userError) {
         // User creation failed, but HCP was created. This is where rollback is needed.
         console.error('Failed to create user:', userError)
         openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
 
         // Attempt to roll back the HCP creation
-        if (updatedHcpResult && updatedHcpResult.id) {
-          console.warn(`Attempting to roll back HCP creation for ID: ${updatedHcpResult.id}`)
+        if (createdHcpResult && createdHcpResult.id) {
+          console.warn(`Attempting to roll back HCP creation for ID: ${createdHcpResult.id}`)
           try {
-            await deleteSilentHcp(updatedHcpResult).unwrap()
+            await deleteSilentHcp(createdHcpResult).unwrap()
           } catch (rollbackError) {
-            console.error(`Failed to roll back HCP creation (ID: ${updatedHcpResult.id}):`, rollbackError)
+            console.error(`Failed to roll back HCP creation (ID: ${createdHcpResult.id}):`, rollbackError)
           }
         }
       }
@@ -229,15 +226,13 @@ export const ManagerUsers = (): ReactElement => {
 
   const updateUser = async (record: UserRow) => {
     try {
-      console.log('UPDATE')
       if (!record.hcp || !record.user) throw new Error('No user selected')
       const rowValues = await form.validateFields()
       // Step 1: Update HealthcareParty
-      const createdHcpResult = await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
+      const updatedHcpResult = await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
       try {
         // Step 2: If HCP update was successful, try to update User
-        const createdUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
-        //setEditingKey('')
+        const updatedUserResult = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
       } catch (userError) {
         // User creation failed, but HCP was created.
         console.error('Failed to update user:', userError)
@@ -252,7 +247,7 @@ export const ManagerUsers = (): ReactElement => {
 
   const tableRowUpdate = async (record: UserRow) => {
     if (!record.hcp || !record.user) throw new Error('No user selected')
-    else if (!record.hcp.rev && !record.hcp.rev) {
+    else if (!record.user.rev && !record.hcp.rev) {
       createUser(record)
     } else if (record.hcp.rev && record.user.rev) {
       updateUser(record)

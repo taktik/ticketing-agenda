@@ -80,7 +80,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
         name: t('content.new_service'),
         descr: {
           FR: t('content.new_service'),
-          NDLS: '',
+          NL: '',
           EN: '',
           DE: '',
         },
