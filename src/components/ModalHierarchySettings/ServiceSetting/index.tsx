@@ -14,6 +14,7 @@ import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from 
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
 import { RenameInput } from '../../common/RenameInput'
+import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 
 const SubjectEdit = () => {
   const languages = ['FR', 'NDLS', 'EN', 'DE']
@@ -80,12 +81,16 @@ const sortByOtherInfosOrder = (items: CalendarItemType[]): CalendarItemType[] =>
   })
 }
 
+export interface LanguageDescription {
+  [key: string]: string
+}
+
 interface ProcedureRow {
   rowId: string
   procedureId: string
   appointmentDurations: number[]
   isPublic: string
-  subjectByLanguage: { [key: string]: string }
+  subjectByLanguage: LanguageDescription
   procedureDetails: string
 }
 
@@ -94,7 +99,7 @@ interface FormValues {
   appointmentDurations: number[]
   isPublic: string
   emailTemplate: string
-  subjectByLanguage: { [key: string]: string }
+  subjectByLanguage: LanguageDescription
   procedureDetails: string
 }
 
@@ -111,7 +116,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const [procedureRowToBeDeleted, setProcedureRowToBeDeleted] = useState<ProcedureRow | undefined>(undefined)
   const [proceduresList, setProceduresList] = useState<CalendarItemType[]>([])
   const [tableRows, setTableRows] = useState<ProcedureRow[]>([])
-  const [showRenameSiteInput, setShowRenameSiteInput] = useState<boolean>(false)
+  const [showEditServiceTitle, setShowEditServiceTitle] = useState<boolean>(false)
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
 
@@ -215,7 +220,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       const matchingProcedures = (procedures ?? []).filter((item) => item.name === procedureRow.subjectByLanguage['FR'])
       const sortedMatchingProcedures = sortByOtherInfosOrder(matchingProcedures)
 
-      // Step 3 : We make our desired Array as the user has chosen
+      // Step 3 : We make our desired Array with the values the user has chosen
       const desiredArray = rowValues.appointmentDurations.map(
         (duration, index) =>
           new CalendarItemType({
@@ -393,14 +398,15 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const renameService = (newName: string) => {
+  const renameService = (newTitles: LanguageDescription) => {
     try {
       if (!service) throw new Error('No service selected')
-      createUpdateService(new HealthcareParty({ ...service, name: newName }))
+      if (!newTitles || !newTitles['FR']) throw new Error('No service selected')
+      createUpdateService(new HealthcareParty({ ...service, descr: newTitles, name: newTitles['FR'] }))
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     } finally {
-      setShowRenameSiteInput(false)
+      setShowEditServiceTitle(false)
     }
   }
 
@@ -411,7 +417,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       key: 'rename',
       label: t('content.rename'),
       icon: <EditOutlined />,
-      onClick: () => setShowRenameSiteInput(true),
+      onClick: () => setShowEditServiceTitle(true),
     },
     {
       key: 'delete',
@@ -438,8 +444,8 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         <div className="form-fields">
           <div className="service-title">
             <Space align="center">
-              {showRenameSiteInput ? <RenameInput hcp={service} setShowRenameInput={setShowRenameSiteInput} rename={renameService} /> : <Typography.Title level={2}>{service.name}</Typography.Title>}
-              {showRenameSiteInput ? null : (
+              <EditableServiceTitle initialTitles={service.descr} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
+              {showEditServiceTitle ? null : (
                 <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                   <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />
                 </Dropdown>

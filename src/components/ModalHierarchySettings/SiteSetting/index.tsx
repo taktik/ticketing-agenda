@@ -76,7 +76,17 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
 
   const handleCreateNewService = async () => {
     try {
-      const serviceHcp = new HealthcareParty({ name: t('content.new_service'), parentId: selectedKeyId, id: v4() })
+      const serviceHcp = new HealthcareParty({
+        name: t('content.new_service'),
+        descr: {
+          FR: t('content.new_service'),
+          NDLS: '',
+          EN: '',
+          DE: '',
+        },
+        parentId: selectedKeyId,
+        id: v4(),
+      })
       await createUpdateService({ ...serviceHcp })
       createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id }))
     } catch (error) {
