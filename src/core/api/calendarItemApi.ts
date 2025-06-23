@@ -1,6 +1,9 @@
-import { DecryptedCalendarItem } from '@icure/cardinal-sdk'
+import { CalendarItem, CalendarItemFilters, DecryptedCalendarItem } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
+import { GetCalendarItemsByAgendaAndPeriods } from './fetchType'
+import { loadFromIterator } from './utils'
+import { addDays, endOfMonth, startOfMonth, subDays } from 'date-fns'
 
 enum CalendarItemTags {
   CalendarItem = 'CalendarItem',
@@ -24,7 +27,26 @@ export const calendarItemApiRtk = createApi({
           return new DecryptedCalendarItem(calendarItem)
         })
       },
+
       providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: 'all' }] : []),
+    }),
+    getCalendarItemByAgendaIdAndPeriod: builder.query<CalendarItem[] | undefined, GetCalendarItemsByAgendaAndPeriods>({
+      async queryFn({ agendaId, from, to }, { getState }) {
+        const calendarApi = (await cardinalApi(getState))?.calendarItem
+        return guard([calendarApi], async (): Promise<CalendarItem[]> => {
+          return await loadFromIterator(await calendarApi!.filterCalendarItemsBy(CalendarItemFilters.byPeriodAndAgenda(agendaId, from, to)), 1000)
+        })
+      },
+      providesTags: (result, error, { from, to }) => {
+        const fromDate = from ? new Date(from) : subDays(startOfMonth(new Date()), 5)
+        const toDate = to ? new Date(to) : addDays(endOfMonth(new Date()), 5)
+        return [
+          {
+            type: CalendarItemTags.CalendarItem,
+            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
+          },
+        ]
+      },
     }),
     createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, DecryptedCalendarItem>({
       async queryFn(calendarItem, { getState }) {
@@ -58,4 +80,4 @@ export const calendarItemApiRtk = createApi({
   }),
 })
 
-export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation } = calendarItemApiRtk
+export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery } = calendarItemApiRtk

@@ -143,7 +143,15 @@ export default function DashboardPage() {
           <ProcedureSelector procedures={filteredProcedures} isProceduresLoading={isProceduresRelatedLoading} selectedProcedure={selectedProcedure} setSelectedProcedure={setSelectedProcedure} />
         </div>
         <div className="right-panel">
-          <Calendar calendarRef={calendarRef} handleFullCalendarDateChange={handleFullCalendarDateChange} />
+          <Calendar
+            calendarRef={calendarRef}
+            handleFullCalendarDateChange={handleFullCalendarDateChange}
+            selectedAgenda={agenda}
+            procedures={procedures}
+            selectedProcedure={selectedProcedure}
+            calendarDate={calendarDate}
+            setCalendarDate={setCalendarDate}
+          />
         </div>
       </div>
       {settingsModalOpen &&

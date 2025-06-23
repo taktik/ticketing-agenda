@@ -38,3 +38,10 @@ export type UndeleteHcpByIdParameters = {
   rev: string
   skip?: boolean
 }
+
+export type GetCalendarItemsByAgendaAndPeriods = {
+  agendaId: string
+  from: number
+  to: number
+  skip?: boolean
+}

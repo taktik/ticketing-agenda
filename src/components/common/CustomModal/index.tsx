@@ -86,6 +86,7 @@ export const CustomModal = ({
       padding: innerWidth < breakpoints.md ? '16px' : '20px 24px',
       margin: 0,
       background: 'white',
+      justifyContent: 'flex-end',
     },
     content: {
       padding: 0,
@@ -151,7 +152,7 @@ export const CustomModal = ({
         open={isVisible}
         title={title}
         onCancel={handleClose}
-        footer={getFooter()}
+        footer={customFooter ? customFooter : getFooter()}
         style={getCustomModalResponsiveStyles(innerWidth < breakpoints.md)}
         width={innerWidth < breakpoints.md ? '100vw' : (width ?? DEFAULT_MODAL_WIDTH)}
       >
