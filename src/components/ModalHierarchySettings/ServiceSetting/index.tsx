@@ -1,6 +1,6 @@
 import { CloseOutlined, DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Card, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Button, Card, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
@@ -15,6 +15,7 @@ import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
 import { RenameInput } from '../../common/RenameInput'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
+import type { Color } from 'antd/es/color-picker'
 
 const SubjectEdit = () => {
   const languages = ['FR', 'NL', 'EN', 'DE']
@@ -92,6 +93,7 @@ interface ProcedureRow {
   isPublic: string
   subjectByLanguage: LanguageDescription
   procedureDetails: string
+  color: string
 }
 
 interface FormValues {
@@ -101,6 +103,7 @@ interface FormValues {
   emailTemplate: string
   subjectByLanguage: LanguageDescription
   procedureDetails: string
+  color: string
 }
 
 interface ServiceSettingProps {
@@ -153,6 +156,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         isPublic: procedure.otherInfos.isPublic === 'true' ? 'true' : 'false',
         procedureDetails: procedure.otherInfos.procedureDetails,
         subjectByLanguage: procedure.subjectByLanguage,
+        color: procedure.color,
       } as ProcedureRow
     })
     setTableRows(tableRowsList)
@@ -199,6 +203,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
           EN: '',
           DE: '',
         },
+        color: 'blue',
         id: v4(),
       })
       createUpdateProcedure(procedure)
@@ -235,6 +240,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               procedureDetails: rowValues.procedureDetails,
             },
             subjectByLanguage: rowValues.subjectByLanguage,
+            color: typeof rowValues.color !== 'string' ? (rowValues.color as Color).toHexString() : rowValues.color,
             id: v4(),
           }),
       )
@@ -255,7 +261,8 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             existingItem.defaultCalendarItemType !== desiredProps.defaultCalendarItemType ||
             existingItem.name !== desiredProps.name ||
             existingItem.otherInfos !== desiredProps.otherInfos ||
-            existingItem.subjectByLanguage !== desiredProps.subjectByLanguage
+            existingItem.subjectByLanguage !== desiredProps.subjectByLanguage ||
+            existingItem.color !== desiredProps.color
           ) {
             const procedure = new CalendarItemType({
               name: desiredProps.name,
@@ -267,6 +274,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
               id: existingItem.id,
               rev: existingItem.rev,
               subjectByLanguage: desiredProps.subjectByLanguage,
+              color: desiredProps.color,
             })
             mutationPromises.push(createUpdateProcedure(procedure).unwrap())
           }
@@ -314,6 +322,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         isPublic: procedureRow.isPublic,
         procedureDetails: procedureRow.procedureDetails,
         subjectByLanguage: procedureRow.subjectByLanguage,
+        color: procedureRow.color,
       })
       setEditingKey(procedureRow.rowId)
     } catch (error) {
@@ -473,6 +482,45 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                   </Button>
                 }
               >
+                <Column
+                  title={undefined}
+                  dataIndex="color"
+                  key="color"
+                  minWidth={50}
+                  render={(color: string, record: ProcedureRow) => {
+                    const editable = isEditing(record)
+                    if (editable) {
+                      return (
+                        <Form.Item
+                          name="color"
+                          style={{ margin: 0 }}
+                          rules={[
+                            {
+                              required: true,
+                              message: 'Please select a color!',
+                            },
+                          ]}
+                        >
+                          <ColorPicker />
+                        </Form.Item>
+                      )
+                    } else {
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 4,
+                              backgroundColor: color,
+                              border: '1px solid #d9d9d9',
+                            }}
+                          />
+                        </div>
+                      )
+                    }
+                  }}
+                />
                 <Column
                   title={t('content.procedure')}
                   dataIndex="subjectByLanguage"
