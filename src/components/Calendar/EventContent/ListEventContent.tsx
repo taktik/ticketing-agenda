@@ -1,4 +1,4 @@
-import { Space, Typography, Tag } from 'antd'
+import { Space, Typography } from 'antd'
 import { EventApi } from 'fullcalendar'
 
 interface EventContentProps {

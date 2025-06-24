@@ -8,7 +8,7 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Button, Segmented, Space, Typography } from 'antd'
-import { DatesSetArg, EventApi, EventClickArg, EventInput, EventSourceInput } from 'fullcalendar'
+import { DateSelectArg, DatesSetArg, EventApi, EventClickArg, EventInput, EventSourceInput } from 'fullcalendar'
 import React, { ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
@@ -19,7 +19,8 @@ import { v4 } from 'uuid'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
 import { createPortal } from 'react-dom'
-import { ModalEvent } from './ModalEvent/ModalEvent'
+import { EventDetails } from './EventDetails/ModalEvent'
+import { CreateEvent } from './CreateEvent/CreateEvent'
 
 interface CalendarProps {
   handleFullCalendarDateChange: () => void
@@ -50,6 +51,7 @@ const fakeEvents: EventInput[] = [
 
 export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate, setCalendarDate, procedures }: CalendarProps): ReactElement => {
   const [eventModalOpen, setEventModalOpen] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<EventApi | undefined>(undefined)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
   const [timeRange, setTimeRange] = useState<'week' | 'day'>('week')
@@ -121,6 +123,10 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     setEventModalOpen(true)
   }
 
+  const handleCreate = () => {
+    setCreateModalOpen(true)
+  }
+
   return (
     <div className="calendar-root">
       <div className="calendar-header">
@@ -130,6 +136,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             <Button onClick={handleNext} icon={<RightOutlined />} />
           </Space.Compact>
           <Button onClick={handleToday}>{t('content.today')}</Button>
+          <Button onClick={() => handleCreate()}>{t('content.create_appointment')}</Button>
         </Space>
 
         <Typography.Title level={4} style={{ margin: 0 }}>
@@ -165,7 +172,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         headerToolbar={false}
         initialView="timeGridWeek"
         editable={true}
-        selectable={true}
+        selectable={false}
         selectMirror={true}
         dayMaxEvents={true}
         weekends={false}
@@ -182,7 +189,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           return <i>{eventInfo.event.title}</i>
         }}
       />
-      {eventModalOpen && createPortal(<ModalEvent isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} />, document.body)}
+      {eventModalOpen && createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} />, document.body)}
+      {createModalOpen && createPortal(<CreateEvent isVisible={createModalOpen} onClose={() => setCreateModalOpen(false)} />, document.body)}
     </div>
   )
 }

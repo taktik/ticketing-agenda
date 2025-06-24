@@ -112,9 +112,27 @@ body {
 body * {
   font-family: Lato400, sans-serif;
 }
-.modal-event {
+.right {
   display: flex;
-  background-color: aqua;
-  width: 100%;
+  align-items: center;
+  gap: 4rem;
+}
+.procedure-select .ant-select-selector {
+  width: 450px !important;
+}
+.ant-picker-cell {
+  text-align: center;
+}
+th {
+  text-align: center;
+}
+.your-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.column-layout {
+  display: flex;
+  flex-direction: column;
 }
 /*# sourceMappingURL=index.css.map */
