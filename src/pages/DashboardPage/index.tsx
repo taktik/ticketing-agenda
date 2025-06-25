@@ -47,20 +47,7 @@ export default function DashboardPage() {
   const skip = !user
   const { t } = useTranslation()
 
-  const { data: hcps } = useGetHealthcarePartiesByIdsQuery([user?.healthcarePartyId ?? '', 'd3927cfe-6a86-4dbe-a70c-12af9b8daa9e'])
-  const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
-
-  useEffect(() => console.log('current user', user), [user])
-  useEffect(() => console.log('current hcp', hcps), [hcps])
-
   const { data: rootHcp, isLoading: isRootHcpLoading } = useGetRootHealthcareParty({ skip: skip })
-
-  const { data: allHcps } = useGetHealthcarePartiesQuery(undefined, {
-    skip: !user,
-  })
-
-  useEffect(() => console.log('rootHcp', rootHcp), [rootHcp])
-  useEffect(() => console.log('allHcps', allHcps), [allHcps])
 
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
 
@@ -150,7 +137,7 @@ export default function DashboardPage() {
             procedures={procedures}
             selectedProcedure={selectedProcedure}
             calendarDate={calendarDate}
-            setCalendarDate={setCalendarDate}
+            sites={sites}
           />
         </div>
       </div>

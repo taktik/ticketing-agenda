@@ -1,23 +1,20 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
 import { Button, Divider, Form, message, Result, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomModal } from '../../common/CustomModal'
 import { StepAppointmentreview } from './appointmentSteps/StepAppointmentReview'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
+import { HealthcareParty } from '@icure/cardinal-sdk'
+import { useGetServicesForMultipleSitesQuery } from '../../../core/api/healthcarePartyApi'
+import { useGetAgendasQuery } from '../../../core/api/agendaApi'
+import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
+import { transformProceduresForSelection } from '../../../helpers/transformProcedures'
 
 const { Step } = Steps
-
-const procedures = [
-  { id: 'proc-1', name: 'General Check-up', duration: 30 },
-  { id: 'proc-2', name: 'Dental Cleaning', duration: 60 },
-  { id: 'proc-3', name: 'Specialist Consultation', duration: 45 },
-]
-
-const availableTimeSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
 
 export interface FormProcedure {
   procedureId: string | undefined
@@ -45,29 +42,30 @@ export interface AppointmentForm {
   personalInfo: PersonalInfo | undefined
 }
 
-export interface Procedures {
-  id: string
-  displayText: string
-  serviceName: string
-  procedureName: string
-  displayTextByLanguage: { [key: string]: string } // key values are set to 'FR', 'NL', 'DE', 'EN'
-  procedureDetails: string
-  variants: {
-    procedureId: string
-    attendees: number
-    duration: number
-  }[]
-}
-
 interface CreateEventProps {
   isVisible: boolean
   onClose: () => void
+  sites: HealthcareParty[] | undefined
 }
 
-export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
+export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => {
   const { t } = useTranslation()
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [form] = Form.useForm<AppointmentForm>()
+  const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
+
+  const { data: allServices, isLoading: isServicesLoading } = useGetServicesForMultipleSitesQuery({ siteIds: siteIds }, { skip: !siteIds || siteIds.length === 0 })
+  const servicesIds = useMemo(() => (allServices ?? []).map((service) => service.id), [allServices])
+
+  const { data: allAgendas, isLoading: isAgendasLoading } = useGetAgendasQuery(undefined, { skip: !allServices || allServices.length === 0 })
+  const filteredAgenda = useMemo(() => (allAgendas ?? []).filter((agenda) => servicesIds.includes(agenda.author ?? '')), [allAgendas, allServices])
+  const agendaIds = useMemo(() => (filteredAgenda ?? []).map((agenda) => agenda.id), [filteredAgenda])
+
+  const { data: allProcedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesForMultipleAgendasQuery({ agendaIds: agendaIds }, { skip: !agendaIds || agendaIds.length === 0 })
+
+  const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? []), [allServices, allProcedures])
+
+  const isLoading = useMemo(() => isServicesLoading || isAgendasLoading || isProceduresLoading, [isServicesLoading, isAgendasLoading, isProceduresLoading])
 
   const steps = [
     { title: t('content.procedure'), icon: <ToolOutlined /> },
@@ -94,10 +92,10 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   }
 
   const stepContent = [
-    <StepProcedureSelector procedures={[]} isProcedureLoading={false} form={form} key={'procedureStep'} />,
+    <StepProcedureSelector procedures={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
     <StepTimeSlotSelector form={form} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
-    <StepAppointmentreview formValues={form.getFieldsValue(true)} procedures={[]} key={'reviewStep'} />,
+    <StepAppointmentreview formValues={form.getFieldsValue(true)} procedures={selections} key={'reviewStep'} />,
   ]
 
   const initialFormValues = {

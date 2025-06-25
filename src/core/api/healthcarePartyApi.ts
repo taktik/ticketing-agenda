@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useAppDispatch } from '../hooks'
 import { cardinalApi, guard } from '../services/auth.api'
 import { agendaApiRtk, useDeleteAgendaMutation } from './agendaApi'
-import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, UndeleteHcpByIdParameters } from './fetchType'
+import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, GetServicesForMultipleSitesParameters, UndeleteHcpByIdParameters } from './fetchType'
 import { loadFromIterator } from './utils'
 
 enum HealthcarePartyTags {
@@ -48,6 +48,33 @@ export const healthcarePartyApiRtk = createApi({
         })
       },
       providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+    }),
+    getServicesForMultipleSites: builder.query<HealthcareParty[], GetServicesForMultipleSitesParameters>({
+      async queryFn(params, { getState, dispatch }) {
+        const { siteIds } = params
+        if (!siteIds || siteIds.length === 0) {
+          return { data: [] as HealthcareParty[] }
+        }
+
+        const promises: Promise<HealthcareParty[] | undefined>[] = siteIds.map((siteId) =>
+          dispatch(healthcarePartyApiRtk.endpoints.getHealthcarePartiesByParent.initiate({ parentId: siteId }, { forceRefetch: true }))
+            .unwrap()
+            .catch((error: unknown) => {
+              console.error(`Failed to fetch services for site ID ${siteId}:`, error)
+              return undefined
+            }),
+        )
+
+        try {
+          const resultArray = await Promise.all(promises)
+          const finalData: HealthcareParty[] = resultArray.map((result) => result || []).flat()
+          return { data: finalData }
+        } catch (error: unknown) {
+          const err = error as { message?: string }
+          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Batch fetch for services failed.' } as FetchBaseQueryError }
+        }
+      },
+      providesTags: (result, error, arg) => (result ? arg.siteIds.map((id) => ({ type: HealthcarePartyTags.HealthcareParty, id: 'all' })) : []),
     }),
     getRootHealthcareParty: builder.query<HealthcareParty[] | undefined, undefined>({
       async queryFn(_, { getState }) {
@@ -164,6 +191,7 @@ export const {
   useUnDeleteHealthcarePartyMutation,
   useUnDeleteHealthcarePartyByIdMutation,
   useSilentUnDeleteHealthcarePartyMutation,
+  useGetServicesForMultipleSitesQuery,
 } = healthcarePartyApiRtk
 
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {

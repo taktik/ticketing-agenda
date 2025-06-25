@@ -28,8 +28,8 @@ interface CalendarProps {
   calendarDate: Date
   selectedAgenda: Agenda | undefined
   selectedProcedure: CalendarItemType | undefined
-  setCalendarDate: React.Dispatch<React.SetStateAction<Date>>
   procedures: CalendarItemType[] | undefined
+  sites: HealthcareParty[] | undefined
 }
 
 type calendarRangeType = {
@@ -49,7 +49,7 @@ const fakeEvents: EventInput[] = [
   },
 ]
 
-export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate, setCalendarDate, procedures }: CalendarProps): ReactElement => {
+export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate, procedures, sites }: CalendarProps): ReactElement => {
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<EventApi | undefined>(undefined)
@@ -190,7 +190,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         }}
       />
       {eventModalOpen && createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} />, document.body)}
-      {createModalOpen && createPortal(<CreateEvent isVisible={createModalOpen} onClose={() => setCreateModalOpen(false)} />, document.body)}
+      {createModalOpen && createPortal(<CreateEvent isVisible={createModalOpen} onClose={() => setCreateModalOpen(false)} sites={sites} />, document.body)}
     </div>
   )
 }

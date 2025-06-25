@@ -2,8 +2,9 @@ import { InfoCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-desi
 import { Button, Card, Form, FormInstance, Select, Space, Tooltip, Typography } from 'antd'
 import React, { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppointmentForm, FormProcedure, Procedures } from '../CreateEvent'
+import { AppointmentForm, FormProcedure } from '../CreateEvent'
 import './index.css'
+import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 
 const { Title, Paragraph } = Typography
 const { Option } = Select
@@ -13,7 +14,7 @@ interface ProcedureRowProps {
   remove: (index: number) => void
   isFirst: boolean
   canRemove: boolean
-  procedures: Procedures[]
+  procedures: ProcedureSelection[]
   isProcedureLoading: boolean
 }
 
@@ -129,7 +130,7 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
   )
 }
 
-export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; procedures: Procedures[]; isProcedureLoading: boolean }> = ({ form, procedures, isProcedureLoading }) => {
+export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; procedures: ProcedureSelection[]; isProcedureLoading: boolean }> = ({ form, procedures, isProcedureLoading }) => {
   const { t } = useTranslation()
   const formProcedures = Form.useWatch('procedures', form)
 

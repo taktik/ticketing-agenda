@@ -138,7 +138,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
   const { data: allAgendas } = useGetAllAgendaByAuthorIds({ skip: !site || !services, authorIds: servicesIds })
   const agendaIds = useMemo(() => allAgendas?.map((agenda) => agenda.id), [allAgendas])
 
-  const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ skip: !site || !agendaIds, agendaIds: agendaIds })
+  const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ agendaIds: agendaIds }, { skip: !site || !agendaIds })
   const flatProceduresArray = useMemo(() => (allProcedures ?? []).flat(), [allProcedures])
 
   const serviceAndProcedures: ServiceWithProceduresTuple[] = services.map((service): ServiceWithProceduresTuple => {

@@ -2,8 +2,9 @@ import { Descriptions, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppointmentForm, Procedures } from '../CreateEvent'
+import { AppointmentForm } from '../CreateEvent'
 import './index.css'
+import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 
 const { Title, Text } = Typography
 
@@ -14,7 +15,7 @@ const languageMapping: { [key: string]: string } = {
   de: 'DE',
 }
 
-export const StepAppointmentreview: FC<{ formValues: AppointmentForm; procedures: Procedures[] }> = ({ formValues, procedures }) => {
+export const StepAppointmentreview: FC<{ formValues: AppointmentForm; procedures: ProcedureSelection[] }> = ({ formValues, procedures }) => {
   const { t, i18n } = useTranslation()
   const langCode = useMemo(() => {
     return languageMapping[i18n.language] || 'FR' // Fallback
@@ -35,10 +36,8 @@ export const StepAppointmentreview: FC<{ formValues: AppointmentForm; procedures
     const time = formValues.timeslot?.time
     if (!date || !time) return 'N/A'
 
-    // Parse the fake data time string (e.g., "14:30")
     const [hour, minute] = time.split(':').map(Number)
 
-    // Combine the date and time
     const combinedDateTime = date.hour(hour).minute(minute)
 
     return combinedDateTime.format('LLLL')

@@ -19,8 +19,6 @@ export default function RegisterPage() {
   const { waitingForToken, loginProcessStarted } = useAppSelector(reduxSelector)
 
   const startAuthenticationProcessWithEmailAndCaptchaToken = (firstName: string, lastName: string, email: string, captchaToken: Solution) => {
-    console.log(captchaToken)
-
     dispatch(setRegistrationInformation({ email: email, firstName: firstName, lastName: lastName }))
     dispatch(startAuthentication({ captchaToken: captchaToken }))
   }

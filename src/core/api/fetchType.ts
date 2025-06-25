@@ -29,7 +29,6 @@ export type GetAllServiceBySiteIdParameters = {
 }
 
 export type AllCalendarItemTypeServiceParameters = {
-  skip: boolean
   agendaIds: string[]
 }
 
@@ -44,4 +43,8 @@ export type GetCalendarItemsByAgendaAndPeriods = {
   from: number
   to: number
   skip?: boolean
+}
+
+export type GetServicesForMultipleSitesParameters = {
+  siteIds: string[]
 }

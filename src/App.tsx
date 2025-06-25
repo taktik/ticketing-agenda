@@ -22,6 +22,9 @@ import 'dayjs/locale/nl'
 import 'dayjs/locale/en'
 import 'dayjs/locale/de'
 
+import localizedFormat from 'dayjs/plugin/localizedFormat'
+dayjs.extend(localizedFormat)
+
 // Mapping from i18n language codes to antd locale objects
 const antdLocales: { [key: string]: typeof enGB } = {
   fr: frFR,
