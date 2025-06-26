@@ -1,42 +1,27 @@
-import { ApartmentOutlined, ScheduleOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { DatesSetArg } from '@fullcalendar/core'
+import { ApartmentOutlined, ScheduleOutlined } from '@ant-design/icons'
 import '@fullcalendar/core/locales/de'
 import '@fullcalendar/core/locales/fr'
 import '@fullcalendar/core/locales/nl'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin from '@fullcalendar/interaction'
 import FullCalendar from '@fullcalendar/react'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import listPlugin from '@fullcalendar/list'
 import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { Calendar as AntCalendar, Button, Card, Space, Tooltip } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { Calendar } from '../../components/Calendar'
 import { Header } from '../../components/common/Header'
-import { ProcedureSelector } from '../../components/ProcedureSelector'
-import { ModalScheduling } from '../../components/ModalScheduling'
 import { ModalSettings } from '../../components/ModalHierarchySettings'
+import { ModalScheduling } from '../../components/ModalScheduling'
+import { ProcedureSelector } from '../../components/ProcedureSelector'
 import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import {
-  useDeleteHealthcarePartyMutation,
-  useGetHealthcarePartiesByIdsQuery,
-  useGetHealthcarePartiesByParentQuery,
-  useGetHealthcarePartiesQuery,
-  useGetRootHealthcareParty,
-  useSilentUnDeleteHealthcarePartyMutation,
-  useUnDeleteHealthcarePartyByIdMutation,
-} from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
-import { useCreateUpdateUserMutation, useGetUserByEmailQuery } from '../../core/api/userApi'
-import { ButtonStyleType, StyledButton } from '../../components/common/StyledButton'
-import { Calendar } from '../../components/Calendar'
 
 export default function DashboardPage() {
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())

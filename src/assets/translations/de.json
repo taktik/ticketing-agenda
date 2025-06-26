@@ -168,7 +168,9 @@
     "minutes": "minuten",
     "phone_must_be_number": "Die Telefonnummer muss eine Zahl sein",
     "phone_max_11_digits": "Die Telefonnummer darf maximal 11 Ziffern haben",
-    "phone_min_8_digits": "Die Telefonnummer muss mindestens 8 Ziffern haben"
+    "phone_min_8_digits": "Die Telefonnummer muss mindestens 8 Ziffern haben",
+    "return_to_safety": "Zurück in Sicherheit",
+    "page_not_found": "Entschuldigung, die von Ihnen besuchte Seite existiert nicht."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

@@ -167,7 +167,9 @@
     "minutes": "minuten",
     "phone_must_be_number": "Telefoonnummer moet een getal zijn",
     "phone_max_11_digits": "Telefoonnummer mag maximaal 11 cijfers bevatten",
-    "phone_min_8_digits": "Telefoonnummer moet minimaal 8 cijfers bevatten"
+    "phone_min_8_digits": "Telefoonnummer moet minimaal 8 cijfers bevatten",
+    "return_to_safety": "Terug naar veiligheid",
+    "page_not_found": "Sorry, de pagina die u bezocht bestaat niet."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

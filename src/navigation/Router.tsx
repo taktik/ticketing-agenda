@@ -4,17 +4,13 @@ import LoginLayout from '../layout/LoginLayout'
 import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/authentication/LoginPage'
 import RegisterPage from '../pages/authentication/RegisterPage'
+import { PageNotFound } from '../pages/NotFoundPage'
 
 export const routes = {
   dashboard: '/dashboard',
   login: '/',
   register: '/register',
-  appointmentNew: '/appointment/new',
-  appointmentConfirmation: '/appointment/confirm',
-  appointmentSuccess: '/appointment/success',
-  appointmentError: '/appointment/error',
-  appointmentModification: '/appointment/modification',
-  appointmentCancellation: '/appointment/cancel',
+  notFound: '*',
 }
 
 export const Router = () => (
@@ -27,6 +23,7 @@ export const Router = () => (
       <Route element={<AuthenticatedLayout />}>
         <Route path={routes.dashboard} element={<DashboardPage />} />
       </Route>
+      <Route path={routes.notFound} element={<PageNotFound />} />
     </Routes>
   </BrowserRouter>
 )
