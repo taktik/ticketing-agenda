@@ -312,7 +312,7 @@ export const ManagerUsers = (): ReactElement => {
                   if (editable) {
                     return (
                       <>
-                        <Form.Item name="firstName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('content.firstname_required') }]}>
+                        <Form.Item name="firstName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.firstname_required') }]}>
                           <Input autoFocus />
                         </Form.Item>
                       </>
@@ -339,7 +339,7 @@ export const ManagerUsers = (): ReactElement => {
                   if (editable) {
                     return (
                       <>
-                        <Form.Item name="lastName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('content.lastname_required') }]}>
+                        <Form.Item name="lastName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.lastname_required') }]}>
                           <Input autoFocus />
                         </Form.Item>
                       </>
@@ -370,8 +370,8 @@ export const ManagerUsers = (): ReactElement => {
                           name="email"
                           style={{ margin: 0, padding: '6px 0 12px 0' }}
                           rules={[
-                            { required: true, message: t('content.email_required') },
-                            { type: 'email', message: t('content.invalid_email') },
+                            { required: true, message: t('validation.email_required') },
+                            { type: 'email', message: t('validation.invalid_email') },
                           ]}
                         >
                           <Input autoFocus />

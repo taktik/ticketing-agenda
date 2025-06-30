@@ -63,7 +63,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const { data: allProcedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesForMultipleAgendasQuery({ agendaIds: agendaIds }, { skip: !agendaIds || agendaIds.length === 0 })
 
-  const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? []), [allServices, allProcedures])
+  const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? []), [allServices, allProcedures])
 
   const isLoading = useMemo(() => isServicesLoading || isAgendasLoading || isProceduresLoading, [isServicesLoading, isAgendasLoading, isProceduresLoading])
 
@@ -125,7 +125,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
               stepContent[currentStep]
             ) : (
               <Result
-                status="info"
+                status="success"
                 title={t('content.confirmation_email_sent_to_address', { email: form.getFieldValue(['personalInfo', 'email']) })}
                 subTitle={
                   <>

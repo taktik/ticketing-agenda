@@ -169,7 +169,13 @@
     "phone_max_11_digits": "Telefoonnummer mag maximaal 11 cijfers bevatten",
     "phone_min_8_digits": "Telefoonnummer moet minimaal 8 cijfers bevatten",
     "return_to_safety": "Terug naar veiligheid",
-    "page_not_found": "Sorry, de pagina die u bezocht bestaat niet."
+    "page_not_found": "Sorry, de pagina die u bezocht bestaat niet.",
+    "login_title": "Inloggen",
+    "email_label": "E-mail",
+    "validation_code_label": "Validatiecode",
+    "login_button": "Inloggen",
+    "receive_one_time_code": "Eenmalige code ontvangen",
+    "captcha_check_hold_on": "Een ogenblik, even een snelle CAPTCHA-check..."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -270,6 +276,20 @@
     "all_durations_must_be_positive": "Alle duren moeten positieve getallen zijn.",
     "firstname_required": "Voornaam is vereist",
     "lastname_required": "Achternaam is vereist",
-    "email_required": "E-mailadres is vereist"
+    "email_required": "E-mailadres is vereist",
+    "validation_code_required": "Validatiecode is vereist",
+    "invalid_email": "Ongeldig e-mailadres",
+    "color_required": "Kleur is vereist",
+    "visibility_required": "Zichtbaarheid is vereist",
+    "unexpected_error": "Er is een onverwachte fout opgetreden.",
+    "schedule_name_required": "Naam van de planning is vereist",
+    "schedule_start_required": "Begin van de planning is vereist",
+    "schedule_end_required": "Einde van de planning is vereist",
+    "availability_required": "Beschikbaarheid is vereist",
+    "must_be_zero_or_positive": "Moet 0 of positief zijn",
+    "start_time_required": "Starttijd is vereist",
+    "end_time_required": "Eindtijd is vereist",
+    "value_required": "Waarde is vereist",
+    "unit_required": "Eenheid is vereist"
   }
 }

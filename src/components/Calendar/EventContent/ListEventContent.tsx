@@ -3,9 +3,10 @@ import { EventApi } from 'fullcalendar'
 
 interface EventContentProps {
   event: EventApi
+  view: string
 }
 
-export const ListEventContent = ({ event }: EventContentProps) => {
+export const ListEventContent = ({ event, view }: EventContentProps) => {
   const email: string = event.extendedProps.email ?? ''
   const fullName: string = event.extendedProps.fullName ?? ''
 

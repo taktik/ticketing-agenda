@@ -170,7 +170,13 @@
     "phone_max_11_digits": "Die Telefonnummer darf maximal 11 Ziffern haben",
     "phone_min_8_digits": "Die Telefonnummer muss mindestens 8 Ziffern haben",
     "return_to_safety": "Zurück in Sicherheit",
-    "page_not_found": "Entschuldigung, die von Ihnen besuchte Seite existiert nicht."
+    "page_not_found": "Entschuldigung, die von Ihnen besuchte Seite existiert nicht.",
+    "login_title": "Anmelden",
+    "email_label": "E-Mail",
+    "validation_code_label": "Bestätigungscode",
+    "login_button": "Anmelden",
+    "receive_one_time_code": "Einmal-Code erhalten",
+    "captcha_check_hold_on": "Einen Moment, nur eine kurze CAPTCHA-Prüfung..."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -271,6 +277,20 @@
     "all_durations_must_be_positive": "Alle Dauern müssen positive Zahlen sein.",
     "firstname_required": "Vorname ist erforderlich",
     "lastname_required": "Nachname ist erforderlich",
-    "email_required": "E-Mail-Adresse ist erforderlich"
+    "email_required": "E-Mail-Adresse ist erforderlich",
+    "validation_code_required": "Bestätigungscode ist erforderlich",
+    "invalid_email": "Ungültige E-Mail-Adresse",
+    "color_required": "Farbe ist erforderlich",
+    "visibility_required": "Sichtbarkeit ist erforderlich",
+    "unexpected_error": "Ein unerwarteter Fehler ist aufgetreten.",
+    "schedule_name_required": "Name des Zeitplans ist erforderlich",
+    "schedule_start_required": "Beginn des Zeitplans ist erforderlich",
+    "schedule_end_required": "Ende des Zeitplans ist erforderlich",
+    "availability_required": "Verfügbarkeit ist erforderlich",
+    "must_be_zero_or_positive": "Muss 0 oder positiv sein",
+    "start_time_required": "Startzeit ist erforderlich",
+    "end_time_required": "Endzeit ist erforderlich",
+    "value_required": "Wert ist erforderlich",
+    "unit_required": "Einheit ist erforderlich"
   }
 }

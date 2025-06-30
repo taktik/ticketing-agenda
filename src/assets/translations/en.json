@@ -169,7 +169,13 @@
     "phone_max_11_digits": "Phone number must have a maximum of 11 digits",
     "phone_min_8_digits": "Phone number must have a minimum of 8 digits",
     "return_to_safety": "Return to safety",
-    "page_not_found": "Sorry, the page you visited does not exist."
+    "page_not_found": "Sorry, the page you visited does not exist.",
+    "login_title": "Login",
+    "email_label": "Email",
+    "validation_code_label": "Validation code",
+    "login_button": "Log in",
+    "receive_one_time_code": "Receive a one time code",
+    "captcha_check_hold_on": "Hold on, just a quick CAPTCHA check..."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -270,6 +276,20 @@
     "all_durations_must_be_positive": "All durations must be positive numbers.",
     "firstname_required": "First name is required",
     "lastname_required": "Last name is required",
-    "email_required": "Email address is required"
+    "email_required": "Email address is required",
+    "validation_code_required": "Validation code is required",
+    "invalid_email": "Invalid email",
+    "color_required": "Color is required",
+    "visibility_required": "Visibility is required",
+    "unexpected_error": "An unexpected error occurred.",
+    "schedule_name_required": "Name of the schedule is required",
+    "schedule_start_required": "Start of the schedule is required",
+    "schedule_end_required": "End of the schedule is required",
+    "availability_required": "Availability is required",
+    "must_be_zero_or_positive": "Must be 0 or positive",
+    "start_time_required": "Start time is required",
+    "end_time_required": "End time is required",
+    "value_required": "Value is required",
+    "unit_required": "Unit is required"
   }
 }

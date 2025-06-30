@@ -169,7 +169,13 @@
     "phone_max_11_digits": "Le numéro de téléphone doit comporter un maximum de 11 chiffres",
     "phone_min_8_digits": "Le numéro de téléphone doit comporter un minimum de 8 chiffres",
     "return_to_safety": "Retourner en lieu sûr",
-    "page_not_found": "Désolé, la page que vous avez visitée n'existe pas."
+    "page_not_found": "Désolé, la page que vous avez visitée n'existe pas.",
+    "login_title": "Connexion",
+    "email_label": "E-mail",
+    "validation_code_label": "Code de validation",
+    "login_button": "Se connecter",
+    "receive_one_time_code": "Recevoir un code unique",
+    "captcha_check_hold_on": "Un instant, une rapide vérification CAPTCHA..."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -270,6 +276,20 @@
     "all_durations_must_be_positive": "Toutes les durées doivent être des nombres positifs.",
     "firstname_required": "Le prénom est requis",
     "lastname_required": "Le nom de famille est requis",
-    "email_required": "L'adresse e-mail est requise"
+    "email_required": "L'adresse e-mail est requise",
+    "validation_code_required": "Le code de validation est requis",
+    "invalid_email": "E-mail invalide",
+    "color_required": "La couleur est requise",
+    "visibility_required": "La visibilité est requise",
+    "unexpected_error": "Une erreur inattendue s'est produite.",
+    "schedule_name_required": "Le nom de l'horaire est requis",
+    "schedule_start_required": "Le début de l'horaire est requis",
+    "schedule_end_required": "La fin de l'horaire est requise",
+    "availability_required": "La disponibilité est requise",
+    "must_be_zero_or_positive": "Doit être 0 ou positif",
+    "start_time_required": "L'heure de début est requise",
+    "end_time_required": "L'heure de fin est requise",
+    "value_required": "La valeur est requise",
+    "unit_required": "L'unité est requise"
   }
 }

@@ -3,9 +3,10 @@ import { EventApi } from 'fullcalendar'
 
 interface EventContentProps {
   event: EventApi
+  view: string
 }
 
-export const GridEventContent = ({ event }: EventContentProps) => {
+export const GridEventContent = ({ event, view }: EventContentProps) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', gap: '4px' }}>
       <div
@@ -16,7 +17,7 @@ export const GridEventContent = ({ event }: EventContentProps) => {
           flexShrink: 0,
         }}
       />
-      <Typography.Text ellipsis={true} style={{ fontSize: '12px' }}>
+      <Typography.Text ellipsis={true} style={{ fontSize: '12px', color: 'white' }}>
         {event.title}
       </Typography.Text>
     </div>

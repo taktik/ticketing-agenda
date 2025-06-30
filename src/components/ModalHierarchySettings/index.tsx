@@ -18,20 +18,20 @@ import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../core/api/c
 import { SiteSetting } from './SiteSetting'
 import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 
-interface ModalSchedulingProps {
+interface ModalHierarchySettingsProps {
   isVisible: boolean
   onClose: () => void
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
 
-export const ModalSettings = ({ isVisible, onClose }: ModalSchedulingProps): ReactElement => {
+export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySettingsProps): ReactElement => {
   const { selectedSite, rootHcp, selectedKey, setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
-  const { data: sites } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
+  const { data: sites } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
   const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()

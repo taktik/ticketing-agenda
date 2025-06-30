@@ -9,7 +9,6 @@ import { PageNotFound } from '../pages/NotFoundPage'
 export const routes = {
   dashboard: '/dashboard',
   login: '/',
-  register: '/register',
   notFound: '*',
 }
 
@@ -18,7 +17,6 @@ export const Router = () => (
     <Routes>
       <Route element={<LoginLayout />}>
         <Route path={routes.login} element={<LoginPage />} />
-        <Route path={routes.register} element={<RegisterPage />} />
       </Route>
       <Route element={<AuthenticatedLayout />}>
         <Route path={routes.dashboard} element={<DashboardPage />} />

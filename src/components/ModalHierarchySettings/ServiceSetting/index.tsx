@@ -1,6 +1,7 @@
-import { CloseOutlined, DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Card, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
+import type { Color } from 'antd/es/color-picker'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
@@ -12,10 +13,8 @@ import { useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
-import './index.css'
-import { RenameInput } from '../../common/RenameInput'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
-import type { Color } from 'antd/es/color-picker'
+import './index.css'
 
 const SubjectEdit = () => {
   const languages = ['FR', 'NL', 'EN', 'DE']
@@ -125,7 +124,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !service, authorId: service?.id ?? '' })
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: !service || !agenda, agendaId: agenda?.id ?? '' })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !service || !agenda })
 
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
@@ -208,7 +207,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       })
       createUpdateProcedure(procedure)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     }
   }
 
@@ -300,7 +299,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       } else if (error instanceof Error) {
         openNotification('error', 'Update Failed', error.message)
       } else {
-        openNotification('error', 'Update Failed', 'An unexpected error occurred.')
+        openNotification('error', 'Update Failed', t('validation.unexpected_error'))
       }
     } finally {
       // Step 5: we return the row to its display mode
@@ -326,7 +325,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       })
       setEditingKey(procedureRow.rowId)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     }
   }
 
@@ -335,7 +334,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       if (!service) throw new Error('No site selected')
       deleteService(service)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     } finally {
       setSelectedKey('default')
     }
@@ -350,7 +349,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
       deleteProcedure(proceduresToDeleteIds)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     } finally {
       setShowDeleteProcedureModal(false)
       setProcedureRowToBeDeleted(undefined)
@@ -413,7 +412,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       if (!newTitles || !newTitles['FR']) throw new Error('No service selected')
       createUpdateService(new HealthcareParty({ ...service, descr: newTitles, name: newTitles['FR'] }))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     } finally {
       setShowEditServiceTitle(false)
     }
@@ -497,7 +496,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                           rules={[
                             {
                               required: true,
-                              message: 'Please select a color!',
+                              message: t('validation.color_required'),
                             },
                           ]}
                         >
@@ -645,7 +644,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
                     if (editable) {
                       return (
-                        <Form.Item name="isPublic" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select privacy mode!' }]}>
+                        <Form.Item name="isPublic" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.visibility_required') }]}>
                           <Radio.Group className="radio-group">
                             <Radio value={'true'}>{t('content.public')}</Radio>
                             <Radio value={'false'}>{t('content.private')}</Radio>

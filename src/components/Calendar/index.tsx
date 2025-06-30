@@ -62,12 +62,14 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     to: endOfWeek(new Date()),
   })
 
-  const { data: calendarItems, isLoading: isCalendarItemsLoading } = useGetCalendarItemByAgendaIdAndPeriodQuery({
-    agendaId: selectedAgenda?.id ?? '',
-    from: calendarRange.from.getTime(),
-    to: calendarRange.to.getTime(),
-    skip: !selectedAgenda,
-  })
+  const { data: calendarItems, isLoading: isCalendarItemsLoading } = useGetCalendarItemByAgendaIdAndPeriodQuery(
+    {
+      agendaId: selectedAgenda?.id ?? '',
+      from: calendarRange.from.getTime(),
+      to: calendarRange.to.getTime(),
+    },
+    { skip: true },
+  )
 
   const events: EventInput[] = useMemo(() => {
     if (!calendarItems) return []
@@ -96,7 +98,11 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       }
 
       if (calendarApi.view.type !== targetView) {
-        calendarApi.changeView(targetView)
+        queueMicrotask(() => {
+          // Using queueMicrotask is a Fullcalendar fix. Atm in fullcalendar v6 and using react v18, we have 'flushSync inside useffect' console errors and may have rendering issues (Noticed none but better be safe).
+          // Fix is supposed to come in fullcalendar v7. https://github.com/fullcalendar/fullcalendar/issues/7448
+          calendarApi.changeView(targetView)
+        })
       }
     }
   }, [viewMode, timeRange])
@@ -181,12 +187,12 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         events={fakeEvents}
         eventClick={handleEventClick}
         eventContent={(eventInfo) => {
-          if (eventInfo.view.type === 'listWeek') {
-            return <ListEventContent event={eventInfo.event} />
-          } else if (eventInfo.view.type === 'dayGridMonth') {
-            return <GridEventContent event={eventInfo.event} />
+          if (eventInfo.view.type === 'listWeek' || eventInfo.view.type === 'listDay') {
+            return <ListEventContent event={eventInfo.event} view={eventInfo.view.type} />
+          } else if (eventInfo.view.type === 'timeGridDay' || eventInfo.view.type === 'timeGridWeek') {
+            return <GridEventContent event={eventInfo.event} view={eventInfo.view.type} />
           }
-          return <i>{eventInfo.event.title}</i>
+          return <p>{eventInfo.event.title}</p>
         }}
       />
       {eventModalOpen && createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} />, document.body)}

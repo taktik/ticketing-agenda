@@ -1,4 +1,4 @@
-import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 
 export interface ProcedureVariant {
@@ -10,6 +10,8 @@ export interface ProcedureVariant {
 
 export interface ProcedureSelection {
   id: string
+  serviceId: string | undefined | null
+  agendaId: string | undefined | null
   displayText: string
   serviceName: string
   procedureName: string
@@ -23,8 +25,9 @@ export interface ProcedureSelection {
  * Transforms flat lists of services and procedures into a structured list
  * of unique "Procedure Selections" grouped by service and procedure name.
  */
-export function transformProceduresForSelection(allServices: HealthcareParty[], allProcedures: CalendarItemType[]): ProcedureSelection[] {
+export function transformProceduresForSelection(allServices: HealthcareParty[], allProcedures: CalendarItemType[], allAgendas: Agenda[]): ProcedureSelection[] {
   const serviceMap = new Map(allServices.map((service) => [service.id, service]))
+  const agendaMap = new Map(allAgendas.map((agenda) => [agenda.author, agenda]))
 
   const publicProcedures = allProcedures.filter((procedure) => (procedure.otherInfos?.['isPublic'] ?? 'false').toLowerCase() === 'true')
 
@@ -42,6 +45,7 @@ export function transformProceduresForSelection(allServices: HealthcareParty[], 
     const serviceId = firstProcedure.healthcarePartyId || ''
     const procedureName = firstProcedure.name || 'Unnamed Procedure'
     const serviceObject = serviceMap.get(serviceId)
+    const agendaObject = agendaMap.get(serviceId)
     const serviceName = serviceObject?.name || 'Unknown Service'
 
     const languages = ['FR', 'NL', 'DE', 'EN']
@@ -68,6 +72,8 @@ export function transformProceduresForSelection(allServices: HealthcareParty[], 
 
     return {
       id: v4(),
+      serviceId: agendaObject?.author,
+      agendaId: agendaObject?.id,
       displayText: `${serviceName} - ${procedureName}`,
       serviceName: serviceName,
       procedureName: procedureName,

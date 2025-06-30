@@ -39,7 +39,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
 
   const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
-  const { data: timeTables, isLoading: istimeTablesLoading } = useGetTimeTablesQuery({ skip: !agenda, agendaId: agenda?.id ?? '' })
+  const { data: timeTables, isLoading: istimeTablesLoading } = useGetTimeTablesQuery({ agendaId: agenda?.id ?? '' }, { skip: !agenda })
 
   const sortedTimeTables = useMemo(() => {
     return [...(timeTables ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))

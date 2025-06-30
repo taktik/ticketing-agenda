@@ -108,7 +108,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
   const { data: timeTable, isLoading: isTimeTableLoading } = useGetTimeTableQuery(timeTableId ?? '')
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: !timeTable || !agenda, agendaId: agenda?.id ?? '' })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !timeTable || !agenda })
 
   const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
 
@@ -619,19 +619,19 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
             <div className="selectors">
               <div className="antSelect">
                 {t('content.name')}
-                <Form.Item name="name" rules={[{ required: true, message: 'Name of the schedule' }]}>
+                <Form.Item name="name" rules={[{ required: true, message: t('validation.schedule_name_required') }]}>
                   <Input suffix={<CloseOutlined disabled={nameValue === timeTable?.name} onClick={handleNameCancel} />} />
                 </Form.Item>
               </div>
               <div className="antSelect">
                 {t('content.start')}
-                <Form.Item name="start" rules={[{ required: true, message: 'Start of the schedule' }]}>
+                <Form.Item name="start" rules={[{ required: true, message: t('validation.schedule_start_required') }]}>
                   <DatePicker format="DD/MM/YYYY" />
                 </Form.Item>
               </div>
               <div className="antSelect">
                 {t('content.end')}
-                <Form.Item name="end" rules={[{ required: true, message: 'End of the schedule' }]}>
+                <Form.Item name="end" rules={[{ required: true, message: t('validation.schedule_end_required') }]}>
                   <DatePicker format="DD/MM/YYYY" />
                 </Form.Item>
               </div>
@@ -739,10 +739,10 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
                             <Space.Compact block className="rrule-repeat">
                               <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.repeat_every')}:</Typography.Text>
-                              <Form.Item name="_interval" initialValue={1} rules={[{ required: true, message: t('validation.valueMissing', 'Value') }]} noStyle>
+                              <Form.Item name="_interval" initialValue={1} rules={[{ required: true, message: t('validation.value_required') }]} noStyle>
                                 <InputNumber min={1} style={{ width: '35%' }} />
                               </Form.Item>
-                              <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unitMissing', 'Unit') }]} noStyle>
+                              <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unit_required') }]} noStyle>
                                 <Select style={{ width: '65%' }}>
                                   <Select.Option value={RRule.DAILY}>{watchedInterval === 1 ? t('rrule.day') : t('rrule.days')}</Select.Option>
                                   <Select.Option value={RRule.WEEKLY}>{watchedInterval === 1 ? t('rrule.week') : t('rrule.weeks')}</Select.Option>
@@ -855,7 +855,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                 {fields.map(({ key, name, ...restField }) => {
                                   return (
                                     <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                                      <Form.Item {...restField} name={[name, 'startHour']} rules={[{ required: true, message: t('validation.startTimeRequired', 'Start!') }]} noStyle>
+                                      <Form.Item {...restField} name={[name, 'startHour']} rules={[{ required: true, message: t('validation.start_time_required') }]} noStyle>
                                         <TimePicker
                                           showNow={false}
                                           format="HH:mm"
@@ -872,7 +872,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                                         name={[name, 'endHour']}
                                         noStyle
                                         rules={[
-                                          { required: true, message: t('validation.endTimeRequired', 'End!') },
+                                          { required: true, message: t('validation.end_time_required') },
                                           ({ getFieldValue }) => ({
                                             validator(_, value) {
                                               // 'value' is the current endHour (a dayjs object or null)
@@ -975,9 +975,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                               labelCol={{ span: 24 }}
                               wrapperCol={{ span: 24 }}
                               style={{ marginBottom: 8 }}
-                              rules={[{ type: 'number', min: 0, message: 'Must be 0 or positive' }]}
+                              rules={[{ type: 'number', min: 0, message: t('validation.must_be_zero_or_positive') }]}
                             >
-                              <DurationInput defaultUnit="weeks" placeholder={t('placeholders.enterValue', 'Enter value')} />
+                              <DurationInput defaultUnit="weeks" placeholder={t('content.enterValue')} />
                             </Form.Item>
 
                             <Form.Item
@@ -986,9 +986,9 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
                               labelCol={{ span: 24 }}
                               wrapperCol={{ span: 24 }}
                               style={{ marginBottom: 0 }}
-                              rules={[{ type: 'number', min: 0, message: 'Must be 0 or positive' }]}
+                              rules={[{ type: 'number', min: 0, message: t('validation.must_be_zero_or_positive') }]}
                             >
-                              <DurationInput defaultUnit="weeks" placeholder={t('placeholders.enterValue', 'Enter value')} />
+                              <DurationInput defaultUnit="weeks" placeholder={t('content.enterValue')} />
                             </Form.Item>
                           </Space>
                         )
@@ -1025,7 +1025,7 @@ export const ModalRules = ({ isVisible, onClose, timeTableId, agenda }: ModalRul
 
                       if (editable) {
                         return (
-                          <Form.Item name="publicTimeTableItem" style={{ margin: 0 }} rules={[{ required: true, message: 'Please select availability!' }]}>
+                          <Form.Item name="publicTimeTableItem" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.availability_required') }]}>
                             <Radio.Group className="radio-group">
                               <Radio value={false}>{t('content.activate')}</Radio>
                               <Radio value={true}>{t('content.deactivate')}</Radio>

@@ -1,17 +1,14 @@
 export type TimeTablesServiceParameters = {
   agendaId: string
-  skip?: boolean
 }
 
 export type CalendarItemTypeServiceParameters = {
   agendaId: string
-  skip?: boolean
 }
 
 export type DeleteAgendaByIdParameters = {
   agendaId: string
   rev: string
-  skip?: boolean
 }
 
 export type GetRootHealthcarePartyParameters = {
@@ -20,12 +17,11 @@ export type GetRootHealthcarePartyParameters = {
 
 export type GetHealthcarePartyByParentParameters = {
   parentId: string
-  skip?: boolean
 }
 
 export type GetAllServiceBySiteIdParameters = {
   sitesIds: string[]
-  skip?: boolean
+  skip: boolean
 }
 
 export type AllCalendarItemTypeServiceParameters = {
@@ -35,14 +31,12 @@ export type AllCalendarItemTypeServiceParameters = {
 export type UndeleteHcpByIdParameters = {
   HcpId: string
   rev: string
-  skip?: boolean
 }
 
 export type GetCalendarItemsByAgendaAndPeriods = {
   agendaId: string
   from: number
   to: number
-  skip?: boolean
 }
 
 export type GetServicesForMultipleSitesParameters = {

@@ -11,7 +11,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Calendar } from '../../components/Calendar'
 import { Header } from '../../components/common/Header'
-import { ModalSettings } from '../../components/ModalHierarchySettings'
+import { ModalHierarchySettings } from '../../components/ModalHierarchySettings'
 import { ModalScheduling } from '../../components/ModalScheduling'
 import { ProcedureSelector } from '../../components/ProcedureSelector'
 import { ServiceSelector } from '../../components/ServiceSelector'
@@ -19,7 +19,7 @@ import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesByParentQuery, useGetHealthcarePartiesQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
 
@@ -34,11 +34,11 @@ export default function DashboardPage() {
 
   const { data: rootHcp, isLoading: isRootHcpLoading } = useGetRootHealthcareParty({ skip: skip })
 
-  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ skip: skip || !rootHcp, parentId: rootHcp?.id ?? '' })
+  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
 
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
-  const { data: services, isLoading: isServicesLoading } = useGetHealthcarePartiesByParentQuery({ skip: skip || !selectedSite, parentId: selectedSite?.id ?? '' })
+  const { data: services, isLoading: isServicesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
   const filteredServices = useMemo(() => (services && selectedSite ? services : []), [services, selectedSite])
 
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(undefined)
@@ -46,7 +46,7 @@ export default function DashboardPage() {
   const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
   const filteredAgenda = useMemo(() => (agenda && selectedService ? agenda : undefined), [agenda, selectedService])
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ skip: skip || !filteredAgenda || !selectedService, agendaId: filteredAgenda?.id ?? '' })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: filteredAgenda?.id ?? '' }, { skip: skip || !filteredAgenda || !selectedService })
   const filteredProcedures = useMemo(() => (procedures && filteredAgenda ? procedures : []), [procedures, filteredAgenda])
 
   const isSitesRelatedLoading = useMemo(() => isSitesLoading || isRootHcpLoading, [isSitesLoading, isRootHcpLoading])
@@ -54,6 +54,11 @@ export default function DashboardPage() {
   const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
 
   const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
+
+  const { data: allHcps } = useGetHealthcarePartiesQuery(undefined, {
+    skip: !user,
+  })
+  useEffect(() => console.log('allHcps', allHcps), [allHcps])
 
   useEffect(() => setSelectedService(undefined), [services])
   useEffect(() => setSelectedProcedure(undefined), [procedures])
@@ -129,7 +134,7 @@ export default function DashboardPage() {
       {settingsModalOpen &&
         createPortal(
           <SettingContextProvider selectedSite={selectedSite} rootHcp={rootHcp}>
-            <ModalSettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
+            <ModalHierarchySettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
           </SettingContextProvider>,
           document.body,
         )}
