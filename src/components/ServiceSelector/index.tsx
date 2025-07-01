@@ -3,8 +3,6 @@ import { Button, Divider, Spin, Typography } from 'antd'
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
-import { SpinLoader } from '../common/SpinLoader'
-import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 
 interface ServiceSelectorProps {
   services: HealthcareParty[]

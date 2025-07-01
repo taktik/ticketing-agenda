@@ -2,7 +2,7 @@ import Icon from '@ant-design/icons'
 import { DecryptedPatient } from '@icure/cardinal-sdk'
 import { createSelector } from '@reduxjs/toolkit'
 import { Tag } from 'antd'
-import React, { ReactElement } from 'react'
+import { ReactElement } from 'react'
 import { emailIcn, locationIcn, phoneIcn, userAvatarPlaceholderIcn } from '../../../../assets/CustomIcons'
 import { useFindContactsByHcPartyPatientQuery } from '../../../../core/api/contactApi'
 import { useAppSelector } from '../../../../core/hooks'
@@ -12,11 +12,10 @@ import { getImgSRC } from '../../../../helpers/fileToBase64'
 import { getTagColor } from '../../../../helpers/getTagColor'
 import { getPatientDataFormated } from '../../../../helpers/patientDataManipulations'
 import { CommonPlaceholder } from '../../../common/CommonPlaceholder'
-
 import { CustomModal } from '../../../common/CustomModal'
-import './index.css'
 import { SpinLoader } from '../../../common/SpinLoader'
 import { Consultation } from './Consultation'
+import './index.css'
 
 interface ModalPatientProfileProps {
   isVisible: boolean
@@ -35,8 +34,7 @@ const reduxSelector = createSelector(
 
 export const ModalPatientProfile = ({ isVisible, onClose, patient, onEdit, onAddConsultation }: ModalPatientProfileProps): ReactElement => {
   const { healthcarePartyId } = useAppSelector(reduxSelector)
-  const { language, picture, userNameOneString, userHomeAddressOneString, emailAddress, phoneNumber, birthSex, userDateOfBirthOneString, tags, age } =
-    getPatientDataFormated(patient)
+  const { language, picture, userNameOneString, userHomeAddressOneString, emailAddress, phoneNumber, birthSex, userDateOfBirthOneString, tags, age } = getPatientDataFormated(patient)
   const { data: listOfContacts, isLoading: isListOfContactsLoading } = useFindContactsByHcPartyPatientQuery(
     {
       hcPartyId: healthcarePartyId ?? '',
@@ -151,9 +149,7 @@ export const ModalPatientProfile = ({ isVisible, onClose, patient, onEdit, onAdd
           {/*Consultations*/}
           {sortedContacts?.length !== 0 && sortedContacts?.map((contact, index) => <Consultation contact={contact} key={index} />)}
 
-          {listOfContacts?.length === 0 && (
-            <CommonPlaceholder title="No Consultations Available" content="This patient has no consultations recorded. Add a new consultation to get started!" />
-          )}
+          {listOfContacts?.length === 0 && <CommonPlaceholder title="No Consultations Available" content="This patient has no consultations recorded. Add a new consultation to get started!" />}
         </div>
       </div>
     </CustomModal>

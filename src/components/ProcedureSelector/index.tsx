@@ -3,7 +3,6 @@ import { Button, Divider, Spin, Typography } from 'antd'
 import React, { ReactElement, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
-import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 
 interface ProcedureSelectorProps {
   procedures: CalendarItemType[]

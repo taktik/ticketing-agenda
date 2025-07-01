@@ -1,5 +1,5 @@
-import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import React, { createContext, useContext, useMemo, useState } from 'react'
+import { HealthcareParty } from '@icure/cardinal-sdk'
+import React, { createContext, useMemo, useState } from 'react'
 
 type SettingContextType = {
   selectedSite: HealthcareParty | undefined

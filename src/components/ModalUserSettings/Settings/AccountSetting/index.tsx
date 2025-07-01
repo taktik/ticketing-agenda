@@ -1,14 +1,13 @@
-import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType, User } from '@icure/cardinal-sdk'
+import { HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Upload, UploadFile, UploadProps } from 'antd'
 import ImgCrop from 'antd-img-crop'
 import { ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCreateOrUpdatePractitionerMutation } from '../../../../core/api/practitionerApi'
+import { useCreateUpdateUserMutation } from '../../../../core/api/userApi'
 import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileToBase64'
 import { SpinLoader } from '../../../common/SpinLoader'
 import './index.css'
-import { useCreateUpdateUserMutation, useGetUserByEmailQuery } from '../../../../core/api/userApi'
-import { ButtonStyleType, StyledButton } from '../../../common/StyledButton'
 
 interface AccountSettingProps {
   currentUser?: HealthcareParty

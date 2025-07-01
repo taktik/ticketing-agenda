@@ -1,20 +1,14 @@
-import { AddressType, DecryptedAddress, DecryptedTelecom, HealthcareParty, TelecomType, User } from '@icure/cardinal-sdk'
-import { Form, Input, Upload, UploadFile, UploadProps, Button, Col, Divider, Row, Typography, Menu, MenuProps, Layout } from 'antd'
-
-import ImgCrop from 'antd-img-crop'
-import React, { ReactElement, useCallback, useEffect, useState } from 'react'
-import { useCreateOrUpdatePractitionerMutation } from '../../core/api/practitionerApi'
-import { getFileUploaderCommonProps, getImgSRC } from '../../helpers/fileToBase64'
-
-import { CustomModal } from '../common/CustomModal'
-import { SpinLoader } from '../common/SpinLoader'
-import '../ModalUserSettings/index.css'
-import { AccountSetting } from './Settings/AccountSetting'
+import { HealthcareParty, User } from '@icure/cardinal-sdk'
+import { Layout, Menu, MenuProps } from 'antd'
+import { ReactElement, useCallback, useState } from 'react'
 import { ProfileOutlined, UsergroupAddOutlined } from '@ant-design/icons'
-import { ManagerUsers } from './Settings/ManageUsers'
-import { useTranslation } from 'react-i18next'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
+import { useTranslation } from 'react-i18next'
+import { CustomModal } from '../common/CustomModal'
+import '../ModalUserSettings/index.css'
+import { AccountSetting } from './Settings/AccountSetting'
+import { ManagerUsers } from './Settings/ManageUsers'
 
 interface ModalSettingsProps {
   isVisible: boolean

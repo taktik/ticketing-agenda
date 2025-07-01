@@ -84,7 +84,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(today, 1))
       createUpdateTimeTable(new TimeTable({ name: t('content.new_schedule'), agendaId: agenda.id, startTime: start, endTime: end, id: v4() }))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     }
   }
 
@@ -103,7 +103,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       if (!timeTableToBeDelete) throw new Error('No schedule selected')
       deleteTimeTable(timeTableToBeDelete)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     } finally {
       setShowDeleteTimeTableModal(false)
     }

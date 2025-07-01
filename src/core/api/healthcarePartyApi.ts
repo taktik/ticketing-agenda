@@ -1,4 +1,4 @@
-import { HealthcareParty, HealthcarePartyFilters, PatientFilters } from '@icure/cardinal-sdk'
+import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
 import { useState } from 'react'
 import { useAppDispatch } from '../hooks'

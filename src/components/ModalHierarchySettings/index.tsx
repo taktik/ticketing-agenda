@@ -1,22 +1,20 @@
-import { AppstoreOutlined, BankOutlined, CaretDownOutlined, CaretRightOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, BankOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
 import { HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Card, Empty, Layout, Menu, MenuProps, message, notification, Typography } from 'antd'
+import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
 import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
+import emptyIcon from '../../assets/empty.svg'
 import { SettingContext } from '../../contexts/SettingContext'
 import { useCreateUpdateHealthcarePartyMutation, useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import { CustomModal } from '../common/CustomModal'
+import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 import './index.css'
 import { ServiceSetting } from './ServiceSetting'
-import emptyIcon from '../../assets/empty.svg'
-import { useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
-import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../core/api/calendarItemTypeApi'
 import { SiteSetting } from './SiteSetting'
-import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 
 interface ModalHierarchySettingsProps {
   isVisible: boolean
@@ -77,7 +75,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
       const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id })
       createUpdateSite(siteHcp)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     }
   }, [selectedKey, rootHcp])
 

@@ -16,7 +16,6 @@ import {
 } from '../../../../core/api/healthcarePartyApi'
 import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
-import { ButtonStyleType, StyledButton } from '../../../common/StyledButton'
 
 interface UserRow {
   rowId: string
@@ -31,11 +30,6 @@ interface FormValues {
   firstName: string
   lastName: string
   email: string
-}
-
-interface ManagerUsersProps {
-  onClose: () => void
-  currentUser?: HealthcareParty
 }
 
 export const ManagerUsers = (): ReactElement => {

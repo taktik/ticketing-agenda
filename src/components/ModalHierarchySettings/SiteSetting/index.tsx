@@ -1,18 +1,18 @@
-import { CloseOutlined, DeleteOutlined, EditOutlined, EllipsisOutlined, PlusOutlined, RollbackOutlined, SaveOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, EllipsisOutlined } from '@ant-design/icons'
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Card, Dropdown, Empty, Form, Input, List, MenuProps, message, notification, Space, Tooltip, Typography } from 'antd'
-import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
+import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { SettingContext } from '../../../contexts/SettingContext'
 import { useCreateUpdateAgendaMutation, useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
-import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
-import { ModalConfirmAction } from '../../common/ModalConfirmAction'
-import './index.css'
-import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
+import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
+import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { RenameInput } from '../../common/RenameInput'
+import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
+import './index.css'
 
 interface SiteSettingProps {
   site: HealthcareParty
@@ -57,7 +57,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       if (!site) throw new Error('No site selected')
       createUpdateSite(new HealthcareParty({ ...site, name: newName }))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     } finally {
       setShowRenameSiteInput(false)
     }
@@ -68,7 +68,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       if (!site) throw new Error('No site selected')
       deleteSite(site)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     } finally {
       setSelectedKey('default')
     }
@@ -90,7 +90,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       await createUpdateService({ ...serviceHcp })
       createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id }))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     }
   }
 

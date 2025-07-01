@@ -3,7 +3,6 @@ import AuthenticatedLayout from '../layout/AuthenticatedLayout'
 import LoginLayout from '../layout/LoginLayout'
 import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/authentication/LoginPage'
-import RegisterPage from '../pages/authentication/RegisterPage'
 import { PageNotFound } from '../pages/NotFoundPage'
 
 export const routes = {
