@@ -165,8 +165,8 @@ export const ManagerUsers = (): ReactElement => {
         // Step 1: Delete HealthcareParty
         const deletedHcpResult = await deleteHcp(userRowToBeDeleted.hcp).unwrap()
         try {
-          // Step 2: If HCP deletion was successful, try to create User
-          const createdUserResult = await deleteUser(userRowToBeDeleted.user).unwrap()
+          // Step 2: If HCP deletion was successful, try to delete User
+          const deleteUserResult = await deleteUser(userRowToBeDeleted.user).unwrap()
         } catch (userError) {
           // User deletion failed, but HCP was deleted. This is where rollback is needed.
           console.error('Failed to delete user:', userError)

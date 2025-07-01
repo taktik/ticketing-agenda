@@ -1,5 +1,5 @@
-import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { Button, Divider, Form, message, Result, Steps } from 'antd'
+import { CalendarOutlined, CheckCircleOutlined, PlusOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
+import { Button, Card, Descriptions, Divider, Form, message, Result, Space, Steps, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,9 +12,40 @@ import { HealthcareParty } from '@icure/cardinal-sdk'
 import { useGetServicesForMultipleSitesQuery } from '../../../core/api/healthcarePartyApi'
 import { useGetAgendasQuery } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-import { transformProceduresForSelection } from '../../../helpers/transformProcedures'
+import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
+import { StepCreateAppointment } from './appointmentSteps/StepCreateAppointment'
 
 const { Step } = Steps
+const { Title, Paragraph, Text } = Typography
+
+export const languageMapping: { [key: string]: string } = {
+  fr: 'FR',
+  nl: 'NL',
+  en: 'EN',
+  de: 'DE',
+}
+
+export const appointmentDuration = (formProcedures: FormProcedure[], procedures: ProcedureSelection[]) => {
+  const duration =
+    formProcedures.reduce((total, item) => {
+      const procedure = procedures.find((s) => s.id === item.procedureId)
+      const procedureVariant = procedure?.variants.find((p) => p.attendees === item.quantity)
+      return total + (procedureVariant?.duration || 0)
+    }, 0) || 0
+  return duration
+}
+
+export const formatDateTime = (dateForm: dayjs.Dayjs | undefined, timeForm: string | undefined) => {
+  const date = dateForm
+  const time = timeForm
+  if (!date || !time) return 'N/A'
+
+  const [hour, minute] = time.split(':').map(Number)
+
+  const combinedDateTime = date.hour(hour).minute(minute)
+
+  return combinedDateTime.format('LLLL')
+}
 
 export interface FormProcedure {
   procedureId: string | undefined
@@ -49,9 +80,14 @@ interface CreateEventProps {
 }
 
 export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [form] = Form.useForm<AppointmentForm>()
+
+  const langCode = useMemo(() => {
+    return languageMapping[i18n.language] || 'FR' // Fallback
+  }, [i18n.language])
+
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
 
   const { data: allServices, isLoading: isServicesLoading } = useGetServicesForMultipleSitesQuery({ siteIds: siteIds }, { skip: !siteIds || siteIds.length === 0 })
@@ -74,10 +110,13 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     { title: t('content.confirm'), icon: <CheckCircleOutlined /> },
   ]
 
+  const createAppointments = () => {}
+
   const next = async () => {
     try {
       await form.validateFields()
       setCurrentStep(currentStep + 1)
+      if (currentStep === 4) createAppointments()
     } catch (err) {
       message.error(t('content.complete_required_fields'))
     }
@@ -89,6 +128,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     setCurrentStep(0)
     form.resetFields()
     form.setFieldsValue({ procedures: [{ procedureId: undefined, quantity: 1 }] })
+    onClose()
   }
 
   const stepContent = [
@@ -110,6 +150,8 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     },
   }
 
+  const formValues: AppointmentForm = form.getFieldsValue(true)
+
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={900}>
       <div style={{ width: '100%', padding: '1.5rem' }}>
@@ -120,23 +162,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         </Steps>
 
         <Form form={form} layout="vertical" initialValues={initialFormValues}>
-          <div style={{ minHeight: '350px' }}>
-            {currentStep < 4 ? (
-              stepContent[currentStep]
-            ) : (
-              <Result
-                status="success"
-                title={t('content.confirmation_email_sent_to_address', { email: form.getFieldValue(['personalInfo', 'email']) })}
-                subTitle={
-                  <>
-                    {t('content.confirmation_check_inbox')}
-                    <br />
-                    {t('content.confirmation_booking_not_final')}
-                  </>
-                }
-              />
-            )}
-          </div>
+          <div style={{ minHeight: '350px' }}>{currentStep < 4 ? stepContent[currentStep] : <StepCreateAppointment formValues={formValues} form={form} selections={selections} />}</div>
 
           <Divider />
 
@@ -161,7 +187,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
               )}
               {currentStep === 4 && (
                 <Button size="large" type="primary" onClick={reset}>
-                  {t('content.book_another')}
+                  {t('content.close')}
                 </Button>
               )}
             </div>
@@ -171,3 +197,44 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     </CustomModal>
   )
 }
+
+/*
+
+(
+              <Result
+                style={{ padding: 0 }}
+                status="success"
+                title="Booking Successful"
+                subTitle={
+                  <>
+                    <Paragraph style={{ paddingBottom: '1rem' }}>Your appointment has been successfully completed. A summary is provided below for your records.</Paragraph>
+
+                    <Card size="small" style={{ marginTop: 16, maxWidth: 500, margin: 'auto', textAlign: 'left' }}>
+                      <Descriptions title="Appointment Summary" column={1} bordered>
+                        <Descriptions.Item label={t('content.procedures')}>
+                          <Space direction="vertical">
+                            {formValues.procedures?.map((item, index) => {
+                              const mainProcedure = selections?.find((proc) => proc.id === item.procedureId)
+                              if (!mainProcedure) return null
+                              return (
+                                <Text key={index}>
+                                  {item.quantity} x {mainProcedure.displayTextByLanguage[langCode]}
+                                </Text>
+                              )
+                            })}
+                          </Space>
+                        </Descriptions.Item>
+
+                        <Descriptions.Item label={t('content.date')}>{formatDateTime(formValues.timeslot?.date, formValues.timeslot?.time)}</Descriptions.Item>
+                        <Descriptions.Item label={t('content.duration')}>
+                          <Text strong>{appointmentDuration(formValues.procedures, selections) + ' ' + t('content.minutes')}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Location">Rue du sanglier</Descriptions.Item>
+                      </Descriptions>
+                    </Card>
+                  </>
+                }
+              />
+            )}
+
+            */

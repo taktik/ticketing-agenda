@@ -77,12 +77,12 @@ const AppContent: React.FC = () => {
 // Main App component wraps everything in Suspense for i18n
 function App() {
   return (
-    <React.StrictMode>
+    <>
       {/* Suspense is crucial for i18next loading */}
       <Suspense fallback={<p>Loading Application...</p>}>
         <AppContent />
       </Suspense>
-    </React.StrictMode>
+    </>
   )
 }
 

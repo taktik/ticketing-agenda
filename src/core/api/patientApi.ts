@@ -1,12 +1,16 @@
-import { DecryptedPatient, IdWithRev, intersection, Patient } from '@icure/cardinal-sdk'
+import { DecryptedPatient, EncryptedPatient, IdWithRev, intersection, Patient } from '@icure/cardinal-sdk'
 import { PatientFilters, union } from '@icure/cardinal-sdk/filters.mjs'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { allPatientsTagsEnum } from '../../helpers/types'
 import { cardinalApi, guard } from '../services/auth.api'
 
+enum PatientTags {
+  Patient = 'Patient',
+}
+
 export const patientApiRtk = createApi({
   reducerPath: 'patientApi',
-  tagTypes: ['Patient'],
+  tagTypes: [PatientTags.Patient],
   baseQuery: fetchBaseQuery({
     baseUrl: '',
   }),
@@ -22,8 +26,20 @@ export const patientApiRtk = createApi({
           return new DecryptedPatient(updatedPatient)
         })
       },
-
-      invalidatesTags: (result, _, arg) => (!result?.rev ? [] : result.rev.startsWith('1-') ? [{ type: 'Patient', id: 'all' }] : [{ type: 'Patient', id: arg.id }]),
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
+    }),
+    updatePatient: builder.mutation<EncryptedPatient | undefined, EncryptedPatient>({
+      async queryFn(patient, { getState }) {
+        const patientApi = (await cardinalApi(getState))?.patient
+        return guard([patientApi], async (): Promise<EncryptedPatient> => {
+          const updatedPatient = await patientApi?.encrypted.modifyPatient(patient)
+          if (!updatedPatient) {
+            throw new Error('Patient does not exist')
+          }
+          return new EncryptedPatient(updatedPatient)
+        })
+      },
+      invalidatesTags: (result) => (result ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
     createPatients: builder.mutation<IdWithRev[] | undefined, DecryptedPatient[]>({
       async queryFn(patients, { getState }) {
@@ -41,7 +57,7 @@ export const patientApiRtk = createApi({
           return await patientApi?.createPatients(validPatients)
         })
       },
-      invalidatesTags: [{ type: 'Patient', id: 'all' }],
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
     filterPatientsByDataOwner: builder.query<string[] | undefined, string>({
       async queryFn(practitionerId, { getState }) {
@@ -62,18 +78,7 @@ export const patientApiRtk = createApi({
           return patientsList
         })
       },
-      providesTags: (res) =>
-        res
-          ? [
-              { type: 'Patient', id: 'all' },
-              ...res.map((patient) => {
-                return {
-                  type: 'Patient',
-                  id: patient,
-                } as { type: 'Patient'; id: string }
-              }),
-            ]
-          : [{ type: 'Patient', id: 'all' }],
+      providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
     filterPatientsByFuzzyNameForDataOwner: builder.query<string[] | undefined, { practitionerId: string; searchString: string }>({
       async queryFn({ practitionerId, searchString }, { getState }) {
@@ -107,18 +112,20 @@ export const patientApiRtk = createApi({
           return patientsList
         })
       },
-      providesTags: (res) =>
-        res
-          ? [
-              { type: 'Patient', id: 'all' },
-              ...res.map((patient) => {
-                return {
-                  type: 'Patient',
-                  id: patient,
-                } as { type: 'Patient'; id: string }
-              }),
-            ]
-          : [{ type: 'Patient', id: 'all' }],
+      providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
+    }),
+    getPatientById: builder.query<DecryptedPatient | undefined, string>({
+      async queryFn(patientId, { getState }) {
+        const patientApi = (await cardinalApi(getState))?.patient
+        return guard([patientApi], async (): Promise<DecryptedPatient> => {
+          const patient = await patientApi!.decrypt(await patientApi!.encrypted.getPatient(patientId))
+          if (!patient) {
+            throw new Error('Patients do not found')
+          }
+          return patient
+        })
+      },
+      providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
     getPatientsByIds: builder.query<DecryptedPatient[] | undefined, string[]>({
       async queryFn(patientsIds, { getState }) {
@@ -134,18 +141,7 @@ export const patientApiRtk = createApi({
           return patientsList
         })
       },
-      providesTags: (res) =>
-        res
-          ? [
-              { type: 'Patient', id: 'all' },
-              ...res.map((patient) => {
-                return {
-                  type: 'Patient',
-                  id: patient.id,
-                } as { type: 'Patient'; id: string }
-              }),
-            ]
-          : [],
+      providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
     deletePatient: builder.mutation<string | undefined, Patient>({
       async queryFn(patient, { getState }) {
@@ -158,10 +154,7 @@ export const patientApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: (id) => [
-        { type: 'Patient', id: 'all' },
-        { type: 'Patient', id: id },
-      ],
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
     deletePatients: builder.mutation<(string | undefined)[] | undefined, Patient[]>({
       async queryFn(patients, { getState }) {
@@ -177,12 +170,7 @@ export const patientApiRtk = createApi({
           return r
         })
       },
-      invalidatesTags: (res) => [
-        { type: 'Patient', id: 'all' }, // Invalidate all patient data
-        ...(res?.map((id) => {
-          return { type: 'Patient', id } as { type: 'Patient'; id: string }
-        }) || []),
-      ],
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
 
     sharePatientWith: builder.mutation<DecryptedPatient | undefined, { patient: DecryptedPatient; delegateId: string }>({
@@ -196,8 +184,7 @@ export const patientApiRtk = createApi({
           return new DecryptedPatient(updatedPatient)
         })
       },
-
-      invalidatesTags: (result, error, arg) => (!result?.rev ? [] : result.rev.startsWith('1-') ? [{ type: 'Patient', id: 'all' }] : [{ type: 'Patient', id: arg.patient.id }]),
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
   }),
 })
@@ -211,4 +198,6 @@ export const {
   useDeletePatientsMutation,
   useSharePatientWithMutation,
   useCreatePatientsMutation,
+  useLazyGetPatientByIdQuery,
+  useUpdatePatientMutation,
 } = patientApiRtk

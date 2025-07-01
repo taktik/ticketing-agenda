@@ -85,4 +85,4 @@ export const userApiRtk = createApi({
   }),
 })
 
-export const { useGetUsersQuery, useGetUserByEmailQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation } = userApiRtk
+export const { useGetUsersQuery, useGetUserByEmailQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation, useLazyGetUserByEmailQuery } = userApiRtk

@@ -2,46 +2,17 @@ import { Descriptions, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppointmentForm } from '../CreateEvent'
+import { appointmentDuration, AppointmentForm, formatDateTime, FormProcedure, languageMapping } from '../CreateEvent'
 import './index.css'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 
 const { Title, Text } = Typography
-
-const languageMapping: { [key: string]: string } = {
-  fr: 'FR',
-  nl: 'NL',
-  en: 'EN',
-  de: 'DE',
-}
 
 export const StepAppointmentreview: FC<{ formValues: AppointmentForm; procedures: ProcedureSelection[] }> = ({ formValues, procedures }) => {
   const { t, i18n } = useTranslation()
   const langCode = useMemo(() => {
     return languageMapping[i18n.language] || 'FR' // Fallback
   }, [i18n.language])
-
-  const appointmentDuration = () => {
-    const duration =
-      formValues.procedures?.reduce((total, item) => {
-        const procedure = procedures.find((s) => s.id === item.procedureId)
-        const procedureVariant = procedure?.variants.find((p) => p.attendees === item.quantity)
-        return total + (procedureVariant?.duration || 0)
-      }, 0) || 0
-    return duration + ' ' + t('content.minutes')
-  }
-
-  const formatDateTime = useMemo(() => {
-    const date = formValues.timeslot?.date
-    const time = formValues.timeslot?.time
-    if (!date || !time) return 'N/A'
-
-    const [hour, minute] = time.split(':').map(Number)
-
-    const combinedDateTime = date.hour(hour).minute(minute)
-
-    return combinedDateTime.format('LLLL')
-  }, [formValues, i18n.language])
 
   return (
     <>
@@ -61,9 +32,9 @@ export const StepAppointmentreview: FC<{ formValues: AppointmentForm; procedures
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label={t('content.duration')}>
-          <Text strong>{appointmentDuration()}</Text>
+          <Text strong>{appointmentDuration(formValues.procedures, procedures) + ' ' + t('content.minutes')}</Text>
         </Descriptions.Item>
-        <Descriptions.Item label={t('content.date')}>{formatDateTime}</Descriptions.Item>
+        <Descriptions.Item label={t('content.date')}>{formatDateTime(formValues.timeslot?.date, formValues.timeslot?.time)}</Descriptions.Item>
         <Descriptions.Item label={t('content.full_name')}>
           {formValues.personalInfo?.firstName} {formValues.personalInfo?.lastName}
         </Descriptions.Item>

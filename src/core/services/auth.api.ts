@@ -4,6 +4,7 @@ import {
   CaptchaOptions,
   CardinalApis,
   CardinalSdk,
+  CardinalBaseSdk,
   CryptoStrategies,
   KeypairFingerprintV1String,
   KeyPairRecoverer,
@@ -230,6 +231,7 @@ export const startAuthentication = createAsyncThunk(
         { firstName, lastName },
         {
           useHierarchicalDataOwners: false,
+          encryptedFields: { patient: [], calendarItem: [] },
           cryptoStrategies: new PetraCareCryptoStrategies(),
         },
       )
