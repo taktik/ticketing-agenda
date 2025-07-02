@@ -12,7 +12,6 @@ import { getImgSRC } from '../../../../helpers/fileToBase64'
 import { getTagColor } from '../../../../helpers/getTagColor'
 import { getPatientDataFormated } from '../../../../helpers/patientDataManipulations'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
-import { ModalAddConsultationForm } from '../../modals/ModalAddConsultationForm'
 import { ModalPatientForm } from '../../modals/ModalPatientForm'
 import { ModalPatientProfile } from '../../modals/ModalPatientProfile'
 import './index.css'
@@ -261,8 +260,6 @@ export const PatientRow = ({ patient }: PatientRowProps): ReactElement => {
       </div>
       {isPatientFormModalOpen &&
         createPortal(<ModalPatientForm mode="edit" patientToEdit={patient} isVisible={isPatientFormModalOpen} onClose={() => setPatientFormModalOpen(false)} />, document.body)}
-      {isAddConsultationModalOpen &&
-        createPortal(<ModalAddConsultationForm isVisible={isAddConsultationModalOpen} onClose={() => setAddConsultationModalOpen(false)} patient={patient} />, document.body)}
       {isPatientProfileModalOpen &&
         createPortal(
           <ModalPatientProfile

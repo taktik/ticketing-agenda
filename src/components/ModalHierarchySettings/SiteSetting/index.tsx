@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined } from '@ant-design/icons'
-import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
+import { AddressType, Agenda, CalendarItemType, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
 import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -10,7 +10,7 @@ import { useCreateUpdateAgendaMutation, useGetAllAgendaByAuthorIds } from '../..
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
-import { RenameInput } from '../../common/RenameInput'
+import { EditableSiteInfo, SiteInfoFormValues } from '../../common/EditableSiteInfo'
 import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import './index.css'
 
@@ -52,10 +52,10 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
     },
   ]
 
-  const renameSite = (newName: string) => {
+  const onSiteInfoSave = (formValues: SiteInfoFormValues) => {
     try {
       if (!site) throw new Error('No site selected')
-      createUpdateSite(new HealthcareParty({ ...site, name: newName }))
+      createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] }))
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
     } finally {
@@ -153,7 +153,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       <div className="site-header">
         <div className="site-title">
           <Space align="center">
-            {showRenameSiteInput ? <RenameInput hcp={site} setShowRenameInput={setShowRenameSiteInput} rename={renameSite} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
+            {showRenameSiteInput ? <EditableSiteInfo hcp={site} setShowRenameInput={setShowRenameSiteInput} onSave={onSiteInfoSave} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
             {showRenameSiteInput ? null : (
               <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                 <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />
