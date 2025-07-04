@@ -25,7 +25,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
   const { selectedKeyId, setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
-  const [showRenameSiteInput, setShowRenameSiteInput] = useState<boolean>(false)
+  const [showEditableSite, setShowEditableSite] = useState<boolean>(false)
 
   const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
 
@@ -38,10 +38,10 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
 
   const siteActionItems: MenuProps['items'] = [
     {
-      key: 'rename',
-      label: t('content.rename'),
+      key: 'edit',
+      label: t('content.edit'),
       icon: <EditOutlined />,
-      onClick: () => setShowRenameSiteInput(true),
+      onClick: () => setShowEditableSite(true),
     },
     {
       key: 'delete',
@@ -57,9 +57,9 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       if (!site) throw new Error('No site selected')
       createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] }))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
     } finally {
-      setShowRenameSiteInput(false)
+      setShowEditableSite(false)
     }
   }
 
@@ -68,7 +68,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       if (!site) throw new Error('No site selected')
       deleteSite(site)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
     } finally {
       setSelectedKey('default')
     }
@@ -90,7 +90,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       await createUpdateService({ ...serviceHcp })
       createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id }))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     }
   }
 
@@ -153,8 +153,8 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
       <div className="site-header">
         <div className="site-title">
           <Space align="center">
-            {showRenameSiteInput ? <EditableSiteInfo hcp={site} setShowRenameInput={setShowRenameSiteInput} onSave={onSiteInfoSave} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
-            {showRenameSiteInput ? null : (
+            {showEditableSite ? <EditableSiteInfo hcp={site} setShowEditableSite={setShowEditableSite} onSave={onSiteInfoSave} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
+            {showEditableSite ? null : (
               <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                 <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />
               </Dropdown>

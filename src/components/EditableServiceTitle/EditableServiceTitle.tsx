@@ -37,6 +37,7 @@ export const EditableServiceTitle = ({ initialTitles, onSave, showEditServiceTit
     try {
       const values = await form.validateFields()
       onSave(values.descr)
+      form.resetFields()
     } catch (error) {
       message.error('Validation failed. Please check the required fields.')
     }

@@ -98,7 +98,6 @@ export default function DashboardPage() {
     <div className="Dashboard">
       <Header />
       <div className="Panel">
-        {/* <div className="svg-background" /> */}
         <div className="left-panel">
           <Card className="card">
             <div className="SiteSelectorRow">

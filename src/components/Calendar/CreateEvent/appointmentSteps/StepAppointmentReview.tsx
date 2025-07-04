@@ -21,7 +21,7 @@ export const StepAppointmentreview: FC<{ formValues: AppointmentForm; procedures
         <Descriptions.Item label={t('content.procedures')}>
           <Space direction="vertical">
             {formValues.procedures?.map((item, index) => {
-              const procedure = procedures.find((s) => s.id === item.procedureId)
+              const procedure = procedures.find((s) => s.id === item.procedureSelectionId)
               if (!procedure) return null
               return (
                 <Text key={index}>
@@ -32,7 +32,7 @@ export const StepAppointmentreview: FC<{ formValues: AppointmentForm; procedures
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label={t('content.duration')}>
-          <Text strong>{appointmentDuration(formValues.procedures, procedures) + ' ' + t('content.minutes')}</Text>
+          <Text strong>{appointmentDuration(formValues, procedures) + ' ' + t('content.minutes')}</Text>
         </Descriptions.Item>
         <Descriptions.Item label={t('content.date')}>{formatDateTime(formValues.timeslot?.date, formValues.timeslot?.time)}</Descriptions.Item>
         <Descriptions.Item label={t('content.full_name')}>

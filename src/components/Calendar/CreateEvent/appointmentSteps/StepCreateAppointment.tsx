@@ -186,7 +186,7 @@ export const StepCreateAppointment = ({ formValues, selections, form }: StepCrea
                           <Descriptions.Item label={t('content.procedures')}>
                             <Space direction="vertical">
                               {formValues?.procedures?.map((item, index) => {
-                                const mainProcedure = selections?.find((proc) => proc.id === item.procedureId)
+                                const mainProcedure = selections?.find((proc) => proc.id === item.procedureSelectionId)
                                 if (!mainProcedure) return null
                                 return (
                                   <Text key={index}>
@@ -199,7 +199,7 @@ export const StepCreateAppointment = ({ formValues, selections, form }: StepCrea
 
                           <Descriptions.Item label={t('content.date')}>{formatDateTime(formValues.timeslot?.date, formValues.timeslot?.time)}</Descriptions.Item>
                           <Descriptions.Item label={t('content.duration')}>
-                            <Text strong>{appointmentDuration(formValues.procedures, selections) + ' ' + t('content.minutes')}</Text>
+                            <Text strong>{appointmentDuration(formValues, selections) + ' ' + t('content.minutes')}</Text>
                           </Descriptions.Item>
                           <Descriptions.Item label="Location">Rue du sanglier</Descriptions.Item>
                         </Descriptions>

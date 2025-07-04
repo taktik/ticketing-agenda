@@ -134,8 +134,6 @@ export const StepPersonalInformation: FC = () => {
           <Select style={{ width: 120 }} size="large">
             <Option value="Français">Français</Option>
             <Option value="Nederlands">Nederlands</Option>
-            <Option value="Deutsch">Deutsch</Option>
-            <Option value="English">English</Option>
           </Select>
         </Form.Item>
         <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'birthDate']} label={t('content.birth_date')} rules={[{ required: true }]} layout="horizontal">

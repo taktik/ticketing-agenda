@@ -35,13 +35,17 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
   }, [i18n.language])
 
   // Watch the procedureId for THIS specific row
-  const procedureId = Form.useWatch(['procedures', name, 'procedureId'], form)
+  const procedureId = Form.useWatch(['procedures', name, 'procedureSelectionId'], form)
+  const siteId = Form.useWatch(['procedures', name, 'site'], form)
 
-  // Find the full details of the selected procedure
+  // Selected main procedure
   const selectedProcedure = procedures.find((s) => s.id === procedureId)
 
+  // Selected SiteVariant
+  const selectedSiteVariant = selectedProcedure ? selectedProcedure.siteVariants.find((siteVariant) => siteVariant.site.id === siteId) : undefined
+
   // Determine the list of available procedures for the dropdown
-  const firstProcedureId = formProcedures[0]?.procedureId
+  const firstProcedureId = formProcedures[0]?.procedureSelectionId
   const firstService = procedures.find((s) => s.id === firstProcedureId)
   const selectedServiceName = firstService?.serviceName
 
@@ -51,12 +55,14 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
     // When a procedure changes, reset the quantity to 1
     const newProcedures = [...formProcedures]
     if (newProcedures[name]) {
-      newProcedures[name] = { ...newProcedures[name], procedureId: value, quantity: 1 }
+      newProcedures[name] = { ...newProcedures[name], procedureSelectionId: value, quantity: 1 }
       form.setFieldsValue({ procedures: newProcedures })
     }
   }
 
   const renderLabelWithTooltip = () => {
+    return <div>hey</div>
+    /*
     return (
       <Space>
         <span>{t('content.procedure')}</span>
@@ -73,13 +79,20 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
         )}
       </Space>
     )
+      */
   }
 
   return (
     <Card>
       <Space align="baseline" style={{ width: '100%', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: '1rem', marginBottom: 0 }}>
-          <Form.Item name={[name, 'procedureId']} label={renderLabelWithTooltip()} rules={[{ required: true, message: t('content.select_procedure_prompt') }]} style={{ marginBottom: 0 }} className="procedure-select ">
+          <Form.Item
+            name={[name, 'procedureSelectionId']}
+            label={renderLabelWithTooltip()}
+            rules={[{ required: true, message: t('content.select_procedure_prompt') }]}
+            style={{ marginBottom: 0 }}
+            className="procedure-select "
+          >
             <Select
               loading={isProcedureLoading}
               placeholder={t('content.select_procedure_placeholder')}
@@ -102,9 +115,19 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
         </div>
 
         <div className="right">
+          <Form.Item name={[name, 'site']} label={t('content.select_site_prompt')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
+            <Select placeholder="Site" style={{ minWidth: '80px' }} disabled={selectedProcedure?.siteVariants && selectedProcedure?.siteVariants.length < 2} loading={isProcedureLoading}>
+              {selectedProcedure?.siteVariants.map((variant) => (
+                <Option key={variant.site.id} value={variant.site.id}>
+                  {variant.site.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
           <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
             <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId} loading={isProcedureLoading}>
-              {selectedProcedure?.variants.map((variant) => (
+              {selectedSiteVariant?.variants.map((variant) => (
                 <Option key={variant.attendees} value={variant.attendees}>
                   {variant.attendees}
                 </Option>
@@ -134,7 +157,7 @@ export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; pr
   const { t } = useTranslation()
   const formProcedures = Form.useWatch('procedures', form)
 
-  const firstProcedureId = formProcedures?.[0]?.procedureId
+  const firstProcedureId = formProcedures?.[0]?.procedureSelectionId
   const firstProcedure = procedures.find((p) => p.id === firstProcedureId)
   const selectedServiceName = firstProcedure?.serviceName
 
@@ -145,9 +168,9 @@ export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; pr
       let hasChanges = false
       // Create a new array by mapping, ensuring each object has the correct shape.
       const newProcedures: FormProcedure[] = formProcedures.map((procedure, index) => {
-        if (index === 0 || !procedure || !procedure.procedureId) return procedure
+        if (index === 0 || !procedure || !procedure.procedureSelectionId) return procedure
 
-        const currentProcedureId = procedure.procedureId
+        const currentProcedureId = procedure.procedureSelectionId
         if (currentProcedureId) {
           const currentService = procedures.find((s) => s.id === currentProcedureId)
 

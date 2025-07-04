@@ -175,7 +175,9 @@
     "validation_code_label": "Code de validation",
     "login_button": "Se connecter",
     "receive_one_time_code": "Recevoir un code unique",
-    "captcha_check_hold_on": "Un instant, une rapide vérification CAPTCHA..."
+    "captcha_check_hold_on": "Un instant, une rapide vérification CAPTCHA...",
+    "edit_site_information": "Modifier les informations du site",
+    "site_name": "Nom du site"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

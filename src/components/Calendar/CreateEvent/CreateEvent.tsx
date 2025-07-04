@@ -1,22 +1,21 @@
-import { CalendarOutlined, CheckCircleOutlined, PlusOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Divider, Form, message, Result, Space, Steps, Typography } from 'antd'
+import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
+import { HealthcareParty } from '@icure/cardinal-sdk'
+import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useGetAgendasQuery } from '../../../core/api/agendaApi'
+import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
+import { useGetServicesForMultipleSitesQuery } from '../../../core/api/healthcarePartyApi'
+import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
 import { StepAppointmentreview } from './appointmentSteps/StepAppointmentReview'
+import { StepCreateAppointment } from './appointmentSteps/StepCreateAppointment'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
-import { HealthcareParty } from '@icure/cardinal-sdk'
-import { useGetServicesForMultipleSitesQuery } from '../../../core/api/healthcarePartyApi'
-import { useGetAgendasQuery } from '../../../core/api/agendaApi'
-import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
-import { StepCreateAppointment } from './appointmentSteps/StepCreateAppointment'
 
 const { Step } = Steps
-const { Title, Paragraph, Text } = Typography
 
 export const languageMapping: { [key: string]: string } = {
   fr: 'FR',
@@ -25,14 +24,38 @@ export const languageMapping: { [key: string]: string } = {
   de: 'DE',
 }
 
-export const appointmentDuration = (formProcedures: FormProcedure[], procedures: ProcedureSelection[]) => {
-  const duration =
-    formProcedures.reduce((total, item) => {
-      const procedure = procedures.find((s) => s.id === item.procedureId)
-      const procedureVariant = procedure?.variants.find((p) => p.attendees === item.quantity)
-      return total + (procedureVariant?.duration || 0)
-    }, 0) || 0
-  return duration
+export const appointmentDuration = (formValues: AppointmentForm, procedures: ProcedureSelection[]): number => {
+  // Get the array of procedures the user has selected in the form
+  const formProcedures = formValues.procedures
+
+  // Use the .reduce() method to iterate over each selected procedure and sum up their durations
+  const totalDuration = formProcedures.reduce((total, currentFormProcedure) => {
+    // 1. Find the main procedure group (e.g., "Demande de passeport") from the master list
+    // using the ID stored in the form.
+    const masterProcedure = procedures.find((p) => p.id === currentFormProcedure.procedureSelectionId)
+    if (!masterProcedure) {
+      return total // If not found, add nothing and move to the next item
+    }
+
+    // 2. From that group, find the specific site variant the user chose
+    // using the site ID stored in the form.
+    const siteVariant = masterProcedure.siteVariants.find((sv) => sv.site.id === currentFormProcedure.site)
+    if (!siteVariant) {
+      return total
+    }
+
+    // 3. From that site variant, find the specific attendee/quantity variant
+    // using the quantity stored in the form.
+    const procedureVariant = siteVariant.variants.find((pv) => pv.attendees === currentFormProcedure.quantity)
+    if (!procedureVariant) {
+      return total
+    }
+
+    // 4. If we successfully found the exact variant, add its duration to the running total.
+    return total + (procedureVariant.duration || 0)
+  }, 0) // The 0 here is the starting value for our total.
+
+  return totalDuration
 }
 
 export const formatDateTime = (dateForm: dayjs.Dayjs | undefined, timeForm: string | undefined) => {
@@ -48,7 +71,8 @@ export const formatDateTime = (dateForm: dayjs.Dayjs | undefined, timeForm: stri
 }
 
 export interface FormProcedure {
-  procedureId: string | undefined
+  procedureSelectionId: string | undefined
+  site: string | undefined
   quantity: number
 }
 
@@ -99,7 +123,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const { data: allProcedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesForMultipleAgendasQuery({ agendaIds: agendaIds }, { skip: !agendaIds || agendaIds.length === 0 })
 
-  const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? []), [allServices, allProcedures])
+  const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allServices, allProcedures, allAgendas, sites])
+
+  const selections2 = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allServices, allProcedures, allAgendas, sites])
+  useEffect(() => console.log('selections 2', selections2), [selections2])
 
   const isLoading = useMemo(() => isServicesLoading || isAgendasLoading || isProceduresLoading, [isServicesLoading, isAgendasLoading, isProceduresLoading])
 
@@ -118,7 +145,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       setCurrentStep(currentStep + 1)
       if (currentStep === 4) createAppointments()
     } catch (err) {
-      message.error(t('content.complete_required_fields'))
+      openNotification('error', t('content.complete_required_fields'), '')
     }
   }
 
@@ -127,7 +154,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   const reset = () => {
     setCurrentStep(0)
     form.resetFields()
-    form.setFieldsValue({ procedures: [{ procedureId: undefined, quantity: 1 }] })
+    form.setFieldsValue({ procedures: [{ procedureSelectionId: undefined, quantity: 1 }] })
     onClose()
   }
 
@@ -150,11 +177,37 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     },
   }
 
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
+
   const formValues: AppointmentForm = form.getFieldsValue(true)
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={900}>
       <div style={{ width: '100%', padding: '1.5rem' }}>
+        {notificationContextHolder}
+        {messageContextHolder}
         <Steps current={currentStep} style={{ marginBottom: 32 }}>
           {steps.map((item) => (
             <Step key={item.title} title={item.title} icon={item.icon} />
@@ -197,44 +250,3 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     </CustomModal>
   )
 }
-
-/*
-
-(
-              <Result
-                style={{ padding: 0 }}
-                status="success"
-                title="Booking Successful"
-                subTitle={
-                  <>
-                    <Paragraph style={{ paddingBottom: '1rem' }}>Your appointment has been successfully completed. A summary is provided below for your records.</Paragraph>
-
-                    <Card size="small" style={{ marginTop: 16, maxWidth: 500, margin: 'auto', textAlign: 'left' }}>
-                      <Descriptions title="Appointment Summary" column={1} bordered>
-                        <Descriptions.Item label={t('content.procedures')}>
-                          <Space direction="vertical">
-                            {formValues.procedures?.map((item, index) => {
-                              const mainProcedure = selections?.find((proc) => proc.id === item.procedureId)
-                              if (!mainProcedure) return null
-                              return (
-                                <Text key={index}>
-                                  {item.quantity} x {mainProcedure.displayTextByLanguage[langCode]}
-                                </Text>
-                              )
-                            })}
-                          </Space>
-                        </Descriptions.Item>
-
-                        <Descriptions.Item label={t('content.date')}>{formatDateTime(formValues.timeslot?.date, formValues.timeslot?.time)}</Descriptions.Item>
-                        <Descriptions.Item label={t('content.duration')}>
-                          <Text strong>{appointmentDuration(formValues.procedures, selections) + ' ' + t('content.minutes')}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Location">Rue du sanglier</Descriptions.Item>
-                      </Descriptions>
-                    </Card>
-                  </>
-                }
-              />
-            )}
-
-            */
