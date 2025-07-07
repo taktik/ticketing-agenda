@@ -1,5 +1,5 @@
-import { InfoCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Card, Form, FormInstance, Select, Space, Tooltip, Typography } from 'antd'
+import { ExclamationCircleOutlined, InfoCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Form, FormInstance, Select, Space, Tooltip, Typography } from 'antd'
 import React, { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppointmentForm, FormProcedure } from '../CreateEvent'
@@ -34,22 +34,49 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
     return languageMapping[i18n.language] || 'FR' // Fallback
   }, [i18n.language])
 
-  // Watch the procedureId for THIS specific row
+  // --- Watched values from the form (this part is fine) ---
   const procedureId = Form.useWatch(['procedures', name, 'procedureSelectionId'], form)
   const siteId = Form.useWatch(['procedures', name, 'site'], form)
 
-  // Selected main procedure
-  const selectedProcedure = procedures.find((s) => s.id === procedureId)
+  // 1. Memoize the selected main procedure.
+  const selectedProcedure = useMemo(() => {
+    return procedures.find((s) => s.id === procedureId)
+  }, [procedureId, procedures])
 
-  // Selected SiteVariant
-  const selectedSiteVariant = selectedProcedure ? selectedProcedure.siteVariants.find((siteVariant) => siteVariant.site.id === siteId) : undefined
+  // 2. Memoize the selected site variant.
+  const selectedSiteVariant = useMemo(() => {
+    return selectedProcedure?.siteVariants.find((siteVariant) => siteVariant.site.id === siteId)
+  }, [selectedProcedure, siteId])
 
-  // Determine the list of available procedures for the dropdown
-  const firstProcedureId = formProcedures[0]?.procedureSelectionId
-  const firstService = procedures.find((s) => s.id === firstProcedureId)
-  const selectedServiceName = firstService?.serviceName
+  // 3. Memoize the details of the *first* procedure row.
+  const { firstProcedureSelection, selectedSite, selectedServiceName } = useMemo(() => {
+    const firstProcId = formProcedures[0]?.procedureSelectionId
+    const firstSiteId = formProcedures[0]?.site
+    const firstProc = procedures.find((s) => s.id === firstProcId)
+    const firstSite = firstProc?.siteVariants.find((p) => p.site.id === firstSiteId)
 
-  const availableProcedures = !isFirst && selectedServiceName ? procedures.filter((s) => s.serviceName === selectedServiceName) : procedures
+    return {
+      firstProcedureSelection: firstProc,
+      selectedSite: firstSite,
+      selectedServiceName: firstProc?.serviceName,
+    }
+  }, [formProcedures, procedures])
+
+  // 4. Memoize the filtered lists.
+  const availableProcedures = useMemo(() => {
+    return !isFirst && selectedServiceName ? procedures.filter((s) => s.serviceName === selectedServiceName) : procedures
+  }, [isFirst, selectedServiceName, procedures])
+
+  const filteredAvailableProcedures = useMemo(() => {
+    const firstSiteId = formProcedures[0]?.site
+    return firstSiteId ? availableProcedures.filter((proc) => proc.siteVariants.some((variant) => variant.site.id === firstSiteId)) : procedures
+  }, [formProcedures, availableProcedures, procedures])
+
+  const availableSites = useMemo(() => {
+    const firstSiteId = formProcedures[0]?.site
+    const selectedSite = firstProcedureSelection?.siteVariants.find((p) => p.site.id === firstSiteId)
+    return !isFirst && selectedProcedure ? selectedProcedure.siteVariants.filter((s) => s.site.id === selectedSite?.site.id) : selectedProcedure?.siteVariants
+  }, [isFirst, selectedProcedure, formProcedures, firstProcedureSelection])
 
   const onProcedureChange = (value: string, event: unknown) => {
     // When a procedure changes, reset the quantity to 1
@@ -60,96 +87,82 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
     }
   }
 
-  const renderLabelWithTooltip = () => {
-    return <div>hey</div>
-    /*
-    return (
-      <Space>
-        <span>{t('content.procedure')}</span>
-        {selectedProcedure?.procedureDetails && (
-          <Tooltip title={selectedProcedure.procedureDetails}>
-            <InfoCircleOutlined
-              style={{
-                color: 'orange',
-                cursor: 'help',
-                fontSize: '16px',
-              }}
-            />
-          </Tooltip>
-        )}
-      </Space>
-    )
-      */
-  }
-
   // TODO :
   // 1) tooltip appear after we selected both the procedure and the site (below the selecotrs ?)
   // 2) Make sure user cannot select the same service - procedure from two different site (lock the site selector to user first procedure choice)
+  // 3) If user adds a procedure, it must be of the same service but also same site. So only display procedures that have the same service and site
 
   return (
     <Card>
       <Space align="baseline" style={{ width: '100%', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: 0 }}>
-          <Form.Item
-            name={[name, 'procedureSelectionId']}
-            label={renderLabelWithTooltip()}
-            rules={[{ required: true, message: t('content.select_procedure_prompt') }]}
-            style={{ marginBottom: 0 }}
-            className="procedure-select "
-          >
-            <Select
-              loading={isProcedureLoading}
-              placeholder={t('content.select_procedure_placeholder')}
-              showSearch
-              disabled={!isFirst && !selectedServiceName}
-              onChange={onProcedureChange}
-              filterOption={(input, option) =>
-                String(option?.label ?? '')
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-            >
-              {availableProcedures.map((procedure) => (
-                <Option key={procedure.id} value={procedure.id} label={procedure.displayTextByLanguage[langCode]}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>{procedure.displayTextByLanguage[langCode]}</div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item> 
-          <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]} style={{ marginBottom: 0 }}>
-            <Select placeholder="Site" style={{ minWidth: '80px' }} disabled={!procedureId} loading={isProcedureLoading} className="site-select ">
-              {selectedProcedure?.siteVariants.map((variant) => (
-                <Option key={variant.site.id} value={variant.site.id}>
-                  {variant.site.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0 }}>
+              <Form.Item
+                name={[name, 'procedureSelectionId']}
+                label={t('content.procedure')}
+                rules={[{ required: true, message: t('content.select_procedure_prompt') }]}
+                style={{ marginBottom: 0 }}
+                className="procedure-select "
+              >
+                <Select
+                  loading={isProcedureLoading}
+                  placeholder={t('content.select_procedure_placeholder')}
+                  showSearch
+                  disabled={!isFirst && !selectedServiceName}
+                  onChange={onProcedureChange}
+                  filterOption={(input, option) =>
+                    String(option?.label ?? '')
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                >
+                  {filteredAvailableProcedures.map((procedure) => (
+                    <Option key={procedure.id} value={procedure.id} label={procedure.displayTextByLanguage[langCode]}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>{procedure.displayTextByLanguage[langCode]}</div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]} style={{ marginBottom: 0 }}>
+                <Select placeholder="Site" style={{ minWidth: '80px' }} disabled={!procedureId} loading={isProcedureLoading} className="site-select ">
+                  {(availableSites ?? []).map((variant) => (
+                    <Option key={variant.site.id} value={variant.site.id}>
+                      {variant.site.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </div>
 
-        <div className="right">
-          <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
-            <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId || !siteId} loading={isProcedureLoading}>
-              {selectedSiteVariant?.variants.map((variant) => (
-                <Option key={variant.attendees} value={variant.attendees}>
-                  {variant.attendees}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Tooltip title={t('content.remove_selection')}>
-            <Button
-              type="text"
-              danger
-              icon={<MinusCircleOutlined />}
-              onClick={() => {
-                remove(name)
-              }}
-              disabled={!canRemove}
-              size="middle"
-              style={{ fontSize: '18px', cursor: 'pointer' }}
-            />
-          </Tooltip>
+            <div className="right">
+              <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
+                <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId || !siteId} loading={isProcedureLoading}>
+                  {selectedSiteVariant?.variants.map((variant) => (
+                    <Option key={variant.attendees} value={variant.attendees}>
+                      {variant.attendees}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Tooltip title={t('content.remove_selection')}>
+                <Button
+                  type="text"
+                  danger
+                  icon={<MinusCircleOutlined />}
+                  onClick={() => {
+                    remove(name)
+                  }}
+                  disabled={!canRemove}
+                  size="middle"
+                  style={{ fontSize: '18px', cursor: 'pointer', alignSelf: 'end' }}
+                />
+              </Tooltip>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0, marginTop: '16px' }}>
+            {selectedSiteVariant?.procedureDetails && <Alert message={selectedSiteVariant?.procedureDetails} type="warning" showIcon icon={<ExclamationCircleOutlined />} style={{ width: '100%' }} />}
+          </div>
         </div>
       </Space>
     </Card>
