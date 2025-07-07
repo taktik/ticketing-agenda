@@ -82,6 +82,10 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
       */
   }
 
+  // TODO :
+  // 1) tooltip appear after we selected both the procedure and the site (below the selecotrs ?)
+  // 2) Make sure user cannot select the same service - procedure from two different site (lock the site selector to user first procedure choice)
+
   return (
     <Card>
       <Space align="baseline" style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -111,12 +115,9 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
                 </Option>
               ))}
             </Select>
-          </Form.Item>
-        </div>
-
-        <div className="right">
-          <Form.Item name={[name, 'site']} label={t('content.select_site_prompt')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
-            <Select placeholder="Site" style={{ minWidth: '80px' }} disabled={selectedProcedure?.siteVariants && selectedProcedure?.siteVariants.length < 2} loading={isProcedureLoading}>
+          </Form.Item> 
+          <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]} style={{ marginBottom: 0 }}>
+            <Select placeholder="Site" style={{ minWidth: '80px' }} disabled={!procedureId} loading={isProcedureLoading} className="site-select ">
               {selectedProcedure?.siteVariants.map((variant) => (
                 <Option key={variant.site.id} value={variant.site.id}>
                   {variant.site.name}
@@ -124,9 +125,11 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
               ))}
             </Select>
           </Form.Item>
+        </div>
 
+        <div className="right">
           <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
-            <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId} loading={isProcedureLoading}>
+            <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId || !siteId} loading={isProcedureLoading}>
               {selectedSiteVariant?.variants.map((variant) => (
                 <Option key={variant.attendees} value={variant.attendees}>
                   {variant.attendees}

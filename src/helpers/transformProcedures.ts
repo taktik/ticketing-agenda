@@ -1,6 +1,8 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 
+const languages = ['FR', 'EN', 'NDLS', 'DE']
+
 export interface ProcedureVariant {
   procedureId: string
   attendees: number
@@ -109,13 +111,22 @@ export function transformProceduresForSelection(allServices: HealthcareParty[], 
     const representativeService = firstProcedureInGroup.healthcarePartyId ? serviceMap.get(firstProcedureInGroup.healthcarePartyId) : undefined
     const serviceName = representativeService?.name || 'Unknown Service'
 
+    //8. Get the translations for service - procedure
+    const displayTextByLanguage = Object.fromEntries(
+      languages.map((lang) => {
+        const servicePart = representativeService?.descr?.[lang] || serviceName
+        const procedurePart = firstProcedureInGroup.subjectByLanguage?.[lang] || procedureName
+        return [lang, `${servicePart} - ${procedurePart}`]
+      }),
+    )
+
     return {
       id: v4(),
       siteVariants: siteVariants,
       displayText: `${serviceName} - ${procedureName}`,
       serviceName: serviceName,
       procedureName: procedureName,
-      displayTextByLanguage: firstProcedureInGroup.subjectByLanguage || {},
+      displayTextByLanguage: displayTextByLanguage,
     }
   })
 

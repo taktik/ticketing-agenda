@@ -177,7 +177,9 @@
     "receive_one_time_code": "Recevoir un code unique",
     "captcha_check_hold_on": "Un instant, une rapide vérification CAPTCHA...",
     "edit_site_information": "Modifier les informations du site",
-    "site_name": "Nom du site"
+    "site_name": "Nom du site",
+    "please_select_site": "Veuillez sélectionner un site",
+    "site": "Site" 
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

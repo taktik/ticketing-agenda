@@ -178,7 +178,9 @@
     "receive_one_time_code": "Einmal-Code erhalten",
     "captcha_check_hold_on": "Einen Moment, nur eine kurze CAPTCHA-Prüfung...",
     "edit_site_information": "Standortinformationen bearbeiten",
-    "site_name": "Name des Standorts"
+    "site_name": "Name des Standorts",
+    "please_select_site": "Bitte wählen Sie einen Standort aus",
+   "site": "Standort"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
