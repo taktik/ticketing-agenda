@@ -179,7 +179,8 @@
     "edit_site_information": "Edit Site Information",
     "site_name": "Site Name",
     "please_select_site": "Please select a site",
-    "site": "Site"
+    "site": "Site",
+    "save_current_schedule_before_adding": "Please modify and save your current schedule before adding a new one"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -226,6 +227,9 @@
     "schedule_save_error": "An error occurred while saving the schedule.",
     "schedule_delete_failed": "We could not delete the schedule!",
     "schedule_delete_error": "An error occurred while deleting the schedule.",
+    "schedule_updated": "The schedule was updated!",
+    "schedule_update_failed": "We could not update the schedule!",
+    "schedule_update_error": "An error occurred while updating the schedule.",
     "rule_deleted": "The rule was deleted!",
     "rule_saved": "The rule was saved!",
     "rule_save_failed": "We could not save the rule!",

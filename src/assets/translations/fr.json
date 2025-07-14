@@ -179,7 +179,8 @@
     "edit_site_information": "Modifier les informations du site",
     "site_name": "Nom du site",
     "please_select_site": "Veuillez sélectionner un site",
-    "site": "Site" 
+    "site": "Site",
+    "save_current_schedule_before_adding": "Veuillez modifier et enregistrer votre horaire actuel avant d'en ajouter un nouveau"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -226,6 +227,9 @@
     "schedule_save_error": "Une erreur s'est produite lors de l'enregistrement de l'horaire.",
     "schedule_delete_failed": "Nous n'avons pas pu supprimer l'horaire !",
     "schedule_delete_error": "Une erreur s'est produite lors de la suppression de l'horaire.",
+    "schedule_updated": "L'horaire a été mis à jour !",
+    "schedule_update_failed": "Nous n'avons pas pu mettre à jour l'horaire !",
+    "schedule_update_error": "Une erreur s'est produite lors de la mise à jour de l'horaire.",
     "rule_deleted": "La règle a été supprimée !",
     "rule_saved": "La règle a été enregistrée !",
     "rule_save_failed": "Nous n'avons pas pu enregistrer la règle !",

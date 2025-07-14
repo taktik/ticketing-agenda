@@ -37,7 +37,7 @@ export const agendaApiRtk = createApi({
           return new Agenda(agenda)
         })
       },
-      providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: res.id }] : []),
+      providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
     }),
     createUpdateAgenda: builder.mutation<Agenda | undefined, Agenda>({
       async queryFn(agenda, { getState }) {
@@ -47,6 +47,19 @@ export const agendaApiRtk = createApi({
 
           if (!updatedAgenda) {
             throw new Error('Agenda creation or update failed')
+          }
+          return new Agenda(updatedAgenda)
+        })
+      },
+      invalidatesTags: (result, error, arg) => (result ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
+    }),
+    updateAgenda: builder.mutation<Agenda | undefined, Agenda>({
+      async queryFn(agenda, { getState }) {
+        const agendaApi = (await cardinalApi(getState))?.agenda
+        return guard([agendaApi], async (): Promise<Agenda> => {
+          const updatedAgenda = await agendaApi?.modifyAgenda(agenda)
+          if (!updatedAgenda) {
+            throw new Error('Agenda update failed')
           }
           return new Agenda(updatedAgenda)
         })
@@ -127,7 +140,7 @@ export const agendaApiRtk = createApi({
   }),
 })
 
-export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
+export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
 
 export const useGetAllAgendaByAuthorIds = (params: { skip: boolean; authorIds: string[] }) => {
   const { data, ...rest } = useGetAgendasQuery(undefined, {

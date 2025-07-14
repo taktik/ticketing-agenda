@@ -39,14 +39,7 @@ export const ModalSharePatient = ({ isVisible, onClose, patientToEdit }: ModalPa
   }
 
   return (
-    <CustomModal
-      isVisible={isVisible}
-      handleClose={handleOnClose}
-      secondaryBtnTitle="Cancel"
-      handleClickPrimaryBtn={() => form.submit()}
-      primaryBtnTitle="Save"
-      title="Share patient"
-    >
+    <CustomModal isVisible={isVisible} handleClose={handleOnClose} secondaryBtnTitle="Cancel" handleClickPrimaryBtn={() => form.submit()} primaryBtnTitle="Save" title="Share patient">
       <div className="modalSharePatient">
         {isSharePatientLoading && <SpinLoader />}
         <Form className="modalSharePatient__form" layout="vertical" colon={false} form={form} onFinish={(values) => handleOnOk(values)}>

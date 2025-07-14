@@ -1,16 +1,10 @@
 import dayjs from 'dayjs'
 
-export const minutesToDayjs = (totalMinutes?: number): dayjs.Dayjs | null => {
-  if (totalMinutes === undefined || totalMinutes === null || isNaN(totalMinutes)) {
-    return null
-  }
+export const minutesToDayjs = (totalMinutes: number): dayjs.Dayjs => {
   return dayjs().startOf('day').add(totalMinutes, 'minute')
 }
 
-export const dayjsToMinutes = (time?: dayjs.Dayjs | null): number | undefined => {
-  if (!time || !dayjs.isDayjs(time)) {
-    return undefined
-  }
+export const dayjsToMinutes = (time: dayjs.Dayjs): number => {
   return time.hour() * 60 + time.minute()
 }
 
@@ -92,4 +86,128 @@ export function formatTotalMinutesForDisplay(totalMinutes: number | undefined, t
   }
   // Fallback to minutes if no clean larger unit
   return `${totalMinutes} ${t('content.unit_minutes')}`
+}
+
+export const dayjsToHhmmss = (time: dayjs.Dayjs): number => {
+  if (!time || !time.isValid()) {
+    console.error('Invalid time provided to dayjsToHhmmss')
+    return 0
+  }
+
+  const hours = time.hour()
+  const minutes = time.minute()
+  const seconds = time.second()
+
+  const hh = String(hours).padStart(2, '0') // 9 -> "09"
+  const mm = String(minutes).padStart(2, '0') // 5 -> "05"
+  const ss = String(seconds).padStart(2, '0') // 1 -> "01"
+
+  const timeString = `${hh}${mm}${ss}`
+
+  return parseInt(timeString, 10)
+}
+
+export const formatHhmmssToHHmm = (numericTime: number): string => {
+  // Handle invalid or null inputs gracefully
+  if (numericTime === null || isNaN(numericTime) || numericTime < 0) {
+    return '00:00'
+  }
+
+  // 1. Convert the number to a string and pad with leading zeros
+  //    to ensure it's always 6 digits long.
+  //    93015 -> "093015"
+  //    164530 -> "164530"
+  const timeString = String(numericTime).padStart(6, '0')
+
+  // 2. Extract the hour and minute parts using string slicing.
+  const hours = timeString.slice(0, 2) // "09" or "16"
+  const minutes = timeString.slice(2, 4) // "30" or "45"
+
+  // 3. Combine them into the final formatted string.
+  return `${hours}:${minutes}`
+}
+
+export const hhmmssToDayjs = (numericTime: number): dayjs.Dayjs => {
+  // Handle invalid or null inputs gracefully
+  if (numericTime === null || isNaN(numericTime) || numericTime < 0) {
+    // Return a default dayjs object (e.g., start of today)
+    return dayjs().startOf('day')
+  }
+
+  // 1. Convert the number to a string and pad with leading zeros
+  //    to ensure it's always 6 digits long.
+  //    43000  -> "043000"
+  //    235000 -> "235000"
+  const timeString = String(numericTime).padStart(6, '0')
+
+  // 2. Extract the hour, minute, and second parts as numbers.
+  const hours = parseInt(timeString.slice(0, 2), 10)
+  const minutes = parseInt(timeString.slice(2, 4), 10)
+  const seconds = parseInt(timeString.slice(4, 6), 10)
+
+  // 3. Create a dayjs object for today and set the time.
+  //    Using .hour(), .minute(), .second() is chainable and clear.
+  const timeObject = dayjs().hour(hours).minute(minutes).second(seconds)
+
+  return timeObject
+}
+
+/**
+ * Converts a "fuzzy date" integer in YYYYMMDD format to a dayjs object.
+ * @param fuzzyDate The date represented as a number (e.g., 20250714).
+ * @returns A dayjs object representing that date.
+ */
+export const fuzzyDateIntToDayjs = (fuzzyDate: number | undefined): dayjs.Dayjs => {
+  // Handle invalid or null inputs
+  if (fuzzyDate === null || fuzzyDate === undefined || isNaN(fuzzyDate)) {
+    console.error('Invalid number provided to fuzzyDateIntToDayjs')
+    // Return today's date as a sensible default
+    return dayjs()
+  }
+
+  // 1. Convert the number to a string.
+  const dateString = String(fuzzyDate)
+
+  // 2. Use dayjs to parse the string, providing the exact format.
+  //    This is robust and handles all cases correctly.
+  const dateObject = dayjs(dateString, 'YYYYMMDD')
+
+  return dateObject
+}
+
+/**
+ * Converts a dayjs object to a "fuzzy date" integer in YYYYMMDD format.
+ * @param date The dayjs object to convert.
+ * @returns A number representing the date (e.g., 20250714).
+ */
+export const dayjsToFuzzyDateInt = (date: dayjs.Dayjs | undefined): number => {
+  // Handle invalid or null inputs
+  if (!date || !date.isValid()) {
+    console.error('Invalid dayjs object provided to dayjsToFuzzyDateInt')
+    // Return a sensible default, like 0 or throw an error
+    return 0
+  }
+
+  // 1. Use the format() method to get the string "YYYYMMDD".
+  const dateString = date.format('YYYYMMDD')
+
+  // 2. Convert the formatted string to an integer.
+  return parseInt(dateString, 10)
+}
+
+/**
+ * Takes a standard RRULE string, corrects the UNTIL format, and removes the "RRULE:" prefix.
+ * @param rruleString The raw string from the rrule.js library, e.g., "RRULE:FREQ=WEEKLY;UNTIL=20250814T000000Z..."
+ * @returns The corrected and cleaned string, e.g., "FREQ=WEEKLY;UNTIL=20250814..."
+ */
+export const correctAndCleanRRuleString = (rruleString: string): string => {
+  // Return an empty string if the input is invalid
+  if (!rruleString) {
+    return ''
+  }
+
+  // Chain two replace calls:
+  // 1. The first one fixes the UNTIL format.
+  // 2. The second one removes the "RRULE:" prefix from the beginning of the string.
+  return rruleString.replace(/(UNTIL=\d{8})T\d{6}Z/, '$1').replace(/^RRULE:/, '')
 }

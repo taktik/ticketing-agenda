@@ -88,7 +88,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
         id: v4(),
       })
       await createUpdateService({ ...serviceHcp })
-      createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id }))
+      createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id, zoneId: 'Europe/Brussels' }))
     } catch (error) {
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     }

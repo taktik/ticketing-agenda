@@ -118,7 +118,7 @@ export const patientApiRtk = createApi({
       async queryFn(patientId, { getState }) {
         const patientApi = (await cardinalApi(getState))?.patient
         return guard([patientApi], async (): Promise<DecryptedPatient> => {
-          const patient = await patientApi!.decrypt(await patientApi!.encrypted.getPatient(patientId))
+          const patient = undefined //await patientApi!.decrypt(await patientApi!.encrypted.getPatient(patientId))
           if (!patient) {
             throw new Error('Patients do not found')
           }

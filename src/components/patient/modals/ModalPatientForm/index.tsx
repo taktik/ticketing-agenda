@@ -58,10 +58,8 @@ export const ModalPatientForm = ({ mode, isVisible, onClose, patientToEdit }: Mo
   )
   const [form] = Form.useForm()
 
-  const [
-    createOrUpdatePatient,
-    { error: createOrUpdatePatientError, isError: isCreateOrUpdatePatientError, isSuccess: isPatientCreatedOrUpdateSuccessfully, isLoading: isPatientCreatingOrUpdatingLoading },
-  ] = useCreateOrUpdatePatientMutation()
+  const [createOrUpdatePatient, { error: createOrUpdatePatientError, isError: isCreateOrUpdatePatientError, isSuccess: isPatientCreatedOrUpdateSuccessfully, isLoading: isPatientCreatingOrUpdatingLoading }] =
+    useCreateOrUpdatePatientMutation()
 
   if (isCreateOrUpdatePatientError) {
     console.log(createOrUpdatePatientError)
@@ -117,8 +115,7 @@ export const ModalPatientForm = ({ mode, isVisible, onClose, patientToEdit }: Mo
     form.resetFields()
   }
   const getPatientToEdit = (patient: DecryptedPatient) => {
-    const { firstName, lastName, dateOfBirth, birthSex, language, tags, phoneNumber, emailAddress, country, city, street, houseNumber, postalCode, picture } =
-      getPatientDataFormated(patient)
+    const { firstName, lastName, dateOfBirth, birthSex, language, tags, phoneNumber, emailAddress, country, city, street, houseNumber, postalCode, picture } = getPatientDataFormated(patient)
     return {
       firstName,
       lastName,

@@ -29,8 +29,7 @@ export const PatientRow = ({ patient }: PatientRowProps): ReactElement => {
   const [isPatientToBeDeleted, setPatientToBeDeleted] = useState(false)
   const [isSharePatientModalOpen, setSharePatientModalOpen] = useState(false)
 
-  const [invitePatient, { error: invitePatientError, isError: isInvitePatientError, isSuccess: isPatientInvitedSuccessfully, isLoading: isPatientInvitingLoading }] =
-    useCreateUserMutation()
+  const [invitePatient, { error: invitePatientError, isError: isInvitePatientError, isSuccess: isPatientInvitedSuccessfully, isLoading: isPatientInvitingLoading }] = useCreateUserMutation()
   const [deletePatient, { isError: isDeletePatientError, isSuccess: isPatientDeletedSuccessfully, isLoading: isPatientDeletingLoading }] = useDeletePatientMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
@@ -60,21 +59,11 @@ export const PatientRow = ({ patient }: PatientRowProps): ReactElement => {
   useEffect(() => {
     if (isPatientInvitingLoading) showMessageFeedback('loading', 'The invite mail is sending...')
     if (isPatientInvitedSuccessfully) showMessageFeedback('success', 'The invite mail was sent!')
-    if (isInvitePatientError)
-      openNotification(
-        'error',
-        'Cannot invite the patient!',
-        `An error occurred while sending the invitation letter. ${(invitePatientError as FetchBaseQueryError)?.data ?? invitePatientError}`,
-      )
+    if (isInvitePatientError) openNotification('error', 'Cannot invite the patient!', `An error occurred while sending the invitation letter. ${(invitePatientError as FetchBaseQueryError)?.data ?? invitePatientError}`)
 
     if (isPatientDeletingLoading) showMessageFeedback('loading', 'The patient is deleting...')
     if (isPatientDeletedSuccessfully) showMessageFeedback('success', 'The patient was deleted!')
-    if (isDeletePatientError)
-      openNotification(
-        'error',
-        'We could not delete the patient!',
-        `An error occurred while deleting the patient. ${(invitePatientError as FetchBaseQueryError)?.data ?? invitePatientError}`,
-      )
+    if (isDeletePatientError) openNotification('error', 'We could not delete the patient!', `An error occurred while deleting the patient. ${(invitePatientError as FetchBaseQueryError)?.data ?? invitePatientError}`)
   }, [isPatientInvitingLoading, isPatientInvitedSuccessfully, isInvitePatientError, isDeletePatientError])
 
   const items: MenuProps['items'] = [
@@ -258,8 +247,7 @@ export const PatientRow = ({ patient }: PatientRowProps): ReactElement => {
           </Dropdown>
         </div>
       </div>
-      {isPatientFormModalOpen &&
-        createPortal(<ModalPatientForm mode="edit" patientToEdit={patient} isVisible={isPatientFormModalOpen} onClose={() => setPatientFormModalOpen(false)} />, document.body)}
+      {isPatientFormModalOpen && createPortal(<ModalPatientForm mode="edit" patientToEdit={patient} isVisible={isPatientFormModalOpen} onClose={() => setPatientFormModalOpen(false)} />, document.body)}
       {isPatientProfileModalOpen &&
         createPortal(
           <ModalPatientProfile
@@ -288,8 +276,7 @@ export const PatientRow = ({ patient }: PatientRowProps): ReactElement => {
           />,
           document.body,
         )}
-      {isSharePatientModalOpen &&
-        createPortal(<ModalSharePatient isVisible={isSharePatientModalOpen} onClose={() => setSharePatientModalOpen(false)} patientToEdit={patient} />, document.body)}
+      {isSharePatientModalOpen && createPortal(<ModalSharePatient isVisible={isSharePatientModalOpen} onClose={() => setSharePatientModalOpen(false)} patientToEdit={patient} />, document.body)}
     </>
   )
 }

@@ -5,6 +5,7 @@ import {
   CardinalApis,
   CardinalSdk,
   CardinalBaseSdk,
+  CardinalAnonymousSdk,
   CryptoStrategies,
   KeypairFingerprintV1String,
   KeyPairRecoverer,
@@ -28,8 +29,12 @@ import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID } from '../../
 
 import { revertAll, setSavedCredentials } from '../app'
 import { store } from '../store'
+import { useAddUserKeyMutation, useLazyGetKeyQuery } from '../api/keyApi'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
+
+//const [addUserKey, { isLoading: isUpdating }] = useAddUserKeyMutation()
+//const [triggerGetKey, { data, error, isLoading }] = useLazyGetKeyQuery()
 
 export class PetraCareCryptoStrategies extends CryptoStrategies {
   async notifyNewKeyCreated(sdk: CardinalApis): Promise<void> {
@@ -43,7 +48,34 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
       .match(/.{1,4}/g)
       ?.join('-')
 
-    if (!!formattedKey) store.dispatch(setNewlyCreatedRecoveryKey({ recoveryKey: formattedKey }))
+    const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
+    //if (!!formattedKey) await addUserKey({userId: hcp.id, key: formattedKey})
+    // if (!!formattedKey) store.dispatch(setNewlyCreatedRecoveryKey({ recoveryKey: formattedKey }))
+
+    if (!!formattedKey && !!hcp) {
+      try {
+        const response = await fetch('http://localhost:8080/api/keys', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: hcp.id, key: formattedKey }),
+        })
+
+        if (!response.ok) {
+          // Handle HTTP errors like 4xx or 5xx
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Backend request failed')
+        }
+
+        const result = await response.json()
+        console.log('Backend success message:', result.message)
+      } catch (error) {
+        console.error('Failed to save key via fetch:', error)
+        // Re-throw the error so the calling component knows something went wrong.
+        throw error
+      }
+    }
   }
 
   async recoverAndVerifySelfHierarchyKeys(
@@ -53,8 +85,33 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
   ): Promise<{ [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData }> {
     let recovered: RecoveryResult<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }> | undefined = undefined
     let reason = RecoveryDataUseFailureReason.Missing
+    const hcp = keysData.at(-1)?.dataOwnerDetails.dataOwner
+
+    const fetchRecoveryKey = async (hcpId: string): Promise<string | undefined> => {
+      try {
+        const response = await fetch(`http://localhost:8080/api/keys/${hcpId}`)
+
+        if (response.status === 404) {
+          return undefined
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Request failed')
+        }
+
+        const result = await response.json()
+        return result.key
+      } catch (error) {
+        console.error('Failed to fetch key:', error)
+        throw error
+      }
+    }
+
     do {
-      const rk = await this.promptUserForRecoveryKey(reason)
+      const rk = hcp ? await fetchRecoveryKey(hcp?.id) : undefined
+      //const rk = await this.promptUserForRecoveryKey(reason)
+
       if (!rk) {
         break
       }
@@ -74,6 +131,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     const result: { [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData } = {}
     for (const recoveryRequest of keysData) {
       const dataOwner = recoveryRequest.dataOwnerDetails.dataOwner
+      console.log('dataowner', dataOwner)
       const currDataOwnerRecoveredData = (recovered as RecoveryResult.Success<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }>).data[dataOwner.id]
       const currRecoveryResult: { [fp: KeypairFingerprintV1String]: XRsaKeypair } = {}
       if (currDataOwnerRecoveredData != undefined) {
@@ -94,7 +152,6 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
   private async promptUserForRecoveryKey(reason: RecoveryDataUseFailureReason = RecoveryDataUseFailureReason.Missing): Promise<string | undefined> {
     const promise = new Promise<string>((resolve) => {
-      // let unsubscribe:
       const handleChange = () => {
         const {
           cardinalApi: { recoveryKeys },

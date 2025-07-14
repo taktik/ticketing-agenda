@@ -35,8 +35,7 @@ export const ModalImportPatients = ({ onClose, isVisible }: ModalImportPatientsP
     missingFieldsRowsList: [] as UploadedPatientType[],
   })
 
-  const [createPatients, { error: createPatientsError, isError: isCreatePatientsError, isSuccess: isPatientsCreatedSuccessfully, isLoading: isPatientsCreatingLoading }] =
-    useCreatePatientsMutation()
+  const [createPatients, { error: createPatientsError, isError: isCreatePatientsError, isSuccess: isPatientsCreatedSuccessfully, isLoading: isPatientsCreatingLoading }] = useCreatePatientsMutation()
 
   useEffect(() => {
     if (isPatientsCreatedSuccessfully) {
@@ -202,9 +201,7 @@ export const ModalImportPatients = ({ onClose, isVisible }: ModalImportPatientsP
           <div className="modalImportPatients__upload">
             <p>
               To import patients, upload a file in one of supported formats (.xlsx, .xls, .xml, .csv, .txt, .ods) with the correct field structure (you can find it in the template
-              <a onClick={() => saveAs(new Blob([getExampleSheetBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${sheetTitle}.xlsx`)}>
-                Download the template here
-              </a>
+              <a onClick={() => saveAs(new Blob([getExampleSheetBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${sheetTitle}.xlsx`)}>Download the template here</a>
               ).
             </p>
 

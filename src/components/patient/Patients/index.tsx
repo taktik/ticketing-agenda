@@ -25,10 +25,7 @@ export const Patients = () => {
     data: patientsByFuzzyNameForDataOwnerIds,
     isLoading: patientsByFuzzyNameForDataOwnerIdsAreLoading,
     originalArgs: searchArgs,
-  } = useFilterPatientsByFuzzyNameForDataOwnerQuery(
-    { practitionerId: healthcarePartyId ?? '', searchString: searchString?.trim() ?? '' },
-    { skip: !healthcarePartyId || !searchString?.length },
-  )
+  } = useFilterPatientsByFuzzyNameForDataOwnerQuery({ practitionerId: healthcarePartyId ?? '', searchString: searchString?.trim() ?? '' }, { skip: !healthcarePartyId || !searchString?.length })
 
   const patientsIdsList = searchString?.length ? patientsByFuzzyNameForDataOwnerIds : patientsByDataOwnerIds
   const noMatchingPatients = !!searchString?.length && patientsIdsList?.length === 0

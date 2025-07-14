@@ -179,7 +179,8 @@
     "edit_site_information": "Locatie-informatie bewerken",
     "site_name": "Naam van de locatie",
     "please_select_site": "Selecteer alstublieft een locatie",
-    "site": "Locatie"
+    "site": "Locatie",
+    "save_current_schedule_before_adding": "Pas uw huidige planning aan en sla deze op voordat u een nieuwe toevoegt"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -226,6 +227,9 @@
     "schedule_save_error": "Er is een fout opgetreden bij het opslaan van de planning.",
     "schedule_delete_failed": "We konden de planning niet verwijderen!",
     "schedule_delete_error": "Er is een fout opgetreden bij het verwijderen van de planning.",
+    "schedule_updated": "De planning is bijgewerkt!",
+    "schedule_update_failed": "We konden de planning niet bijwerken!",
+    "schedule_update_error": "Er is een fout opgetreden bij het bijwerken van de planning.",
     "rule_deleted": "De regel is verwijderd!",
     "rule_saved": "De regel is opgeslagen!",
     "rule_save_failed": "We konden de regel niet opslaan!",

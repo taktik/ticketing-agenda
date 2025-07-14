@@ -20,7 +20,8 @@
     gap: 12px;
   });
 
-  &__picture, &__userAvatarPlaceholder {
+  &__picture,
+  &__userAvatarPlaceholder {
     width: 45px;
     height: 45px;
     display: flex;
@@ -57,14 +58,12 @@
         height: 20px;
       });
     }
-
   }
 
   &__contentDesktop {
-
     flex-grow: 1;
     display: grid;
-    grid-template-columns: 170px repeat(2, minmax(100px, 130px))  repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: 170px repeat(2, minmax(100px, 130px)) repeat(auto-fit, minmax(150px, 1fr));
 
     grid-auto-rows: auto; /* Adjust row height automatically */
     row-gap: 12px;
@@ -75,19 +74,16 @@
       grid-template-columns: 170px repeat(2, minmax(100px, 150px))  repeat(auto-fit, minmax(150px, 400px));
     });
 
-
     .media-breakpoint-down(@xl,
     {
       grid-template-columns: 130px repeat(2, minmax(70px, 80px))  repeat(auto-fit, minmax(150px, 1fr));
     });
-
 
     .media-breakpoint-down(@lg,
     {
       grid-template-columns:  repeat(auto-fit, minmax(180px, 1fr));
       align-items: start;
     });
-
 
     .media-breakpoint-down(@md,
     {
@@ -188,7 +184,6 @@
     display: flex;
     align-items: center;
 
-
     &__item {
       display: flex;
       width: 40px;
@@ -256,7 +251,6 @@
             height: 14px;
           }
         }
-
       }
     }
   }

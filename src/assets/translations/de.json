@@ -180,7 +180,8 @@
     "edit_site_information": "Standortinformationen bearbeiten",
     "site_name": "Name des Standorts",
     "please_select_site": "Bitte wählen Sie einen Standort aus",
-   "site": "Standort"
+    "site": "Standort",
+    "save_current_schedule_before_adding": "Bitte ändern und speichern Sie Ihren aktuellen Zeitplan, bevor Sie einen neuen hinzufügen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -227,6 +228,9 @@
     "schedule_save_error": "Beim Speichern des Zeitplans ist ein Fehler aufgetreten.",
     "schedule_delete_failed": "Wir konnten den Zeitplan nicht löschen!",
     "schedule_delete_error": "Beim Löschen des Zeitplans ist ein Fehler aufgetreten.",
+    "schedule_updated": "Der Zeitplan wurde aktualisiert!",
+    "schedule_update_failed": "Wir konnten den Zeitplan nicht aktualisieren!",
+    "schedule_update_error": "Beim Aktualisieren des Zeitplans ist ein Fehler aufgetreten.",
     "rule_deleted": "Die Regel wurde gelöscht!",
     "rule_saved": "Die Regel wurde gespeichert!",
     "rule_save_failed": "Wir konnten die Regel nicht speichern!",

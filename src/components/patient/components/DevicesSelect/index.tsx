@@ -15,9 +15,7 @@ export const DevicesSelect = ({ value, onChange }: DevicesSelectProps) => {
   const notificationShown = useRef(false)
 
   useEffect(() => {
-    setDisplayedDevices(
-      devices?.filter((x) => !searchString || x.name?.toLowerCase().includes(searchString.toLowerCase())).map((d) => ({ value: d.id, label: d.name ?? '' })) ?? [],
-    )
+    setDisplayedDevices(devices?.filter((x) => !searchString || x.name?.toLowerCase().includes(searchString.toLowerCase())).map((d) => ({ value: d.id, label: d.name ?? '' })) ?? [])
     if (error && !notificationShown.current) {
       openNotification()
       notificationShown.current = true // Mark notification as shown
@@ -28,8 +26,7 @@ export const DevicesSelect = ({ value, onChange }: DevicesSelectProps) => {
     api.open({
       type: 'error',
       message: 'Devices are not available.',
-      description:
-        "Please ensure you have the necessary permissions to manage devices. Go to the Cockpit and verify that the HCP user has the 'DEVICE_USER_MANAGER' role assigned.",
+      description: "Please ensure you have the necessary permissions to manage devices. Go to the Cockpit and verify that the HCP user has the 'DEVICE_USER_MANAGER' role assigned.",
       duration: 0,
     })
   }

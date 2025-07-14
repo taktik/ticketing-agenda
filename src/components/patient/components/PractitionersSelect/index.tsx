@@ -9,11 +9,7 @@ interface PractitionersSelectProps extends SelectProps<string | number> {
 
 export const PractitionersSelect = ({ value, onChange }: PractitionersSelectProps) => {
   const [searchString, setSearchString] = useState<string>()
-  const {
-    data: practitioners,
-    isFetching: practitionersListLoading,
-    error,
-  } = useFilterPractitionersByNameQuery(searchString ?? '', { skip: !searchString || searchString.length < 3 })
+  const { data: practitioners, isFetching: practitionersListLoading, error } = useFilterPractitionersByNameQuery(searchString ?? '', { skip: !searchString || searchString.length < 3 })
   const [api, contextHolder] = notification.useNotification()
   const notificationShown = useRef(false)
 

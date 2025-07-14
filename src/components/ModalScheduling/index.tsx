@@ -1,15 +1,13 @@
-import { HealthcareParty, TimeTable } from '@icure/cardinal-sdk'
+import { HealthcareParty, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
 import { Select as AntSelect, Button, Empty, message, notification, Space, Table, Tooltip } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
-import { addMonths, format, Locale, startOfDay } from 'date-fns'
+import { addMonths, endOfToday, format, Locale, startOfDay } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { v4 } from 'uuid'
-import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
-import { useCreateUpdateTimeTableMutation, useDeleteTimeTableMutation, useGetTimeTablesQuery } from '../../core/api/timeTableApi'
+import { useGetAgendaByAuthorId, useUpdateAgendaMutation } from '../../core/api/agendaApi'
 import { CustomModal } from '../common/CustomModal'
 import { formatDateToYYYYMMDDHHmmssNumber, numberTimestampToDate } from '../common/helpers'
 import { ModalConfirmAction } from '../common/ModalConfirmAction'
@@ -32,25 +30,23 @@ interface ModalSchedulingProps {
 export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulingProps): ReactElement => {
   const { t, i18n } = useTranslation()
   const [showRulesModal, setShowRulesModal] = useState<boolean>(false)
-  const [showDeleteTimeTableModal, setShowDeleteTimeTableModal] = useState<boolean>(false)
-  const [selectedTimeTable, setSelectedTimeTable] = useState<string | undefined>(undefined)
+  const [showDeleteResourceGroupModal, setShowDeleteResourceGroupModal] = useState<boolean>(false)
+  const [selectedResourcegroup, setSelectedResourcegroup] = useState<ResourceGroupAllocationSchedule | undefined>(undefined)
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
-  const [timeTableToBeDelete, setTimeTableToBeDelete] = useState<TimeTable | undefined>(undefined)
+  const [resourceGroups, setResourceGroups] = useState<ResourceGroupAllocationSchedule[]>([])
+  const [resourceGroupToBeDelete, setResourceGroupToBeDelete] = useState<ResourceGroupAllocationSchedule | undefined>(undefined)
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
 
   const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
-  const { data: timeTables, isLoading: istimeTablesLoading } = useGetTimeTablesQuery({ agendaId: agenda?.id ?? '' }, { skip: !agenda })
 
-  const sortedTimeTables = useMemo(() => {
-    return [...(timeTables ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
-  }, [timeTables])
+  useEffect(() => {
+    const sortedResourceGroups = [...(agenda?.schedules ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+    setResourceGroups(sortedResourceGroups)
+  }, [agenda])
 
-  const [deleteTimeTable, { isError: isDeleteTimeTableError, isSuccess: isDeleteTimeTableSuccess, isLoading: isDeleteTimeTableLoading }] = useDeleteTimeTableMutation()
-  const [createUpdateTimeTable, { isError: isCreateUpdateTimeTableError, isSuccess: isCreateUpdateTimeTableSuccess, isLoading: isCreateUpdateTimeTableLoading }] = useCreateUpdateTimeTableMutation()
+  const [updateAgenda, { isError: isUpdateAgendaError, isSuccess: isUpdateAgendaSuccess, isLoading: isUpdateAgendaLoading }] = useUpdateAgendaMutation()
 
-  const isFetching = useMemo(() => isAgendaLoading || istimeTablesLoading, [isAgendaLoading, istimeTablesLoading])
-  const isMutating = useMemo(() => isDeleteTimeTableLoading || isCreateUpdateTimeTableLoading, [isDeleteTimeTableLoading, isCreateUpdateTimeTableLoading])
-  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
+  const isLoading = useMemo(() => isAgendaLoading || isUpdateAgendaLoading, [isAgendaLoading, isUpdateAgendaLoading])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -79,33 +75,35 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const addSchedule = () => {
     try {
       if (!agenda) throw new Error('No service selected')
-      const today = startOfDay(new Date())
+      const today = new Date()
       const start = formatDateToYYYYMMDDHHmmssNumber(today)
-      const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(today, 1))
-      createUpdateTimeTable(new TimeTable({ name: t('content.new_schedule'), agendaId: agenda.id, startTime: start, endTime: end, id: v4() }))
+      const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(endOfToday(), 1))
+      const newResourceGroup = new ResourceGroupAllocationSchedule({ name: t('content.new_schedule'), startDateTime: start, endDateTime: end, items: [] })
+      setResourceGroups((prev) => [...prev, newResourceGroup])
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
     }
   }
 
-  const handleEditClick = (timeTable: TimeTable) => {
-    setSelectedTimeTable(timeTable.id)
+  const handleEditClick = (resourceGroup: ResourceGroupAllocationSchedule) => {
+    setSelectedResourcegroup(resourceGroup)
     setShowRulesModal(true)
   }
-  const handleDeleteClick = (timeTable: TimeTable) => {
-    setTimeTableToBeDelete(timeTable)
-    setShowDeleteTimeTableModal(true)
+  const handleDeleteClick = (resourceGroup: ResourceGroupAllocationSchedule) => {
+    setResourceGroupToBeDelete(resourceGroup)
+    setShowDeleteResourceGroupModal(true)
   }
 
-  const handleDeleteTimeTable = () => {
+  const handleDeleteResourceGroup = () => {
     try {
       if (!agenda) throw new Error('No service selected')
-      if (!timeTableToBeDelete) throw new Error('No schedule selected')
-      deleteTimeTable(timeTableToBeDelete)
+      if (!resourceGroupToBeDelete) throw new Error('No schedule selected')
+      const updatedSchedule = agenda.schedules.filter((sched) => sched !== resourceGroupToBeDelete)
+      updateAgenda({ ...agenda, schedules: updatedSchedule })
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
     } finally {
-      setShowDeleteTimeTableModal(false)
+      setShowDeleteResourceGroupModal(false)
     }
   }
 
@@ -126,17 +124,13 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     }
   }, [services])
 
-  //Delete notifications
+  //Update agenda notifications
   useEffect(() => {
-    if (isDeleteTimeTableSuccess) showMessageFeedback('success', t('notification.schedule_deleted'))
-    if (isDeleteTimeTableError) openNotification('error', t('notification.schedule_delete_failed'), t('notification.schedule_delete_error'))
-  }, [isDeleteTimeTableSuccess, isDeleteTimeTableError])
+    if (isUpdateAgendaSuccess) showMessageFeedback('success', t('notification.schedule_updated'))
+    if (isUpdateAgendaError) openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
+  }, [isUpdateAgendaSuccess, isUpdateAgendaError])
 
-  //Save notifications
-  useEffect(() => {
-    if (isCreateUpdateTimeTableSuccess) showMessageFeedback('success', t('notification.schedule_saved'))
-    if (isCreateUpdateTimeTableError) openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
-  }, [isCreateUpdateTimeTableSuccess, isCreateUpdateTimeTableError])
+  const canAddSchedule = agenda?.schedules.length === resourceGroups.length
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.schedule_list')} blockAntModalBodyVerticalScroll noFooter width={1300}>
@@ -167,21 +161,21 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
         </div>
 
         <div className="antTable">
-          <Table<TimeTable>
+          <Table<ResourceGroupAllocationSchedule>
             pagination={{
               pageSize: 6,
               simple: true,
             }}
             scroll={{ y: 'calc(100vh - 500px)', x: 'max-content' }}
-            dataSource={sortedTimeTables}
-            rowKey="id"
+            dataSource={resourceGroups}
+            rowKey={(record) => `${record.startDateTime}-${record.endDateTime}`}
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
             loading={isLoading}
           >
             <ColumnGroup
               title={
-                <Tooltip title={selectedService ? null : t('content.select_service_for_schedule')}>
-                  <Button style={{ width: '100%' }} disabled={!selectedService} onClick={addSchedule}>
+                <Tooltip title={selectedService ? (!canAddSchedule ? t('content.save_current_schedule_before_adding') : null) : t('content.select_service_for_schedule')}>
+                  <Button style={{ width: '100%' }} disabled={!selectedService || !agenda || !canAddSchedule} onClick={addSchedule}>
                     {t('content.add_schedule')}
                   </Button>
                 </Tooltip>
@@ -190,8 +184,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               <Column title={t('content.name')} dataIndex="name" key="name" width={'23%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
               <Column
                 title={t('content.start')}
-                dataIndex="startTime"
-                key="startTime"
+                dataIndex="startDateTime"
+                key="startDateTime"
                 width={'23%'}
                 render={(value: number) => {
                   const startDate = numberTimestampToDate(value) ?? new Date()
@@ -200,8 +194,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               />
               <Column
                 title={t('content.end')}
-                dataIndex="endTime"
-                key="endTime"
+                dataIndex="endDateTime"
+                key="endDateTime"
                 width={'23%'}
                 render={(value: number) => {
                   const endDate = numberTimestampToDate(value) ?? new Date()
@@ -211,9 +205,9 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
               <Column
                 title={t('content.actions')}
-                key="action"
+                key="actions"
                 width={'16%'}
-                render={(_: unknown, record: TimeTable) => (
+                render={(_: unknown, record: ResourceGroupAllocationSchedule) => (
                   <Space size="middle">
                     <Button onClick={() => handleEditClick(record)}>{t('content.edit')}</Button>
                     <Button onClick={() => handleDeleteClick(record)}>{t('content.delete')}</Button>
@@ -223,8 +217,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             </ColumnGroup>
           </Table>
         </div>
-        {showRulesModal && createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} timeTableId={selectedTimeTable} agenda={agenda} />, document.body)}
-        {showDeleteTimeTableModal &&
+        {showRulesModal && createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} resourceGroup={selectedResourcegroup} agenda={agenda} />, document.body)}
+        {showDeleteResourceGroupModal &&
           createPortal(
             <ModalConfirmAction
               title={t('delete_modal.confirm_delete_schedule_prompt')}
@@ -237,9 +231,9 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               }
               yesBtnTitle={t('content.delete')}
               noBtnTitle={t('content.close')}
-              onYesClick={handleDeleteTimeTable}
-              onNoClick={() => setShowDeleteTimeTableModal(false)}
-              isVisible={showDeleteTimeTableModal}
+              onYesClick={handleDeleteResourceGroup}
+              onNoClick={() => setShowDeleteResourceGroupModal(false)}
+              isVisible={showDeleteResourceGroupModal}
               mode="danger"
             />,
             document.body,

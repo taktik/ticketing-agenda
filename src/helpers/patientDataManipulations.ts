@@ -40,9 +40,7 @@ export const getPatientDataFormated = (patient: DecryptedPatient): PatientFormat
   const userName = userFirstName && userLastName ? userFirstName.concat(' ', userLastName) : (userFirstName ?? userLastName)
   // get user home address
   const homeAddressObj = addresses?.find(({ addressType }) => addressType === AddressType.Home)
-  const homeAddressString = [homeAddressObj?.street, homeAddressObj?.houseNumber, homeAddressObj?.postalCode, homeAddressObj?.city, homeAddressObj?.country]
-    .filter((el) => !!el)
-    .join(', ')
+  const homeAddressString = [homeAddressObj?.street, homeAddressObj?.houseNumber, homeAddressObj?.postalCode, homeAddressObj?.city, homeAddressObj?.country].filter((el) => !!el).join(', ')
   // get users birthday
   const userDateOfBirth = dateOfBirth ? dayjs.unix(dateOfBirth).format(DATE_FORMAT_TO_DISPLAY) : '-'
   return {
