@@ -1,5 +1,5 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { HealthcareParty } from '@icure/cardinal-sdk'
+import { DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
@@ -14,6 +14,11 @@ import { StepCreateAppointment } from './appointmentSteps/StepCreateAppointment'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
+import { useLazyGetPatientByIdQuery, useUpdatePatientMutation, useCreateOrUpdatePatientMutation } from '../../../core/api/patientApi'
+import { useLazyGetUserByEmailQuery, useCreateUpdateUserMutation } from '../../../core/api/userApi'
+import { v4 } from 'uuid'
+import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
+import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 
 const { Step } = Steps
 
@@ -125,10 +130,20 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allServices, allProcedures, allAgendas, sites])
 
-  const selections2 = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allServices, allProcedures, allAgendas, sites])
-  useEffect(() => console.log('selections 2', selections2), [selections2])
-
   const isLoading = useMemo(() => isServicesLoading || isAgendasLoading || isProceduresLoading, [isServicesLoading, isAgendasLoading, isProceduresLoading])
+
+  const [getUserByMailLazy, { isError: isGetUserError, isSuccess: isGetUserSuccess, isLoading: isGetUserLoading }] = useLazyGetUserByEmailQuery()
+  const [getPatientByIdLazy, { isError: isGetPatientError, isSuccess: isGetPatientSuccess, isLoading: isGetPatientLoading }] = useLazyGetPatientByIdQuery()
+  const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
+  const [createUpdatePatient, { isError: isCreateUpdatePatientError, isSuccess: isCreateUpdatePatientSuccess, isLoading: isCreateUpdatePatientLoading }] = useCreateOrUpdatePatientMutation()
+  const [createUpdateEvent, { isError: isCreateUpdateEventError, isSuccess: isCreateUpdateEventSuccess, isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
+  const [processWorking, setProcessWorking] = useState<boolean>(false)
+  const [isCreateEventSuccess, setIsCreateEventSuccess] = useState<boolean>(false)
+
+  const isCreateLoading = useMemo(
+    () => processWorking || isGetPatientLoading || isCreateUpdatePatientLoading || isCreateUpdateUserLoading || isGetUserLoading || isCreateUpdateEventLoading,
+    [processWorking, isGetPatientLoading, isCreateUpdatePatientLoading, isGetUserLoading, isCreateUpdateEventLoading],
+  )
 
   const steps = [
     { title: t('content.procedure'), icon: <ToolOutlined /> },
@@ -137,13 +152,127 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     { title: t('content.confirm'), icon: <CheckCircleOutlined /> },
   ]
 
-  const createAppointments = () => {}
+  const formValues: AppointmentForm = form.getFieldsValue(true)
+
+  const createAppointments = async () => {
+    setProcessWorking(true)
+    const { personalInfo, procedures } = formValues
+    const userEmail = personalInfo?.email
+
+    try {
+      if (!userEmail) throw Error('Email not found.')
+
+      let citizenUser: User | undefined
+      let citizenPatient: DecryptedPatient | undefined
+
+      // Step 1: fetch user by email
+      const foundUser = await getUserByMailLazy(userEmail)
+
+      // If we found a user
+      if (foundUser.data) {
+        citizenUser = { ...foundUser.data } // Create a mutable copy
+
+        // Step 2: Update existing user's phone if it changed
+        const newPhoneNumber = personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined
+        if (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) {
+          const userUpdatePayload = new User({ ...citizenUser, mobilePhone: newPhoneNumber })
+          const updatedUserResult = await createUpdateUser(userUpdatePayload).unwrap()
+          if (!updatedUserResult) throw new Error("Failed to update user's phone number.")
+          citizenUser = updatedUserResult
+        }
+
+        // Step 3: Get or Create/Update patient for the existing user
+        let patientNeedsUpdate = false
+        if (citizenUser.patientId) {
+          // fetch patient by id
+          const foundPatient = await getPatientByIdLazy(citizenUser.patientId)
+
+          if (foundPatient.data) {
+            citizenPatient = { ...foundPatient.data }
+          } else {
+            citizenPatient = new DecryptedPatient({ id: v4() })
+            patientNeedsUpdate = true
+          }
+        } else {
+          citizenPatient = new DecryptedPatient({ id: v4() })
+          patientNeedsUpdate = true
+        }
+
+        const newLanguage = personalInfo.language
+        const newBirthDate = personalInfo.birthDate ? Number(dayjs(personalInfo.birthDate).format('YYYYMMDD')) : undefined
+        const hasLanguageChanged = newLanguage && newLanguage !== (citizenPatient.languages?.[0] || '')
+        const hasBirthDateChanged = newBirthDate && newBirthDate !== citizenPatient.dateOfBirth
+
+        if (patientNeedsUpdate || hasLanguageChanged || hasBirthDateChanged) {
+          const patientPayload = new DecryptedPatient({
+            ...citizenPatient,
+            languages: hasLanguageChanged ? [newLanguage!] : citizenPatient.languages,
+            dateOfBirth: hasBirthDateChanged ? newBirthDate : citizenPatient.dateOfBirth,
+            firstName: patientNeedsUpdate ? personalInfo.firstName : citizenPatient.firstName,
+            lastName: patientNeedsUpdate ? personalInfo.lastName : citizenPatient.lastName,
+          })
+          const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
+          if (updatedPatient) citizenPatient = updatedPatient
+        }
+      } else {
+        //else not found user
+        const patientId = v4()
+        const newBirthDate = personalInfo.birthDate ? Number(dayjs(personalInfo.birthDate).format('YYYYMMDD')) : undefined
+        const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [personalInfo.language], dateOfBirth: newBirthDate, firstName: personalInfo.firstName, lastName: personalInfo.lastName })
+        const createdPatient = await createUpdatePatient(newPatientPayload).unwrap()
+        if (!createdPatient) throw new Error('Failed to create a new patient record.')
+        citizenPatient = createdPatient
+
+        // Then create the new User linked to the new Patient
+        const newPhoneNumber = personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined
+        const newUserPayload = new User({ id: v4(), patientId: patientId, mobilePhone: newPhoneNumber, email: userEmail, login: userEmail, name: `${personalInfo.firstName} ${personalInfo.lastName}` })
+        const createdUser = await createUpdateUser(newUserPayload).unwrap()
+        if (!createdUser) throw new Error('Failed to create a new user record after creating patient.')
+        citizenUser = createdUser
+      }
+
+      console.log('citizenUser', citizenUser)
+      console.log('citizenPatient', citizenPatient)
+
+      const eventsCreationPromises = procedures.map((item) => {
+        const masterProcedure = selections.find((selectProc) => selectProc.id === item.procedureSelectionId)
+        if (!masterProcedure) throw Error('Unexpected error.')
+        const siteVariant = masterProcedure.siteVariants.find((selectSite) => selectSite.site.id === item.site)
+        if (!siteVariant) throw Error('Unexpected error.')
+        const procedureVariant = siteVariant.variants.find((pv) => pv.attendees === item.quantity)
+        if (!procedureVariant) throw Error('Unexpected error.')
+
+        const newEvent = new DecryptedCalendarItem({
+          id: v4(),
+          patientId: citizenPatient.id,
+          title: masterProcedure.displayText,
+          calendarItemTypeId: procedureVariant.procedureId,
+          duration: procedureVariant.duration,
+          details: siteVariant.procedureDetails,
+          agendaId: siteVariant.agendaId,
+          phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
+        })
+        //const eventResult = await createUpdateEvent(newEvent).unwrap()
+      })
+      //await Promise.all(eventsCreationPromises)
+
+      setIsCreateEventSuccess(true)
+    } catch (error: unknown) {
+      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      setIsCreateEventSuccess(false)
+    } finally {
+      setProcessWorking(false)
+    }
+  }
 
   const next = async () => {
     try {
       await form.validateFields()
       setCurrentStep(currentStep + 1)
-      if (currentStep === 4) createAppointments()
+      console.log('current step', currentStep)
+      if (currentStep === 3) {
+        createAppointments()
+      }
     } catch (err) {
       openNotification('error', t('content.complete_required_fields'), '')
     }
@@ -163,6 +292,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     <StepTimeSlotSelector form={form} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
     <StepAppointmentreview formValues={form.getFieldsValue(true)} procedures={selections} key={'reviewStep'} />,
+    <StepCreateEventResult isCreateLoading={isCreateLoading} isCreateEventSuccess={isCreateEventSuccess} formValues={formValues} selections={selections} key={'resultStep'} />,
   ]
 
   const initialFormValues = {
@@ -201,8 +331,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const formValues: AppointmentForm = form.getFieldsValue(true)
-
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={900}>
       <div style={{ width: '100%', padding: '1.5rem' }}>
@@ -215,7 +343,17 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         </Steps>
 
         <Form form={form} layout="vertical" initialValues={initialFormValues}>
-          <div style={{ minHeight: '350px' }}>{currentStep < 4 ? stepContent[currentStep] : <StepCreateAppointment formValues={formValues} form={form} selections={selections} />}</div>
+          <div style={{ minHeight: '350px' }}>
+            {currentStep < 4 ? (
+              stepContent[currentStep]
+            ) : (
+              <>
+                {isCreateLoading && <div>Loading</div>}
+                {!isCreateLoading && isCreateEventSuccess && <div>Success !</div>}
+                {!isCreateLoading && !isCreateEventSuccess && <div>Failure !</div>}
+              </>
+            )}
+          </div>
 
           <Divider />
 

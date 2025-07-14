@@ -465,10 +465,10 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             <Table<ProcedureRow>
               className="custom-table"
               pagination={{
-                pageSize: 6,
+                pageSize: 3,
                 simple: true,
               }}
-              scroll={{ y: 'calc(100vh - 500px)', x: 'max-content' }}
+              scroll={{ y: 'calc(100vh - 550px)', x: 'max-content' }}
               dataSource={tableRows}
               rowKey="rowId"
               locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}

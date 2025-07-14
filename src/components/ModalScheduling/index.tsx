@@ -80,6 +80,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(endOfToday(), 1))
       const newResourceGroup = new ResourceGroupAllocationSchedule({ name: t('content.new_schedule'), startDateTime: start, endDateTime: end, items: [] })
       setResourceGroups((prev) => [...prev, newResourceGroup])
+      handleEditClick(newResourceGroup)
     } catch (error) {
       openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
     }

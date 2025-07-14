@@ -92,6 +92,24 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
   // 2) Make sure user cannot select the same service - procedure from two different site (lock the site selector to user first procedure choice)
   // 3) If user adds a procedure, it must be of the same service but also same site. So only display procedures that have the same service and site
 
+  useEffect(() => {
+    // 1. Check if there is exactly one site available.
+    if (availableSites && availableSites.length === 1) {
+      const singleSiteId = availableSites[0].site.id
+
+      // 2. Get the current value of this specific field to avoid unnecessary updates.
+      const currentSiteValue = form.getFieldValue(['procedures', name, 'site'])
+
+      // 3. Only update the form if the current value isn't already set.
+      //    This prevents an infinite re-render loop.
+      if (currentSiteValue !== singleSiteId) {
+        // 4. Use form.setFieldValue to update ONLY the field we care about.
+        //    This is much cleaner and has no external dependencies.
+        form.setFieldValue(['procedures', name, 'site'], singleSiteId)
+      }
+    }
+  }, [availableSites, form, name])
+
   return (
     <Card>
       <Space align="baseline" style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -125,7 +143,14 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
                 </Select>
               </Form.Item>
               <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]} style={{ marginBottom: 0 }}>
-                <Select placeholder="Site" style={{ minWidth: '80px' }} disabled={!procedureId} loading={isProcedureLoading} className="site-select ">
+                <Select
+                  placeholder="Site"
+                  style={{ minWidth: '80px' }}
+                  disabled={!procedureId}
+                  loading={isProcedureLoading}
+                  className="site-select "
+                  defaultActiveFirstOption={availableSites ? availableSites.length === 1 : false}
+                >
                   {(availableSites ?? []).map((variant) => (
                     <Option key={variant.site.id} value={variant.site.id}>
                       {variant.site.name}

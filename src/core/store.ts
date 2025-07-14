@@ -15,6 +15,7 @@ import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { groupApiRtk } from './api/groupApi'
 import { keyApiRtk } from './api/keyApi'
+import { anonymousApiRtk } from './api/anonymousApi'
 
 export const store = configureStore({
   reducer: persistedReducer,
@@ -33,6 +34,7 @@ export const store = configureStore({
       calendarItemTypeApiRtk.middleware,
       groupApiRtk.middleware,
       keyApiRtk.middleware,
+      anonymousApiRtk.middleware,
       thunk,
       // Add your own middleware here. For example, you can add a logger:
     ),

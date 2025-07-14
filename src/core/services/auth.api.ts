@@ -4,7 +4,6 @@ import {
   CaptchaOptions,
   CardinalApis,
   CardinalSdk,
-  CardinalBaseSdk,
   CardinalAnonymousSdk,
   CryptoStrategies,
   KeypairFingerprintV1String,
@@ -25,16 +24,14 @@ import {
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
 import { Unsubscribe } from 'redux'
-import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID } from '../../constants'
+import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID, DB_ID } from '../../constants'
 
 import { revertAll, setSavedCredentials } from '../app'
 import { store } from '../store'
 import { useAddUserKeyMutation, useLazyGetKeyQuery } from '../api/keyApi'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
-
-//const [addUserKey, { isLoading: isUpdating }] = useAddUserKeyMutation()
-//const [triggerGetKey, { data, error, isLoading }] = useLazyGetKeyQuery()
+const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
 
 export class PetraCareCryptoStrategies extends CryptoStrategies {
   async notifyNewKeyCreated(sdk: CardinalApis): Promise<void> {
@@ -49,8 +46,6 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
       ?.join('-')
 
     const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
-    //if (!!formattedKey) await addUserKey({userId: hcp.id, key: formattedKey})
-    // if (!!formattedKey) store.dispatch(setNewlyCreatedRecoveryKey({ recoveryKey: formattedKey }))
 
     if (!!formattedKey && !!hcp) {
       try {
@@ -110,7 +105,6 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
     do {
       const rk = hcp ? await fetchRecoveryKey(hcp?.id) : undefined
-      //const rk = await this.promptUserForRecoveryKey(reason)
 
       if (!rk) {
         break
@@ -257,6 +251,27 @@ export const cardinalApi = async (getState: () => unknown) => {
   return await getApiFromState(() => state)
 }
 
+export const getAnonymousApiFromState = async (getState: () => CardinalApiState | { cardinalApi: CardinalApiState } | undefined): Promise<CardinalAnonymousSdk | undefined> => {
+  const state = getState()
+  if (!state) {
+    throw new Error('No state found')
+  }
+
+  const initialState = 'cardinalApi' in state ? state.cardinalApi : state
+  const { user } = initialState
+
+  if (!user) {
+    return undefined
+  }
+
+  return anonymousApiCache['anonymous'] as CardinalAnonymousSdk
+}
+
+export const anonymousCardinalApi = async (getState: () => unknown) => {
+  const state = getState() as { cardinalApi: CardinalApiState }
+  return await getAnonymousApiFromState(() => state)
+}
+
 export const startAuthentication = createAsyncThunk(
   'cardinalApi/startAuthentication',
   async (
@@ -325,6 +340,9 @@ export const completeAuthentication = createAsyncThunk('cardinalApi/completeAuth
 
     apiCache[`${user.groupId}/${user.id}`] = api
 
+    const anonymousApi = await CardinalAnonymousSdk.initialize(DB_ID!)
+    anonymousApiCache['anonymouse'] = anonymousApi
+
     dispatch(
       setSavedCredentials({
         login: `${user.groupId}/${user.id}`,
@@ -361,10 +379,11 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
     const api = await CardinalSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
       useHierarchicalDataOwners: false,
     })
-
     const user = await api.user.getCurrentUser()
-
     apiCache[`${user.groupId}/${user.id}`] = api
+
+    const anonymousApi = await CardinalAnonymousSdk.initialize(DB_ID!)
+    anonymousApiCache['anonymouse'] = anonymousApi
 
     return new User(user)
   } catch (e) {

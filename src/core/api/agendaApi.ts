@@ -84,8 +84,6 @@ export const agendaApiRtk = createApi({
       ],
       async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
         let getCalendarItemTypesAction
-        let getTimeTablesAction
-
         try {
           // --- Step 1: Fetch Calendar Item Types ---
           getCalendarItemTypesAction = dispatch(calendarItemTypeApiRtk.endpoints.getCalendarItemTypes.initiate({ agendaId: id }))
@@ -107,31 +105,12 @@ export const agendaApiRtk = createApi({
           } else {
             console.log(`[onQueryStarted deleteAgenda] No CalendarItemTypes found for agenda ${id}. Skipping deletion.`)
           }
-
-          // --- Step 3: Fetch Time Tables ---
-          getTimeTablesAction = dispatch(timeTableApiRtk.endpoints.getTimeTables.initiate({ agendaId: id }))
-          const timeTablesResult = await getTimeTablesAction
-          getTimeTablesAction.unsubscribe() // Unsubscribe after getting result
-
-          if (timeTablesResult.error) {
-            console.error(`[onQueryStarted deleteAgenda] Error fetching TimeTables for agenda ${id}:`, timeTablesResult.error)
-            throw timeTablesResult.error
-          }
-          const timeTables = timeTablesResult.data
-
-          // --- Step 4: Delete Time Tables (if any) ---
-          if (timeTables && timeTables.length > 0) {
-            await dispatch(timeTableApiRtk.endpoints.deleteTimeTables.initiate(timeTables)).unwrap()
-          } else {
-            console.log(`[onQueryStarted deleteAgenda] No TimeTables found for agenda ${id}.`)
-          }
         } catch (error) {
           console.error(`[onQueryStarted deleteAgenda] Error during orchestrated deletion for agenda ${id}:`, error)
           // Error could be from fetching/deleting children, or deleting the parent.
           // RTK Query handles the mutation's error state.
           // Ensure subscriptions are cleaned up on error
           getCalendarItemTypesAction?.unsubscribe()
-          getTimeTablesAction?.unsubscribe()
           // Let the error propagate so the calling hook's .unwrap() catches it.
           throw error
         }

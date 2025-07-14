@@ -241,12 +241,14 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
         rruleStart: watchedTimeTableStart ?? dayjs(),
       }
       setTableRows((prev) => [...prev, newRule])
+      tableRowEdit(newRule)
     } catch (error) {
       openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
     }
   }
 
   const watchedCalendarItemTypesIds = Form.useWatch('calendarItemTypesIds', form)
+  const watchedRruleStart = Form.useWatch('rruleStart', form)
   const watchedFreq = Form.useWatch('_freq', form)
   const watchedInterval = Form.useWatch('_interval', form)
   const watchedByDay = Form.useWatch('_byday', form)
@@ -288,7 +290,6 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
         }
         const rule = new RRule(rruleOptions)
         const resultRrule = correctAndCleanRRuleString(rule.toString())
-        console.log('resultrrule', resultRrule)
         form.setFieldsValue({ rrule: resultRrule })
       } catch (e) {
         console.error('Error generating RRULE string:', e)
@@ -478,6 +479,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
               hours: sortedHoursToSave,
               public: rowValues.public,
               timeConstraints: [rowValues.notBeforeInMinutes, rowValues.notAfterInMinutes],
+              rruleStart: rowValues.rruleStart,
             }
           }
           return row
@@ -762,7 +764,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
                             throw new Error('Frequency cannot be parsed')
                           }
 
-                          const dtStart = parsedRuleComponents.dtstart ?? new Date(new Date().setHours(0, 0, 0, 0))
+                          const dtStart = record.rruleStart?.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0))
 
                           // 2. Create the options object for new RRule() ensuring all required types are met
                           const optionsForToText: Partial<Options> = {

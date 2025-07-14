@@ -5,6 +5,9 @@ import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppointmentForm } from '../CreateEvent'
 import './index.css'
+import { CardinalAnonymousSdk } from '@icure/cardinal-sdk'
+import { DB_ID } from '../../../../constants'
+import { useGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
 
 const { Title, Paragraph } = Typography
 
@@ -15,6 +18,8 @@ export const StepTimeSlotSelector: FC<{ form: FormInstance<AppointmentForm> }> =
   const disabledDate = (current: Dayjs) => current && current < dayjs().startOf('day')
   const dateValue = Form.useWatch(['timeslot', 'date'], form)
   const timeValue = Form.useWatch(['timeslot', 'time'], form)
+
+  const { data: availabilities, isLoading: availabilitiesLoading } = useGetAvailabilitiesQuery({})
 
   const onDateSelect = (date: Dayjs) => {
     form.setFieldsValue({ timeslot: { time: undefined, date: date } })

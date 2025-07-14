@@ -15,6 +15,7 @@ import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { groupApiRtk } from './api/groupApi'
 import { keyApiRtk } from './api/keyApi'
+import { anonymousApiRtk } from './api/anonymousApi'
 
 export const appReducer = combineReducers({
   app: app.reducer,
@@ -32,6 +33,7 @@ export const appReducer = combineReducers({
   calendarItemTypeApi: calendarItemTypeApiRtk.reducer,
   groupApi: groupApiRtk.reducer,
   keyApi: keyApiRtk.reducer,
+  anonymousApi: anonymousApiRtk.reducer,
 })
 
 export const persistedReducer = persistReducer(persistConfig, appReducer)
