@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined } from '@ant-design/icons'
-import { AddressType, Agenda, CalendarItemType, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
+import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
 import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -29,12 +29,10 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
 
   const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
 
-  // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
   const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
   const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateHealthcarePartyMutation()
 
-  // Creating a pair of the same mutation with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
-  const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading, isSuccess: isDeleteSiteSuccess, error: isDeleteSiteError } = useRecursiveHcpDeletion()
+  const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading } = useRecursiveHcpDeletion()
 
   const siteActionItems: MenuProps['items'] = [
     {
@@ -55,7 +53,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
   const onSiteInfoSave = (formValues: SiteInfoFormValues) => {
     try {
       if (!site) throw new Error('No site selected')
-      createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] }))
+      createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] })).unwrap()
     } catch (error) {
       openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
     } finally {
@@ -63,10 +61,11 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
     }
   }
 
-  const handleSiteDelete = () => {
+  const handleSiteDelete = async () => {
     try {
       if (!site) throw new Error('No site selected')
-      deleteSite(site)
+      await deleteSite(site)
+      showMessageFeedback('success', t('notification.site_deleted'))
     } catch (error) {
       openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
     } finally {
@@ -88,22 +87,19 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
         id: v4(),
       })
       await createUpdateService({ ...serviceHcp })
-      createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id, zoneId: 'Europe/Brussels' }))
+      const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({
+        intervalMinutes: 5,
+      })
+      await createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id, zoneId: 'Europe/Brussels', slottingAlgorithm: algorithm })).unwrap()
     } catch (error) {
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     }
   }
 
-  // We have two same mutations with renamed states and callback. Goal is to have better visibility : One is for site, the other is for service
-  useEffect(() => {
-    if (isDeleteSiteSuccess) showMessageFeedback('success', t('notification.site_deleted'))
-    if (isDeleteSiteError) openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
-  }, [isDeleteSiteSuccess, isDeleteSiteError])
-
   useEffect(() => {
     if (isCreateUpdateSiteSuccess) showMessageFeedback('success', t('notification.site_saved'))
-    if (isCreateUpdateSiteError) openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
-  }, [isCreateUpdateSiteSuccess, isCreateUpdateSiteError])
+    if (isCreateUpdateAgendaError) openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
+  }, [isCreateUpdateSiteSuccess, isCreateUpdateAgendaError])
 
   useEffect(() => {
     if (isCreateUpdateServiceSuccess) showMessageFeedback('success', t('notification.service_saved'))
@@ -145,6 +141,9 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
     const serviceProcedures = flatProceduresArray.filter((procedure) => procedure.healthcarePartyId === service.id && procedure.defaultCalendarItemType === true)
     return [service, serviceProcedures]
   })
+
+  useEffect(() => console.log('services', services), [services])
+  useEffect(() => console.log('allAgendas', allAgendas), [allAgendas])
 
   return (
     <div className="site-root">

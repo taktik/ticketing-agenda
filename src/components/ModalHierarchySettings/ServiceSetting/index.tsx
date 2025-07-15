@@ -184,13 +184,13 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const addProcedure = () => {
     try {
-      if (!service) throw new Error('No service selected')
+      if (!service || !agenda) throw new Error(t('validation.unexpected_error'))
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
         defaultCalendarItemType: true,
         duration: 15,
         healthcarePartyId: service.id,
-        agendaId: agenda?.id,
+        agendaId: agenda.id,
         otherInfos: {
           order: '0',
           isPublic: 'true',
@@ -308,7 +308,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }
 
-  const tableRowCancel = (procedureRow: ProcedureRow) => {
+  const tableRowCancel = () => {
     setEditingKey('')
   }
 
@@ -329,12 +329,12 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }
 
-  const handleDeleteService = () => {
+  const handleDeleteService = async () => {
     try {
       if (!service) throw new Error('No site selected')
-      deleteService(service)
+      await deleteService(service)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
     } finally {
       setSelectedKey('default')
     }
@@ -397,11 +397,13 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const [messageApi, messageContextHolder] = message.useMessage()
 
   const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    console.log('test')
     messageApi.open({
       type,
       content,
       duration: 0,
     })
+    console.log('test 2')
     // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
@@ -696,7 +698,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
                       return (
                         <Space size="middle">
                           <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
-                          <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
+                          <Button onClick={tableRowCancel}>{t('content.cancel')}</Button>
                         </Space>
                       )
                     } else {

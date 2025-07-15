@@ -2,23 +2,22 @@ import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } fro
 import { DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { v4 } from 'uuid'
 import { useGetAgendasQuery } from '../../../core/api/agendaApi'
+import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useGetServicesForMultipleSitesQuery } from '../../../core/api/healthcarePartyApi'
+import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery } from '../../../core/api/patientApi'
+import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
 import { StepAppointmentreview } from './appointmentSteps/StepAppointmentReview'
-import { StepCreateAppointment } from './appointmentSteps/StepCreateAppointment'
+import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
-import { useLazyGetPatientByIdQuery, useUpdatePatientMutation, useCreateOrUpdatePatientMutation } from '../../../core/api/patientApi'
-import { useLazyGetUserByEmailQuery, useCreateUpdateUserMutation } from '../../../core/api/userApi'
-import { v4 } from 'uuid'
-import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
-import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 
 const { Step } = Steps
 
@@ -308,10 +307,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   }
 
   const stepContent = [
-    <StepProcedureSelector procedures={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
-    <StepTimeSlotSelector form={form} formValues={formValues} selections={selections} key={'TimeStep'} />,
+    <StepProcedureSelector selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
+    <StepTimeSlotSelector form={form} procedures={formValues.procedures} selections={selections} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
-    <StepAppointmentreview formValues={form.getFieldsValue(true)} procedures={selections} key={'reviewStep'} />,
+    <StepAppointmentreview formValues={form.getFieldsValue(true)} selections={selections} key={'reviewStep'} />,
     <StepCreateEventResult isCreateLoading={isCreateLoading} isCreateEventSuccess={isCreateEventSuccess} formValues={formValues} selections={selections} key={'resultStep'} />,
   ]
 

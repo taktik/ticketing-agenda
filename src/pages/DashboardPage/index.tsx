@@ -104,10 +104,10 @@ export default function DashboardPage() {
               <SiteSelector sites={sites ?? []} isSitesLoading={isSitesRelatedLoading} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
               <Space>
                 <Tooltip title={t('content.organize_hierarchy')}>
-                  <Button icon={<ApartmentOutlined />} onClick={() => setSettingsModalOpen(true)} aria-label="Organize Hierarchy" />
+                  <Button icon={<ApartmentOutlined />} onClick={() => setSettingsModalOpen(true)} aria-label={t('content.organize_hierarchy')} />
                 </Tooltip>
                 <Tooltip title={t('content.manage_planning')}>
-                  <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label="Manage Planning" />
+                  <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label={t('content.manage_planning')} />
                 </Tooltip>
               </Space>
             </div>

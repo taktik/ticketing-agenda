@@ -14,7 +14,7 @@ interface ProcedureRowProps {
   remove: (index: number) => void
   isFirst: boolean
   canRemove: boolean
-  procedures: ProcedureSelection[]
+  selections: ProcedureSelection[]
   isProcedureLoading: boolean
 }
 
@@ -25,7 +25,7 @@ const languageMapping: { [key: string]: string } = {
   de: 'DE',
 }
 
-export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isProcedureLoading }: ProcedureRowProps): React.ReactElement => {
+export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isProcedureLoading }: ProcedureRowProps): React.ReactElement => {
   const { t, i18n } = useTranslation()
   const form = Form.useFormInstance<AppointmentForm>()
   const formProcedures = Form.useWatch('procedures', form) || []
@@ -40,8 +40,8 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
 
   // 1. Memoize the selected main procedure.
   const selectedProcedure = useMemo(() => {
-    return procedures.find((s) => s.id === procedureId)
-  }, [procedureId, procedures])
+    return selections.find((s) => s.id === procedureId)
+  }, [procedureId, selections])
 
   // 2. Memoize the selected site variant.
   const selectedSiteVariant = useMemo(() => {
@@ -52,7 +52,7 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
   const { firstProcedureSelection, selectedSite, selectedServiceName } = useMemo(() => {
     const firstProcId = formProcedures[0]?.procedureSelectionId
     const firstSiteId = formProcedures[0]?.site
-    const firstProc = procedures.find((s) => s.id === firstProcId)
+    const firstProc = selections.find((s) => s.id === firstProcId)
     const firstSite = firstProc?.siteVariants.find((p) => p.site.id === firstSiteId)
 
     return {
@@ -60,17 +60,17 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
       selectedSite: firstSite,
       selectedServiceName: firstProc?.serviceName,
     }
-  }, [formProcedures, procedures])
+  }, [formProcedures, selections])
 
   // 4. Memoize the filtered lists.
   const availableProcedures = useMemo(() => {
-    return !isFirst && selectedServiceName ? procedures.filter((s) => s.serviceName === selectedServiceName) : procedures
-  }, [isFirst, selectedServiceName, procedures])
+    return !isFirst && selectedServiceName ? selections.filter((s) => s.serviceName === selectedServiceName) : selections
+  }, [isFirst, selectedServiceName, selections])
 
   const filteredAvailableProcedures = useMemo(() => {
     const firstSiteId = formProcedures[0]?.site
-    return firstSiteId ? availableProcedures.filter((proc) => proc.siteVariants.some((variant) => variant.site.id === firstSiteId)) : procedures
-  }, [formProcedures, availableProcedures, procedures])
+    return firstSiteId ? availableProcedures.filter((proc) => proc.siteVariants.some((variant) => variant.site.id === firstSiteId)) : selections
+  }, [formProcedures, availableProcedures, selections])
 
   const availableSites = useMemo(() => {
     const firstSiteId = formProcedures[0]?.site
@@ -194,12 +194,12 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, procedures, isP
   )
 }
 
-export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; procedures: ProcedureSelection[]; isProcedureLoading: boolean }> = ({ form, procedures, isProcedureLoading }) => {
+export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; selections: ProcedureSelection[]; isProcedureLoading: boolean }> = ({ form, selections, isProcedureLoading }) => {
   const { t } = useTranslation()
   const formProcedures = Form.useWatch('procedures', form)
 
   const firstProcedureId = formProcedures?.[0]?.procedureSelectionId
-  const firstProcedure = procedures.find((p) => p.id === firstProcedureId)
+  const firstProcedure = selections.find((p) => p.id === firstProcedureId)
   const selectedServiceName = firstProcedure?.serviceName
 
   useEffect(() => {
@@ -213,7 +213,7 @@ export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; pr
 
         const currentProcedureId = procedure.procedureSelectionId
         if (currentProcedureId) {
-          const currentService = procedures.find((s) => s.id === currentProcedureId)
+          const currentService = selections.find((s) => s.id === currentProcedureId)
 
           // If the service name doesn't match, reset this item's procedureId.
           if (currentService?.serviceName !== selectedServiceName) {
@@ -238,7 +238,7 @@ export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; pr
         {(fields, { add, remove }) => (
           <Space direction="vertical" style={{ width: '100%', maxHeight: '350px', overflow: 'auto' }}>
             {fields.map(({ key, name, ...restField }, index) => {
-              return <ProcedureRow key={key} name={name} remove={remove} isFirst={index === 0} canRemove={fields.length > 1} procedures={procedures} isProcedureLoading={isProcedureLoading} />
+              return <ProcedureRow key={key} name={name} remove={remove} isFirst={index === 0} canRemove={fields.length > 1} selections={selections} isProcedureLoading={isProcedureLoading} />
             })}
             <Form.Item>
               <Button type="dashed" onClick={() => add({ procedureId: undefined, quantity: 1 })} block icon={<PlusOutlined />}>
