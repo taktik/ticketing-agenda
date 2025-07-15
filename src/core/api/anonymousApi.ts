@@ -41,4 +41,4 @@ export const anonymousApiRtk = createApi({
   }),
 })
 
-export const { useGetAvailabilitiesQuery } = anonymousApiRtk
+export const { useGetAvailabilitiesQuery, useLazyGetAvailabilitiesQuery } = anonymousApiRtk

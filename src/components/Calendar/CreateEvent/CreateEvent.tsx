@@ -63,6 +63,26 @@ export const appointmentDuration = (formValues: AppointmentForm, procedures: Pro
   return totalDuration
 }
 
+export const findProcedureData = (selections: ProcedureSelection[], formProcedure: FormProcedure) => {
+  if (!selections || !formProcedure.procedureSelectionId) {
+    return { masterProcedure: undefined, siteVariant: undefined, procedureVariant: undefined }
+  }
+
+  const masterProcedure = selections.find((proc) => proc.id === formProcedure.procedureSelectionId)
+  if (!masterProcedure) {
+    return { masterProcedure: undefined, siteVariant: undefined, procedureVariant: undefined }
+  }
+
+  const siteVariant = formProcedure.site ? masterProcedure.siteVariants.find((sv) => sv.site.id === formProcedure.site) : undefined
+  if (!siteVariant) {
+    return { masterProcedure, siteVariant: undefined, procedureVariant: undefined }
+  }
+
+  const procedureVariant = formProcedure.quantity ? siteVariant.variants.find((pv) => pv.attendees === formProcedure.quantity) : undefined
+
+  return { masterProcedure, siteVariant, procedureVariant }
+}
+
 export const formatDateTime = (dateForm: dayjs.Dayjs | undefined, timeForm: string | undefined) => {
   const date = dateForm
   const time = timeForm
@@ -230,17 +250,18 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         if (!createdUser) throw new Error('Failed to create a new user record after creating patient.')
         citizenUser = createdUser
       }
-
       console.log('citizenUser', citizenUser)
       console.log('citizenPatient', citizenPatient)
 
       const eventsCreationPromises = procedures.map((item) => {
-        const masterProcedure = selections.find((selectProc) => selectProc.id === item.procedureSelectionId)
-        if (!masterProcedure) throw Error('Unexpected error.')
-        const siteVariant = masterProcedure.siteVariants.find((selectSite) => selectSite.site.id === item.site)
-        if (!siteVariant) throw Error('Unexpected error.')
-        const procedureVariant = siteVariant.variants.find((pv) => pv.attendees === item.quantity)
-        if (!procedureVariant) throw Error('Unexpected error.')
+        const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
+          procedureSelectionId: item.procedureSelectionId,
+          site: item.site,
+          quantity: item.quantity,
+        })
+        if (!masterProcedure || !siteVariant || !procedureVariant) throw Error('Unexpected error.')
+
+        if (!citizenUser || !citizenPatient) throw Error('Unexpected error.')
 
         const newEvent = new DecryptedCalendarItem({
           id: v4(),
@@ -269,7 +290,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     try {
       await form.validateFields()
       setCurrentStep(currentStep + 1)
-      console.log('current step', currentStep)
       if (currentStep === 3) {
         createAppointments()
       }
@@ -289,7 +309,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const stepContent = [
     <StepProcedureSelector procedures={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
-    <StepTimeSlotSelector form={form} key={'TimeStep'} />,
+    <StepTimeSlotSelector form={form} formValues={formValues} selections={selections} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
     <StepAppointmentreview formValues={form.getFieldsValue(true)} procedures={selections} key={'reviewStep'} />,
     <StepCreateEventResult isCreateLoading={isCreateLoading} isCreateEventSuccess={isCreateEventSuccess} formValues={formValues} selections={selections} key={'resultStep'} />,
