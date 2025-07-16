@@ -22,23 +22,18 @@ export const anonymousApiRtk = createApi({
   endpoints: (builder) => ({
     getAvailabilities: builder.query<number[] | undefined, listAnonymousAvailabilitiesParams>({
       async queryFn(params, { getState }) {
-        console.log('entry rtk', params)
         const anonymousAgendaApi = (await anonymousCardinalApi())?.agenda
-        console.log('get api rtk', anonymousAgendaApi)
-        console.log('db id', DATABASE_ID)
         return guard([anonymousAgendaApi], async (): Promise<number[]> => {
           const availabilities = await anonymousAgendaApi?.listAnonymousAvailabilities(
-            'ic-taktikticketingagendamouscron-f7627de4-d674-4443-9987-2cc5c0d793b1',
+            DATABASE_ID!,
             params.agendaId,
             params.calendarItemTypeId,
             params.startDate,
             params.endDate,
           )
-          console.log('availabilities rtk', availabilities)
           if (!availabilities) {
             throw new Error('No availabilities')
           }
-          console.log('result', availabilities)
           return availabilities
         })
       },
