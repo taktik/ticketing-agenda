@@ -22,12 +22,8 @@ const localeMap: Record<string, Locale> = {
   nl: nl,
 }
 
-interface SchedulingTableRow {
+export interface SchedulingTableRow extends ResourceGroupAllocationSchedule {
   rowId: string
-  name: string | undefined
-  startDateTime: number | undefined
-  endDateTime: number | undefined
-  items: Array<EmbeddedTimeTableItem>
 }
 
 interface ModalSchedulingProps {
@@ -43,7 +39,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const [selectedResourcegroup, setSelectedResourcegroup] = useState<SchedulingTableRow | undefined>(undefined)
   const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(services?.[0])
   const [resourceGroupToBeDelete, setResourceGroupToBeDelete] = useState<SchedulingTableRow | undefined>(undefined)
-  const [schedulingTableRow, setSchedulingTableRow] = useState<SchedulingTableRow[]>([])
+  const [schedulingTableRows, setSchedulingTableRow] = useState<SchedulingTableRow[]>([])
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
 
   const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
@@ -54,10 +50,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     const tableRows = sortedResourceGroups.map((resourceGroup) => {
       const newRow: SchedulingTableRow = {
         rowId: v4(),
-        name: resourceGroup.name,
-        startDateTime: resourceGroup.startDateTime,
-        endDateTime: resourceGroup.endDateTime,
-        items: resourceGroup.items,
+        ...resourceGroup,
       }
       return newRow
     })
@@ -98,7 +91,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       const today = new Date()
       const start = formatDateToYYYYMMDDHHmmssNumber(today)
       const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(endOfToday(), 1))
-      const newRow: SchedulingTableRow = { rowId: v4(), name: t('content.new_schedule'), startDateTime: start, endDateTime: end, items: [] }
+      const newRow: SchedulingTableRow = { rowId: v4(), name: t('content.new_schedule'), startDateTime: start, endDateTime: end, items: [], tags: [], codes: [], resourceGroup: undefined }
       setSchedulingTableRow((prev) => [...prev, newRow])
       handleEditClick(newRow)
     } catch (error) {
@@ -115,10 +108,23 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     setShowDeleteResourceGroupModal(true)
   }
 
+  const showUpdateSuccessMessage = (message: string) => {
+    showMessageFeedback('success', message)
+  }
+
   const handleDeleteResourceGroup = () => {
     try {
       if (!agenda || !resourceGroupToBeDelete) throw new Error()
-      const updatedSchedule = agenda.schedules.filter((sched) => sched !== resourceGroupToBeDelete)
+      const updatedSchedule = schedulingTableRows.reduce((acc, row) => {
+        if (row.rowId === resourceGroupToBeDelete.rowId) {
+          return acc
+        }
+
+        const { rowId, ...resourceGroup } = row
+
+        acc.push(new ResourceGroupAllocationSchedule({ ...resourceGroup }))
+        return acc
+      }, [] as ResourceGroupAllocationSchedule[])
       updateAgenda({ ...agenda, schedules: updatedSchedule }).unwrap()
       showMessageFeedback('success', t('notification.schedule_deleted'))
     } catch (error) {
@@ -145,7 +151,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     }
   }, [services])
 
-  const canAddSchedule = agenda?.schedules.length === schedulingTableRow.length
+  const canAddSchedule = agenda?.schedules.length === schedulingTableRows.length
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.schedule_list')} blockAntModalBodyVerticalScroll noFooter width={1300}>
@@ -182,7 +188,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               simple: true,
             }}
             scroll={{ y: 'calc(100vh - 500px)', x: 'max-content' }}
-            dataSource={schedulingTableRow}
+            dataSource={schedulingTableRows}
             rowKey={(record) => `${record.startDateTime}-${record.endDateTime}`}
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
             loading={isLoading}
@@ -222,7 +228,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
                 title={t('content.actions')}
                 key="actions"
                 width={'16%'}
-                render={(_: unknown, record: ResourceGroupAllocationSchedule) => (
+                render={(_: unknown, record: SchedulingTableRow) => (
                   <Space size="middle">
                     <Button onClick={() => handleEditClick(record)}>{t('content.edit')}</Button>
                     <Button onClick={() => handleDeleteClick(record)}>{t('content.delete')}</Button>
@@ -232,7 +238,18 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             </ColumnGroup>
           </Table>
         </div>
-        {showRulesModal && createPortal(<ModalRules isVisible={showRulesModal} onClose={() => setShowRulesModal(false)} resourceGroup={selectedResourcegroup} agenda={agenda} />, document.body)}
+        {showRulesModal &&
+          createPortal(
+            <ModalRules
+              isVisible={showRulesModal}
+              onClose={() => setShowRulesModal(false)}
+              schedulingTableRow={selectedResourcegroup}
+              schedulingTableRows={schedulingTableRows}
+              agenda={agenda}
+              showUpdateSuccessMessage={showUpdateSuccessMessage}
+            />,
+            document.body,
+          )}
         {showDeleteResourceGroupModal &&
           createPortal(
             <ModalConfirmAction

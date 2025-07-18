@@ -31,6 +31,7 @@ import {
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
 import isEqual from 'lodash/isEqual'
+import { SchedulingTableRow } from '../index'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -83,8 +84,10 @@ interface FormValues {
 interface ModalRulesProps {
   isVisible: boolean
   onClose: () => void
-  resourceGroup: ResourceGroupAllocationSchedule | undefined
+  schedulingTableRow: SchedulingTableRow | undefined
+  schedulingTableRows: SchedulingTableRow[]
   agenda: Agenda | undefined
+  showUpdateSuccessMessage: (message: string) => void
 }
 const sortEmbeddedTimeTableHours = (hours?: EmbeddedTimeTableHour[]): EmbeddedTimeTableHour[] => {
   if (!hours || hours.length === 0) {
@@ -107,7 +110,7 @@ const sortEmbeddedTimeTableHours = (hours?: EmbeddedTimeTableHour[]): EmbeddedTi
   })
 }
 
-export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalRulesProps): ReactElement => {
+export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingTableRows, agenda, showUpdateSuccessMessage }: ModalRulesProps): ReactElement => {
   const { t, i18n } = useTranslation()
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
   const [showConfirmCloseModal, setShowConfirmCloseModal] = useState<boolean>(false)
@@ -117,13 +120,13 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const isEditing = useMemo(() => (record: TableRow) => record.rowId === editingKey, [editingKey])
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !resourceGroup || !agenda })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !schedulingTableRow || !agenda })
 
   const [updateAgenda, { isError: isUpdateAgendaError, isSuccess: isUpdateAgendaSuccess, isLoading: isUpdateAgendaLoading }] = useUpdateAgendaMutation()
 
   const [form] = Form.useForm<FormValues>()
   const nameValue = Form.useWatch('name', form)
-  const initialName = useMemo(() => resourceGroup?.name || '', [resourceGroup])
+  const initialName = useMemo(() => schedulingTableRow?.name || '', [schedulingTableRow])
 
   const isFetching = useMemo(() => isProceduresLoading, [isProceduresLoading])
   const isMutating = useMemo(() => isUpdateAgendaLoading, [isUpdateAgendaLoading])
@@ -180,21 +183,21 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
 
   useEffect(() => {
     // Fetch update the state and form values
-    if (resourceGroup) {
-      const parsedStart = numberTimestampToDayjs(resourceGroup.startDateTime ?? 0) ?? dayjs()
-      const parsedEnd = numberTimestampToDayjs(resourceGroup.endDateTime ?? 0) ?? dayjs()
+    if (schedulingTableRow) {
+      const parsedStart = numberTimestampToDayjs(schedulingTableRow.startDateTime ?? 0) ?? dayjs()
+      const parsedEnd = numberTimestampToDayjs(schedulingTableRow.endDateTime ?? 0) ?? dayjs()
 
       form.setFieldsValue({
-        name: resourceGroup.name,
-        start: resourceGroup.startDateTime ? parsedStart : undefined,
-        end: resourceGroup.endDateTime ? parsedEnd : undefined,
+        name: schedulingTableRow.name,
+        start: schedulingTableRow.startDateTime ? parsedStart : undefined,
+        end: schedulingTableRow.endDateTime ? parsedEnd : undefined,
       })
-      setResourceGroupItems(resourceGroup.items)
+      setResourceGroupItems(schedulingTableRow.items)
     } else {
       setEditingKey('')
       form.resetFields()
     }
-  }, [resourceGroup, form])
+  }, [schedulingTableRow, form])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -227,7 +230,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
   const addRule = () => {
     // Add new rule with default values
     try {
-      if (!resourceGroup) throw new Error()
+      if (!schedulingTableRow) throw new Error()
       const newRule: TableRow = {
         rrule: undefined,
         availabilities: 1,
@@ -518,7 +521,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
 
   const handleSubmit = async () => {
     try {
-      if (!resourceGroup || !agenda) throw new Error()
+      if (!schedulingTableRow || !agenda) throw new Error()
       const { name, start, end } = form.getFieldsValue()
 
       const newEmbeddedTimeTableItems = tableRows.map((row: TableRow) => {
@@ -536,6 +539,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
         return new EmbeddedTimeTableItem(newEmbeddedItem)
       })
 
+      const { rowId, ...resourceGroup } = schedulingTableRow
       const newResourceGroup: ResourceGroupAllocationSchedule = {
         ...resourceGroup,
         name: name,
@@ -543,15 +547,13 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
         endDateTime: formatDayjsToYYYYMMDDHHmmssNumber(end),
         items: newEmbeddedTimeTableItems,
       }
-      const scheduleFiltered = agenda.schedules.filter((sched) => {
-        return !isEqual(sched, resourceGroup)
-      })
+      const scheduleFiltered = schedulingTableRows.filter((sched) => sched.rowId !== schedulingTableRow.rowId).map(({ rowId, ...rest }) => new ResourceGroupAllocationSchedule(rest))
       const newSchedule = [...scheduleFiltered, newResourceGroup]
       await updateAgenda({ ...agenda, schedules: [...newSchedule] }).unwrap()
-      showMessageFeedback('success', t('notification.schedule_saved'))
+      showUpdateSuccessMessage(t('notification.schedule_saved'))
+      onClose()
       setIsDirty(false)
     } catch (error) {
-      console.log('error', error)
       openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
     }
   }
@@ -575,7 +577,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
               <div className="antSelect">
                 {t('content.name')}
                 <Form.Item name="name" rules={[{ required: true, message: t('validation.schedule_name_required') }]}>
-                  <Input suffix={<CloseOutlined disabled={nameValue === resourceGroup?.name} onClick={handleNameCancel} />} />
+                  <Input suffix={<CloseOutlined disabled={nameValue === schedulingTableRow?.name} onClick={handleNameCancel} />} />
                 </Form.Item>
               </div>
               <div className="antSelect">
