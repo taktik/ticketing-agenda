@@ -21,18 +21,16 @@ import {
   correctAndCleanRRuleString,
   dayjsToFuzzyDateInt,
   dayjsToHhmmss,
-  dayjsToMinutes,
   formatDayjsToYYYYMMDDHHmmssNumber,
   formatHhmmssToHHmm,
-  formatMinutesToHHMM,
   formatTotalMinutesForDisplay,
   fuzzyDateIntToDayjs,
   hhmmssToDayjs,
-  minutesToDayjs,
   numberTimestampToDayjs,
 } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
+import isEqual from 'lodash/isEqual'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -229,7 +227,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
   const addRule = () => {
     // Add new rule with default values
     try {
-      if (!resourceGroup) throw new Error('No schedule selected')
+      if (!resourceGroup) throw new Error()
       const newRule: TableRow = {
         rrule: undefined,
         availabilities: 1,
@@ -366,7 +364,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
   const tableRowEdit = (tableRow: TableRow) => {
     // Edit the row
     try {
-      if (!tableRow.rowId) throw new Error('No rule selected')
+      if (!tableRow.rowId) throw new Error()
 
       // First we initialize the rrule
       let initialRruleString = tableRow.rrule
@@ -518,13 +516,13 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
     form.setFieldsValue({ hours: newHoursArray })
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     try {
-      if (!resourceGroup || !agenda) throw new Error('No schedule selected')
+      if (!resourceGroup || !agenda) throw new Error()
       const { name, start, end } = form.getFieldsValue()
 
       const newEmbeddedTimeTableItems = tableRows.map((row: TableRow) => {
-        if (!row.rrule) throw new Error('No schedule selected')
+        if (!row.rrule) throw new Error()
         const newEmbeddedItem: Partial<EmbeddedTimeTableItem> & Pick<EmbeddedTimeTableItem, 'rrule' | 'hours' | 'calendarItemTypesIds'> = {
           rrule: row.rrule,
           hours: row.hours,
@@ -545,18 +543,25 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
         endDateTime: formatDayjsToYYYYMMDDHHmmssNumber(end),
         items: newEmbeddedTimeTableItems,
       }
-      const scheduleFiltered = agenda.schedules.filter((sched) => sched !== resourceGroup)
+      const scheduleFiltered = agenda.schedules.filter((sched) => {
+        return !isEqual(sched, resourceGroup)
+      })
       const newSchedule = [...scheduleFiltered, newResourceGroup]
-      updateAgenda({ ...agenda, schedules: [...newSchedule] }).unwrap()
+      await updateAgenda({ ...agenda, schedules: [...newSchedule] }).unwrap()
       showMessageFeedback('success', t('notification.schedule_saved'))
       setIsDirty(false)
     } catch (error) {
+      console.log('error', error)
       openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
     }
   }
 
   const handleClose = () => {
-    setShowConfirmCloseModal(true)
+    if (isDirty) {
+      setShowConfirmCloseModal(true)
+    } else {
+      onClose()
+    }
   }
 
   return (
@@ -758,7 +763,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
 
                           const parsedRuleComponents = RRule.parseString(rruleString)
                           if (parsedRuleComponents.freq === undefined) {
-                            throw new Error('Frequency cannot be parsed')
+                            throw new Error()
                           }
 
                           const dtStart = record.rruleStart?.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0))

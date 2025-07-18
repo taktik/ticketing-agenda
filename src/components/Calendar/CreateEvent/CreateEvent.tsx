@@ -179,7 +179,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     const userEmail = personalInfo?.email
 
     try {
-      if (!userEmail) throw Error('Email not found.')
+      if (!userEmail) {
+        console.error('Email not found.')
+        throw Error()
+      }
 
       let citizenUser: User | undefined
       let citizenPatient: DecryptedPatient | undefined
@@ -196,7 +199,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         if (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) {
           const userUpdatePayload = new User({ ...citizenUser, mobilePhone: newPhoneNumber })
           const updatedUserResult = await createUpdateUser(userUpdatePayload).unwrap()
-          if (!updatedUserResult) throw new Error("Failed to update user's phone number.")
+          if (!updatedUserResult) {
+            console.error("Failed to update user's phone number.")
+            throw Error()
+          }
           citizenUser = updatedUserResult
         }
 
@@ -239,14 +245,21 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         const newBirthDate = personalInfo.birthDate ? Number(dayjs(personalInfo.birthDate).format('YYYYMMDD')) : undefined
         const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [personalInfo.language], dateOfBirth: newBirthDate, firstName: personalInfo.firstName, lastName: personalInfo.lastName })
         const createdPatient = await createUpdatePatient(newPatientPayload).unwrap()
-        if (!createdPatient) throw new Error('Failed to create a new patient record.')
+
+        if (!createdPatient) {
+          console.error('Failed to create a new patient record.')
+          throw new Error()
+        }
         citizenPatient = createdPatient
 
         // Then create the new User linked to the new Patient
         const newPhoneNumber = personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined
         const newUserPayload = new User({ id: v4(), patientId: patientId, mobilePhone: newPhoneNumber, email: userEmail, login: userEmail, name: `${personalInfo.firstName} ${personalInfo.lastName}` })
         const createdUser = await createUpdateUser(newUserPayload).unwrap()
-        if (!createdUser) throw new Error('Failed to create a new user record after creating patient.')
+        if (!createdUser) {
+          console.error('Failed to create a new user record after creating patient.')
+          throw new Error()
+        }
         citizenUser = createdUser
       }
       console.log('citizenUser', citizenUser)
@@ -258,9 +271,15 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           site: item.site,
           quantity: item.quantity,
         })
-        if (!masterProcedure || !siteVariant || !procedureVariant) throw Error('Unexpected error.')
+        if (!masterProcedure || !siteVariant || !procedureVariant) {
+          console.error('Missing data.')
+          throw Error()
+        }
 
-        if (!citizenUser || !citizenPatient) throw Error('Unexpected error.')
+        if (!citizenUser || !citizenPatient) {
+          console.error('Missing data.')
+          throw Error()
+        }
 
         const newEvent = new DecryptedCalendarItem({
           id: v4(),

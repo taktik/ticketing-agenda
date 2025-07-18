@@ -72,6 +72,7 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
         },
         parentId: selectedKeyId,
         id: v4(),
+        public: true,
       })
       await createUpdateService({ ...serviceHcp }).unwrap()
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({

@@ -74,7 +74,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     try {
       if (!rootHcp) throw new Error()
       const id = v4()
-      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id })
+      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id, public: true })
       createUpdateSite(siteHcp).unwrap()
       showMessageFeedback('success', t('notification.site_saved'))
     } catch (error) {

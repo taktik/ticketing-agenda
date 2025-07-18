@@ -95,8 +95,8 @@ interface ProcedureRow {
   color: string
 }
 
-interface FormValues {
-  serviceName: string
+export interface FormValuesService {
+  descr: LanguageDescription
   appointmentDurations: number[]
   isPublic: string
   emailTemplate: string
@@ -134,7 +134,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
       .filter((item) => item.defaultCalendarItemType === true)
   }, [procedures])
 
-  const [form] = Form.useForm<FormValues>()
+  const [form] = Form.useForm<FormValuesService>()
 
   useEffect(() => {
     setProceduresList(sortedProcedures)
@@ -171,7 +171,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
   useEffect(() => {
     if (service) {
       form.setFieldsValue({
-        serviceName: service.name,
+        descr: service.descr,
       })
     }
   }, [service, form])
@@ -407,7 +407,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
         <div className="form-fields">
           <div className="service-title">
             <Space align="center">
-              <EditableServiceTitle initialTitles={service.descr} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
+              <EditableServiceTitle form={form} initialTitles={service.descr} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
               {showEditServiceTitle ? null : (
                 <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                   <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />

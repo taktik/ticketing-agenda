@@ -181,7 +181,8 @@
     "site_name": "Name des Standorts",
     "please_select_site": "Bitte wählen Sie einen Standort aus",
     "site": "Standort",
-    "save_current_schedule_before_adding": "Bitte ändern und speichern Sie Ihren aktuellen Zeitplan, bevor Sie einen neuen hinzufügen"
+    "save_current_schedule_before_adding": "Bitte ändern und speichern Sie Ihren aktuellen Zeitplan, bevor Sie einen neuen hinzufügen",
+    "service_name_in_lang": "Dienstname auf {{lang}}"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -302,6 +303,7 @@
     "start_time_required": "Startzeit ist erforderlich",
     "end_time_required": "Endzeit ist erforderlich",
     "value_required": "Wert ist erforderlich",
-    "unit_required": "Einheit ist erforderlich"
+    "unit_required": "Einheit ist erforderlich",
+    "service_name_in_french_mandatory": "Der Dienstname auf Französisch ist obligatorisch."
   }
 }

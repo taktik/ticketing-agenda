@@ -180,7 +180,8 @@
     "site_name": "Nom du site",
     "please_select_site": "Veuillez sélectionner un site",
     "site": "Site",
-    "save_current_schedule_before_adding": "Veuillez modifier et enregistrer votre horaire actuel avant d'en ajouter un nouveau"
+    "save_current_schedule_before_adding": "Veuillez modifier et enregistrer votre horaire actuel avant d'en ajouter un nouveau",
+    "service_name_in_lang": "Nom du service en {{lang}}"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -301,6 +302,7 @@
     "start_time_required": "L'heure de début est requise",
     "end_time_required": "L'heure de fin est requise",
     "value_required": "La valeur est requise",
-    "unit_required": "L'unité est requise"
+    "unit_required": "L'unité est requise",
+    "service_name_in_french_mandatory": "Le nom du service en français est obligatoire."
   }
 }
