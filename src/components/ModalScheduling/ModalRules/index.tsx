@@ -112,11 +112,11 @@ const sortEmbeddedTimeTableHours = (hours?: EmbeddedTimeTableHour[]): EmbeddedTi
 export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalRulesProps): ReactElement => {
   const { t, i18n } = useTranslation()
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
-  const [showDeleteTimeTableItemModal, setShowDeleteTimeTableItemModal] = useState<boolean>(false)
-  const [tableRowToBeDeleted, setTableRowToBeDeleted] = useState<TableRow | undefined>(undefined)
+  const [showConfirmCloseModal, setShowConfirmCloseModal] = useState<boolean>(false)
   const [resourceGroupItems, setResourceGroupItems] = useState<EmbeddedTimeTableItem[]>([])
   const [tableRows, setTableRows] = useState<TableRow[]>([])
   const [editingKey, setEditingKey] = useState<string>('')
+  const [isDirty, setIsDirty] = useState<boolean>(false)
   const isEditing = useMemo(() => (record: TableRow) => record.rowId === editingKey, [editingKey])
 
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !resourceGroup || !agenda })
@@ -242,8 +242,9 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
       }
       setTableRows((prev) => [...prev, newRule])
       tableRowEdit(newRule)
+      setIsDirty(true)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
     }
   }
 
@@ -405,7 +406,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
             uiRruleParts._byday = []
           }
         } catch (error) {
-          openNotification('error', 'Update failed', error instanceof Error ? error.message : 'Error while updating the days column.')
+          openNotification('error', t('content.unexpected_error'), '')
           console.error('Error parsing existing RRULE string:', error, initialRruleString)
           initialRruleString = undefined // Clear if invalid to avoid issues
           // Reset to defaults if parsing failed
@@ -436,27 +437,24 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
       })
       setEditingKey(tableRow.rowId)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', t('content.unexpected_error'), '')
     }
   }
 
-  const tableHandleDelete = () => {
+  const tableHandleDelete = (record: TableRow) => {
     try {
-      if (!tableRowToBeDeleted) throw new Error('No rule selected')
+      if (!record) throw new Error()
       // Simply remove it from the state. When user save the form it will be 'deleted'
-
-      setTableRows((prev) => prev.filter((item) => item.rowId !== tableRowToBeDeleted.rowId))
+      setTableRows((prev) => prev.filter((item) => item.rowId !== record.rowId))
+      setIsDirty(true)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
-    } finally {
-      setShowDeleteTimeTableItemModal(false)
-      setTableRowToBeDeleted(undefined)
+      openNotification('error', t('notification.rule_delete_failed'), t('notification.rule_delete_error'))
     }
   }
 
-  const tableRowCancel = (timeTableItemRow: TableRow) => {
+  const tableRowCancel = useCallback(() => {
     setEditingKey('')
-  }
+  }, [setEditingKey])
 
   const tableRowUpdate = async (timeTableItemRow: TableRow) => {
     try {
@@ -485,15 +483,13 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
           return row
         }),
       )
-
       setEditingKey('')
+      setIsDirty(true)
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error && Array.isArray(error.errorFields) && error.errorFields.length > 0) {
         openNotification('error', t('validation.validation_failed'), t('validation.check_highlighted_fields_correct_errors'))
-      } else if (error instanceof Error) {
-        openNotification('error', 'Update Failed', error.message)
       } else {
-        openNotification('error', 'Update Failed', 'An unexpected error occurred.')
+        openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
       }
     }
   }
@@ -551,19 +547,20 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
       }
       const scheduleFiltered = agenda.schedules.filter((sched) => sched !== resourceGroup)
       const newSchedule = [...scheduleFiltered, newResourceGroup]
-      updateAgenda({ ...agenda, schedules: [...newSchedule] })
+      updateAgenda({ ...agenda, schedules: [...newSchedule] }).unwrap()
+      showMessageFeedback('success', t('notification.schedule_saved'))
+      setIsDirty(false)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+      openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
     }
   }
 
-  useEffect(() => {
-    if (isUpdateAgendaSuccess) showMessageFeedback('success', t('notification.schedule_saved'))
-    if (isUpdateAgendaError) openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
-  }, [isUpdateAgendaSuccess, isUpdateAgendaError])
+  const handleClose = () => {
+    setShowConfirmCloseModal(true)
+  }
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.edit_schedule')} blockAntModalBodyVerticalScroll noFooter width={1300}>
+    <CustomModal isVisible={isVisible} handleClose={handleClose} title={t('content.edit_schedule')} blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modalRule">
         {notificationContextHolder}
         {messageContextHolder}
@@ -1048,7 +1045,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
                         return (
                           <Space size="middle" className="actionButtons">
                             <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
-                            <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
+                            <Button onClick={() => tableRowCancel()}>{t('content.cancel')}</Button>
                           </Space>
                         )
                       } else {
@@ -1057,8 +1054,7 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
                             <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
                             <Button
                               onClick={() => {
-                                setTableRowToBeDeleted(record)
-                                setShowDeleteTimeTableItemModal(true)
+                                tableHandleDelete(record)
                               }}
                             >
                               {t('content.delete')}
@@ -1078,25 +1074,24 @@ export const ModalRules = ({ isVisible, onClose, resourceGroup, agenda }: ModalR
             </Button>
           </div>
         </Form>
-        {showDeleteTimeTableItemModal &&
+        {showConfirmCloseModal &&
           createPortal(
             <ModalConfirmAction
-              title={t('delete_modal.confirm_delete_rule_prompt')}
+              title={t('delete_modal.confirm_closure_title')}
               description=""
               content={
                 <>
-                  <p>{t('delete_modal.delete_rule_warning_details')}</p>
-                  <p>{t('delete_modal.delete_permanent_warning')}</p>
+                  <p>{t('delete_modal.unsaved_changes_will_be_lost')}</p>
+                  <p>{t('delete_modal.confirm_close_prompt')}</p>
                 </>
               }
-              yesBtnTitle={t('content.delete')}
-              noBtnTitle={t('content.close')}
-              onYesClick={tableHandleDelete}
+              yesBtnTitle={t('content.close')}
+              noBtnTitle={t('content.cancel')}
+              onYesClick={onClose}
               onNoClick={() => {
-                setTableRowToBeDeleted(undefined)
-                setShowDeleteTimeTableItemModal(false)
+                setShowConfirmCloseModal(false)
               }}
-              isVisible={showDeleteTimeTableItemModal}
+              isVisible={showConfirmCloseModal}
               mode="danger"
             />,
             document.body,

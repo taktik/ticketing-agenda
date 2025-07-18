@@ -107,12 +107,11 @@ interface FormValues {
 
 interface ServiceSettingProps {
   service: HealthcareParty
+  handleDeleteService: (service: HealthcareParty) => Promise<void>
 }
 
-export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement => {
-  const { setSelectedKey } = useContext(SettingContext)
+export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingProps): ReactElement => {
   const { t } = useTranslation()
-  const [isModification, setIsModification] = useState<boolean>(false)
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const [showDeleteProcedureModal, setShowDeleteProcedureModal] = useState<boolean>(false)
   const [procedureRowToBeDeleted, setProcedureRowToBeDeleted] = useState<ProcedureRow | undefined>(undefined)
@@ -123,7 +122,6 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
 
   const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !service, authorId: service?.id ?? '' })
-
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !service || !agenda })
 
   const sortedProcedures = useMemo(() => {
@@ -165,13 +163,9 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const [createUpdateProcedure, { isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading }] = useCreateUpdateCalendarItemTypeMutation()
 
   const [deleteProcedure, { isError: isDeleteDemarcheError, isSuccess: isDeleteDemarcheSuccess, isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypeMutation()
-  const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading, isSuccess: isDeleteServiceSuccess, error: isDeleteServiceError } = useRecursiveHcpDeletion()
 
   const isFetching = useMemo(() => isAgendaLoading || isProceduresLoading, [isAgendaLoading, isProceduresLoading])
-  const isMutating = useMemo(
-    () => isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading || isDeleteServiceLoading,
-    [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading, isDeleteServiceLoading],
-  )
+  const isMutating = useMemo(() => isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading, [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading])
   const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   useEffect(() => {
@@ -182,9 +176,9 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
     }
   }, [service, form])
 
-  const addProcedure = () => {
+  const addProcedure = async () => {
     try {
-      if (!service || !agenda) throw new Error(t('validation.unexpected_error'))
+      if (!service || !agenda) throw new Error()
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
         defaultCalendarItemType: true,
@@ -202,21 +196,20 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
           EN: '',
           DE: '',
         },
-        color: 'blue',
+        color: '#0000ff',
         id: v4(),
       })
-      createUpdateProcedure(procedure)
+      await createUpdateProcedure(procedure).unwrap()
+      showMessageFeedback('success', t('notification.procedure_saved'))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.procedure_save_failed'), t('notification.procedure_save_error'))
     }
   }
 
   const tableRowUpdate = async (procedureRow: ProcedureRow) => {
     try {
-      setIsModification(true)
       // Step 1 : We first make sure everything is valid
-      if (!service) throw new Error('No service selected')
-      if (!agenda) throw new Error('No agenda selected')
+      if (!service || !agenda) throw new Error()
 
       const rowValues = await form.validateFields()
 
@@ -291,20 +284,18 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
         await Promise.allSettled(mutationPromises) // Use allSettled to attempt all operations
       } catch (error) {
         console.error('Error during sync/mutation execution:', error)
-        openNotification('error', 'Update Failed', 'Some operations may have failed.')
+        openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
       }
+      showMessageFeedback('success', t('notification.procedure_modified'))
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error && Array.isArray(error.errorFields) && error.errorFields.length > 0) {
         openNotification('error', t('validation.validation_failed'), t('validation.check_highlighted_fields_correct_errors'))
-      } else if (error instanceof Error) {
-        openNotification('error', 'Update Failed', error.message)
       } else {
-        openNotification('error', 'Update Failed', t('validation.unexpected_error'))
+        openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
       }
     } finally {
       // Step 5: we return the row to its display mode
       setEditingKey('')
-      setIsModification(false)
     }
   }
 
@@ -314,7 +305,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
 
   const tableRowEdit = (procedureRow: ProcedureRow) => {
     try {
-      if (!procedureRow.rowId) throw new Error('No rule selected')
+      if (!procedureRow.rowId) throw new Error()
       // Set the state with the values
       form.setFieldsValue({
         appointmentDurations: procedureRow.appointmentDurations,
@@ -325,62 +316,26 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
       })
       setEditingKey(procedureRow.rowId)
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('content.unexpected_error'), '')
     }
   }
 
-  const handleDeleteService = async () => {
+  const tableRowDelete = async () => {
     try {
-      if (!service) throw new Error('No site selected')
-      await deleteService(service)
-    } catch (error) {
-      openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
-    } finally {
-      setSelectedKey('default')
-    }
-  }
-
-  const tableRowDelete = () => {
-    try {
-      if (!procedureRowToBeDeleted) throw new Error('No procedure selected')
+      if (!procedureRowToBeDeleted) throw new Error()
       // Simply remove it from the state. When user save the form it will be 'deleted'
       const proceduresToDelete = procedures?.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR'])
-      if (!proceduresToDelete) throw new Error('No procedure selected')
+      if (!proceduresToDelete) throw new Error()
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
-      deleteProcedure(proceduresToDeleteIds)
+      await deleteProcedure(proceduresToDeleteIds).unwrap()
+      showMessageFeedback('success', t('notification.procedure_deleted'))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.procedure_delete_failed'), t('notification.procedure_delete_error'))
     } finally {
       setShowDeleteProcedureModal(false)
       setProcedureRowToBeDeleted(undefined)
     }
   }
-
-  //  Two pairs of useffects : First pair handles the delete and create/update of procedures
-  useEffect(() => {
-    if (isDeleteDemarcheError && isModification) openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
-    else if (isDeleteDemarcheError) openNotification('error', t('notification.procedure_delete_failed'), t('notification.procedure_delete_error'))
-    if (isDeleteDemarcheSuccess && isModification) showMessageFeedback('success', t('notification.procedure_modified'))
-    else if (isDeleteDemarcheSuccess) showMessageFeedback('success', t('notification.procedure_deleted'))
-  }, [isDeleteDemarcheSuccess, isDeleteDemarcheError])
-
-  useEffect(() => {
-    if (isCreateUpdateDemarcheError && isModification) openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
-    else if (isCreateUpdateDemarcheError) openNotification('error', t('notification.procedure_save_failed'), t('notification.procedure_save_error'))
-    if (isCreateUpdateDemarcheSuccess && isModification) showMessageFeedback('success', t('notification.procedure_modified'))
-    else if (isCreateUpdateDemarcheSuccess) showMessageFeedback('success', t('notification.procedure_saved'))
-  }, [isCreateUpdateDemarcheSuccess, isCreateUpdateDemarcheError])
-
-  // Second pair handles the delete and update of the service
-  useEffect(() => {
-    if (isDeleteServiceSuccess) showMessageFeedback('success', t('notification.service_deleted'))
-    if (isDeleteServiceError) openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
-  }, [isDeleteServiceSuccess, isDeleteServiceError])
-
-  useEffect(() => {
-    if (isCreateUpdateServiceSuccess) showMessageFeedback('success', t('notification.service_saved'))
-    if (isCreateUpdateServiceError) openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
-  }, [isCreateUpdateServiceSuccess, isCreateUpdateServiceError])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -397,24 +352,22 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
   const [messageApi, messageContextHolder] = message.useMessage()
 
   const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    console.log('test')
     messageApi.open({
       type,
       content,
       duration: 0,
     })
-    console.log('test 2')
     // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const renameService = (newTitles: LanguageDescription) => {
+  const renameService = async (newTitles: LanguageDescription) => {
     try {
-      if (!service) throw new Error('No service selected')
-      if (!newTitles || !newTitles['FR']) throw new Error('No service selected')
-      createUpdateService(new HealthcareParty({ ...service, descr: newTitles, name: newTitles['FR'] }))
+      if (!service || !newTitles || !newTitles['FR']) throw new Error()
+      await createUpdateService(new HealthcareParty({ ...service, descr: newTitles, name: newTitles['FR'] })).unwrap()
+      showMessageFeedback('success', t('notification.service_saved'))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     } finally {
       setShowEditServiceTitle(false)
     }
@@ -478,7 +431,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             >
               <ColumnGroup
                 title={
-                  <Button style={{ width: '100%' }} onClick={addProcedure}>
+                  <Button style={{ width: '100%' }} onClick={addProcedure} disabled={editingKey !== ''}>
                     {t('content.add_procedure')}
                   </Button>
                 }
@@ -738,7 +691,7 @@ export const ServiceSetting = ({ service }: ServiceSettingProps): ReactElement =
             yesBtnTitle={t('content.delete')}
             noBtnTitle={t('content.close')}
             onYesClick={() => {
-              handleDeleteService()
+              handleDeleteService(service)
               setShowDeleteServiceModal(false)
             }}
             onNoClick={() => setShowDeleteServiceModal(false)}

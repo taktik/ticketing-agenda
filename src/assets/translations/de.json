@@ -198,7 +198,10 @@
     "delete_user_warning_details": "Diese Aktion löscht den Benutzer und alle zugehörigen Daten.",
     "delete_permanent_warning": "Einmal gelöscht, können ihre Informationen nicht wiederhergestellt werden, es handelt sich also um eine endgültige Aktion.",
     "confirm_delete_appointment_prompt": "Sind Sie sicher, dass Sie diesen Termin löschen möchten?",
-    "delete_appointment_warning_details": "Diese Aktion löscht diesen Termin endgültig."
+    "delete_appointment_warning_details": "Diese Aktion löscht diesen Termin endgültig.",
+    "confirm_closure_title": "Schließung bestätigen",
+    "unsaved_changes_will_be_lost": "Alle nicht gespeicherten Änderungen gehen verloren.",
+    "confirm_close_prompt": "Sind Sie sicher, dass Sie schließen möchten?"
   },
   "notification": {
     "procedure_modified": "Das Verfahren wurde geändert!",

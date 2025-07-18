@@ -197,7 +197,10 @@
     "delete_user_warning_details": "This action will delete the user and all their associated data.",
     "delete_permanent_warning": "Once deleted, their information can’t be recovered, so it’s a permanent action.",
     "confirm_delete_appointment_prompt": "Are you sure you want to delete this appointment?",
-    "delete_appointment_warning_details": "This action will permanently delete this appointment."
+    "delete_appointment_warning_details": "This action will permanently delete this appointment.",
+    "confirm_closure_title": "Confirm closure",
+    "unsaved_changes_will_be_lost": "All unsaved changes will be lost.",
+    "confirm_close_prompt": "Are you sure you want to close?"
   },
   "notification": {
     "procedure_modified": "The procedure was modified!",

@@ -74,7 +74,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
   const addSchedule = () => {
     try {
-      if (!agenda) throw new Error('No service selected')
+      if (!agenda) throw new Error()
       const today = new Date()
       const start = formatDateToYYYYMMDDHHmmssNumber(today)
       const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(endOfToday(), 1))
@@ -82,7 +82,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       setResourceGroups((prev) => [...prev, newResourceGroup])
       handleEditClick(newResourceGroup)
     } catch (error) {
-      openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
+      openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
     }
   }
 
@@ -97,12 +97,12 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
   const handleDeleteResourceGroup = () => {
     try {
-      if (!agenda) throw new Error('No service selected')
-      if (!resourceGroupToBeDelete) throw new Error('No schedule selected')
+      if (!agenda || !resourceGroupToBeDelete) throw new Error()
       const updatedSchedule = agenda.schedules.filter((sched) => sched !== resourceGroupToBeDelete)
-      updateAgenda({ ...agenda, schedules: updatedSchedule })
+      updateAgenda({ ...agenda, schedules: updatedSchedule }).unwrap()
+      showMessageFeedback('success', t('notification.schedule_deleted'))
     } catch (error) {
-      openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
+      openNotification('error', t('notification.schedule_delete_failed'), t('notification.schedule_delete_error'))
     } finally {
       setShowDeleteResourceGroupModal(false)
     }
@@ -124,12 +124,6 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       setSelectedService(selected)
     }
   }, [services])
-
-  //Update agenda notifications
-  useEffect(() => {
-    if (isUpdateAgendaSuccess) showMessageFeedback('success', t('notification.schedule_updated'))
-    if (isUpdateAgendaError) openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
-  }, [isUpdateAgendaSuccess, isUpdateAgendaError])
 
   const canAddSchedule = agenda?.schedules.length === resourceGroups.length
 

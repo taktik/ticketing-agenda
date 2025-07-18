@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import emptyIcon from '../../assets/empty.svg'
 import { SettingContext } from '../../contexts/SettingContext'
-import { useCreateUpdateHealthcarePartyMutation, useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
+import { useCreateUpdateHealthcarePartyMutation, useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery, useRecursiveHcpDeletion } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import { CustomModal } from '../common/CustomModal'
 import { ButtonStyleType, StyledButton } from '../common/StyledButton'
@@ -32,7 +32,9 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const { data: sites } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
-  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading } = useRecursiveHcpDeletion()
+  const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading } = useRecursiveHcpDeletion()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -70,19 +72,15 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
   const handleAddSite = useCallback(() => {
     try {
-      if (!rootHcp) throw new Error('No root')
+      if (!rootHcp) throw new Error()
       const id = v4()
       const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id })
-      createUpdateSite(siteHcp)
+      createUpdateSite(siteHcp).unwrap()
+      showMessageFeedback('success', t('notification.site_saved'))
     } catch (error) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
     }
   }, [selectedKey, rootHcp])
-
-  useEffect(() => {
-    if (isCreateUpdateSiteSuccess) showMessageFeedback('success', t('notification.site_saved'))
-    if (isCreateUpdateSiteError) openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
-  }, [isCreateUpdateSiteSuccess, isCreateUpdateSiteError])
 
   const menuItems: MenuItem[] = useMemo(
     () =>
@@ -144,6 +142,30 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     setOpenKeys(keys)
   }
 
+  const handleSiteDelete = async (site: HealthcareParty) => {
+    try {
+      if (!site) throw new Error('No site selected')
+      await deleteSite(site)
+      showMessageFeedback('success', t('notification.site_deleted'))
+    } catch (error) {
+      openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
+    } finally {
+      setSelectedKey('default')
+    }
+  }
+
+  const handleDeleteService = async (service: HealthcareParty) => {
+    try {
+      if (!service) throw new Error('No service selected')
+      await deleteService(service)
+      showMessageFeedback('success', t('notification.service_deleted'))
+    } catch (error) {
+      openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
+    } finally {
+      setSelectedKey('default')
+    }
+  }
+
   const renderSettingContent = useCallback(() => {
     const match = selectedKey.match(/^(site|service)-(.+)$/)
     const type = match?.[1]
@@ -159,13 +181,13 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
       const servicesOfThisSite = sortedServices?.filter((service) => service.parentId === matchingSite.id) ?? []
 
-      return <SiteSetting site={matchingSite} services={servicesOfThisSite} />
+      return <SiteSetting site={matchingSite} services={servicesOfThisSite} handleSiteDelete={handleSiteDelete} />
     }
 
     if (type === 'service') {
       const matchingService = sortedServices?.find((service) => service.id === id)
       if (!matchingService) return <div>{t('cntent.service_not_found')}</div>
-      return <ServiceSetting service={matchingService} />
+      return <ServiceSetting service={matchingService} handleDeleteService={handleDeleteService} />
     }
 
     return <div>{t('content.select_site_or_service')}</div>

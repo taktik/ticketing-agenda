@@ -197,7 +197,10 @@
     "delete_user_warning_details": "Deze actie verwijdert de gebruiker en al hun bijbehorende gegevens.",
     "delete_permanent_warning": "Eenmaal verwijderd, kan hun informatie niet worden hersteld, dus het is een permanente actie.",
     "confirm_delete_appointment_prompt": "Weet u zeker dat u deze afspraak wilt verwijderen?",
-    "delete_appointment_warning_details": "Deze actie verwijdert deze afspraak definitief."
+    "delete_appointment_warning_details": "Deze actie verwijdert deze afspraak definitief.",
+    "confirm_closure_title": "Sluiting bevestigen",
+    "unsaved_changes_will_be_lost": "Alle niet-opgeslagen wijzigingen gaan verloren.",
+    "confirm_close_prompt": "Weet u zeker dat u wilt sluiten?"
   },
   "notification": {
     "procedure_modified": "De procedure is gewijzigd!",

@@ -278,7 +278,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
       setIsCreateEventSuccess(true)
     } catch (error: unknown) {
-      openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
+      openNotification('error', t('content.unexpected_error'), '')
       setIsCreateEventSuccess(false)
     } finally {
       setProcessWorking(false)

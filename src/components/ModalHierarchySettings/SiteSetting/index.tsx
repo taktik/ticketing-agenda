@@ -17,22 +17,20 @@ import './index.css'
 interface SiteSettingProps {
   site: HealthcareParty
   services: HealthcareParty[]
+  handleSiteDelete: (site: HealthcareParty) => Promise<void>
 }
 
 type ServiceWithProceduresTuple = [HealthcareParty, CalendarItemType[]]
 
-export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement => {
+export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingProps): ReactElement => {
   const { selectedKeyId, setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showEditableSite, setShowEditableSite] = useState<boolean>(false)
 
   const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
-
   const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
   const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateHealthcarePartyMutation()
-
-  const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading } = useRecursiveHcpDeletion()
 
   const siteActionItems: MenuProps['items'] = [
     {
@@ -50,26 +48,15 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
     },
   ]
 
-  const onSiteInfoSave = (formValues: SiteInfoFormValues) => {
+  const onSiteInfoSave = async (formValues: SiteInfoFormValues) => {
     try {
-      if (!site) throw new Error('No site selected')
-      createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] })).unwrap()
+      if (!site) throw new Error()
+      await createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] })).unwrap()
+      showMessageFeedback('success', t('notification.site_saved'))
     } catch (error) {
       openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
     } finally {
       setShowEditableSite(false)
-    }
-  }
-
-  const handleSiteDelete = async () => {
-    try {
-      if (!site) throw new Error('No site selected')
-      await deleteSite(site)
-      showMessageFeedback('success', t('notification.site_deleted'))
-    } catch (error) {
-      openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
-    } finally {
-      setSelectedKey('default')
     }
   }
 
@@ -86,25 +73,16 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
         parentId: selectedKeyId,
         id: v4(),
       })
-      await createUpdateService({ ...serviceHcp })
+      await createUpdateService({ ...serviceHcp }).unwrap()
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({
         intervalMinutes: 5,
       })
       await createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id, zoneId: 'Europe/Brussels', slottingAlgorithm: algorithm })).unwrap()
+      showMessageFeedback('success', t('notification.service_saved'))
     } catch (error) {
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     }
   }
-
-  useEffect(() => {
-    if (isCreateUpdateSiteSuccess) showMessageFeedback('success', t('notification.site_saved'))
-    if (isCreateUpdateAgendaError) openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
-  }, [isCreateUpdateSiteSuccess, isCreateUpdateAgendaError])
-
-  useEffect(() => {
-    if (isCreateUpdateServiceSuccess) showMessageFeedback('success', t('notification.service_saved'))
-    if (isCreateUpdateServiceError) openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
-  }, [isCreateUpdateServiceSuccess, isCreateUpdateServiceError])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -187,7 +165,7 @@ export const SiteSetting = ({ site, services }: SiteSettingProps): ReactElement 
             yesBtnTitle={t('content.delete')}
             noBtnTitle={t('content.close')}
             onYesClick={() => {
-              handleSiteDelete()
+              handleSiteDelete(site)
               setShowDeleteSiteModal(false)
             }}
             onNoClick={() => setShowDeleteSiteModal(false)}

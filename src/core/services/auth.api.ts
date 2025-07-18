@@ -67,8 +67,6 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
         console.log('Backend success message:', result.message)
       } catch (error) {
         console.error('Failed to save key via fetch:', error)
-        // Re-throw the error so the calling component knows something went wrong.
-        throw error
       }
     }
   }
@@ -142,25 +140,6 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
       }
     }
     return result
-  }
-
-  private async promptUserForRecoveryKey(reason: RecoveryDataUseFailureReason = RecoveryDataUseFailureReason.Missing): Promise<string | undefined> {
-    const promise = new Promise<string>((resolve) => {
-      const handleChange = () => {
-        const {
-          cardinalApi: { recoveryKeys },
-        } = store.getState()
-        if (recoveryKeys === undefined) {
-          return
-        }
-        resolve(recoveryKeys[0])
-        unsubscribe?.()
-      }
-      const unsubscribe: Unsubscribe | undefined = store.subscribe(handleChange)
-    })
-
-    store.dispatch(askForRecoveryKey({ reason }))
-    return promise
   }
 }
 
