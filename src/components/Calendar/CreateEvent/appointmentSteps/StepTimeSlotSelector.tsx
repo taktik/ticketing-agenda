@@ -95,6 +95,33 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
 
   useEffect(() => console.log('availabilitiesData', availabilitiesData), [availabilitiesData])
 
+  const cellRender = (current: Dayjs, info: { originNode: React.ReactElement }) => {
+    const formattedDate = current.format('YYYY-MM-DD')
+    const highlightedDates = ['2025-07-28', '2025-07-30', '2025-08-05']
+    const defaultCellProps = info.originNode.props
+
+    if (highlightedDates.includes(formattedDate)) {
+      return (
+        <div
+          className={defaultCellProps.className}
+          style={{
+            backgroundColor: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: '6px',
+            height: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {defaultCellProps.children}
+        </div>
+      )
+    } else {
+      return info.originNode
+    }
+  }
+
   const renderCalendarHeader: CalendarProps<Dayjs>['headerRender'] = ({ value, onChange }) => {
     const today = dayjs()
     const endOfNextMonth = dayjs().add(1, 'month')
@@ -140,7 +167,7 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
       <Col xs={24} lg={14}>
         <Title level={4}>{t('content.select_a_date')}</Title>
         <Form.Item name={['timeslot', 'date']} rules={[{ required: true }]}>
-          <Calendar fullscreen={false} disabledDate={disabledDate} headerRender={renderCalendarHeader} />
+          <Calendar fullscreen={false} disabledDate={disabledDate} headerRender={renderCalendarHeader} fullCellRender={cellRender} />
         </Form.Item>
       </Col>
       <Col xs={24} lg={10}>

@@ -121,9 +121,6 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
     return [service, serviceProcedures]
   })
 
-  useEffect(() => console.log('services', services), [services])
-  useEffect(() => console.log('allAgendas', allAgendas), [allAgendas])
-
   return (
     <div className="site-root">
       {notificationContextHolder}

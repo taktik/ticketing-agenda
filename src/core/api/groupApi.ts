@@ -1,6 +1,7 @@
 import { DesignDocument } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
+import { DATABASE_ID } from '../../constants'
 
 export const groupApiRtk = createApi({
   reducerPath: 'groupApi',
@@ -13,7 +14,7 @@ export const groupApiRtk = createApi({
       async queryFn(_, { getState }) {
         const groupApi = (await cardinalApi(getState))?.group
         return guard([groupApi], async (): Promise<DesignDocument[]> => {
-          const result = await groupApi?.initDesignDocs('ic-taktikticketingagendamouscron-f7627de4-d674-4443-9987-2cc5c0d793b1', true, false)
+          const result = await groupApi?.initDesignDocs(DATABASE_ID!, true, false)
           if (!result) {
             throw new Error('Error during init design docs')
           }

@@ -6,7 +6,7 @@ export const MSG_GW_URL = 'https://msg-gw.icure.cloud'
 // export const MSG_GW_URL = 'https://gwad.taktik.to'
 export const SPEC_ID = process.env.REACT_APP_EXTERNAL_SERVICES_SPEC_ID
 export const PROCESS_ID = process.env.REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID
-export const DATABASE_ID = process.env.DATABASE_ID
+export const DATABASE_ID = process.env.REACT_APP_DATABASE_ID
 
 export const DATE_FORMAT = 'dd.MM.yyyy'
 export const DATE_FORMAT_TO_DISPLAY = 'DD.MM.YYYY'

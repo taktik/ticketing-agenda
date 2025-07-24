@@ -67,7 +67,7 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
 
   return (
     <div className="modalManageAccountForm">
-      {isPractitionerUpdatingLoading && <SpinLoader />}
+      {(isPractitionerUpdatingLoading || isCreateUpdateUserLoading) && <SpinLoader />}
       <Form
         className="modalManageAccountForm__form"
         layout="vertical"

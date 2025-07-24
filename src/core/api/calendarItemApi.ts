@@ -52,7 +52,7 @@ export const calendarItemApiRtk = createApi({
       async queryFn(calendarItem, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
-          const updatedCalendarItem = !!calendarItem.rev ? await calendarApi?.modifyCalendarItem(calendarItem) : await calendarApi?.createCalendarItem(calendarItem)
+          const updatedCalendarItem = !!calendarItem.rev ? await calendarApi?.modifyCalendarItem(calendarItem) : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, undefined))
           if (!updatedCalendarItem) {
             throw new Error('CalendarItem update failed')
           }
