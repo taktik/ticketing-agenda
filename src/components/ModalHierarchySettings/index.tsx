@@ -1,5 +1,5 @@
 import { AppstoreOutlined, BankOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
-import { HealthcareParty } from '@icure/cardinal-sdk'
+import { CodeStub, HealthcareParty } from '@icure/cardinal-sdk'
 import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
@@ -74,7 +74,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     try {
       if (!rootHcp) throw new Error()
       const id = v4()
-      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id, public: true })
+      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id, public: true, tags: [new CodeStub({ id: 'SITE', code: 'SITE', context: 'SITE', type: 'SITE' })] })
       createUpdateSite(siteHcp).unwrap()
       showMessageFeedback('success', t('notification.site_saved'))
     } catch (error) {

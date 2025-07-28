@@ -118,7 +118,7 @@ body * {
   min-height: 100vh;
   height: 100%;
   background: #ffffff;
-  overflow: auto;
+  overflow: hidden;
 }
 .Panel {
   position: relative;

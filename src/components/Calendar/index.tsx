@@ -145,7 +145,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           <Button onClick={() => handleCreate()}>{t('content.create_appointment')}</Button>
         </Space>
 
-        <Typography.Title level={4} style={{ margin: 0 }}>
+        <Typography.Title level={4} style={{ margin: 0 }} ellipsis={{ rows: 2 }}>
           {calendarTitle}
         </Typography.Title>
 

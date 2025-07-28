@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined } from '@ant-design/icons'
-import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
+import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, CodeStub, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
 import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -73,6 +73,7 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
         parentId: selectedKeyId,
         id: v4(),
         public: true,
+        tags: [new CodeStub({ id: 'SERVICE', code: 'SERVICE', context: 'SERVICE', type: 'SERVICE' })],
       })
       await createUpdateService({ ...serviceHcp }).unwrap()
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({
