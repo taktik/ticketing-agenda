@@ -1,5 +1,5 @@
 import { CloseOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { Agenda, EmbeddedTimeTableHour, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, EmbeddedTimeTableHour, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
 import { Button, DatePicker, Empty, Form, Input, InputNumber, message, notification, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
@@ -153,11 +153,38 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       .filter((item) => item.defaultCalendarItemType === true)
   }, [procedures])
 
+  const groupProcedures = useMemo(() => {
+    const groupedByName = (procedures ?? []).reduce(
+      (acc, procedure) => {
+        const key = procedure.name ?? ''
+
+        if (!acc[key]) {
+          acc[key] = []
+        }
+
+        acc[key].push(procedure)
+        return acc
+      },
+      {} as Record<string, CalendarItemType[]>,
+    )
+
+    const finalEntries = Object.values(groupedByName)
+      .map((group) => {
+        const defaultProc = group.find((p) => p.defaultCalendarItemType)
+
+        return defaultProc ? [defaultProc.id, group] : null
+      })
+
+      .filter((pair): pair is [string, CalendarItemType[]] => pair !== null)
+
+    return new Map(finalEntries)
+  }, [procedures])
+
   const allProcedureIds = useMemo(() => (sortedProcedures || []).map((p) => p.id), [sortedProcedures])
 
   const procedureMap = useMemo(() => {
-    return new Map((procedures ?? []).map((p) => [p.id, p.name]))
-  }, [procedures])
+    return new Map((sortedProcedures ?? []).map((p) => [p.id, p.name]))
+  }, [sortedProcedures])
 
   useEffect(() => {
     if (!Array.isArray(resourceGroupItems)) {
@@ -526,6 +553,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
 
       const newEmbeddedTimeTableItems = tableRows.map((row: TableRow) => {
         if (!row.rrule) throw new Error()
+        const extendedCalendarItemTypesIds = row.calendarItemTypesIds.flatMap((item) => groupProcedures.get(item)?.map((proc) => proc.id) ?? [])
         const newEmbeddedItem: Partial<EmbeddedTimeTableItem> & Pick<EmbeddedTimeTableItem, 'rrule' | 'hours' | 'calendarItemTypesIds'> = {
           rrule: row.rrule,
           hours: row.hours,
@@ -533,7 +561,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
           availabilities: row.availabilities,
           notBeforeInMinutes: row.timeConstraints[0],
           notAfterInMinutes: row.timeConstraints[1],
-          calendarItemTypesIds: row.calendarItemTypesIds,
+          calendarItemTypesIds: extendedCalendarItemTypesIds,
           rruleStartDate: dayjsToFuzzyDateInt(row.rruleStart),
         }
         return new EmbeddedTimeTableItem(newEmbeddedItem)
@@ -577,19 +605,19 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
               <div className="antSelect">
                 {t('content.name')}
                 <Form.Item name="name" rules={[{ required: true, message: t('validation.schedule_name_required') }]}>
-                  <Input suffix={<CloseOutlined disabled={nameValue === schedulingTableRow?.name} onClick={handleNameCancel} />} />
+                  <Input suffix={<CloseOutlined disabled={nameValue === schedulingTableRow?.name} onClick={handleNameCancel} />} onChange={() => setIsDirty(true)} />
                 </Form.Item>
               </div>
               <div className="antSelect">
                 {t('content.start')}
                 <Form.Item name="start" rules={[{ required: true, message: t('validation.schedule_start_required') }]}>
-                  <DatePicker format="DD/MM/YYYY" />
+                  <DatePicker format="DD/MM/YYYY" onChange={() => setIsDirty(true)} />
                 </Form.Item>
               </div>
               <div className="antSelect">
                 {t('content.end')}
                 <Form.Item name="end" rules={[{ required: true, message: t('validation.schedule_end_required') }]}>
-                  <DatePicker format="DD/MM/YYYY" />
+                  <DatePicker format="DD/MM/YYYY" onChange={() => setIsDirty(true)} />
                 </Form.Item>
               </div>
             </div>
