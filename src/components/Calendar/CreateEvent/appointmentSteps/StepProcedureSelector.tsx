@@ -104,92 +104,91 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
       //    This prevents an infinite re-render loop.
       if (currentSiteValue !== singleSiteId) {
         // 4. Use form.setFieldValue to update ONLY the field we care about.
-        //    This is much cleaner and has no external dependencies.
         form.setFieldValue(['procedures', name, 'site'], singleSiteId)
       }
     }
   }, [availableSites, form, name])
 
   return (
-    <Card>
-      <Space align="baseline" style={{ width: '100%', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <Card style={{ width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'baseline' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0, width: '100%', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0 }}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0 }}>
-              <Form.Item
-                name={[name, 'procedureSelectionId']}
-                label={t('content.procedure')}
-                rules={[{ required: true, message: t('content.select_procedure_prompt') }]}
-                style={{ marginBottom: 0 }}
-                className="procedure-select "
+            <Form.Item
+              name={[name, 'procedureSelectionId']}
+              label={t('content.procedure')}
+              rules={[{ required: true, message: t('content.select_procedure_prompt') }]}
+              style={{ marginBottom: 0 }}
+              className="procedure-select "
+            >
+              <Select
+                loading={isProcedureLoading}
+                placeholder={t('content.select_procedure_placeholder')}
+                showSearch
+                disabled={!isFirst && !selectedServiceName}
+                onChange={onProcedureChange}
+                filterOption={(input, option) =>
+                  String(option?.label ?? '')
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
               >
-                <Select
-                  loading={isProcedureLoading}
-                  placeholder={t('content.select_procedure_placeholder')}
-                  showSearch
-                  disabled={!isFirst && !selectedServiceName}
-                  onChange={onProcedureChange}
-                  filterOption={(input, option) =>
-                    String(option?.label ?? '')
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                >
-                  {filteredAvailableProcedures.map((procedure) => (
-                    <Option key={procedure.id} value={procedure.id} label={procedure.displayTextByLanguage[langCode]}>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>{procedure.displayTextByLanguage[langCode]}</div>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]} style={{ marginBottom: 0 }}>
-                <Select
-                  placeholder="Site"
-                  style={{ minWidth: '80px' }}
-                  disabled={!procedureId}
-                  loading={isProcedureLoading}
-                  className="site-select "
-                  defaultActiveFirstOption={availableSites ? availableSites.length === 1 : false}
-                >
-                  {(availableSites ?? []).map((variant) => (
-                    <Option key={variant.site.id} value={variant.site.id}>
-                      {variant.site.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </div>
-
-            <div className="right">
-              <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
-                <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId || !siteId} loading={isProcedureLoading}>
-                  {selectedSiteVariant?.variants.map((variant) => (
-                    <Option key={variant.attendees} value={variant.attendees}>
-                      {variant.attendees}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Tooltip title={t('content.remove_selection')}>
-                <Button
-                  type="text"
-                  danger
-                  icon={<MinusCircleOutlined />}
-                  onClick={() => {
-                    remove(name)
-                  }}
-                  disabled={!canRemove}
-                  size="middle"
-                  style={{ fontSize: '18px', cursor: 'pointer', alignSelf: 'end' }}
-                />
-              </Tooltip>
-            </div>
+                {filteredAvailableProcedures.map((procedure) => (
+                  <Option key={procedure.id} value={procedure.id} label={procedure.displayTextByLanguage[langCode]}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>{procedure.displayTextByLanguage[langCode]}</div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]} style={{ marginBottom: 0 }}>
+              <Select
+                placeholder="Site"
+                style={{ minWidth: '80px' }}
+                disabled={!procedureId}
+                loading={isProcedureLoading}
+                className="site-select "
+                defaultActiveFirstOption={availableSites ? availableSites.length === 1 : false}
+              >
+                {(availableSites ?? []).map((variant) => (
+                  <Option key={variant.site.id} value={variant.site.id}>
+                    {variant.site.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0, marginTop: '16px' }}>
-            {selectedSiteVariant?.procedureDetails && <Alert message={selectedSiteVariant?.procedureDetails} type="warning" showIcon icon={<ExclamationCircleOutlined />} style={{ width: '100%' }} />}
+
+          <div className="right">
+            <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
+              <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId || !siteId} loading={isProcedureLoading}>
+                {selectedSiteVariant?.variants.map((variant) => (
+                  <Option key={variant.attendees} value={variant.attendees}>
+                    {variant.attendees}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Tooltip title={t('content.remove_selection')}>
+              <Button
+                type="text"
+                danger
+                icon={<MinusCircleOutlined />}
+                onClick={() => {
+                  remove(name)
+                }}
+                disabled={!canRemove}
+                size="middle"
+                style={{ fontSize: '18px', cursor: 'pointer', alignSelf: 'end' }}
+              />
+            </Tooltip>
           </div>
         </div>
-      </Space>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0, marginTop: '16px', width: '100%' }}>
+          {selectedSiteVariant?.procedureDetails && (
+            <Alert message={selectedSiteVariant?.procedureDetails} type="warning" showIcon icon={<ExclamationCircleOutlined />} style={{ width: '100%', whiteSpace: 'pre-wrap' }} />
+          )}
+        </div>
+      </div>
     </Card>
   )
 }

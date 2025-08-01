@@ -1,5 +1,5 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Calendar, CalendarProps, Col, Form, FormInstance, Row, Space, Typography, notification } from 'antd'
+import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, Row, Space, Typography, notification } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,7 +11,10 @@ import './index.css'
 
 const { Title, Paragraph } = Typography
 
-const availableTimeSlots: string[] = ['09:00', '09:30', '10:00', '10:30', '11:00', '14:00', '14:30', '15:00', '16:00']
+interface ProcessedAvailabilities {
+  availabilityList: dayjs.Dayjs[]
+  procedureDuration: number
+}
 
 interface StepTimeSlotSelectorProps {
   form: FormInstance<AppointmentForm>
@@ -20,14 +23,24 @@ interface StepTimeSlotSelectorProps {
 }
 export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeSlotSelectorProps) => {
   const { t } = useTranslation()
-  const [availabilitiesData, setAvailabilitiesData] = useState<number[]>([])
+  const [availabilities, setAvailabilities] = useState<dayjs.Dayjs[]>([])
   const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
   const timeValue = Form.useWatch(['timeslot', 'time'], form)
+  const [selectedHour, setSelectedHour] = useState<dayjs.Dayjs | undefined>(undefined)
+  const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
 
   const minDate = useMemo(() => dayjs().startOf('day'), [])
   const maxDate = useMemo(() => dayjs().add(1, 'month').endOf('month'), [])
+  const availableDatesSet = useMemo(() => {
+    const dates = new Set()
+    availabilities.forEach((slot) => {
+      dates.add(slot.format('YYYY-MM-DD'))
+    })
+    return dates
+  }, [availabilities])
+
   const disabledDate = (current: Dayjs) => {
-    return current < minDate || current > maxDate
+    return current < minDate || current > maxDate || !availableDatesSet.has(current.format('YYYY-MM-DD'))
   }
 
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
@@ -44,18 +57,71 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
     setTimeout(api.destroy, 2500)
   }
 
+  const findConsecutiveSlots = (processedAvailabilities: ProcessedAvailabilities[]): dayjs.Dayjs[] => {
+    // Si aucune disponibilité n'est fournie, on retourne un tableau vide.
+    if (!processedAvailabilities || processedAvailabilities.length === 0) {
+      return []
+    }
+
+    // --- Étape 1 : Pour chaque procédure, "décomposer" ses disponibilités en blocs de 5 minutes ---
+    const allProcedureIntervals = processedAvailabilities.map((proc) => {
+      const duration = proc.procedureDuration
+      const slotsNeeded = duration / 5 // En supposant que chaque créneau dure 5 minutes
+      const intervals = new Set<number>()
+
+      proc.availabilityList.forEach((startSlot) => {
+        for (let i = 0; i < slotsNeeded; i++) {
+          intervals.add(startSlot.add(i * 5, 'minutes').valueOf())
+        }
+      })
+      return intervals
+    })
+
+    // --- Étape 2 : Trouver l'intersection de tous les blocs de 5 minutes disponibles ---
+    if (allProcedureIntervals.length === 0) return []
+
+    let commonIntervals = new Set(allProcedureIntervals[0])
+    for (let i = 1; i < allProcedureIntervals.length; i++) {
+      commonIntervals = new Set(Array.from(commonIntervals).filter((timestamp) => allProcedureIntervals[i].has(timestamp)))
+    }
+
+    // --- Étape 3 : Calculer la durée totale et le nombre de créneaux nécessaires ---
+    const totalDuration = processedAvailabilities.reduce((sum, proc) => sum + proc.procedureDuration, 0)
+    const requiredConsecutiveSlots = totalDuration / 5
+
+    if (requiredConsecutiveSlots <= 0) return []
+
+    // --- Étape 4 : Chercher des séquences continues dans les créneaux communs ---
+    const validStartSlots: dayjs.Dayjs[] = []
+    const sortedCommonIntervals = Array.from(commonIntervals).sort()
+
+    for (const timestamp of sortedCommonIntervals) {
+      let isSequenceValid = true
+      for (let i = 1; i < requiredConsecutiveSlots; i++) {
+        const nextTimestamp = dayjs(timestamp)
+          .add(i * 5, 'minutes')
+          .valueOf()
+        if (!commonIntervals.has(nextTimestamp)) {
+          isSequenceValid = false
+          break
+        }
+      }
+      if (isSequenceValid) {
+        validStartSlots.push(dayjs(timestamp))
+      }
+    }
+
+    return validStartSlots
+  }
+
   useEffect(() => {
-    console.log('test start')
     if (!procedures || procedures.length === 0) {
-      console.log('procedures', procedures)
       return
     }
-    console.log('test middle')
 
     const fetchAllAvailabilities = async () => {
-      console.log('fetch avail start')
       try {
-        const promises = procedures.map((item) => {
+        const promises = procedures.map(async (item) => {
           const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
             procedureSelectionId: item.procedureSelectionId,
             site: item.site,
@@ -63,41 +129,89 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
           })
 
           if (!masterProcedure || !siteVariant || !procedureVariant || !siteVariant.agendaId) {
-            throw Error('Missing data for selected procedures.')
+            throw Error()
           }
 
-          return getAvailabilities({
+          const rawAvailabilities = await getAvailabilities({
             agendaId: siteVariant.agendaId,
             calendarItemTypeId: procedureVariant.procedureId,
             startDate: formatDayjsToYYYYMMDDHHmmssNumber(minDate),
             endDate: formatDayjsToYYYYMMDDHHmmssNumber(maxDate),
           }).unwrap()
-        })
 
-        console.log('promises', promises)
+          const availabilitiesAsDayjs = (rawAvailabilities || []).map((num) => dayjs(String(num), 'YYYYMMDDHHmmss'))
+
+          return {
+            procedureDuration: procedureVariant.duration,
+            availabilityList: availabilitiesAsDayjs,
+          } as ProcessedAvailabilities
+        })
 
         const results = await Promise.all(promises)
-        console.log('fetch avail results', results)
+        console.log('results', results)
 
-        const allAvailabilities = results.flatMap((result) => {
-          return result || []
-        })
+        const finalList = findConsecutiveSlots(results)
+        console.log('FINAL LIST', finalList)
 
-        setAvailabilitiesData(allAvailabilities)
-        console.log('fetch avail end')
+        setAvailabilities(finalList)
       } catch (error: unknown) {
         openNotification('error', t('validation.unexpected_error'), '')
       }
     }
-    console.log('test end')
     fetchAllAvailabilities()
   }, [procedures, selections, minDate, maxDate, getAvailabilities])
 
-  useEffect(() => console.log('availabilitiesData', availabilitiesData), [availabilitiesData])
+  //useEffect(() => console.log('availabilitiesData', availabilities), [availabilities])
+  //useEffect(() => console.log('timeValue', timeValue), [timeValue])
+
+  useEffect(() => {
+    const firstAvailable = availabilities.find((d) => !disabledDate(d))
+    if (firstAvailable) {
+      form.setFieldsValue({
+        timeslot: { date: firstAvailable },
+      })
+    }
+  }, [availabilities, form])
+
+  const slotsForSelectedDay = useMemo(() => {
+    return availabilities.filter((slot) => slot.isSame(dateValue, 'day'))
+  }, [dateValue, availabilities])
+
+  const slotsByHour = useMemo(() => {
+    return slotsForSelectedDay.reduce(
+      (acc, slot) => {
+        const hour = slot.format('HH')
+        if (!acc[hour]) {
+          acc[hour] = []
+        }
+        acc[hour].push(slot)
+        return acc
+      },
+      {} as Record<string, dayjs.Dayjs[]>,
+    )
+  }, [slotsForSelectedDay])
+
+  const availableHours = useMemo(() => {
+    return Object.keys(slotsByHour)
+      .sort()
+      .map((hour) => {
+        return slotsByHour[hour][0].minute(0).second(0)
+      })
+  }, [slotsByHour])
+
+  useEffect(() => {
+    setSelectedHour(undefined)
+    setSelectedTime(undefined)
+  }, [dateValue])
+
+  const handleHourSelect = (hour: dayjs.Dayjs) => {
+    setSelectedHour(hour)
+    setSelectedTime(undefined)
+  }
 
   const cellRender = (current: Dayjs, info: { originNode: React.ReactElement }) => {
     const formattedDate = current.format('YYYY-MM-DD')
-    const highlightedDates = ['2025-07-28', '2025-07-30', '2025-08-05']
+    const highlightedDates = useMemo(() => availabilities.map((d) => d.format('YYYY-MM-DD')), [availabilities])
     const defaultCellProps = info.originNode.props
 
     if (highlightedDates.includes(formattedDate)) {
@@ -164,26 +278,64 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
   return (
     <Row gutter={[32, 32]}>
       {notificationContextHolder}
-      <Col xs={24} lg={14}>
+      <Col xs={24} lg={12}>
         <Title level={4}>{t('content.select_a_date')}</Title>
         <Form.Item name={['timeslot', 'date']} rules={[{ required: true }]}>
           <Calendar fullscreen={false} disabledDate={disabledDate} headerRender={renderCalendarHeader} fullCellRender={cellRender} />
         </Form.Item>
       </Col>
-      <Col xs={24} lg={10}>
+      <Col xs={24} lg={12}>
         <Title level={4}>{t('content.select_a_time')}</Title>
         <Paragraph type="secondary">
           {t('content.available_on')} {dateValue ? dateValue.format('MMMM D, YYYY') : '...'}
         </Paragraph>
-        <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]}>
-          <Space wrap size={[8, 16]}>
-            {availableTimeSlots.map((time) => (
-              <Button key={time} type={timeValue === time ? 'primary' : 'default'} onClick={() => form.setFieldsValue({ timeslot: { time: time } })} disabled={!dateValue} style={{ width: '90px' }}>
-                {time}
-              </Button>
-            ))}
-          </Space>
-        </Form.Item>
+
+        <Divider />
+        <div style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto', padding: '0 16px 0 4px' }}>
+          {availableHours.length > 0 ? (
+            <>
+              <div>
+                <Title level={5} style={{ marginBottom: 12 }}>
+                  1. Choisissez une heure
+                </Title>
+                <Space size={[8, 12]} wrap>
+                  {availableHours.map((hour) => (
+                    <Button key={hour.format('HH')} type={selectedHour?.isSame(hour, 'hour') ? 'primary' : 'default'} onClick={() => handleHourSelect(hour)}>
+                      {hour.format('HH')}:00
+                    </Button>
+                  ))}
+                </Space>
+              </div>
+
+              {selectedHour && (
+                <div style={{ marginTop: 24 }}>
+                  <Title level={5} style={{ marginBottom: 12 }}>
+                    2. Choisissez un créneau
+                  </Title>
+                  <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]}>
+                    <Space size={[8, 12]} wrap className="time-slot-buttons">
+                      {slotsByHour[selectedHour.format('HH')].map((time) => (
+                        <Button
+                          key={time.format('HH:mm')}
+                          type={selectedTime?.isSame(time) ? 'primary' : 'default'}
+                          onClick={() => {
+                            setSelectedTime(time)
+                            form.setFieldsValue({ timeslot: { time: time } })
+                          }}
+                        >
+                          {time.format('HH:mm')}
+                        </Button>
+                      ))}
+                    </Space>
+                  </Form.Item>
+                </div>
+              )}
+            </>
+          ) : (
+            <Empty description="Aucun créneau disponible pour cette date." />
+          )}
+        </div>
+        <Divider />
       </Col>
     </Row>
   )

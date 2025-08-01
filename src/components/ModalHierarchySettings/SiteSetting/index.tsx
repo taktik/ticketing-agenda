@@ -79,7 +79,7 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({
         intervalMinutes: 5,
       })
-      await createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id, zoneId: 'Europe/Brussels', slottingAlgorithm: algorithm })).unwrap()
+      await createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id, zoneId: 'Europe/Brussels', slottingAlgorithm: algorithm, name: serviceHcp.name })).unwrap()
       showMessageFeedback('success', t('notification.service_saved'))
     } catch (error) {
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))

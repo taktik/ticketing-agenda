@@ -986,15 +986,15 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                         return (
                           <Form.Item name="public" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.availability_required') }]}>
                             <Radio.Group className="radio-group">
-                              <Radio value={false}>{t('content.activate')}</Radio>
-                              <Radio value={true}>{t('content.deactivate')}</Radio>
+                              <Radio value={true}>{t('content.activate')}</Radio>
+                              <Radio value={false}>{t('content.deactivate')}</Radio>
                             </Radio.Group>
                           </Form.Item>
                         )
                       } else {
-                        if (isPublic === true) {
+                        if (isPublic === false) {
                           return <Tag color="red">{t('content.deactivated')}</Tag>
-                        } else if (isPublic === false) {
+                        } else if (isPublic === true) {
                           return <Tag color="green">{t('content.activated')}</Tag>
                         }
                         return <Tag color="orange">{t('content.unknown')}</Tag>

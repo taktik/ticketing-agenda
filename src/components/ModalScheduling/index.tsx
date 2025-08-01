@@ -46,6 +46,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
   useEffect(() => {
     const sortedResourceGroups = [...(agenda?.schedules ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+    console.log('AGENDA ----- :', agenda)
 
     const tableRows = sortedResourceGroups.map((resourceGroup) => {
       const newRow: SchedulingTableRow = {

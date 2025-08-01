@@ -82,12 +82,13 @@ export const findProcedureData = (selections: ProcedureSelection[], formProcedur
   return { masterProcedure, siteVariant, procedureVariant }
 }
 
-export const formatDateTime = (dateForm: dayjs.Dayjs | undefined, timeForm: string | undefined) => {
+export const formatDateTime = (dateForm: dayjs.Dayjs | undefined, timeForm: dayjs.Dayjs | undefined) => {
   const date = dateForm
   const time = timeForm
   if (!date || !time) return 'N/A'
 
-  const [hour, minute] = time.split(':').map(Number)
+  const hour = timeForm.hour()
+  const minute = timeForm.minute()
 
   const combinedDateTime = date.hour(hour).minute(minute)
 
@@ -112,7 +113,7 @@ interface PersonalInfo {
 
 interface TimeSlot {
   date: Dayjs
-  time: string
+  time: dayjs.Dayjs
 }
 
 export interface AppointmentForm {
@@ -370,7 +371,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   }
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={900}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={1100}>
       <div style={{ width: '100%', padding: '1.5rem' }}>
         {notificationContextHolder}
         {messageContextHolder}
