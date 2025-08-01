@@ -266,7 +266,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       console.log('citizenUser', citizenUser)
       console.log('citizenPatient', citizenPatient)
 
-      const eventsCreationPromises = procedures.map((item) => {
+      const eventsCreationPromises = procedures.map(async (item) => {
         const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
           procedureSelectionId: item.procedureSelectionId,
           site: item.site,
@@ -292,9 +292,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           agendaId: siteVariant.agendaId,
           phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
         })
-        //const eventResult = await createUpdateEvent(newEvent).unwrap()
+        console.log('new event', newEvent)
+        return await createUpdateEvent(newEvent).unwrap()
       })
-      //await Promise.all(eventsCreationPromises)
+      await Promise.all(eventsCreationPromises)
 
       setIsCreateEventSuccess(true)
     } catch (error: unknown) {

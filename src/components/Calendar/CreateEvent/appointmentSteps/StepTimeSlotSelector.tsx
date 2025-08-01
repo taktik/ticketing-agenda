@@ -202,11 +202,13 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
   useEffect(() => {
     setSelectedHour(undefined)
     setSelectedTime(undefined)
+    form.resetFields([['timeslot', 'time']])
   }, [dateValue])
 
   const handleHourSelect = (hour: dayjs.Dayjs) => {
     setSelectedHour(hour)
     setSelectedTime(undefined)
+    form.resetFields([['timeslot', 'time']])
   }
 
   const cellRender = (current: Dayjs, info: { originNode: React.ReactElement }) => {

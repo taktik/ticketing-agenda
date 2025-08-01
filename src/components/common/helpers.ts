@@ -1,3 +1,4 @@
+import { format } from 'date-fns'
 import dayjs from 'dayjs'
 
 export const minutesToDayjs = (totalMinutes: number): dayjs.Dayjs => {
@@ -210,4 +211,14 @@ export const correctAndCleanRRuleString = (rruleString: string): string => {
   // 1. The first one fixes the UNTIL format.
   // 2. The second one removes the "RRULE:" prefix from the beginning of the string.
   return rruleString.replace(/(UNTIL=\d{8})T\d{6}Z/, '$1').replace(/^RRULE:/, '')
+}
+
+/**
+ * Converts a Date object into a number in yyyyMMddHHmmss format using date-fns.
+ * @param date The Date object to convert.
+ * @returns A number representing the date (e.g., 20250801).
+ */
+export const dateToYYYYMMDD = (date: Date): number => {
+  const dateTimeString = format(date, 'yyyyMMddHHmmss')
+  return parseInt(dateTimeString, 10)
 }

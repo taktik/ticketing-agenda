@@ -21,6 +21,7 @@ import { ListEventContent } from './EventContent/ListEventContent'
 import { createPortal } from 'react-dom'
 import { EventDetails } from './EventDetails/ModalEvent'
 import { CreateEvent } from './CreateEvent/CreateEvent'
+import { dateToYYYYMMDD } from '../common/helpers'
 
 interface CalendarProps {
   handleFullCalendarDateChange: () => void
@@ -65,10 +66,10 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const { data: calendarItems, isLoading: isCalendarItemsLoading } = useGetCalendarItemByAgendaIdAndPeriodQuery(
     {
       agendaId: selectedAgenda?.id ?? '',
-      from: calendarRange.from.getTime(),
-      to: calendarRange.to.getTime(),
+      from: dateToYYYYMMDD(calendarRange.from),
+      to: dateToYYYYMMDD(calendarRange.to),
     },
-    { skip: true },
+    { skip: !selectedAgenda },
   )
 
   const events: EventInput[] = useMemo(() => {
@@ -86,6 +87,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       }
     })
   }, [calendarItems])
+
+  useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
+  useEffect(() => console.log('events', events), [events])
 
   useEffect(() => {
     const calendarApi = calendarRef.current?.getApi()
@@ -184,7 +188,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         weekends={false}
         height="90%"
         datesSet={handleDatesSet}
-        events={fakeEvents}
+        events={events}
         eventClick={handleEventClick}
         eventContent={(eventInfo) => {
           if (eventInfo.view.type === 'listWeek' || eventInfo.view.type === 'listDay') {
