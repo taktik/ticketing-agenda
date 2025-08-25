@@ -29,9 +29,8 @@ import {
   numberTimestampToDayjs,
 } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
-import './index.css'
-import isEqual from 'lodash/isEqual'
 import { SchedulingTableRow } from '../index'
+import './index.css'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -180,7 +179,8 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
     return new Map(finalEntries)
   }, [procedures])
 
-  const allProcedureIds = useMemo(() => (sortedProcedures || []).map((p) => p.id), [sortedProcedures])
+  const allCalendarItemTypeIds = useMemo(() => (procedures || []).map((p) => p.id), [procedures])
+  const allDefaultCalendarItemTypeIds = useMemo(() => (sortedProcedures || []).map((p) => p.id), [sortedProcedures])
 
   const procedureMap = useMemo(() => {
     return new Map((sortedProcedures ?? []).map((p) => [p.id, p.name]))
@@ -523,8 +523,8 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
   }
 
   const handleSelectAll = useCallback(() => {
-    form.setFieldsValue({ calendarItemTypesIds: allProcedureIds })
-  }, [form, allProcedureIds])
+    form.setFieldsValue({ calendarItemTypesIds: allDefaultCalendarItemTypeIds })
+  }, [form, allDefaultCalendarItemTypeIds])
 
   // Helper function to update the specific time field within the 'hours' array in the form
   const handleTimeValueUpdate = (itemIndexInFormList: number, fieldName: 'startHour' | 'endHour', timeValue: dayjs.Dayjs | null) => {
@@ -601,34 +601,38 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
         {messageContextHolder}
         <Form layout="vertical" colon={false} form={form} onFinish={handleSubmit} style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between', gap: '1rem' }}>
           <div className="formElements">
-            <div className="selectors">
-              <div className="antSelect">
-                {t('content.name')}
-                <Form.Item name="name" rules={[{ required: true, message: t('validation.schedule_name_required') }]}>
-                  <Input suffix={<CloseOutlined disabled={nameValue === schedulingTableRow?.name} onClick={handleNameCancel} />} onChange={() => setIsDirty(true)} />
-                </Form.Item>
+            <div className="header">
+              <div className="selectors">
+                <div className="antSelect">
+                  {t('content.name')}
+                  <Form.Item name="name" rules={[{ required: true, message: t('validation.schedule_name_required') }]}>
+                    <Input suffix={<CloseOutlined disabled={nameValue === schedulingTableRow?.name} onClick={handleNameCancel} />} onChange={() => setIsDirty(true)} />
+                  </Form.Item>
+                </div>
+                <div className="antSelect">
+                  {t('content.start')}
+                  <Form.Item name="start" rules={[{ required: true, message: t('validation.schedule_start_required') }]}>
+                    <DatePicker format="DD/MM/YYYY" onChange={() => setIsDirty(true)} />
+                  </Form.Item>
+                </div>
+                <div className="antSelect">
+                  {t('content.end')}
+                  <Form.Item name="end" rules={[{ required: true, message: t('validation.schedule_end_required') }]}>
+                    <DatePicker format="DD/MM/YYYY" onChange={() => setIsDirty(true)} />
+                  </Form.Item>
+                </div>
               </div>
-              <div className="antSelect">
-                {t('content.start')}
-                <Form.Item name="start" rules={[{ required: true, message: t('validation.schedule_start_required') }]}>
-                  <DatePicker format="DD/MM/YYYY" onChange={() => setIsDirty(true)} />
-                </Form.Item>
-              </div>
-              <div className="antSelect">
-                {t('content.end')}
-                <Form.Item name="end" rules={[{ required: true, message: t('validation.schedule_end_required') }]}>
-                  <DatePicker format="DD/MM/YYYY" onChange={() => setIsDirty(true)} />
-                </Form.Item>
+              <div className="submitButton">
+                <Button type="primary" htmlType="submit">
+                  {t('content.save_schedule')}
+                </Button>
               </div>
             </div>
             <div className="antTable">
               <Table<TableRow>
                 className="custom-table"
-                pagination={{
-                  pageSize: 4,
-                  simple: true,
-                }}
-                scroll={{ y: 'calc(100vh - 530px)', x: 'max-content' }}
+                pagination={false}
+                scroll={{ y: 'calc(800px - 350px)', x: 'max-content' }}
                 dataSource={tableRows}
                 rowKey="rowId"
                 locale={{ emptyText: <Empty description={t('content.no_rule_yet')} /> }}
@@ -654,7 +658,22 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                         return (
                           <>
                             <Form.Item name="calendarItemTypesIds" style={{ margin: 0 }} rules={[{ required: true, message: t('content.select_procedure_required') }]}>
-                              <Select mode="multiple" allowClear placeholder={t('content.select_procedure_placeholder')} style={{ width: '100%' }} loading={!sortedProcedures}>
+                              <Select
+                                mode="multiple"
+                                allowClear
+                                placeholder={t('content.select_procedure_placeholder')}
+                                style={{ width: '100%' }}
+                                loading={!sortedProcedures}
+                                tagRender={({ value, onClose }) => {
+                                  const name = procedureMap.get(value)
+                                  if (!name) return <></>
+                                  return (
+                                    <Tag color="blue" closable onClose={onClose} style={{ marginRight: 3 }}>
+                                      {name}
+                                    </Tag>
+                                  )
+                                }}
+                              >
                                 {(sortedProcedures || []).map((type) => (
                                   <Select.Option key={type.id} value={type.id}>
                                     {type.name}
@@ -668,7 +687,9 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                                 size="small"
                                 onClick={handleSelectAll}
                                 disabled={
-                                  (allProcedureIds.length > 0 && watchedCalendarItemTypesIds && watchedCalendarItemTypesIds.length === allProcedureIds.length) || !sortedProcedures || sortedProcedures.length === 0
+                                  (allCalendarItemTypeIds.length > 0 && watchedCalendarItemTypesIds && watchedCalendarItemTypesIds.length === allCalendarItemTypeIds.length) ||
+                                  !sortedProcedures ||
+                                  sortedProcedures.length === 0
                                 }
                               >
                                 {t('content.select_all')}
@@ -678,7 +699,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                         )
                       } else {
                         // Display mode
-                        const everythingSelected = allProcedureIds.length > 0 && allProcedureIds.length === record.calendarItemTypesIds.length
+                        const everythingSelected = sortedProcedures.length > 0 && sortedProcedures.every((proc) => record.calendarItemTypesIds.includes(proc.id))
                         if (everythingSelected) {
                           return <Tag color="purple">{t('content.all_procedures')}</Tag>
                         } else if (record.calendarItemTypesIds.length === 0) {
@@ -1098,11 +1119,6 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                 </ColumnGroup>
               </Table>
             </div>
-          </div>
-          <div className="submitButton">
-            <Button type="primary" htmlType="submit">
-              {t('content.save_schedule')}
-            </Button>
           </div>
         </Form>
         {showConfirmCloseModal &&

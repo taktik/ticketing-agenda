@@ -27,7 +27,6 @@ export const calendarItemApiRtk = createApi({
           return new DecryptedCalendarItem(calendarItem)
         })
       },
-
       providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: 'all' }] : []),
     }),
     getCalendarItemByAgendaIdAndPeriod: builder.query<CalendarItem[] | undefined, GetCalendarItemsByAgendaAndPeriods>({

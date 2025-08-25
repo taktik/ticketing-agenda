@@ -1,19 +1,19 @@
-import { EmbeddedTimeTableItem, HealthcareParty, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
+import { HealthcareParty, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
 import { Select as AntSelect, Button, Empty, message, notification, Space, Table, Tooltip } from 'antd'
 import Column from 'antd/es/table/Column'
 import ColumnGroup from 'antd/es/table/ColumnGroup'
-import { addMonths, endOfToday, format, Locale, startOfDay } from 'date-fns'
+import { addMonths, endOfToday, format, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { v4 } from 'uuid'
 import { useGetAgendaByAuthorId, useUpdateAgendaMutation } from '../../core/api/agendaApi'
 import { CustomModal } from '../common/CustomModal'
 import { formatDateToYYYYMMDDHHmmssNumber, numberTimestampToDate } from '../common/helpers'
 import { ModalConfirmAction } from '../common/ModalConfirmAction'
 import './index.css'
 import { ModalRules } from './ModalRules'
-import { v4 } from 'uuid'
 
 const localeMap: Record<string, Locale> = {
   en: enUS,
@@ -184,11 +184,8 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
         <div className="antTable">
           <Table<SchedulingTableRow>
-            pagination={{
-              pageSize: 6,
-              simple: true,
-            }}
-            scroll={{ y: 'calc(100vh - 500px)', x: 'max-content' }}
+            pagination={false}
+            scroll={{ y: 'calc(800px - 350px)', x: 'max-content' }}
             dataSource={schedulingTableRows}
             rowKey={(record) => `${record.startDateTime}-${record.endDateTime}`}
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}

@@ -283,7 +283,7 @@ export const ManagerUsers = (): ReactElement => {
             rowKey="rowId"
             locale={{ emptyText: <Empty description={t('content.no_user_yet')} /> }}
             loading={isLoading}
-            scroll={{ y: 'calc(800px - 340px)', x: 'max-content' }}
+            scroll={{ y: 'calc(800px - 300px)', x: 'max-content' }}
           >
             <ColumnGroup
               title={
