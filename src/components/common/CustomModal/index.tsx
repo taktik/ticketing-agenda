@@ -40,7 +40,7 @@ export const getCustomModalResponsiveStyles = (mobileViewCondition: boolean) => 
   } else {
     return {
       top: '5%',
-      height: 'calc(100vh - 5%)',
+      height: '800px', // 'calc(100vh - 5%)',
       display: 'flex',
       overflow: 'hidden',
       maxWidth: '100vw',

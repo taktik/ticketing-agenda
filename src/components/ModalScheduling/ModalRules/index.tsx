@@ -696,11 +696,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                                   <Tag key={typeId} color="blue">
                                     {name}
                                   </Tag>
-                                ) : (
-                                  <Tag key={typeId} icon={<ExclamationCircleOutlined />} color="warning">
-                                    {t('content.not_set')}
-                                  </Tag>
-                                )
+                                ) : null
                               })}
                             </Space>
                           )

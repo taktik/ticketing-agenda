@@ -4,7 +4,6 @@ import { Provider } from 'react-redux'
 import { store } from './core/store'
 import App from './App'
 import './i18n'
-
 import './style/less/index.css'
 
 const container = document.getElementById('root')!

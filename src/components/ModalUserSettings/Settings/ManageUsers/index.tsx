@@ -278,15 +278,12 @@ export const ManagerUsers = (): ReactElement => {
         <div className="ant-table-custom">
           <Table<UserRow>
             className="custom-table"
-            pagination={{
-              pageSize: 10,
-              simple: true,
-            }}
-            scroll={{ y: 'calc(100vh - 450px)', x: 'max-content' }}
+            pagination={false}
             dataSource={tableRows}
             rowKey="rowId"
             locale={{ emptyText: <Empty description={t('content.no_user_yet')} /> }}
             loading={isLoading}
+            scroll={{ y: 'calc(800px - 340px)', x: 'max-content' }}
           >
             <ColumnGroup
               title={

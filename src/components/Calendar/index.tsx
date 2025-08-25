@@ -7,21 +7,21 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Button, Segmented, Space, Typography } from 'antd'
-import { DateSelectArg, DatesSetArg, EventApi, EventClickArg, EventInput, EventSourceInput } from 'fullcalendar'
-import React, { ReactElement, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import './index.css'
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { useGetCalendarItemByAgendaIdAndPeriodQuery } from '../../core/api/calendarItemApi'
+import { Button, Segmented, Space, Typography } from 'antd'
 import { addDays, addHours, endOfDay, endOfWeek, startOfDay, startOfWeek } from 'date-fns'
+import { EventApi, EventClickArg, EventInput } from 'fullcalendar'
+import React, { ReactElement, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
+import { useGetCalendarItemByAgendaIdAndPeriodQuery } from '../../core/api/calendarItemApi'
+import { dateToYYYYMMDD } from '../common/helpers'
+import { CreateEvent } from './CreateEvent/CreateEvent'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
-import { createPortal } from 'react-dom'
 import { EventDetails } from './EventDetails/ModalEvent'
-import { CreateEvent } from './CreateEvent/CreateEvent'
-import { dateToYYYYMMDD } from '../common/helpers'
+import './index.css'
 
 interface CalendarProps {
   handleFullCalendarDateChange: () => void
@@ -37,18 +37,6 @@ type calendarRangeType = {
   from: Date
   to: Date
 }
-
-const fakeEvents: EventInput[] = [
-  { id: '1', title: 'Déclaration de mariage', start: new Date().getTime(), end: addHours(new Date(), 2).getTime(), color: 'orange', extendedProps: { calendarItemTypeId: '1', agendaId: '5' } },
-  {
-    id: '2',
-    title: 'Déclaration de changement de nom/prénom',
-    start: addDays(addHours(new Date(), 3), 1).getTime(),
-    end: addDays(addHours(new Date(), 4), 1).getTime(),
-    color: 'green',
-    extendedProps: { calendarItemTypeId: '2', agendaId: '3', fullName: 'Phil Defer', email: 'PhilDefer@gmail.com' },
-  },
-]
 
 export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate, procedures, sites }: CalendarProps): ReactElement => {
   const [eventModalOpen, setEventModalOpen] = useState(false)

@@ -58,7 +58,6 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
         })
 
         if (!response.ok) {
-          // Handle HTTP errors like 4xx or 5xx
           const errorData = await response.json()
           throw new Error(errorData.message || 'Backend request failed')
         }

@@ -46,14 +46,14 @@ export const ModalSettings = ({ isVisible, onClose, currentUser, user }: ModalSe
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.your_settings')} noFooter blockAntModalBodyVerticalScroll width={1300}>
-      <Layout className="modal-settings">
+      <Layout className="modal-settings-user">
         <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
-          <div className="menu-user">
-            <Menu onClick={onClick} defaultSelectedKeys={['profil']} mode="inline" items={items} style={{ height: 'auto', borderRight: 0 }} expandIcon={false} />
+          <div className="menu-sites">
+            <Menu mode="inline" items={items} onClick={onClick} defaultSelectedKeys={['profil']} style={{ height: 'auto', borderRight: 0 }} expandIcon={false} />
           </div>
         </Sider>
         <Layout>
-          <Content className="selected-user-setting">{renderSetting()}</Content>
+          <Content className="selected-setting-user">{renderSetting()}</Content>
         </Layout>
       </Layout>
     </CustomModal>

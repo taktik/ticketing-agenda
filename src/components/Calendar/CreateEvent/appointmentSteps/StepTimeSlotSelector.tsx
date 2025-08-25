@@ -240,9 +240,9 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
 
   const renderCalendarHeader: CalendarProps<Dayjs>['headerRender'] = ({ value, onChange }) => {
     const today = dayjs()
-    const endOfNextMonth = dayjs().add(1, 'month')
+    const latestMonth = useMemo(() => (availabilities.length ? dayjs(Math.max(...availabilities.map((d) => d.valueOf()))) : dayjs().add(1, 'month').endOf('month')), [availabilities])
     const isPrevDisabled = useMemo(() => (value ? value.isSame(today, 'month') : true), [value, today])
-    const isNextDisabled = useMemo(() => (value ? value.isSame(endOfNextMonth, 'month') : true), [value, endOfNextMonth])
+    const isNextDisabled = useMemo(() => (value ? value.isSame(latestMonth, 'month') : true), [value, latestMonth])
 
     const handleMonthChange = (proposedDate: Dayjs) => {
       if (proposedDate.isBefore(minDate)) {

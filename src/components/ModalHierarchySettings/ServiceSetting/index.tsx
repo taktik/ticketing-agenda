@@ -419,15 +419,12 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
           <div className="ant-table-custom">
             <Table<ProcedureRow>
               className="custom-table"
-              pagination={{
-                pageSize: 3,
-                simple: true,
-              }}
-              scroll={{ y: 'calc(100vh - 550px)', x: 'max-content' }}
+              scroll={{ y: 'calc(800px - 340px)', x: 'max-content' }}
               dataSource={tableRows}
               rowKey="rowId"
               locale={{ emptyText: <Empty description={t('content.no_procedure_yet')} /> }}
               loading={isLoading}
+              pagination={false}
             >
               <ColumnGroup
                 title={
