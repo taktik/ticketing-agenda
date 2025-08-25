@@ -31,10 +31,10 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
   const formProcedures = Form.useWatch('procedures', form) || []
 
   const langCode = useMemo(() => {
-    return languageMapping[i18n.language] || 'FR' // Fallback
+    return languageMapping[i18n.language] || 'FR'
   }, [i18n.language])
 
-  // --- Watched values from the form (this part is fine) ---
+  // --- Watched values from the form ---
   const procedureId = Form.useWatch(['procedures', name, 'procedureSelectionId'], form)
   const siteId = Form.useWatch(['procedures', name, 'site'], form)
 
@@ -86,11 +86,6 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
       form.setFieldsValue({ procedures: newProcedures })
     }
   }
-
-  // TODO :
-  // 1) tooltip appear after we selected both the procedure and the site (below the selecotrs ?)
-  // 2) Make sure user cannot select the same service - procedure from two different site (lock the site selector to user first procedure choice)
-  // 3) If user adds a procedure, it must be of the same service but also same site. So only display procedures that have the same service and site
 
   useEffect(() => {
     // 1. Check if there is exactly one site available.
