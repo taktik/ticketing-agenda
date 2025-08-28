@@ -2,7 +2,6 @@ import { CloseOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutl
 import { Agenda, CalendarItemType, EmbeddedTimeTableHour, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
 import { Button, DatePicker, Empty, Form, Input, InputNumber, message, notification, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
-import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { format, Locale, setDay, setMonth } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs from 'dayjs'
@@ -638,485 +637,483 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                 locale={{ emptyText: <Empty description={t('content.no_rule_yet')} /> }}
                 loading={isLoading}
               >
-                <ColumnGroup
-                  title={
-                    <Button style={{ width: '100%' }} onClick={addRule}>
-                      {t('content.add_rule')}
-                    </Button>
-                  }
-                >
-                  <Column
-                    title={t('content.procedure')}
-                    dataIndex="calendarItemTypesIds"
-                    key="calendarItemTypesIds"
-                    width={'18%'}
-                    render={(currentValue: string[] | undefined, record: TableRow) => {
-                      const editable = isEditing(record)
+                <div className="table-add-entry">
+                  <Button style={{ width: '100%' }} onClick={addRule}>
+                    {t('content.add_rule')}
+                  </Button>
+                </div>
 
-                      if (editable) {
-                        // Edit mode
-                        return (
-                          <>
-                            <Form.Item name="calendarItemTypesIds" style={{ margin: 0 }} rules={[{ required: true, message: t('content.select_procedure_required') }]}>
-                              <Select
-                                mode="multiple"
-                                allowClear
-                                placeholder={t('content.select_procedure_placeholder')}
-                                style={{ width: '100%' }}
-                                loading={!sortedProcedures}
-                                tagRender={({ value, onClose }) => {
-                                  const name = procedureMap.get(value)
-                                  if (!name) return <></>
-                                  return (
-                                    <Tag color="blue" closable onClose={onClose} style={{ marginRight: 3 }}>
-                                      {name}
-                                    </Tag>
-                                  )
-                                }}
-                              >
-                                {(sortedProcedures || []).map((type) => (
-                                  <Select.Option key={type.id} value={type.id}>
-                                    {type.name}
-                                  </Select.Option>
-                                ))}
-                              </Select>
-                            </Form.Item>
-                            <Space style={{ marginTop: '12px', display: 'flex', justifyContent: 'start' }} size="small">
-                              <Button
-                                type="link"
-                                size="small"
-                                onClick={handleSelectAll}
-                                disabled={
-                                  (allCalendarItemTypeIds.length > 0 && watchedCalendarItemTypesIds && watchedCalendarItemTypesIds.length === allCalendarItemTypeIds.length) ||
-                                  !sortedProcedures ||
-                                  sortedProcedures.length === 0
-                                }
-                              >
-                                {t('content.select_all')}
-                              </Button>
-                            </Space>
-                          </>
-                        )
-                      } else {
-                        // Display mode
-                        const everythingSelected = sortedProcedures.length > 0 && sortedProcedures.every((proc) => record.calendarItemTypesIds.includes(proc.id))
-                        if (everythingSelected) {
-                          return <Tag color="purple">{t('content.all_procedures')}</Tag>
-                        } else if (record.calendarItemTypesIds.length === 0) {
-                          return (
-                            <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                              {t('content.not_set')}
-                            </Tag>
-                          )
-                        } else {
-                          return (
-                            <Space wrap size={[4, 4]} key={record.rowId}>
-                              {record.calendarItemTypesIds.map((typeId) => {
-                                const name = procedureMap.get(typeId)
-                                return name ? (
-                                  <Tag key={typeId} color="blue">
+                <Column
+                  title={t('content.procedure')}
+                  dataIndex="calendarItemTypesIds"
+                  key="calendarItemTypesIds"
+                  width={'18%'}
+                  render={(currentValue: string[] | undefined, record: TableRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      // Edit mode
+                      return (
+                        <>
+                          <Form.Item name="calendarItemTypesIds" style={{ margin: 0 }} rules={[{ required: true, message: t('content.select_procedure_required') }]}>
+                            <Select
+                              mode="multiple"
+                              allowClear
+                              placeholder={t('content.select_procedure_placeholder')}
+                              style={{ width: '100%' }}
+                              loading={!sortedProcedures}
+                              tagRender={({ value, onClose }) => {
+                                const name = procedureMap.get(value)
+                                if (!name) return <></>
+                                return (
+                                  <Tag color="blue" closable onClose={onClose} style={{ marginRight: 3 }}>
                                     {name}
                                   </Tag>
-                                ) : null
-                              })}
-                            </Space>
-                          )
-                        }
-                      }
-                    }}
-                  />
-
-                  <Column
-                    title={t('content.days')}
-                    dataIndex="rrule"
-                    key="rrule"
-                    width={'20%'}
-                    render={(rruleString: string | undefined, record: TableRow) => {
-                      const editable = isEditing(record)
-
-                      if (editable) {
-                        return (
-                          <Space direction="vertical" style={{ width: '100%' }}>
-                            <Form.Item name="rrule" noStyle rules={[{ required: true, message: t('content.recurrence_required') }]}>
-                              <Input type="hidden" />
-                            </Form.Item>
-
-                            <Space.Compact block className="rrule-repeat">
-                              <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.repeat_every')}:</Typography.Text>
-                              <Form.Item name="_interval" initialValue={1} rules={[{ required: true, message: t('validation.value_required') }]} noStyle>
-                                <InputNumber min={1} style={{ width: '35%' }} />
-                              </Form.Item>
-                              <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unit_required') }]} noStyle>
-                                <Select style={{ width: '65%' }}>
-                                  <Select.Option value={RRule.DAILY}>{watchedInterval === 1 ? t('rrule.day') : t('rrule.days')}</Select.Option>
-                                  <Select.Option value={RRule.WEEKLY}>{watchedInterval === 1 ? t('rrule.week') : t('rrule.weeks')}</Select.Option>
-                                </Select>
-                              </Form.Item>
-                            </Space.Compact>
-
-                            {watchedFreq === RRule.WEEKLY && (
-                              <div className="rrule-start">
-                                <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.on_days')}:</Typography.Text>
-                                <Form.Item name="_byday" rules={[{ required: true, message: t('content.select_at_least_one_day') }]} style={{ marginBottom: '12px', width: '100%', flexGrow: 1 }}>
-                                  <Select mode="multiple" allowClear placeholder={t('content.select_days_placeholder')}>
-                                    {RRuleWeekdays.map((day) => (
-                                      <Select.Option key={day.value} value={day.value} label={day.label}>
-                                        {day.label}
-                                      </Select.Option>
-                                    ))}
-                                  </Select>
-                                </Form.Item>
-                              </div>
-                            )}
-
-                            <div className="rrule-start">
-                              <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.from_date')}:</Typography.Text>
-                              <Form.Item
-                                name="rruleStart"
-                                rules={[{ required: true, message: t('validation.select_date_required') }]}
-                                style={{
-                                  marginBottom: '8px',
-                                  flexGrow: 1,
-                                }}
-                              >
-                                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" minDate={watchedTimeTableStart} maxDate={watchedTimeTableEnd} />
-                              </Form.Item>
-                            </div>
-                            <div className="rrule-start">
-                              <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.until')}:</Typography.Text>
-                              <Form.Item
-                                name="_until"
-                                rules={[{ required: true, message: t('validation.select_date_required') }]}
-                                style={{
-                                  marginBottom: '8px',
-                                  flexGrow: 1,
-                                }}
-                              >
-                                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" minDate={watchedTimeTableStart} maxDate={watchedTimeTableEnd} />
-                              </Form.Item>
-                            </div>
-                          </Space>
-                        )
-                      } else {
-                        if (!rruleString) {
-                          return (
-                            <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                              {t('content.not_set')}
-                            </Tag>
-                          )
-                        }
-                        try {
-                          const langOpts = getCurrentRruleLanguageOptions()
-
-                          const parsedRuleComponents = RRule.parseString(rruleString)
-                          if (parsedRuleComponents.freq === undefined) {
-                            throw new Error()
-                          }
-
-                          const dtStart = record.rruleStart?.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0))
-
-                          // 2. Create the options object for new RRule() ensuring all required types are met
-                          const optionsForToText: Partial<Options> = {
-                            dtstart: dtStart,
-                            freq: parsedRuleComponents.freq as Frequency,
-                            ...(parsedRuleComponents.interval !== undefined && { interval: parsedRuleComponents.interval }),
-                            ...(parsedRuleComponents.byweekday && { byweekday: parsedRuleComponents.byweekday }),
-                          }
-
-                          const ruleForText = new RRule(optionsForToText)
-
-                          const formattedStartDate = format(dtStart, 'P', { locale: dateFnsLocale })
-                          const fromDatePrefix = t('rrule.from_date').toLowerCase()
-
-                          const rruleTranslation = ruleForText.toText(rruleGettextAdapter, langOpts)
-                          const displayText = `${rruleTranslation} ${fromDatePrefix} ${formattedStartDate}`
-
-                          return <span title={rruleString}>{displayText}</span>
-                        } catch (e) {
-                          console.error('Error processing RRULE for display:', e, rruleString)
-                          return (
-                            <Tag color="red" title={rruleString}>
-                              {t('content.invalid_rule')}
-                            </Tag>
-                          )
-                        }
-                      }
-                    }}
-                  />
-                  <Column
-                    title={t('content.hours')}
-                    dataIndex="hours"
-                    key="hours"
-                    width={'13%'}
-                    render={(hoursArray: EmbeddedTimeTableHour[] | undefined, record: TableRow) => {
-                      const editable = isEditing(record)
-
-                      if (editable) {
-                        return (
-                          <Form.List name="hours">
-                            {(fields, { add, remove }, { errors }) => (
-                              <div style={{ maxHeight: '150px', overflowY: 'auto', paddingRight: '10px' }}>
-                                {fields.map(({ key, name, ...restField }) => {
-                                  return (
-                                    <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                                      <Form.Item {...restField} name={[name, 'startHour']} rules={[{ required: true, message: t('validation.start_time_required') }]} noStyle>
-                                        <TimePicker
-                                          showNow={false}
-                                          format="HH:mm"
-                                          minuteStep={5}
-                                          placeholder={t('content.start_hour')}
-                                          style={{ width: '100px' }}
-                                          changeOnScroll // allows changing time with mouse scroll
-                                          onPickerValueChange={(timeValue) => handleTimeValueUpdate(name, 'startHour', timeValue)}
-                                        />
-                                      </Form.Item>
-                                      <span>-</span>
-                                      <Form.Item
-                                        {...restField}
-                                        name={[name, 'endHour']}
-                                        noStyle
-                                        rules={[
-                                          { required: true, message: t('validation.end_time_required') },
-                                          ({ getFieldValue }) => ({
-                                            validator(_, value) {
-                                              // 'value' is the current endHour (a dayjs object or null)
-                                              const startHourValue = getFieldValue(['hours', name, 'startHour'])
-
-                                              // Only validate if both start and end times are selected
-                                              // The 'required' rule will handle cases where one is missing.
-                                              if (value && startHourValue && dayjs.isDayjs(value) && dayjs.isDayjs(startHourValue)) {
-                                                if (!value.isAfter(startHourValue)) {
-                                                  // Check if endHour is NOT after startHour
-                                                  return Promise.reject(new Error(t('content.end_time_after_start_time')))
-                                                }
-                                              }
-                                              return Promise.resolve()
-                                            },
-                                          }),
-                                        ]}
-                                      >
-                                        <TimePicker
-                                          showNow={false}
-                                          format="HH:mm"
-                                          minuteStep={5}
-                                          placeholder={t('content.end_hour')}
-                                          style={{ width: '100px' }}
-                                          changeOnScroll
-                                          onPickerValueChange={(timeValue) => handleTimeValueUpdate(name, 'endHour', timeValue)}
-                                        />
-                                      </Form.Item>
-                                      <Button
-                                        type="text"
-                                        danger
-                                        icon={<MinusCircleOutlined />}
-                                        onClick={() => {
-                                          remove(name)
-                                        }}
-                                        disabled={fields.length === 1}
-                                        size="small"
-                                      />
-                                    </Space>
-                                  )
-                                })}
-                                <Button
-                                  type="dashed"
-                                  onClick={() => add({ startHour: null, endHour: null })} // Add with null for TimePicker placeholder
-                                  block
-                                  icon={<PlusOutlined />}
-                                >
-                                  {t('content.add_hours')}
-                                </Button>
-                                <Form.ErrorList errors={errors} />
-                              </div>
-                            )}
-                          </Form.List>
-                        )
-                      } else {
-                        if (!hoursArray || hoursArray.length === 0) {
-                          return <Tag>{t('status.noHoursSet', 'No hours set')}</Tag>
-                        }
-                        return (
-                          <div>
-                            {hoursArray.map((h, index) => {
-                              const startDisplay = formatHhmmssToHHmm(h.startHour)
-                              const endDisplay = formatHhmmssToHHmm(h.endHour)
-
-                              // Check if both start and end are "N/A" (our placeholder for undefined/null)
-                              if (startDisplay === 'N/A' && endDisplay === 'N/A') {
-                                return (
-                                  <Tag icon={<ExclamationCircleOutlined />} color="warning" key={`hour-range-${index}`}>
-                                    {t('content.not_set')}
-                                  </Tag>
                                 )
-                              } else {
-                                // If at least one is defined, show the range (e.g., "08:00 - N/A" or "N/A - 17:00" or "08:00 - 17:00")
-                                return (
-                                  <div key={`hour-range-${index}`}>
-                                    <Tag>{`${startDisplay} - ${endDisplay}`}</Tag>
-                                  </div>
-                                )
-                              }
-                            })}
-                          </div>
-                        )
-                      }
-                    }}
-                  />
-                  <Column
-                    title={t('content.booking_window_min')}
-                    dataIndex="timeConstraints"
-                    key="timeConstraints"
-                    width={'12%'}
-                    render={(timeConstraintsArray: number[] | undefined, record: TableRow) => {
-                      const editable = isEditing(record)
-
-                      if (editable) {
-                        return (
-                          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                            <Form.Item
-                              label={t('rrule.rrule_time_min')}
-                              name="notBeforeInMinutes" // This form field will store total minutes
-                              labelCol={{ span: 24 }}
-                              wrapperCol={{ span: 24 }}
-                              style={{ marginBottom: 8 }}
-                              rules={[{ type: 'number', min: 0, message: t('validation.must_be_zero_or_positive') }]}
-                            >
-                              <DurationInput defaultUnit="weeks" placeholder={t('content.enterValue')} />
-                            </Form.Item>
-
-                            <Form.Item
-                              label={t('rrule.rrule_time_max')}
-                              name="notAfterInMinutes" // This form field will store total minutes
-                              labelCol={{ span: 24 }}
-                              wrapperCol={{ span: 24 }}
-                              style={{ marginBottom: 0 }}
-                              rules={[{ type: 'number', min: 0, message: t('validation.must_be_zero_or_positive') }]}
-                            >
-                              <DurationInput defaultUnit="weeks" placeholder={t('content.enterValue')} />
-                            </Form.Item>
-                          </Space>
-                        )
-                      } else {
-                        const notBeforeMins = timeConstraintsArray?.[0]
-                        const notAfterMins = timeConstraintsArray?.[1]
-
-                        if (!timeConstraintsArray || ((notBeforeMins === null || notBeforeMins === undefined) && (notAfterMins === null || notAfterMins === undefined))) {
-                          return <Tag>{t('content.not_set', 'Not set')}</Tag>
-                        }
-
-                        return (
-                          <div>
-                            <div style={{ whiteSpace: 'nowrap' }}>
-                              <Typography.Text strong>{t('content.before')}: </Typography.Text>
-                              <Tag>{formatTotalMinutesForDisplay(notBeforeMins, t)}</Tag>
-                            </div>
-                            <div style={{ whiteSpace: 'nowrap', marginTop: '4px' }}>
-                              <Typography.Text strong>{t('content.after')}: </Typography.Text>
-                              <Tag>{formatTotalMinutesForDisplay(notAfterMins, t)}</Tag>
-                            </div>
-                          </div>
-                        )
-                      }
-                    }}
-                  />
-                  <Column
-                    title={t('content.availability')}
-                    dataIndex="public"
-                    key="public"
-                    width={'12%'}
-                    render={(isPublic: boolean | undefined, record: TableRow) => {
-                      const editable = isEditing(record)
-
-                      if (editable) {
-                        return (
-                          <Form.Item name="public" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.availability_required') }]}>
-                            <Radio.Group className="radio-group">
-                              <Radio value={true}>{t('content.activate')}</Radio>
-                              <Radio value={false}>{t('content.deactivate')}</Radio>
-                            </Radio.Group>
-                          </Form.Item>
-                        )
-                      } else {
-                        if (isPublic === false) {
-                          return <Tag color="red">{t('content.deactivated')}</Tag>
-                        } else if (isPublic === true) {
-                          return <Tag color="green">{t('content.activated')}</Tag>
-                        }
-                        return <Tag color="orange">{t('content.unknown')}</Tag>
-                      }
-                    }}
-                  />
-                  <Column
-                    title={t('content.number_of_slots')}
-                    dataIndex="availabilities"
-                    key="availabilities"
-                    width={'10%'}
-                    render={(_: unknown, record: TableRow) => {
-                      const editable = isEditing(record)
-
-                      if (editable) {
-                        return (
-                          <Form.Item
-                            name="availabilities"
-                            style={{ margin: 0 }}
-                            rules={[
-                              { required: true, message: t('content.slots_required') },
-                              { type: 'number', min: 1, message: t('content.slot_required_at_least_one') },
-                            ]}
-                          >
-                            <InputNumber min={1} precision={0} style={{ width: '100%' }} placeholder={t('content.enter_slots')} />
-                          </Form.Item>
-                        )
-                      } else {
-                        if (record.availabilities) {
-                          return (
-                            <Tag color={record.availabilities > 0 ? 'geekblue' : 'default'}>
-                              {record.availabilities} {record.availabilities < 2 ? t('content.slot') : t('content.slots')}
-                            </Tag>
-                          )
-                        } else {
-                          return (
-                            <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                              {t('content.not_set')}
-                            </Tag>
-                          )
-                        }
-                      }
-                    }}
-                  />
-
-                  <Column
-                    title={t('content.actions')}
-                    key="action"
-                    fixed="right"
-                    width={'13%'}
-                    render={(_: unknown, record: TableRow) => {
-                      const editable = isEditing(record)
-
-                      if (editable) {
-                        return (
-                          <Space size="middle" className="actionButtons">
-                            <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
-                            <Button onClick={() => tableRowCancel()}>{t('content.cancel')}</Button>
-                          </Space>
-                        )
-                      } else {
-                        return (
-                          <Space size="middle" className="actionButtons">
-                            <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
-                            <Button
-                              onClick={() => {
-                                tableHandleDelete(record)
                               }}
                             >
-                              {t('content.delete')}
+                              {(sortedProcedures || []).map((type) => (
+                                <Select.Option key={type.id} value={type.id}>
+                                  {type.name}
+                                </Select.Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                          <Space style={{ marginTop: '12px', display: 'flex', justifyContent: 'start' }} size="small">
+                            <Button
+                              type="link"
+                              size="small"
+                              onClick={handleSelectAll}
+                              disabled={
+                                (allCalendarItemTypeIds.length > 0 && watchedCalendarItemTypesIds && watchedCalendarItemTypesIds.length === allCalendarItemTypeIds.length) ||
+                                !sortedProcedures ||
+                                sortedProcedures.length === 0
+                              }
+                            >
+                              {t('content.select_all')}
                             </Button>
+                          </Space>
+                        </>
+                      )
+                    } else {
+                      // Display mode
+                      const everythingSelected = sortedProcedures.length > 0 && sortedProcedures.every((proc) => record.calendarItemTypesIds.includes(proc.id))
+                      if (everythingSelected) {
+                        return <Tag color="purple">{t('content.all_procedures')}</Tag>
+                      } else if (record.calendarItemTypesIds.length === 0) {
+                        return (
+                          <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                            {t('content.not_set')}
+                          </Tag>
+                        )
+                      } else {
+                        return (
+                          <Space wrap size={[4, 4]} key={record.rowId}>
+                            {record.calendarItemTypesIds.map((typeId) => {
+                              const name = procedureMap.get(typeId)
+                              return name ? (
+                                <Tag key={typeId} color="blue">
+                                  {name}
+                                </Tag>
+                              ) : null
+                            })}
                           </Space>
                         )
                       }
-                    }}
-                  />
-                </ColumnGroup>
+                    }
+                  }}
+                />
+
+                <Column
+                  title={t('content.days')}
+                  dataIndex="rrule"
+                  key="rrule"
+                  width={'20%'}
+                  render={(rruleString: string | undefined, record: TableRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      return (
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                          <Form.Item name="rrule" noStyle rules={[{ required: true, message: t('content.recurrence_required') }]}>
+                            <Input type="hidden" />
+                          </Form.Item>
+
+                          <Space.Compact block className="rrule-repeat">
+                            <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.repeat_every')}:</Typography.Text>
+                            <Form.Item name="_interval" initialValue={1} rules={[{ required: true, message: t('validation.value_required') }]} noStyle>
+                              <InputNumber min={1} style={{ width: '35%' }} />
+                            </Form.Item>
+                            <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unit_required') }]} noStyle>
+                              <Select style={{ width: '65%' }}>
+                                <Select.Option value={RRule.DAILY}>{watchedInterval === 1 ? t('rrule.day') : t('rrule.days')}</Select.Option>
+                                <Select.Option value={RRule.WEEKLY}>{watchedInterval === 1 ? t('rrule.week') : t('rrule.weeks')}</Select.Option>
+                              </Select>
+                            </Form.Item>
+                          </Space.Compact>
+
+                          {watchedFreq === RRule.WEEKLY && (
+                            <div className="rrule-start">
+                              <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.on_days')}:</Typography.Text>
+                              <Form.Item name="_byday" rules={[{ required: true, message: t('content.select_at_least_one_day') }]} style={{ marginBottom: '12px', width: '100%', flexGrow: 1 }}>
+                                <Select mode="multiple" allowClear placeholder={t('content.select_days_placeholder')}>
+                                  {RRuleWeekdays.map((day) => (
+                                    <Select.Option key={day.value} value={day.value} label={day.label}>
+                                      {day.label}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+                            </div>
+                          )}
+
+                          <div className="rrule-start">
+                            <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.from_date')}:</Typography.Text>
+                            <Form.Item
+                              name="rruleStart"
+                              rules={[{ required: true, message: t('validation.select_date_required') }]}
+                              style={{
+                                marginBottom: '8px',
+                                flexGrow: 1,
+                              }}
+                            >
+                              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" minDate={watchedTimeTableStart} maxDate={watchedTimeTableEnd} />
+                            </Form.Item>
+                          </div>
+                          <div className="rrule-start">
+                            <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.until')}:</Typography.Text>
+                            <Form.Item
+                              name="_until"
+                              rules={[{ required: true, message: t('validation.select_date_required') }]}
+                              style={{
+                                marginBottom: '8px',
+                                flexGrow: 1,
+                              }}
+                            >
+                              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" minDate={watchedTimeTableStart} maxDate={watchedTimeTableEnd} />
+                            </Form.Item>
+                          </div>
+                        </Space>
+                      )
+                    } else {
+                      if (!rruleString) {
+                        return (
+                          <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                            {t('content.not_set')}
+                          </Tag>
+                        )
+                      }
+                      try {
+                        const langOpts = getCurrentRruleLanguageOptions()
+
+                        const parsedRuleComponents = RRule.parseString(rruleString)
+                        if (parsedRuleComponents.freq === undefined) {
+                          throw new Error()
+                        }
+
+                        const dtStart = record.rruleStart?.toDate() ?? new Date(new Date().setHours(0, 0, 0, 0))
+
+                        // 2. Create the options object for new RRule() ensuring all required types are met
+                        const optionsForToText: Partial<Options> = {
+                          dtstart: dtStart,
+                          freq: parsedRuleComponents.freq as Frequency,
+                          ...(parsedRuleComponents.interval !== undefined && { interval: parsedRuleComponents.interval }),
+                          ...(parsedRuleComponents.byweekday && { byweekday: parsedRuleComponents.byweekday }),
+                        }
+
+                        const ruleForText = new RRule(optionsForToText)
+
+                        const formattedStartDate = format(dtStart, 'P', { locale: dateFnsLocale })
+                        const fromDatePrefix = t('rrule.from_date').toLowerCase()
+
+                        const rruleTranslation = ruleForText.toText(rruleGettextAdapter, langOpts)
+                        const displayText = `${rruleTranslation} ${fromDatePrefix} ${formattedStartDate}`
+
+                        return <span title={rruleString}>{displayText}</span>
+                      } catch (e) {
+                        console.error('Error processing RRULE for display:', e, rruleString)
+                        return (
+                          <Tag color="red" title={rruleString}>
+                            {t('content.invalid_rule')}
+                          </Tag>
+                        )
+                      }
+                    }
+                  }}
+                />
+                <Column
+                  title={t('content.hours')}
+                  dataIndex="hours"
+                  key="hours"
+                  width={'13%'}
+                  render={(hoursArray: EmbeddedTimeTableHour[] | undefined, record: TableRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      return (
+                        <Form.List name="hours">
+                          {(fields, { add, remove }, { errors }) => (
+                            <div style={{ maxHeight: '150px', overflowY: 'auto', paddingRight: '10px' }}>
+                              {fields.map(({ key, name, ...restField }) => {
+                                return (
+                                  <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                                    <Form.Item {...restField} name={[name, 'startHour']} rules={[{ required: true, message: t('validation.start_time_required') }]} noStyle>
+                                      <TimePicker
+                                        showNow={false}
+                                        format="HH:mm"
+                                        minuteStep={5}
+                                        placeholder={t('content.start_hour')}
+                                        style={{ width: '100px' }}
+                                        changeOnScroll // allows changing time with mouse scroll
+                                        onPickerValueChange={(timeValue) => handleTimeValueUpdate(name, 'startHour', timeValue)}
+                                      />
+                                    </Form.Item>
+                                    <span>-</span>
+                                    <Form.Item
+                                      {...restField}
+                                      name={[name, 'endHour']}
+                                      noStyle
+                                      rules={[
+                                        { required: true, message: t('validation.end_time_required') },
+                                        ({ getFieldValue }) => ({
+                                          validator(_, value) {
+                                            // 'value' is the current endHour (a dayjs object or null)
+                                            const startHourValue = getFieldValue(['hours', name, 'startHour'])
+
+                                            // Only validate if both start and end times are selected
+                                            // The 'required' rule will handle cases where one is missing.
+                                            if (value && startHourValue && dayjs.isDayjs(value) && dayjs.isDayjs(startHourValue)) {
+                                              if (!value.isAfter(startHourValue)) {
+                                                // Check if endHour is NOT after startHour
+                                                return Promise.reject(new Error(t('content.end_time_after_start_time')))
+                                              }
+                                            }
+                                            return Promise.resolve()
+                                          },
+                                        }),
+                                      ]}
+                                    >
+                                      <TimePicker
+                                        showNow={false}
+                                        format="HH:mm"
+                                        minuteStep={5}
+                                        placeholder={t('content.end_hour')}
+                                        style={{ width: '100px' }}
+                                        changeOnScroll
+                                        onPickerValueChange={(timeValue) => handleTimeValueUpdate(name, 'endHour', timeValue)}
+                                      />
+                                    </Form.Item>
+                                    <Button
+                                      type="text"
+                                      danger
+                                      icon={<MinusCircleOutlined />}
+                                      onClick={() => {
+                                        remove(name)
+                                      }}
+                                      disabled={fields.length === 1}
+                                      size="small"
+                                    />
+                                  </Space>
+                                )
+                              })}
+                              <Button
+                                type="dashed"
+                                onClick={() => add({ startHour: null, endHour: null })} // Add with null for TimePicker placeholder
+                                block
+                                icon={<PlusOutlined />}
+                              >
+                                {t('content.add_hours')}
+                              </Button>
+                              <Form.ErrorList errors={errors} />
+                            </div>
+                          )}
+                        </Form.List>
+                      )
+                    } else {
+                      if (!hoursArray || hoursArray.length === 0) {
+                        return <Tag>{t('status.noHoursSet', 'No hours set')}</Tag>
+                      }
+                      return (
+                        <div>
+                          {hoursArray.map((h, index) => {
+                            const startDisplay = formatHhmmssToHHmm(h.startHour)
+                            const endDisplay = formatHhmmssToHHmm(h.endHour)
+
+                            // Check if both start and end are "N/A" (our placeholder for undefined/null)
+                            if (startDisplay === 'N/A' && endDisplay === 'N/A') {
+                              return (
+                                <Tag icon={<ExclamationCircleOutlined />} color="warning" key={`hour-range-${index}`}>
+                                  {t('content.not_set')}
+                                </Tag>
+                              )
+                            } else {
+                              // If at least one is defined, show the range (e.g., "08:00 - N/A" or "N/A - 17:00" or "08:00 - 17:00")
+                              return (
+                                <div key={`hour-range-${index}`}>
+                                  <Tag>{`${startDisplay} - ${endDisplay}`}</Tag>
+                                </div>
+                              )
+                            }
+                          })}
+                        </div>
+                      )
+                    }
+                  }}
+                />
+                <Column
+                  title={t('content.booking_window_min')}
+                  dataIndex="timeConstraints"
+                  key="timeConstraints"
+                  width={'12%'}
+                  render={(timeConstraintsArray: number[] | undefined, record: TableRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      return (
+                        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                          <Form.Item
+                            label={t('rrule.rrule_time_min')}
+                            name="notBeforeInMinutes" // This form field will store total minutes
+                            labelCol={{ span: 24 }}
+                            wrapperCol={{ span: 24 }}
+                            style={{ marginBottom: 8 }}
+                            rules={[{ type: 'number', min: 0, message: t('validation.must_be_zero_or_positive') }]}
+                          >
+                            <DurationInput defaultUnit="weeks" placeholder={t('content.enterValue')} />
+                          </Form.Item>
+
+                          <Form.Item
+                            label={t('rrule.rrule_time_max')}
+                            name="notAfterInMinutes" // This form field will store total minutes
+                            labelCol={{ span: 24 }}
+                            wrapperCol={{ span: 24 }}
+                            style={{ marginBottom: 0 }}
+                            rules={[{ type: 'number', min: 0, message: t('validation.must_be_zero_or_positive') }]}
+                          >
+                            <DurationInput defaultUnit="weeks" placeholder={t('content.enterValue')} />
+                          </Form.Item>
+                        </Space>
+                      )
+                    } else {
+                      const notBeforeMins = timeConstraintsArray?.[0]
+                      const notAfterMins = timeConstraintsArray?.[1]
+
+                      if (!timeConstraintsArray || ((notBeforeMins === null || notBeforeMins === undefined) && (notAfterMins === null || notAfterMins === undefined))) {
+                        return <Tag>{t('content.not_set', 'Not set')}</Tag>
+                      }
+
+                      return (
+                        <div>
+                          <div style={{ whiteSpace: 'nowrap' }}>
+                            <Typography.Text strong>{t('content.before')}: </Typography.Text>
+                            <Tag>{formatTotalMinutesForDisplay(notBeforeMins, t)}</Tag>
+                          </div>
+                          <div style={{ whiteSpace: 'nowrap', marginTop: '4px' }}>
+                            <Typography.Text strong>{t('content.after')}: </Typography.Text>
+                            <Tag>{formatTotalMinutesForDisplay(notAfterMins, t)}</Tag>
+                          </div>
+                        </div>
+                      )
+                    }
+                  }}
+                />
+                <Column
+                  title={t('content.availability')}
+                  dataIndex="public"
+                  key="public"
+                  width={'12%'}
+                  render={(isPublic: boolean | undefined, record: TableRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      return (
+                        <Form.Item name="public" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.availability_required') }]}>
+                          <Radio.Group className="radio-group">
+                            <Radio value={true}>{t('content.activate')}</Radio>
+                            <Radio value={false}>{t('content.deactivate')}</Radio>
+                          </Radio.Group>
+                        </Form.Item>
+                      )
+                    } else {
+                      if (isPublic === false) {
+                        return <Tag color="red">{t('content.deactivated')}</Tag>
+                      } else if (isPublic === true) {
+                        return <Tag color="green">{t('content.activated')}</Tag>
+                      }
+                      return <Tag color="orange">{t('content.unknown')}</Tag>
+                    }
+                  }}
+                />
+                <Column
+                  title={t('content.number_of_slots')}
+                  dataIndex="availabilities"
+                  key="availabilities"
+                  width={'10%'}
+                  render={(_: unknown, record: TableRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      return (
+                        <Form.Item
+                          name="availabilities"
+                          style={{ margin: 0 }}
+                          rules={[
+                            { required: true, message: t('content.slots_required') },
+                            { type: 'number', min: 1, message: t('content.slot_required_at_least_one') },
+                          ]}
+                        >
+                          <InputNumber min={1} precision={0} style={{ width: '100%' }} placeholder={t('content.enter_slots')} />
+                        </Form.Item>
+                      )
+                    } else {
+                      if (record.availabilities) {
+                        return (
+                          <Tag color={record.availabilities > 0 ? 'geekblue' : 'default'}>
+                            {record.availabilities} {record.availabilities < 2 ? t('content.slot') : t('content.slots')}
+                          </Tag>
+                        )
+                      } else {
+                        return (
+                          <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                            {t('content.not_set')}
+                          </Tag>
+                        )
+                      }
+                    }
+                  }}
+                />
+
+                <Column
+                  title={t('content.actions')}
+                  key="action"
+                  fixed="right"
+                  width={'13%'}
+                  render={(_: unknown, record: TableRow) => {
+                    const editable = isEditing(record)
+
+                    if (editable) {
+                      return (
+                        <Space size="middle" className="actionButtons">
+                          <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
+                          <Button onClick={() => tableRowCancel()}>{t('content.cancel')}</Button>
+                        </Space>
+                      )
+                    } else {
+                      return (
+                        <Space size="middle" className="actionButtons">
+                          <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
+                          <Button
+                            onClick={() => {
+                              tableHandleDelete(record)
+                            }}
+                          >
+                            {t('content.delete')}
+                          </Button>
+                        </Space>
+                      )
+                    }
+                  }}
+                />
               </Table>
             </div>
           </div>

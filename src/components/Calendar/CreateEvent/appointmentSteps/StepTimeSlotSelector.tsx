@@ -3,7 +3,7 @@ import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstanc
 import dayjs, { Dayjs } from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
+import { useGetAvailabilitiesQuery, useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 import { formatDayjsToYYYYMMDDHHmmssNumber } from '../../../common/helpers'
 import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
@@ -30,7 +30,7 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
   const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
 
   const minDate = useMemo(() => dayjs().startOf('day'), [])
-  const maxDate = useMemo(() => dayjs().add(1, 'month').endOf('month'), [])
+  const maxDate = useMemo(() => dayjs().add(12, 'month').endOf('month'), [])
   const availableDatesSet = useMemo(() => {
     const dates = new Set()
     availabilities.forEach((slot) => {
@@ -39,11 +39,19 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
     return dates
   }, [availabilities])
 
+  useEffect(() => console.log('procedures', procedures), [procedures])
+
   const disabledDate = (current: Dayjs) => {
     return current < minDate || current > maxDate || !availableDatesSet.has(current.format('YYYY-MM-DD'))
   }
 
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
+
+  /*agendaId: string
+  calendarItemTypeId: string
+  startDate: number
+  endDate: number
+  */
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -160,9 +168,6 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
     }
     fetchAllAvailabilities()
   }, [procedures, selections, minDate, maxDate, getAvailabilities])
-
-  //useEffect(() => console.log('availabilitiesData', availabilities), [availabilities])
-  //useEffect(() => console.log('timeValue', timeValue), [timeValue])
 
   useEffect(() => {
     const firstAvailable = availabilities.find((d) => !disabledDate(d))

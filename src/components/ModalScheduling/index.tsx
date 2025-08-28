@@ -1,7 +1,6 @@
 import { HealthcareParty, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
 import { Select as AntSelect, Button, Empty, message, notification, Space, Table, Tooltip } from 'antd'
 import Column from 'antd/es/table/Column'
-import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { addMonths, endOfToday, format, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import { ReactElement, useEffect, useMemo, useState } from 'react'
@@ -181,7 +180,13 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             }}
           />
         </div>
-
+        <div className="table-add-entry">
+          <Tooltip title={selectedService ? (!canAddSchedule ? t('content.save_current_schedule_before_adding') : null) : t('content.select_service_for_schedule')}>
+            <Button style={{ width: '100%' }} disabled={!selectedService || !agenda || !canAddSchedule} onClick={addSchedule}>
+              {t('content.add_schedule')}
+            </Button>
+          </Tooltip>
+        </div>
         <div className="antTable">
           <Table<SchedulingTableRow>
             pagination={false}
@@ -191,49 +196,39 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
             loading={isLoading}
           >
-            <ColumnGroup
-              title={
-                <Tooltip title={selectedService ? (!canAddSchedule ? t('content.save_current_schedule_before_adding') : null) : t('content.select_service_for_schedule')}>
-                  <Button style={{ width: '100%' }} disabled={!selectedService || !agenda || !canAddSchedule} onClick={addSchedule}>
-                    {t('content.add_schedule')}
-                  </Button>
-                </Tooltip>
-              }
-            >
-              <Column title={t('content.name')} dataIndex="name" key="name" width={'23%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
-              <Column
-                title={t('content.start')}
-                dataIndex="startDateTime"
-                key="startDateTime"
-                width={'23%'}
-                render={(value: number) => {
-                  const startDate = numberTimestampToDate(value) ?? new Date()
-                  return format(startDate, 'P', { locale: dateFnsLocale })
-                }}
-              />
-              <Column
-                title={t('content.end')}
-                dataIndex="endDateTime"
-                key="endDateTime"
-                width={'23%'}
-                render={(value: number) => {
-                  const endDate = numberTimestampToDate(value) ?? new Date()
-                  return format(endDate, 'P', { locale: dateFnsLocale })
-                }}
-              />
+            <Column title={t('content.name')} dataIndex="name" key="name" width={'23%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
+            <Column
+              title={t('content.start')}
+              dataIndex="startDateTime"
+              key="startDateTime"
+              width={'23%'}
+              render={(value: number) => {
+                const startDate = numberTimestampToDate(value) ?? new Date()
+                return format(startDate, 'P', { locale: dateFnsLocale })
+              }}
+            />
+            <Column
+              title={t('content.end')}
+              dataIndex="endDateTime"
+              key="endDateTime"
+              width={'23%'}
+              render={(value: number) => {
+                const endDate = numberTimestampToDate(value) ?? new Date()
+                return format(endDate, 'P', { locale: dateFnsLocale })
+              }}
+            />
 
-              <Column
-                title={t('content.actions')}
-                key="actions"
-                width={'16%'}
-                render={(_: unknown, record: SchedulingTableRow) => (
-                  <Space size="middle">
-                    <Button onClick={() => handleEditClick(record)}>{t('content.edit')}</Button>
-                    <Button onClick={() => handleDeleteClick(record)}>{t('content.delete')}</Button>
-                  </Space>
-                )}
-              />
-            </ColumnGroup>
+            <Column
+              title={t('content.actions')}
+              key="actions"
+              width={'16%'}
+              render={(_: unknown, record: SchedulingTableRow) => (
+                <Space size="middle">
+                  <Button onClick={() => handleEditClick(record)}>{t('content.edit')}</Button>
+                  <Button onClick={() => handleDeleteClick(record)}>{t('content.delete')}</Button>
+                </Space>
+              )}
+            />
           </Table>
         </div>
         {showRulesModal &&

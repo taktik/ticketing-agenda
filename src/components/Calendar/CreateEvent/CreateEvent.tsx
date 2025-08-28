@@ -2,7 +2,7 @@ import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } fro
 import { DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetAgendasQuery } from '../../../core/api/agendaApi'
@@ -149,6 +149,8 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   const { data: allProcedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesForMultipleAgendasQuery({ agendaIds: agendaIds }, { skip: !agendaIds || agendaIds.length === 0 })
 
   const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allServices, allProcedures, allAgendas, sites])
+
+  useEffect(() => console.log('selections', selections), [selections])
 
   const isLoading = useMemo(() => isServicesLoading || isAgendasLoading || isProceduresLoading, [isServicesLoading, isAgendasLoading, isProceduresLoading])
 

@@ -2,7 +2,6 @@ import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
-import ColumnGroup from 'antd/es/table/ColumnGroup'
 import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -285,160 +284,158 @@ export const ManagerUsers = (): ReactElement => {
             loading={isLoading}
             scroll={{ y: 'calc(800px - 300px)', x: 'max-content' }}
           >
-            <ColumnGroup
-              title={
-                <Button style={{ width: '100%' }} onClick={addUser}>
-                  {t('content.add_user')}
-                </Button>
-              }
-            >
-              <Column
-                title={t('content.firstname')}
-                dataIndex="firstName"
-                key="firstName"
-                width="15%"
-                sorter={(a, b) => (a.firstName ?? '').localeCompare(b.firstName ?? '')}
-                render={(currentValue: string | undefined, record: UserRow) => {
-                  const editable = isEditing(record)
-                  if (editable) {
-                    return (
-                      <>
-                        <Form.Item name="firstName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.firstname_required') }]}>
-                          <Input autoFocus />
-                        </Form.Item>
-                      </>
-                    )
-                  } else {
-                    return currentValue ? (
-                      currentValue
-                    ) : (
-                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                        {t('content.not_set')}
-                      </Tag>
-                    )
-                  }
-                }}
-              />
-              <Column
-                title={t('content.lastname')}
-                dataIndex="lastName"
-                key="lastName"
-                width="15%"
-                sorter={(a, b) => (a.lastName ?? '').localeCompare(b.lastName ?? '')}
-                render={(currentValue: string | undefined, record: UserRow) => {
-                  const editable = isEditing(record)
-                  if (editable) {
-                    return (
-                      <>
-                        <Form.Item name="lastName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.lastname_required') }]}>
-                          <Input autoFocus />
-                        </Form.Item>
-                      </>
-                    )
-                  } else {
-                    return currentValue ? (
-                      currentValue
-                    ) : (
-                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                        {t('content.not_set')}
-                      </Tag>
-                    )
-                  }
-                }}
-              />
-              <Column
-                title={t('content.email')}
-                dataIndex="email"
-                key="email"
-                width="20%"
-                sorter={(a, b) => (a.email ?? '').localeCompare(b.email ?? '')}
-                render={(currentValue: string | undefined, record: UserRow) => {
-                  const editable = isEditing(record)
-                  if (editable) {
-                    return (
-                      <>
-                        <Form.Item
-                          name="email"
-                          style={{ margin: 0, padding: '6px 0 12px 0' }}
-                          rules={[
-                            { required: true, message: t('validation.email_required') },
-                            { type: 'email', message: t('validation.invalid_email') },
-                          ]}
-                        >
-                          <Input autoFocus />
-                        </Form.Item>
-                      </>
-                    )
-                  } else {
-                    return currentValue ? (
-                      currentValue
-                    ) : (
-                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                        {t('content.not_set')}
-                      </Tag>
-                    )
-                  }
-                }}
-              />
-              <Column
-                title={t('content.roles')}
-                dataIndex="email"
-                key="email"
-                width="30%"
-                render={(currentValue: string, record: UserRow) => {
-                  const editable = isEditing(record)
-                  if (editable) {
-                    return (
-                      <>
-                        <Form.Item name="email" style={{ margin: 0 }}>
-                          <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                            {t('content.not_set')}
-                          </Tag>
-                        </Form.Item>
-                      </>
-                    )
-                  } else {
-                    return (
-                      <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                        {t('content.not_set')}
-                      </Tag>
-                    )
-                  }
-                }}
-              />
-              <Column
-                title={t('content.actions')}
-                key="action"
-                fixed="right"
-                width={'20%'}
-                render={(_: unknown, record: UserRow) => {
-                  const editable = isEditing(record)
+            <div className="table-add-entry">
+              <Button style={{ width: '100%' }} onClick={addUser}>
+                {t('content.add_user')}
+              </Button>
+            </div>
 
-                  if (editable) {
-                    return (
-                      <Space size="middle">
-                        <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
-                        <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
-                      </Space>
-                    )
-                  } else {
-                    return (
-                      <Space size="middle">
-                        <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
-                        <Button
-                          onClick={() => {
-                            setUserRowToBeDeleted(record)
-                            setShowDeleteUserModal(true)
-                          }}
-                        >
-                          {t('content.delete')}
-                        </Button>
-                      </Space>
-                    )
-                  }
-                }}
-              />
-            </ColumnGroup>
+            <Column
+              title={t('content.firstname')}
+              dataIndex="firstName"
+              key="firstName"
+              width="15%"
+              sorter={(a, b) => (a.firstName ?? '').localeCompare(b.firstName ?? '')}
+              render={(currentValue: string | undefined, record: UserRow) => {
+                const editable = isEditing(record)
+                if (editable) {
+                  return (
+                    <>
+                      <Form.Item name="firstName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.firstname_required') }]}>
+                        <Input autoFocus />
+                      </Form.Item>
+                    </>
+                  )
+                } else {
+                  return currentValue ? (
+                    currentValue
+                  ) : (
+                    <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                      {t('content.not_set')}
+                    </Tag>
+                  )
+                }
+              }}
+            />
+            <Column
+              title={t('content.lastname')}
+              dataIndex="lastName"
+              key="lastName"
+              width="15%"
+              sorter={(a, b) => (a.lastName ?? '').localeCompare(b.lastName ?? '')}
+              render={(currentValue: string | undefined, record: UserRow) => {
+                const editable = isEditing(record)
+                if (editable) {
+                  return (
+                    <>
+                      <Form.Item name="lastName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.lastname_required') }]}>
+                        <Input autoFocus />
+                      </Form.Item>
+                    </>
+                  )
+                } else {
+                  return currentValue ? (
+                    currentValue
+                  ) : (
+                    <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                      {t('content.not_set')}
+                    </Tag>
+                  )
+                }
+              }}
+            />
+            <Column
+              title={t('content.email')}
+              dataIndex="email"
+              key="email"
+              width="20%"
+              sorter={(a, b) => (a.email ?? '').localeCompare(b.email ?? '')}
+              render={(currentValue: string | undefined, record: UserRow) => {
+                const editable = isEditing(record)
+                if (editable) {
+                  return (
+                    <>
+                      <Form.Item
+                        name="email"
+                        style={{ margin: 0, padding: '6px 0 12px 0' }}
+                        rules={[
+                          { required: true, message: t('validation.email_required') },
+                          { type: 'email', message: t('validation.invalid_email') },
+                        ]}
+                      >
+                        <Input autoFocus />
+                      </Form.Item>
+                    </>
+                  )
+                } else {
+                  return currentValue ? (
+                    currentValue
+                  ) : (
+                    <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                      {t('content.not_set')}
+                    </Tag>
+                  )
+                }
+              }}
+            />
+            <Column
+              title={t('content.roles')}
+              dataIndex="email"
+              key="email"
+              width="30%"
+              render={(currentValue: string, record: UserRow) => {
+                const editable = isEditing(record)
+                if (editable) {
+                  return (
+                    <>
+                      <Form.Item name="email" style={{ margin: 0 }}>
+                        <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                          {t('content.not_set')}
+                        </Tag>
+                      </Form.Item>
+                    </>
+                  )
+                } else {
+                  return (
+                    <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                      {t('content.not_set')}
+                    </Tag>
+                  )
+                }
+              }}
+            />
+            <Column
+              title={t('content.actions')}
+              key="action"
+              fixed="right"
+              width={'20%'}
+              render={(_: unknown, record: UserRow) => {
+                const editable = isEditing(record)
+
+                if (editable) {
+                  return (
+                    <Space size="middle">
+                      <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
+                      <Button onClick={() => tableRowCancel(record)}>{t('content.cancel')}</Button>
+                    </Space>
+                  )
+                } else {
+                  return (
+                    <Space size="middle">
+                      <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
+                      <Button
+                        onClick={() => {
+                          setUserRowToBeDeleted(record)
+                          setShowDeleteUserModal(true)
+                        }}
+                      >
+                        {t('content.delete')}
+                      </Button>
+                    </Space>
+                  )
+                }
+              }}
+            />
           </Table>
         </div>
       </Form>

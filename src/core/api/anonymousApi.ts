@@ -24,6 +24,9 @@ export const anonymousApiRtk = createApi({
       async queryFn(params, { getState }) {
         const anonymousAgendaApi = (await anonymousCardinalApi())?.agenda
         return guard([anonymousAgendaApi], async (): Promise<number[]> => {
+          console.log('startDate', params.startDate)
+          console.log('endDate', params.endDate)
+
           const availabilities = await anonymousAgendaApi?.listAnonymousAvailabilities(DATABASE_ID!, params.agendaId, params.calendarItemTypeId, params.startDate, params.endDate)
           if (!availabilities) {
             throw new Error('No availabilities')

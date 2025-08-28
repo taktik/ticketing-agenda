@@ -3,7 +3,7 @@ import { CodeStub, HealthcareParty } from '@icure/cardinal-sdk'
 import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
-import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import emptyIcon from '../../assets/empty.svg'
@@ -59,7 +59,6 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
-
   const { data: services } = useGetAllServiceBySiteId({ skip: skip || !rootHcp, sitesIds: sitesIds ?? [] })
 
   const sortedServices = useMemo(() => {

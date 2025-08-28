@@ -3,15 +3,13 @@ import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
 import type { Color } from 'antd/es/color-picker'
 import Column from 'antd/es/table/Column'
-import ColumnGroup from 'antd/es/table/ColumnGroup'
-import { ReactElement, useContext, useEffect, useMemo, useState } from 'react'
+import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { SettingContext } from '../../../contexts/SettingContext'
 import { useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
-import { useCreateUpdateHealthcarePartyMutation, useRecursiveHcpDeletion } from '../../../core/api/healthcarePartyApi'
+import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/healthcarePartyApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 import './index.css'
@@ -416,6 +414,12 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
             </Space>
           </div>
 
+          <div className="table-add-entry">
+            <Button style={{ width: '100%' }} onClick={addProcedure} disabled={editingKey !== ''}>
+              {t('content.add_procedure')}
+            </Button>
+          </div>
+
           <div className="ant-table-custom">
             <Table<ProcedureRow>
               className="custom-table"
@@ -426,249 +430,241 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
               loading={isLoading}
               pagination={false}
             >
-              <ColumnGroup
-                title={
-                  <Button style={{ width: '100%' }} onClick={addProcedure} disabled={editingKey !== ''}>
-                    {t('content.add_procedure')}
-                  </Button>
-                }
-              >
-                <Column
-                  title={undefined}
-                  dataIndex="color"
-                  key="color"
-                  minWidth={50}
-                  render={(color: string, record: ProcedureRow) => {
-                    const editable = isEditing(record)
-                    if (editable) {
-                      return (
-                        <Form.Item
-                          name="color"
-                          style={{ margin: 0 }}
-                          rules={[
-                            {
-                              required: true,
-                              message: t('validation.color_required'),
-                            },
-                          ]}
-                        >
-                          <ColorPicker />
-                        </Form.Item>
-                      )
-                    } else {
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <div
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: 4,
-                              backgroundColor: color,
-                              border: '1px solid #d9d9d9',
-                            }}
-                          />
-                        </div>
-                      )
-                    }
-                  }}
-                />
-                <Column
-                  title={t('content.procedure')}
-                  dataIndex="subjectByLanguage"
-                  key="subjectByLanguage"
-                  minWidth={350}
-                  render={(subjectsByLanguage: { [key: string]: string }, record: ProcedureRow) => {
-                    const editable = isEditing(record)
-                    if (editable) {
-                      return <SubjectEdit />
-                    } else {
-                      return <SubjectDisplay subjects={subjectsByLanguage} />
-                    }
-                  }}
-                />
-
-                <Column
-                  title={t('content.appointment_duration')}
-                  dataIndex="appointmentDurations"
-                  key="appointmentDurations"
-                  minWidth={180}
-                  render={(durations: number[] | undefined, record: ProcedureRow) => {
-                    const editable = isEditing(record)
-
-                    if (editable) {
-                      return (
-                        <Form.List
-                          name="appointmentDurations"
-                          rules={[
-                            {
-                              validator: async (_, durationList) => {
-                                if (!durationList || durationList.length === 0) {
-                                  return Promise.reject(new Error(t('validation.at_least_one_duration_required')))
-                                }
-                                for (const duration of durationList) {
-                                  if (duration === null || duration === undefined || duration <= 0) {
-                                    return Promise.reject(new Error(t('validation.all_durations_must_be_positive')))
-                                  }
-                                }
-                              },
-                            },
-                          ]}
-                        >
-                          {(fields, { add, remove }, { errors }) => {
-                            return (
-                              <div style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '10px' }}>
-                                {fields.map(({ key, name, ...restField }, index) => (
-                                  <Space key={key} className="appointment-duration" align="baseline">
-                                    <Typography.Text style={{ minWidth: '100px' }}>
-                                      {index + 1} {index === 0 ? t('content.person') : t('content.persons')} :
-                                    </Typography.Text>
-                                    <div className="appointment-duration-input">
-                                      <Form.Item
-                                        {...restField}
-                                        name={name}
-                                        noStyle
-                                        rules={[
-                                          { required: true, message: t('validation.at_least_one_duration_required') },
-                                          { type: 'number', min: 1, message: t('validation.all_durations_must_be_positive') },
-                                        ]}
-                                      >
-                                        <InputNumber addonAfter="min" style={{ width: '100px' }} />
-                                      </Form.Item>
-
-                                      <Button
-                                        type="text"
-                                        danger
-                                        icon={<MinusCircleOutlined />}
-                                        onClick={() => {
-                                          remove(name)
-                                        }}
-                                        disabled={fields.length === 1}
-                                        size="small"
-                                      />
-                                    </div>
-                                  </Space>
-                                ))}
-                                <Button
-                                  type="dashed"
-                                  onClick={() => {
-                                    const currentDurationsList: number[] = watchedDurations || []
-                                    const lastDuration = currentDurationsList && currentDurationsList.length > 1 ? currentDurationsList?.[currentDurationsList.length - 1] : 15
-                                    add(lastDuration + 15)
-                                  }}
-                                  block
-                                  icon={<PlusOutlined />}
-                                >
-                                  {t('content.add_appointment_duration')}
-                                </Button>
-                                <Form.ErrorList errors={errors} />
-                              </div>
-                            )
+              <Column
+                title={undefined}
+                dataIndex="color"
+                key="color"
+                minWidth={50}
+                render={(color: string, record: ProcedureRow) => {
+                  const editable = isEditing(record)
+                  if (editable) {
+                    return (
+                      <Form.Item
+                        name="color"
+                        style={{ margin: 0 }}
+                        rules={[
+                          {
+                            required: true,
+                            message: t('validation.color_required'),
+                          },
+                        ]}
+                      >
+                        <ColorPicker />
+                      </Form.Item>
+                    )
+                  } else {
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: 4,
+                            backgroundColor: color,
+                            border: '1px solid #d9d9d9',
                           }}
-                        </Form.List>
+                        />
+                      </div>
+                    )
+                  }
+                }}
+              />
+              <Column
+                title={t('content.procedure')}
+                dataIndex="subjectByLanguage"
+                key="subjectByLanguage"
+                minWidth={350}
+                render={(subjectsByLanguage: { [key: string]: string }, record: ProcedureRow) => {
+                  const editable = isEditing(record)
+                  if (editable) {
+                    return <SubjectEdit />
+                  } else {
+                    return <SubjectDisplay subjects={subjectsByLanguage} />
+                  }
+                }}
+              />
+
+              <Column
+                title={t('content.appointment_duration')}
+                dataIndex="appointmentDurations"
+                key="appointmentDurations"
+                minWidth={180}
+                render={(durations: number[] | undefined, record: ProcedureRow) => {
+                  const editable = isEditing(record)
+
+                  if (editable) {
+                    return (
+                      <Form.List
+                        name="appointmentDurations"
+                        rules={[
+                          {
+                            validator: async (_, durationList) => {
+                              if (!durationList || durationList.length === 0) {
+                                return Promise.reject(new Error(t('validation.at_least_one_duration_required')))
+                              }
+                              for (const duration of durationList) {
+                                if (duration === null || duration === undefined || duration <= 0) {
+                                  return Promise.reject(new Error(t('validation.all_durations_must_be_positive')))
+                                }
+                              }
+                            },
+                          },
+                        ]}
+                      >
+                        {(fields, { add, remove }, { errors }) => {
+                          return (
+                            <div style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '10px' }}>
+                              {fields.map(({ key, name, ...restField }, index) => (
+                                <Space key={key} className="appointment-duration" align="baseline">
+                                  <Typography.Text style={{ minWidth: '100px' }}>
+                                    {index + 1} {index === 0 ? t('content.person') : t('content.persons')} :
+                                  </Typography.Text>
+                                  <div className="appointment-duration-input">
+                                    <Form.Item
+                                      {...restField}
+                                      name={name}
+                                      noStyle
+                                      rules={[
+                                        { required: true, message: t('validation.at_least_one_duration_required') },
+                                        { type: 'number', min: 1, message: t('validation.all_durations_must_be_positive') },
+                                      ]}
+                                    >
+                                      <InputNumber addonAfter="min" style={{ width: '100px' }} />
+                                    </Form.Item>
+
+                                    <Button
+                                      type="text"
+                                      danger
+                                      icon={<MinusCircleOutlined />}
+                                      onClick={() => {
+                                        remove(name)
+                                      }}
+                                      disabled={fields.length === 1}
+                                      size="small"
+                                    />
+                                  </div>
+                                </Space>
+                              ))}
+                              <Button
+                                type="dashed"
+                                onClick={() => {
+                                  const currentDurationsList: number[] = watchedDurations || []
+                                  const lastDuration = currentDurationsList && currentDurationsList.length > 1 ? currentDurationsList?.[currentDurationsList.length - 1] : 15
+                                  add(lastDuration + 15)
+                                }}
+                                block
+                                icon={<PlusOutlined />}
+                              >
+                                {t('content.add_appointment_duration')}
+                              </Button>
+                              <Form.ErrorList errors={errors} />
+                            </div>
+                          )
+                        }}
+                      </Form.List>
+                    )
+                  } else {
+                    if (!durations || durations.length === 0) {
+                      return (
+                        <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                          {t('content.not_set')}
+                        </Tag>
                       )
-                    } else {
-                      if (!durations || durations.length === 0) {
-                        return (
-                          <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                            {t('content.not_set')}
+                    }
+                    return (
+                      <Space direction="vertical" size="small">
+                        {durations.map((duration, index) => (
+                          <Tag key={index}>
+                            {index + 1} {index === 0 ? t('content.person') : t('content.persons')}: {duration ?? 'N/A'} min
                           </Tag>
-                        )
-                      }
-                      return (
-                        <Space direction="vertical" size="small">
-                          {durations.map((duration, index) => (
-                            <Tag key={index}>
-                              {index + 1} {index === 0 ? t('content.person') : t('content.persons')}: {duration ?? 'N/A'} min
-                            </Tag>
-                          ))}
-                        </Space>
-                      )
-                    }
-                  }}
-                />
-                <Column
-                  title={t('content.visibility')}
-                  dataIndex="isPublic"
-                  key="isPublic"
-                  minWidth={120}
-                  render={(currentValue: string | undefined, record: ProcedureRow) => {
-                    const editable = isEditing(record)
+                        ))}
+                      </Space>
+                    )
+                  }
+                }}
+              />
+              <Column
+                title={t('content.visibility')}
+                dataIndex="isPublic"
+                key="isPublic"
+                minWidth={120}
+                render={(currentValue: string | undefined, record: ProcedureRow) => {
+                  const editable = isEditing(record)
 
-                    if (editable) {
-                      return (
-                        <Form.Item name="isPublic" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.visibility_required') }]}>
-                          <Radio.Group className="radio-group">
-                            <Radio value={'true'}>{t('content.public')}</Radio>
-                            <Radio value={'false'}>{t('content.private')}</Radio>
-                          </Radio.Group>
-                        </Form.Item>
-                      )
-                    } else {
-                      if (currentValue === 'true') {
-                        return <Tag color="green">{t('content.public')}</Tag>
-                      } else if (currentValue === 'false') {
-                        return <Tag color="red">{t('content.private')}</Tag>
-                      }
-                      return <Tag color="orange">{t('content.unknown')}</Tag>
+                  if (editable) {
+                    return (
+                      <Form.Item name="isPublic" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.visibility_required') }]}>
+                        <Radio.Group className="radio-group">
+                          <Radio value={'true'}>{t('content.public')}</Radio>
+                          <Radio value={'false'}>{t('content.private')}</Radio>
+                        </Radio.Group>
+                      </Form.Item>
+                    )
+                  } else {
+                    if (currentValue === 'true') {
+                      return <Tag color="green">{t('content.public')}</Tag>
+                    } else if (currentValue === 'false') {
+                      return <Tag color="red">{t('content.private')}</Tag>
                     }
-                  }}
-                />
-                <Column
-                  title={t('content.procedure_information')}
-                  dataIndex="procedureDetails"
-                  key="procedureDetails"
-                  minWidth={350}
-                  render={(details: string | undefined, record: ProcedureRow) => {
-                    const editable = isEditing(record)
+                    return <Tag color="orange">{t('content.unknown')}</Tag>
+                  }
+                }}
+              />
+              <Column
+                title={t('content.procedure_information')}
+                dataIndex="procedureDetails"
+                key="procedureDetails"
+                minWidth={350}
+                render={(details: string | undefined, record: ProcedureRow) => {
+                  const editable = isEditing(record)
 
-                    if (editable) {
-                      return (
-                        <Form.Item name="procedureDetails" style={{ width: '100%' }}>
-                          <Input.TextArea autoSize={{ minRows: 3, maxRows: 6 }} placeholder="" />
-                        </Form.Item>
-                      )
-                    } else {
-                      return (
-                        <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '6px', minHeight: '60px' }}>
-                          <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{details || ''}</Typography.Paragraph>
-                        </div>
-                      )
-                    }
-                  }}
-                />
-                <Column
-                  title={t('content.actions')}
-                  key="action"
-                  fixed="right"
-                  width={'12%'}
-                  render={(_: unknown, record: ProcedureRow) => {
-                    const editable = isEditing(record)
+                  if (editable) {
+                    return (
+                      <Form.Item name="procedureDetails" style={{ width: '100%' }}>
+                        <Input.TextArea autoSize={{ minRows: 3, maxRows: 6 }} placeholder="" />
+                      </Form.Item>
+                    )
+                  } else {
+                    return (
+                      <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '6px', minHeight: '60px' }}>
+                        <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{details || ''}</Typography.Paragraph>
+                      </div>
+                    )
+                  }
+                }}
+              />
+              <Column
+                title={t('content.actions')}
+                key="action"
+                fixed="right"
+                width={'12%'}
+                render={(_: unknown, record: ProcedureRow) => {
+                  const editable = isEditing(record)
 
-                    if (editable) {
-                      return (
-                        <Space size="middle">
-                          <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
-                          <Button onClick={tableRowCancel}>{t('content.cancel')}</Button>
-                        </Space>
-                      )
-                    } else {
-                      return (
-                        <Space size="middle">
-                          <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
-                          <Button
-                            onClick={() => {
-                              setProcedureRowToBeDeleted(record)
-                              setShowDeleteProcedureModal(true)
-                            }}
-                          >
-                            {t('content.delete')}
-                          </Button>
-                        </Space>
-                      )
-                    }
-                  }}
-                />
-              </ColumnGroup>
+                  if (editable) {
+                    return (
+                      <Space size="middle">
+                        <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
+                        <Button onClick={tableRowCancel}>{t('content.cancel')}</Button>
+                      </Space>
+                    )
+                  } else {
+                    return (
+                      <Space size="middle">
+                        <Button onClick={() => tableRowEdit(record)}>{t('content.edit')}</Button>
+                        <Button
+                          onClick={() => {
+                            setProcedureRowToBeDeleted(record)
+                            setShowDeleteProcedureModal(true)
+                          }}
+                        >
+                          {t('content.delete')}
+                        </Button>
+                      </Space>
+                    )
+                  }
+                }}
+              />
             </Table>
           </div>
         </div>
