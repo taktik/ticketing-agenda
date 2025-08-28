@@ -1,21 +1,21 @@
-import { HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Divider, Spin, Typography } from 'antd'
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import './index.css'
 
 interface ServiceSelectorProps {
-  services: HealthcareParty[]
+  services: Agenda[]
   isServicesLoading: boolean
-  selectedService: HealthcareParty | undefined
-  setSelectedService: React.Dispatch<React.SetStateAction<HealthcareParty | undefined>>
+  selectedService: Agenda | undefined
+  setSelectedService: React.Dispatch<React.SetStateAction<Agenda | undefined>>
 }
 
 export const ServiceSelector = ({ services, isServicesLoading, selectedService, setSelectedService }: ServiceSelectorProps): React.ReactElement => {
   const { t } = useTranslation()
 
   const handleSelectServiceClick = useCallback(
-    (service: HealthcareParty) => {
+    (service: Agenda) => {
       const toSelect = service.id === selectedService?.id ? undefined : service
       setSelectedService(toSelect)
     },

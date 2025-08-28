@@ -1,12 +1,11 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined } from '@ant-design/icons'
-import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, CodeStub, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
+import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, CodeStub, DecryptedAddress, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType } from '@icure/cardinal-sdk'
 import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
 import { ReactElement, useContext, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { v4 } from 'uuid'
 import { SettingContext } from '../../../contexts/SettingContext'
-import { useCreateUpdateAgendaMutation, useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
+import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/healthcarePartyApi'
 import { EditableSiteInfo, SiteInfoFormValues } from '../../common/EditableSiteInfo'
@@ -16,21 +15,20 @@ import './index.css'
 
 interface SiteSettingProps {
   site: HealthcareParty
-  services: HealthcareParty[]
+  services: Agenda[]
   handleSiteDelete: (site: HealthcareParty) => Promise<void>
 }
 
-type ServiceWithProceduresTuple = [HealthcareParty, CalendarItemType[]]
+type ServiceWithProceduresTuple = [Agenda, CalendarItemType[]]
 
 export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingProps): ReactElement => {
-  const { selectedKeyId, setSelectedKey } = useContext(SettingContext)
+  const { setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showEditableSite, setShowEditableSite] = useState<boolean>(false)
 
   const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
   const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
-  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateHealthcarePartyMutation()
 
   const siteActionItems: MenuProps['items'] = [
     {
@@ -62,24 +60,39 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
 
   const handleCreateNewService = async () => {
     try {
-      const serviceHcp = new HealthcareParty({
-        name: t('content.new_service'),
-        descr: {
-          FR: t('content.new_service'),
-          NL: '',
-          EN: '',
-          DE: '',
-        },
-        parentId: selectedKeyId,
-        id: v4(),
-        public: true,
-        tags: [new CodeStub({ id: 'SERVICE', code: 'SERVICE', context: 'SERVICE', type: 'SERVICE' })],
+      const parentProperty = new DecryptedPropertyStub({
+        id: 'parentSite',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: site.id,
+        }),
       })
-      await createUpdateService({ ...serviceHcp }).unwrap()
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({
         intervalMinutes: 5,
       })
-      await createUpdateAgendaMutation(new Agenda({ author: serviceHcp.id, zoneId: 'Europe/Brussels', slottingAlgorithm: algorithm, name: serviceHcp.name })).unwrap()
+      await createUpdateAgendaMutation(
+        new Agenda({
+          author: site.id,
+          zoneId: 'Europe/Brussels',
+          slottingAlgorithm: algorithm,
+          name: t('content.new_service'),
+          tags: [
+            new CodeStub({
+              id: 'SERVICE',
+              code: 'SERVICE',
+              context: 'SERVICE',
+              type: 'SERVICE',
+              label: {
+                FR: t('content.new_service'),
+                NL: '',
+                EN: '',
+                DE: '',
+              },
+            }),
+          ],
+          properties: [parentProperty],
+        }),
+      ).unwrap()
       showMessageFeedback('success', t('notification.service_saved'))
     } catch (error) {
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
@@ -110,15 +123,13 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const servicesIds = useMemo(() => services?.map((service) => service.id), [services])
-  const { data: allAgendas } = useGetAllAgendaByAuthorIds({ skip: !site || !services, authorIds: servicesIds })
-  const agendaIds = useMemo(() => allAgendas?.map((agenda) => agenda.id), [allAgendas])
+  const agendaIds = useMemo(() => services?.map((agenda) => agenda.id), [services])
 
   const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ agendaIds: agendaIds }, { skip: !site || !agendaIds })
   const flatProceduresArray = useMemo(() => (allProcedures ?? []).flat(), [allProcedures])
 
   const serviceAndProcedures: ServiceWithProceduresTuple[] = services.map((service): ServiceWithProceduresTuple => {
-    const serviceProcedures = flatProceduresArray.filter((procedure) => procedure.healthcarePartyId === service.id && procedure.defaultCalendarItemType === true)
+    const serviceProcedures = flatProceduresArray.filter((procedure) => procedure.agendaId === service.id && procedure.defaultCalendarItemType === true)
     return [service, serviceProcedures]
   })
 

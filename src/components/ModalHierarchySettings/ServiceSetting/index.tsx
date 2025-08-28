@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, CodeStub } from '@icure/cardinal-sdk'
 import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
 import type { Color } from 'antd/es/color-picker'
 import Column from 'antd/es/table/Column'
@@ -7,9 +7,8 @@ import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
+import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
-import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/healthcarePartyApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 import './index.css'
@@ -104,8 +103,8 @@ export interface FormValuesService {
 }
 
 interface ServiceSettingProps {
-  service: HealthcareParty
-  handleDeleteService: (service: HealthcareParty) => Promise<void>
+  service: Agenda
+  handleDeleteService: (service: Agenda) => Promise<void>
 }
 
 export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingProps): ReactElement => {
@@ -119,8 +118,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
 
-  const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !service, authorId: service?.id ?? '' })
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !service || !agenda })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: service?.id ?? '' }, { skip: !service })
 
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
@@ -157,32 +155,30 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
     setTableRows(tableRowsList)
   }, [proceduresList])
 
-  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateAgendaMutation()
   const [createUpdateProcedure, { isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading }] = useCreateUpdateCalendarItemTypeMutation()
-
   const [deleteProcedure, { isError: isDeleteDemarcheError, isSuccess: isDeleteDemarcheSuccess, isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypeMutation()
 
-  const isFetching = useMemo(() => isAgendaLoading || isProceduresLoading, [isAgendaLoading, isProceduresLoading])
+  const isFetching = useMemo(() => isProceduresLoading, [isProceduresLoading])
   const isMutating = useMemo(() => isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading, [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading])
   const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   useEffect(() => {
     if (service) {
       form.setFieldsValue({
-        descr: service.descr,
+        descr: service.tags[0].label,
       })
     }
   }, [service, form])
 
   const addProcedure = async () => {
     try {
-      if (!service || !agenda) throw new Error()
+      if (!service) throw new Error()
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
         defaultCalendarItemType: true,
         duration: 15,
-        healthcarePartyId: service.id,
-        agendaId: agenda.id,
+        agendaId: service.id,
         otherInfos: {
           order: '0',
           isPublic: 'true',
@@ -207,7 +203,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
   const tableRowUpdate = async (procedureRow: ProcedureRow) => {
     try {
       // Step 1 : We first make sure everything is valid
-      if (!service || !agenda) throw new Error()
+      if (!service) throw new Error()
 
       const rowValues = await form.validateFields()
 
@@ -222,8 +218,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
             name: rowValues.subjectByLanguage['FR'],
             duration: duration,
             defaultCalendarItemType: index === 0,
-            healthcarePartyId: service.id,
-            agendaId: agenda.id,
+            agendaId: service.id,
             otherInfos: {
               order: String(index),
               isPublic: rowValues.isPublic,
@@ -362,7 +357,15 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
   const renameService = async (newTitles: LanguageDescription) => {
     try {
       if (!service || !newTitles || !newTitles['FR']) throw new Error()
-      await createUpdateService(new HealthcareParty({ ...service, descr: newTitles, name: newTitles['FR'] })).unwrap()
+      const newTags = service.tags.map((tag) =>
+        tag.id === 'SERVICE'
+          ? new CodeStub({
+              ...tag,
+              label: newTitles,
+            })
+          : tag,
+      )
+      await createUpdateService(new Agenda({ ...service, tags: newTags, name: newTitles['FR'] })).unwrap()
       showMessageFeedback('success', t('notification.service_saved'))
     } catch (error) {
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
@@ -405,7 +408,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
         <div className="form-fields">
           <div className="service-title">
             <Space align="center">
-              <EditableServiceTitle form={form} initialTitles={service.descr} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
+              <EditableServiceTitle form={form} initialTitles={service.tags[0].label} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
               {showEditServiceTitle ? null : (
                 <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                   <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />

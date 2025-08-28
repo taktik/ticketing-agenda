@@ -3,7 +3,7 @@ import '@fullcalendar/core/locales/de'
 import '@fullcalendar/core/locales/fr'
 import '@fullcalendar/core/locales/nl'
 import FullCalendar from '@fullcalendar/react'
-import { CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { Calendar as AntCalendar, Button, Card, Space, Tooltip } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -17,7 +17,7 @@ import { ProcedureSelector } from '../../components/ProcedureSelector'
 import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
-import { useGetAgendaByAuthorId } from '../../core/api/agendaApi'
+import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { useGetHealthcarePartiesByParentQuery, useGetHealthcarePartiesQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
@@ -38,16 +38,14 @@ export default function DashboardPage() {
 
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
-  const { data: services, isLoading: isServicesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
+  const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'parentSite', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
   const filteredServices = useMemo(() => (services && selectedSite ? services : []), [services, selectedSite])
+  const [selectedService, setSelectedService] = useState<Agenda | undefined>(undefined)
 
-  const [selectedService, setSelectedService] = useState<HealthcareParty | undefined>(undefined)
+  useEffect(() => console.log('services', services), [services])
 
-  const { data: agenda, isLoading: isAgendaLoading } = useGetAgendaByAuthorId({ skip: !selectedService, authorId: selectedService?.id ?? '' })
-  const filteredAgenda = useMemo(() => (agenda && selectedService ? agenda : undefined), [agenda, selectedService])
-
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: filteredAgenda?.id ?? '' }, { skip: skip || !filteredAgenda || !selectedService })
-  const filteredProcedures = useMemo(() => (procedures && filteredAgenda ? procedures : []), [procedures, filteredAgenda])
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: selectedService?.id ?? '' }, { skip: skip || !selectedService })
+  const filteredProcedures = useMemo(() => (procedures && selectedService ? procedures : []), [procedures, selectedService])
 
   const isSitesRelatedLoading = useMemo(() => isSitesLoading || isRootHcpLoading, [isSitesLoading, isRootHcpLoading])
   const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
@@ -122,7 +120,7 @@ export default function DashboardPage() {
           <Calendar
             calendarRef={calendarRef}
             handleFullCalendarDateChange={handleFullCalendarDateChange}
-            selectedAgenda={agenda}
+            selectedAgenda={selectedService}
             procedures={procedures}
             selectedProcedure={selectedProcedure}
             calendarDate={calendarDate}

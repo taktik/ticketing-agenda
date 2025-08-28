@@ -42,3 +42,8 @@ export type GetCalendarItemsByAgendaAndPeriods = {
 export type GetServicesForMultipleSitesParameters = {
   siteIds: string[]
 }
+
+export type GetAgendasByStringPropertyParameters = {
+  propertyId: string
+  propertyValue: string
+}

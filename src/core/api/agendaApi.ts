@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { useEffect, useMemo, useState } from 'react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { calendarItemTypeApiRtk } from './calendarItemTypeApi'
-import { timeTableApiRtk } from './timeTableApi'
+import { GetAgendasByStringPropertyParameters } from './fetchType'
 import { loadFromIterator } from './utils'
 
 enum AgendaTags {
@@ -22,6 +22,15 @@ export const agendaApiRtk = createApi({
         const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async (): Promise<Agenda[]> => {
           return await loadFromIterator(await agendaApi!.filterAgendasBy(AgendaFilters.all()), 1000)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
+    }),
+    getAgendasByStringProperty: builder.query<Agenda[] | undefined, GetAgendasByStringPropertyParameters>({
+      async queryFn(params, { getState }) {
+        const agendaApi = (await cardinalApi(getState))?.agenda
+        return guard([agendaApi], async (): Promise<Agenda[]> => {
+          return await loadFromIterator(await agendaApi!.filterAgendasBy(AgendaFilters.byStringProperty(params.propertyId, params.propertyValue)), 1000)
         })
       },
       providesTags: (res) => (res ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
@@ -119,7 +128,7 @@ export const agendaApiRtk = createApi({
   }),
 })
 
-export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendaMutation } = agendaApiRtk
+export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendaMutation, useGetAgendasByStringPropertyQuery } = agendaApiRtk
 
 export const useGetAllAgendaByAuthorIds = (params: { skip: boolean; authorIds: string[] }) => {
   const { data, ...rest } = useGetAgendasQuery(undefined, {

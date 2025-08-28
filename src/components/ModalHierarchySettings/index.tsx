@@ -1,9 +1,9 @@
 import { AppstoreOutlined, BankOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
-import { CodeStub, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, CodeStub, HealthcareParty } from '@icure/cardinal-sdk'
 import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
-import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import emptyIcon from '../../assets/empty.svg'
@@ -15,6 +15,7 @@ import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 import './index.css'
 import { ServiceSetting } from './ServiceSetting'
 import { SiteSetting } from './SiteSetting'
+import { useDeleteAgendaMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
 
 interface ModalHierarchySettingsProps {
   isVisible: boolean
@@ -32,9 +33,11 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const { data: sites } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
+  useEffect(() => console.log('user', user), [user])
+
   const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
   const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading } = useRecursiveHcpDeletion()
-  const { deleteHcpRecursively: deleteService, isLoading: isDeleteServiceLoading } = useRecursiveHcpDeletion()
+  const [deleteAgendaMutation] = useDeleteAgendaMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -59,7 +62,9 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
-  const { data: services } = useGetAllServiceBySiteId({ skip: skip || !rootHcp, sitesIds: sitesIds ?? [] })
+  const { data: services } = useGetAllAgendaByAuthorIds({ skip: skip || !rootHcp, authorIds: sitesIds ?? [] })
+
+  useEffect(() => console.log('agendas in settings', services), [services])
 
   const sortedServices = useMemo(() => {
     return [...(services ?? [])].sort((a, b) => {
@@ -84,7 +89,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const menuItems: MenuItem[] = useMemo(
     () =>
       (sites ?? []).map((site) => {
-        const matchingServices = sortedServices?.filter((service) => service.parentId === site.id) ?? []
+        const matchingServices = sortedServices?.filter((service) => service.author === site.id) ?? []
 
         const children: MenuItem[] = (matchingServices ?? []).map((service) => ({
           key: `service-${service.id}`,
@@ -153,10 +158,10 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     }
   }
 
-  const handleDeleteService = async (service: HealthcareParty) => {
+  const handleDeleteService = async (service: Agenda) => {
     try {
       if (!service) throw new Error('No service selected')
-      await deleteService(service)
+      await deleteAgendaMutation(service)
       showMessageFeedback('success', t('notification.service_deleted'))
     } catch (error) {
       openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
@@ -178,7 +183,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
       const matchingSite = sites?.find((site) => site.id === id)
       if (!matchingSite) return <div>{t('content.site_not_found')}</div>
 
-      const servicesOfThisSite = sortedServices?.filter((service) => service.parentId === matchingSite.id) ?? []
+      const servicesOfThisSite = sortedServices?.filter((service) => service.author === matchingSite.id) ?? []
 
       return <SiteSetting site={matchingSite} services={servicesOfThisSite} handleSiteDelete={handleSiteDelete} />
     }

@@ -1,4 +1,4 @@
-import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
+import { HealthcareParty, HealthcarePartyFilters, AgendaFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
 import { useCallback, useState } from 'react'
 import { useAppDispatch } from '../hooks'
@@ -228,11 +228,6 @@ export const useRecursiveHcpDeletion = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<unknown | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
-
-  // This internal function doesn't need to be memoized as it's only used inside the callback
-  const deleteHcpRecursivelyInternal = async (hcp: HealthcareParty): Promise<void> => {
-    // ... your existing recursive logic is perfect and doesn't need to change ...
-  }
 
   // Wrap the function you return in useCallback.
   const startRecursiveHcpDeletion = useCallback(
