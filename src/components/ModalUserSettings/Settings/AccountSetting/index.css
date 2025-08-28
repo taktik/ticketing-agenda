@@ -112,7 +112,7 @@ body {
 body * {
   font-family: Lato400, sans-serif;
 }
-.modalManageAccountForm {
+.manage-account-root {
   width: 100%;
   height: 100%;
   display: flex;
@@ -120,36 +120,36 @@ body * {
   position: relative;
 }
 @media screen and (max-width: calc(768px - 1px)) {
-  .modalManageAccountForm {
+  .manage-account-root {
     flex-grow: 1;
   }
 }
-.modalManageAccountForm__form {
+.manage-account-root__form {
   display: flex;
   flex-direction: column;
   flex: 1 0 0;
 }
 @media screen and (max-width: calc(768px - 1px)) {
-  .modalManageAccountForm__form {
+  .manage-account-root__form {
     padding: 12px;
   }
 }
-.modalManageAccountForm__form__inputs {
+.manage-account-root__form__inputs {
   display: flex;
   flex-direction: column;
   flex: 1 0 0;
   gap: 12px;
 }
 @media screen and (max-width: calc(768px - 1px)) {
-  .modalManageAccountForm__form__inputs {
+  .manage-account-root__form__inputs {
     padding-bottom: 12px;
   }
 }
-.agendaFormFooter {
+.agenda-form-footer {
   display: flex;
   justify-content: flex-end;
 }
-.agendaFormFooter * {
+.agenda-form-footer * {
   display: flex;
   gap: 10px;
 }

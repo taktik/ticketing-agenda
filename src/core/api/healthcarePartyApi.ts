@@ -50,6 +50,7 @@ export const healthcarePartyApiRtk = createApi({
       providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
     getServicesForMultipleSites: builder.query<HealthcareParty[], GetServicesForMultipleSitesParameters>({
+      // TODO remove/adapt. Services are now agendas
       async queryFn(params, { getState, dispatch }) {
         const { siteIds } = params
         if (!siteIds || siteIds.length === 0) {

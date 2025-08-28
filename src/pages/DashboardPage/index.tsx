@@ -96,11 +96,11 @@ export default function DashboardPage() {
           <div className="ant-calendar-wrapper">
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
-          <ItemSelector<Agenda> titleKey="content.services" items={filteredServices} isLoading={isServicesLoading} selectedItem={selectedService} setSelectedItem={setSelectedService} />
+          <ItemSelector<Agenda> titleKey="content.services" items={filteredServices} isLoading={isServicesRelatedLoading} selectedItem={selectedService} setSelectedItem={setSelectedService} />
           <ItemSelector<CalendarItemType>
             titleKey="content.procedures"
             items={filteredProcedures}
-            isLoading={isProceduresLoading}
+            isLoading={isProceduresRelatedLoading}
             selectedItem={selectedProcedure}
             setSelectedItem={setSelectedProcedure}
             filterPredicate={(item) => item.defaultCalendarItemType === true}

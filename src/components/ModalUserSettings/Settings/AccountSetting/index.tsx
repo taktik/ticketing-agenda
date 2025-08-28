@@ -1,9 +1,9 @@
 import { HealthcareParty, User } from '@icure/cardinal-sdk'
-import { Button, Form, Input, Upload, UploadFile, UploadProps } from 'antd'
+import { Button, Form, Input, Upload, UploadFile, UploadProps, message, notification } from 'antd'
 import ImgCrop from 'antd-img-crop'
 import { ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useCreateOrUpdatePractitionerMutation } from '../../../../core/api/practitionerApi'
+import { useCreateUpdateHealthcarePartyMutation } from '../../../../core/api/healthcarePartyApi'
 import { useCreateUpdateUserMutation } from '../../../../core/api/userApi'
 import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileToBase64'
 import { SpinLoader } from '../../../common/SpinLoader'
@@ -13,10 +13,11 @@ interface AccountSettingProps {
   currentUser?: HealthcareParty
   user?: User
 }
+
 export const AccountSetting = ({ currentUser, user }: AccountSettingProps): ReactElement => {
   const [form] = Form.useForm()
-  const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
-  const [updatePractitioner, { isSuccess: isPractitionerUpdatedSuccessfully, isLoading: isPractitionerUpdatingLoading }] = useCreateOrUpdatePractitionerMutation()
+  const [updateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
+  const [updateHcp, { isLoading: isHcpUpdatingLoading }] = useCreateUpdateHealthcarePartyMutation()
   const { t } = useTranslation()
 
   const userAvatarSrc = getImgSRC(currentUser?.picture)
@@ -34,12 +35,17 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
           },
         ],
   )
-  const handleSubmit = (value: { firstName: string; lastName: string; emailAddress: string }) => {
-    const { firstName, lastName, emailAddress } = value
-    const picture = patientPictureAsBase64 ?? currentUser?.picture
-    updatePractitioner(new HealthcareParty({ ...currentUser, firstName, lastName, picture }))
-    createUpdateUser(new User({ ...user, email: emailAddress }))
-    form.resetFields()
+  const handleSubmit = async (value: { firstName: string; lastName: string; emailAddress: string }) => {
+    try {
+      const { firstName, lastName, emailAddress } = value
+      const picture = patientPictureAsBase64 ?? currentUser?.picture
+      await updateHcp(new HealthcareParty({ ...currentUser, firstName, lastName, picture })).unwrap()
+      await updateUser(new User({ ...user, email: emailAddress })).unwrap()
+      showMessageFeedback('success', t('notification.user_modified'))
+      form.resetFields()
+    } catch (error) {
+      openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
+    }
   }
 
   const currentUserEmail = user?.email
@@ -65,11 +71,37 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
     form.resetFields()
   }
 
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
+
   return (
-    <div className="modalManageAccountForm">
-      {(isPractitionerUpdatingLoading || isCreateUpdateUserLoading) && <SpinLoader />}
+    <div className="manage-account-root">
+      {notificationContextHolder}
+      {messageContextHolder}
+      {(isHcpUpdatingLoading || isCreateUpdateUserLoading) && <SpinLoader />}
       <Form
-        className="modalManageAccountForm__form"
+        className="manage-account-root__form"
         layout="vertical"
         onFinish={(values) => handleSubmit(values)}
         colon={false}
@@ -81,15 +113,15 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
           file: currentUser?.picture,
         }}
       >
-        <div className="modalManageAccountForm__form__inputs">
+        <div className="manage-account-root__form__inputs">
           <Form.Item name="firstName" label={t('content.firstname')} rules={[{ required: true, message: t('validation.firstname_required') }]}>
-            <Input placeholder={t('content.firstname')} size="large" style={{ fontSize: 13 }} />
+            <Input placeholder={t('content.firstname')} size="large" />
           </Form.Item>
           <Form.Item name="lastName" label={t('content.lastname')} rules={[{ required: true, message: t('validation.lastname_required') }]}>
-            <Input placeholder={t('content.lastname')} size="large" style={{ fontSize: 13 }} />
+            <Input placeholder={t('content.lastname')} size="large" />
           </Form.Item>
           <Form.Item name="emailAddress" label={t('content.email')} rules={[{ required: true, message: t('validation.email_required') }]}>
-            <Input placeholder={t('content.email')} size="large" style={{ fontSize: 13 }} />
+            <Input placeholder={t('content.email')} size="large" />
           </Form.Item>
 
           <Form.Item label={t('content.picture')} valuePropName="file">
@@ -100,12 +132,12 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
             </ImgCrop>
           </Form.Item>
         </div>
-        <div className="agendaFormFooter">
+        <div className="agenda-form-footer">
           <Form.Item>
             <Button htmlType="button" onClick={handleCancel}>
               {t('content.cancel')}
             </Button>
-            <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+            <Button type="primary" htmlType="submit">
               {t('content.save')}
             </Button>
           </Form.Item>

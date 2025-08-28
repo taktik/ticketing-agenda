@@ -627,6 +627,11 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                 </Button>
               </div>
             </div>
+            <div className="table-add-entry">
+              <Button style={{ width: '100%' }} onClick={addRule}>
+                {t('content.add_rule')}
+              </Button>
+            </div>
             <div className="antTable">
               <Table<TableRow>
                 className="custom-table"
@@ -637,12 +642,6 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                 locale={{ emptyText: <Empty description={t('content.no_rule_yet')} /> }}
                 loading={isLoading}
               >
-                <div className="table-add-entry">
-                  <Button style={{ width: '100%' }} onClick={addRule}>
-                    {t('content.add_rule')}
-                  </Button>
-                </div>
-
                 <Column
                   title={t('content.procedure')}
                   dataIndex="calendarItemTypesIds"
