@@ -71,7 +71,6 @@
   color: @red-font !important;
   border: 1px solid @red-font !important;
 }
-
 .ant-picker-cell:not(.ant-picker-cell-selected):hover .ant-picker-cell-inner {
   background: @red-background !important;
   color: black !important;
@@ -79,35 +78,46 @@
     background: transparent !important;
   }
 }
-
 .ant-picker-cell-selected .ant-picker-cell-inner {
   background-color: @red-font !important;
   color: white;
 }
-
 .ant-select:hover > * {
   border: none !important;
 }
-
 .fc-toolbar-title {
   position: relative !important;
 }
 .fc-myCustomButton-button {
   position: relative !important;
 }
-
 .fc-today-button {
   position: relative !important;
 }
-
 .fc .fc-view-harness-active > .fc-view {
   background: #ffffff !important;
 }
-
 .table-add-entry {
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   width: 100%;
   padding: 1rem;
   background-color: #fafafa;
+}
+.ant-calendar-wrapper > :first-child {
+  border-radius: 0;
+}
+.ant-calendar-wrapper {
+  width: 400px;
+  border: 1px solid #d9d9d9;
+
+  > :first-child {
+    border-radius: 0;
+  }
+}
+.selector-spin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
 }

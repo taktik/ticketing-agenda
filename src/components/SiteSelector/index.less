@@ -1,10 +1,13 @@
 @import '../../style/less/index';
 
-.selectorRoot {
+.selector-root {
   display: flex;
   width: 100%;
   flex-direction: row;
   border-color: #d9d9d9;
+  > :first-child {
+    width: 100%;
+  }
 }
 .ant-select:hover .ant-select-selector {
   border: 1px solid #d9d9d9 !important;

@@ -112,11 +112,14 @@ body {
 body * {
   font-family: Lato400, sans-serif;
 }
-.selectorRoot {
+.selector-root {
   display: flex;
   width: 100%;
   flex-direction: row;
   border-color: #d9d9d9;
+}
+.selector-root > :first-child {
+  width: 100%;
 }
 .ant-select:hover .ant-select-selector {
   border: 1px solid #d9d9d9 !important;

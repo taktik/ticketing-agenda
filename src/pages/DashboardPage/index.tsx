@@ -6,20 +6,19 @@ import FullCalendar from '@fullcalendar/react'
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { Calendar as AntCalendar, Button, Card, Space, Tooltip } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Calendar } from '../../components/Calendar'
 import { Header } from '../../components/common/Header'
+import { ItemSelector } from '../../components/ItemSelector/ItemSelector'
 import { ModalHierarchySettings } from '../../components/ModalHierarchySettings'
 import { ModalScheduling } from '../../components/ModalScheduling'
-import { ProcedureSelector } from '../../components/ProcedureSelector'
-import { ServiceSelector } from '../../components/ServiceSelector'
 import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useGetHealthcarePartiesByParentQuery, useGetHealthcarePartiesQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
 
@@ -33,30 +32,20 @@ export default function DashboardPage() {
   const { t } = useTranslation()
 
   const { data: rootHcp, isLoading: isRootHcpLoading } = useGetRootHealthcareParty({ skip: skip })
-
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
-
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
   const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'parentSite', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
   const filteredServices = useMemo(() => (services && selectedSite ? services : []), [services, selectedSite])
   const [selectedService, setSelectedService] = useState<Agenda | undefined>(undefined)
 
-  useEffect(() => console.log('services', services), [services])
-
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: selectedService?.id ?? '' }, { skip: skip || !selectedService })
   const filteredProcedures = useMemo(() => (procedures && selectedService ? procedures : []), [procedures, selectedService])
+  const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
 
   const isSitesRelatedLoading = useMemo(() => isSitesLoading || isRootHcpLoading, [isSitesLoading, isRootHcpLoading])
   const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
   const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
-
-  const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
-
-  const { data: allHcps } = useGetHealthcarePartiesQuery(undefined, {
-    skip: !user,
-  })
-  useEffect(() => console.log('allHcps', allHcps), [allHcps])
 
   useEffect(() => setSelectedService(undefined), [services])
   useEffect(() => setSelectedProcedure(undefined), [procedures])
@@ -86,12 +75,6 @@ export default function DashboardPage() {
     }
   }, [calendarRef, setCalendarDate])
 
-  const wrapperStyle: React.CSSProperties = {
-    width: 400,
-    border: `1px solid #D9D9D9`,
-    borderRadius: 0,
-  }
-
   return (
     <div className="Dashboard">
       <Header />
@@ -110,11 +93,18 @@ export default function DashboardPage() {
               </Space>
             </div>
           </Card>
-          <div style={{ ...wrapperStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', zIndex: '1' }}>
+          <div className="ant-calendar-wrapper">
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
-          <ServiceSelector services={filteredServices} isServicesLoading={isServicesRelatedLoading} selectedService={selectedService} setSelectedService={setSelectedService} />
-          <ProcedureSelector procedures={filteredProcedures} isProceduresLoading={isProceduresRelatedLoading} selectedProcedure={selectedProcedure} setSelectedProcedure={setSelectedProcedure} />
+          <ItemSelector<Agenda> titleKey="content.services" items={filteredServices} isLoading={isServicesLoading} selectedItem={selectedService} setSelectedItem={setSelectedService} />
+          <ItemSelector<CalendarItemType>
+            titleKey="content.procedures"
+            items={filteredProcedures}
+            isLoading={isProceduresLoading}
+            selectedItem={selectedProcedure}
+            setSelectedItem={setSelectedProcedure}
+            filterPredicate={(item) => item.defaultCalendarItemType === true}
+          />
         </div>
         <div className="right-panel">
           <Calendar

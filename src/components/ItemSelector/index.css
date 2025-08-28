@@ -112,14 +112,14 @@ body {
 body * {
   font-family: Lato400, sans-serif;
 }
-.DemarcheSelector {
+.leftside-selector {
   width: 400px;
   border: 1px solid #d9d9d9;
   z-index: 1;
   background: #ffffff;
   max-height: 20%;
 }
-.DemarcheSelectorHeader {
+.leftside-selector-header {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -127,7 +127,7 @@ body * {
   gap: 4px;
   padding: 16px;
 }
-.DemarchesContent {
+.leftside-selector-content {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;

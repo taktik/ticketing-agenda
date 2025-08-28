@@ -211,4 +211,20 @@ body * {
   padding: 1rem;
   background-color: #fafafa;
 }
+.ant-calendar-wrapper > :first-child {
+  border-radius: 0;
+}
+.ant-calendar-wrapper {
+  width: 400px;
+  border: 1px solid #d9d9d9;
+}
+.ant-calendar-wrapper > :first-child {
+  border-radius: 0;
+}
+.selector-spin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
 /*# sourceMappingURL=index.css.map */

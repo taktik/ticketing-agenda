@@ -31,11 +31,10 @@ export const SiteSelector = ({ sites, isSitesLoading, selectedSite, setSelectedS
   }, [sites])
 
   return (
-    <div className="selectorRoot">
+    <div className="selector-root">
       <AntSelect
         allowClear
         showSearch
-        style={{ width: '100%' }}
         placeholder={t('content.select_site')}
         optionFilterProp="label"
         labelInValue
