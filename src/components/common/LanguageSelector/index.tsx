@@ -1,10 +1,10 @@
 import { Select, Space } from 'antd'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import flagFrance from '../../../assets/flag_france.png'
 import flagGermany from '../../../assets/flag_germany.png'
 import flagUK from '../../../assets/flag_kingdom_united.png'
 import flagDutch from '../../../assets/flag_netherlands.png'
+import './index.css'
 
 interface LanguageOption {
   code: string
@@ -22,37 +22,21 @@ const languageOptionsData: LanguageOption[] = [
 export const LanguageSelector = () => {
   const { i18n } = useTranslation()
 
-  const [currentLanguage, setCurrentLanguage] = useState<string>(i18n.language)
-
-  const handleLanguageChange = (value: string) => {
-    i18n.changeLanguage(value)
-    setCurrentLanguage(value)
-  }
-
   return (
-    <Select value={currentLanguage} onChange={handleLanguageChange} style={{ width: 150 }} aria-label="Select language" optionLabelProp="label">
+    <Select value={i18n.language} onChange={(value) => i18n.changeLanguage(value)} aria-label="Select language" optionLabelProp="label" className="language-selector">
       {languageOptionsData.map((lang) => (
         <Select.Option
           key={lang.code}
           value={lang.code}
           label={
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img
-                src={lang.FlagComponent}
-                alt={`${lang.name} flag`}
-                style={{
-                  width: '20px',
-                  height: '15px',
-                  marginRight: '8px',
-                  verticalAlign: 'middle',
-                }}
-              />
-              <span style={{ verticalAlign: 'middle' }}>{lang.name}</span>
+            <div className="language-item">
+              <img src={lang.FlagComponent} alt={`${lang.name} flag`} className="language-flag-small" />
+              <span className="language-name">{lang.name}</span>
             </div>
           }
         >
           <Space size="small" align="center">
-            <img src={lang.FlagComponent} alt={`${lang.name} flag`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', verticalAlign: 'middle' }} />
+            <img src={lang.FlagComponent} alt={`${lang.name} flag`} className="language-flag" />
             <span>{lang.name}</span>
           </Space>
         </Select.Option>

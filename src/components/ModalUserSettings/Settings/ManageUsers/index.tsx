@@ -308,7 +308,7 @@ export const ManagerUsers = (): ReactElement => {
                 if (editable) {
                   return (
                     <>
-                      <Form.Item name="firstName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.firstname_required') }]}>
+                      <Form.Item name="firstName" rules={[{ required: true, message: t('validation.firstname_required') }]}>
                         <Input autoFocus />
                       </Form.Item>
                     </>
@@ -335,7 +335,7 @@ export const ManagerUsers = (): ReactElement => {
                 if (editable) {
                   return (
                     <>
-                      <Form.Item name="lastName" style={{ margin: 0, padding: '6px 0 12px 0' }} rules={[{ required: true, message: t('validation.lastname_required') }]}>
+                      <Form.Item name="lastName" rules={[{ required: true, message: t('validation.lastname_required') }]}>
                         <Input autoFocus />
                       </Form.Item>
                     </>
@@ -364,7 +364,6 @@ export const ManagerUsers = (): ReactElement => {
                     <>
                       <Form.Item
                         name="email"
-                        style={{ margin: 0, padding: '6px 0 12px 0' }}
                         rules={[
                           { required: true, message: t('validation.email_required') },
                           { type: 'email', message: t('validation.invalid_email') },
@@ -395,7 +394,7 @@ export const ManagerUsers = (): ReactElement => {
                 if (editable) {
                   return (
                     <>
-                      <Form.Item name="email" style={{ margin: 0 }}>
+                      <Form.Item name="email">
                         <Tag icon={<ExclamationCircleOutlined />} color="warning">
                           {t('content.not_set')}
                         </Tag>
