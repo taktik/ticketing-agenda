@@ -118,7 +118,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const isEditing = useMemo(() => (record: TableRow) => record.rowId === editingKey, [editingKey])
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: agenda?.id ?? '' }, { skip: !schedulingTableRow || !agenda })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(agenda?.id ?? '', { skip: !schedulingTableRow || !agenda })
 
   const [updateAgenda, { isError: isUpdateAgendaError, isSuccess: isUpdateAgendaSuccess, isLoading: isUpdateAgendaLoading }] = useUpdateAgendaMutation()
 

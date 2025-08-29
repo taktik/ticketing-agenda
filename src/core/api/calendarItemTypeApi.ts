@@ -14,19 +14,17 @@ export const calendarItemTypeApiRtk = createApi({
     baseUrl: '',
   }),
   endpoints: (builder) => ({
-    getCalendarItemTypes: builder.query<CalendarItemType[] | undefined, CalendarItemTypeServiceParameters>({
-      async queryFn(params, { getState }) {
+    getCalendarItemTypes: builder.query<CalendarItemType[] | undefined, string>({
+      async queryFn(agendaId, { getState }) {
         const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
         return guard([calendarItemTypeApi], async (): Promise<CalendarItemType[]> => {
-          return await calendarItemTypeApi!.listCalendarItemTypesByAgendaId(params.agendaId)
+          return await calendarItemTypeApi!.listCalendarItemTypesByAgendaId(agendaId)
         })
       },
       providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
     }),
-    getCalendarItemTypesForMultipleAgendas: builder.query<CalendarItemType[][], AllCalendarItemTypeServiceParameters>({
-      async queryFn(params, { getState, dispatch }) {
-        const { agendaIds } = params
-
+    getCalendarItemTypesForMultipleAgendas: builder.query<CalendarItemType[][], string[]>({
+      async queryFn(agendaIds, { getState, dispatch }) {
         if (!agendaIds || agendaIds.length === 0) {
           return { data: [] as CalendarItemType[][] }
         }
@@ -36,7 +34,7 @@ export const calendarItemTypeApiRtk = createApi({
             console.warn('An invalid agendaId was provided in the list:', agendaId)
             return Promise.resolve(undefined)
           }
-          return dispatch(calendarItemTypeApiRtk.endpoints.getCalendarItemTypes.initiate({ agendaId } as CalendarItemTypeServiceParameters, { forceRefetch: true }))
+          return dispatch(calendarItemTypeApiRtk.endpoints.getCalendarItemTypes.initiate(agendaId, { forceRefetch: true }))
             .unwrap()
             .catch((error) => {
               console.error(`Failed to fetch CalendarItemTypes for agendaId ${agendaId}:`, error)
@@ -94,5 +92,12 @@ export const calendarItemTypeApiRtk = createApi({
   }),
 })
 
-export const { useGetCalendarItemTypesQuery, useGetCalendarItemTypesForMultipleAgendasQuery, useGetCalendarItemTypeQuery, useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation } =
-  calendarItemTypeApiRtk
+export const {
+  useGetCalendarItemTypesQuery,
+  useLazyGetCalendarItemTypesQuery,
+  useGetCalendarItemTypesForMultipleAgendasQuery,
+  useLazyGetCalendarItemTypesForMultipleAgendasQuery,
+  useGetCalendarItemTypeQuery,
+  useCreateUpdateCalendarItemTypeMutation,
+  useDeleteCalendarItemTypeMutation,
+} = calendarItemTypeApiRtk

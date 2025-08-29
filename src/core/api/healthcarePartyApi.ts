@@ -1,9 +1,6 @@
-import { HealthcareParty, HealthcarePartyFilters, AgendaFilters } from '@icure/cardinal-sdk'
+import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
-import { useCallback, useState } from 'react'
-import { useAppDispatch } from '../hooks'
 import { cardinalApi, guard } from '../services/auth.api'
-import { agendaApiRtk, useDeleteAgendaMutation } from './agendaApi'
 import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, GetServicesForMultipleSitesParameters, UndeleteHcpByIdParameters } from './fetchType'
 import { loadFromIterator } from './utils'
 
@@ -205,80 +202,5 @@ export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParamete
   return {
     data: root,
     ...rest,
-  }
-}
-
-export const useGetAllServiceBySiteId = (params: GetAllServiceBySiteIdParameters) => {
-  const { data, ...rest } = useGetHealthcarePartiesQuery(undefined, {
-    skip: params.skip,
-  })
-
-  const result = data?.filter((item) => item.parentId && params.sitesIds.includes(item.parentId)) ?? []
-
-  return {
-    data: result,
-    ...rest,
-  }
-}
-
-export const useRecursiveHcpDeletion = () => {
-  const dispatch = useAppDispatch()
-  const [deleteHcpMutation] = useDeleteHealthcarePartyMutation()
-  const [deleteAgendaMutation] = useDeleteAgendaMutation()
-
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<unknown | null>(null)
-  const [isSuccess, setIsSuccess] = useState(false)
-
-  // Wrap the function you return in useCallback.
-  const startRecursiveHcpDeletion = useCallback(
-    async (hcp: HealthcareParty) => {
-      console.log(`[Hook] Starting recursive deletion for initial HCP ID: ${hcp.id}`)
-      setIsLoading(true)
-      setError(null)
-      setIsSuccess(false)
-
-      try {
-        // We need to define the internal function inside or make it a stable dependency.
-        // Let's define it inside for simplicity, or you could wrap it in its own useCallback.
-        const deleteInternal = async (currentHcp: HealthcareParty): Promise<void> => {
-          // --- 1. Fetch and process children ---
-          const childrenResult = (await dispatch(healthcarePartyApiRtk.endpoints.getHealthcarePartiesByParent.initiate({ parentId: currentHcp.id })).unwrap()) ?? []
-          if (childrenResult.length > 0) {
-            for (const child of childrenResult) {
-              await deleteInternal(child)
-            }
-          }
-          // --- 2. Fetch and delete agenda ---
-          const allAgendas = (await dispatch(agendaApiRtk.endpoints.getAgendas.initiate()).unwrap()) ?? []
-          const agenda = allAgendas.find((a) => a.author === currentHcp.id)
-          if (agenda?.id) {
-            await deleteAgendaMutation(agenda).unwrap()
-          }
-          // --- 3. Delete HCP itself ---
-          await deleteHcpMutation(currentHcp).unwrap()
-        }
-
-        await deleteInternal(hcp)
-
-        console.log(`[Hook] Recursive deletion completed successfully for initial HCP ID: ${hcp.id}`)
-        setIsSuccess(true)
-      } catch (err) {
-        console.error(`[Hook] Recursive deletion failed starting from HCP ID ${hcp.id}. Error:`, err)
-        setError(err)
-        setIsSuccess(false)
-      } finally {
-        console.log(`[Hook] Finished recursive deletion attempt for initial HCP ID: ${hcp.id}. Loading: false.`)
-        setIsLoading(false)
-      }
-    },
-    [dispatch, deleteHcpMutation, deleteAgendaMutation],
-  ) // Dependencies for the callback
-
-  return {
-    deleteHcpRecursively: startRecursiveHcpDeletion,
-    isLoading,
-    isSuccess,
-    error,
   }
 }

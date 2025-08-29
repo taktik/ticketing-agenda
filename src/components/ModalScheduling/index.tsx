@@ -3,7 +3,7 @@ import { Select as AntSelect, Button, Empty, message, notification, Space, Table
 import Column from 'antd/es/table/Column'
 import { addMonths, endOfToday, format, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
-import { ReactElement, useEffect, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
@@ -108,29 +108,22 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     showMessageFeedback('success', message)
   }
 
-  const handleDeleteResourceGroup = () => {
+  const handleDeleteResourceGroup = useCallback(async () => {
     try {
-      if (!selectedService || !resourceGroupToBeDelete) throw new Error()
-      const updatedSchedule = schedulingTableRows.reduce((acc, row) => {
-        if (row.rowId === resourceGroupToBeDelete.rowId) {
-          return acc
-        }
+      if (!selectedService || !resourceGroupToBeDelete) throw new Error('Missing service or resource group to delete')
 
-        const { rowId, ...resourceGroup } = row
+      const updatedSchedule = schedulingTableRows.filter((row) => row.rowId !== resourceGroupToBeDelete.rowId).map(({ rowId, ...resourceGroup }) => new ResourceGroupAllocationSchedule({ ...resourceGroup }))
 
-        acc.push(new ResourceGroupAllocationSchedule({ ...resourceGroup }))
-        return acc
-      }, [] as ResourceGroupAllocationSchedule[])
-      updateAgenda({ ...selectedService, schedules: updatedSchedule }).unwrap()
+      await updateAgenda({ ...selectedService, schedules: updatedSchedule }).unwrap()
       showMessageFeedback('success', t('notification.schedule_deleted'))
     } catch (error) {
+      console.error('Failed to delete resource group:', error)
       openNotification('error', t('notification.schedule_delete_failed'), t('notification.schedule_delete_error'))
     } finally {
       setShowDeleteResourceGroupModal(false)
     }
-  }
+  }, [selectedService, resourceGroupToBeDelete, schedulingTableRows, updateAgenda, showMessageFeedback, t, openNotification, setShowDeleteResourceGroupModal])
 
-  // Ant select
   const options = useMemo(
     () =>
       services.map((service) => ({

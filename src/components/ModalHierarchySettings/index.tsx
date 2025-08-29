@@ -3,19 +3,20 @@ import { Agenda, CodeStub, HealthcareParty } from '@icure/cardinal-sdk'
 import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
-import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import emptyIcon from '../../assets/empty.svg'
 import { SettingContext } from '../../contexts/SettingContext'
-import { useCreateUpdateHealthcarePartyMutation, useGetAllServiceBySiteId, useGetHealthcarePartiesByParentQuery, useRecursiveHcpDeletion } from '../../core/api/healthcarePartyApi'
+import { useDeleteAgendaMutation, useDeleteAgendasMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
+import { useDeleteCalendarItemTypeMutation, useLazyGetCalendarItemTypesForMultipleAgendasQuery, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
+import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import { CustomModal } from '../common/CustomModal'
 import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 import './index.css'
 import { ServiceSetting } from './ServiceSetting'
 import { SiteSetting } from './SiteSetting'
-import { useDeleteAgendaMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
 
 interface ModalHierarchySettingsProps {
   isVisible: boolean
@@ -30,14 +31,17 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
-  const { data: sites } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
+
+  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
-  useEffect(() => console.log('user', user), [user])
-
+  const [getCalendarItemTypesForAgendasIds] = useLazyGetCalendarItemTypesForMultipleAgendasQuery()
+  const [getCalendarItemTypesForAgenda] = useLazyGetCalendarItemTypesQuery()
   const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
-  const { deleteHcpRecursively: deleteSite, isLoading: isDeleteSiteLoading } = useRecursiveHcpDeletion()
-  const [deleteAgendaMutation] = useDeleteAgendaMutation()
+  const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
+  const [deleteAgenda, { isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
+  const [deleteAgendas, { isLoading: isDeleteAgendasLoading }] = useDeleteAgendasMutation()
+  const [deleteCalendarItemTypes, { isLoading: isDeleteCalendarItemTypesLoading }] = useDeleteCalendarItemTypeMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -62,9 +66,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
-  const { data: services } = useGetAllAgendaByAuthorIds({ skip: skip || !rootHcp, authorIds: sitesIds ?? [] })
-
-  useEffect(() => console.log('agendas in settings', services), [services])
+  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !rootHcp, authorIds: sitesIds ?? [] })
 
   const sortedServices = useMemo(() => {
     return [...(services ?? [])].sort((a, b) => {
@@ -74,17 +76,16 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     })
   }, [services])
 
-  const handleAddSite = useCallback(() => {
+  const handleAddSite = useCallback(async () => {
     try {
       if (!rootHcp) throw new Error()
-      const id = v4()
-      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: id, public: true, tags: [new CodeStub({ id: 'SITE', code: 'SITE', context: 'SITE', type: 'SITE' })] })
-      createUpdateSite(siteHcp).unwrap()
+      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: v4(), public: true, tags: [new CodeStub({ id: 'SITE', code: 'SITE', context: 'SITE', type: 'SITE' })] })
+      await createUpdateSite(siteHcp).unwrap()
       showMessageFeedback('success', t('notification.site_saved'))
     } catch (error) {
       openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
     }
-  }, [selectedKey, rootHcp])
+  }, [selectedKey, rootHcp, t])
 
   const menuItems: MenuItem[] = useMemo(
     () =>
@@ -126,52 +127,80 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
           children,
         }
       }),
-    [sites, sortedServices],
+    [sites, sortedServices, selectedKey, openKeys],
   )
 
-  const onServiceClick: MenuProps['onClick'] = ({ key }) => {
-    if (key === selectedKey) setSelectedKey('default')
-    else setSelectedKey(key)
-  }
+  const onServiceClick: MenuProps['onClick'] = useCallback(
+    ({ key }: { key: string }) => {
+      setSelectedKey((prevSelectedKey) => (prevSelectedKey === key ? 'default' : key))
+    },
+    [setSelectedKey],
+  )
 
-  const onSiteClick = (keys: string[]) => {
-    if (keys.length > openKeys.length) {
-      // Means we've opened a menu
-      const openedKey = keys.find((key) => !openKeys.includes(key)) // Find the menu we've just opened and select it
-      if (openedKey) setSelectedKey(openedKey)
-    } else {
-      // Closed the menu
-      setSelectedKey('default')
-    }
-    setOpenKeys(keys)
-  }
+  const onSiteClick = useCallback(
+    (keys: string[]) => {
+      // If the new array of open keys is longer, it means we opened a submenu
+      if (keys.length > openKeys.length) {
+        // Find the key that was just added
+        const openedKey = keys.find((key) => !openKeys.includes(key))
+        if (openedKey) {
+          setSelectedKey(openedKey)
+        }
+      } else {
+        // Otherwise, a submenu was closed, so deselect the item
+        setSelectedKey('default')
+      }
+      // Finally, update the state with the new list of open keys
+      setOpenKeys(keys)
+    },
+    [openKeys, setSelectedKey, setOpenKeys],
+  )
 
-  const handleSiteDelete = async (site: HealthcareParty) => {
-    try {
-      if (!site) throw new Error('No site selected')
-      await deleteSite(site)
-      showMessageFeedback('success', t('notification.site_deleted'))
-    } catch (error) {
-      openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
-    } finally {
-      setSelectedKey('default')
-    }
-  }
+  const handleSiteDelete = useCallback(
+    async (site: HealthcareParty) => {
+      try {
+        if (!site) throw new Error('No site selected')
+        const relatedServices = services.filter((service) => service.author === site.id)
+        const relatedServicesIds = relatedServices.map((service) => service.id)
+        const calendarItemTypes = await getCalendarItemTypesForAgendasIds(relatedServicesIds).unwrap()
+        const calendarItemTypesToDelete = calendarItemTypes.flat().map((CIT) => CIT.id)
+        if (calendarItemTypesToDelete.length > 0) {
+          await deleteCalendarItemTypes(calendarItemTypesToDelete).unwrap()
+        }
+        await deleteAgendas(relatedServices).unwrap()
+        await deleteHcp(site).unwrap()
+        showMessageFeedback('success', t('notification.site_deleted'))
+      } catch (error) {
+        openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
+      } finally {
+        setSelectedKey('default')
+      }
+    },
+    [services, getCalendarItemTypesForAgendasIds, deleteCalendarItemTypes, deleteAgendas, deleteHcp, showMessageFeedback, openNotification, setSelectedKey, t],
+  )
 
-  const handleDeleteService = async (service: Agenda) => {
-    try {
-      if (!service) throw new Error('No service selected')
-      await deleteAgendaMutation(service)
-      showMessageFeedback('success', t('notification.service_deleted'))
-    } catch (error) {
-      openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
-    } finally {
-      setSelectedKey('default')
-    }
-  }
+  const handleDeleteService = useCallback(
+    async (service: Agenda) => {
+      try {
+        if (!service) throw new Error('No service selected')
+        const calendarItemTypes = await getCalendarItemTypesForAgenda(service.id).unwrap()
+        const calendarItemTypesToDelete = (calendarItemTypes ?? []).map((CIT) => CIT.id)
+        if (calendarItemTypesToDelete.length > 0) {
+          await deleteCalendarItemTypes(calendarItemTypesToDelete).unwrap()
+        }
+        await deleteAgenda(service).unwrap()
+        showMessageFeedback('success', t('notification.service_deleted'))
+      } catch (error) {
+        openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
+      } finally {
+        setSelectedKey('default')
+      }
+    },
+    [getCalendarItemTypesForAgenda, deleteCalendarItemTypes, deleteAgenda, showMessageFeedback, openNotification, setSelectedKey, t],
+  )
 
-  const renderSettingContent = useCallback(() => {
-    const match = selectedKey.match(/^(site|service)-(.+)$/)
+  const settingContent = useMemo(() => {
+    const match = selectedKey?.match(/^(site|service)-(.+)$/) // Added optional chaining for safety
     const type = match?.[1]
     const id = match?.[2]
 
@@ -190,21 +219,22 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
     if (type === 'service') {
       const matchingService = sortedServices?.find((service) => service.id === id)
-      if (!matchingService) return <div>{t('cntent.service_not_found')}</div>
+      if (!matchingService) return <div>{t('content.service_not_found')}</div> // Typo fixed here
+
       return <ServiceSetting service={matchingService} handleDeleteService={handleDeleteService} />
     }
 
     return <div>{t('content.select_site_or_service')}</div>
-  }, [selectedKey, sites, sortedServices, t, sortedServices])
+  }, [selectedKey, sites, sortedServices, t, handleSiteDelete, handleDeleteService])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>
       <Layout className="modal-settings">
         {notificationContextHolder}
         {messageContextHolder}
-        <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
+        <Sider width={250} className="menu-sites-root">
           <div className="menu-sites">
-            <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} style={{ height: 'auto', borderRight: 0 }} expandIcon={false} />
+            <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />
             <div className="sider-footer">
               <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite}>
                 {t('content.add_site')}
@@ -213,7 +243,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
           </div>
         </Sider>
         <Layout>
-          <Content className="selected-setting">{renderSettingContent()}</Content>
+          <Content className="selected-setting">{settingContent}</Content>
         </Layout>
       </Layout>
     </CustomModal>

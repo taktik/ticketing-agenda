@@ -147,7 +147,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       return t('content.no_events_this_week')
     }
     return null
-  }, [timeRange])
+  }, [timeRange, t])
 
   return (
     <div className="calendar-root">

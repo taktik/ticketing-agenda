@@ -125,7 +125,7 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
 
   const agendaIds = useMemo(() => services?.map((agenda) => agenda.id), [services])
 
-  const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery({ agendaIds: agendaIds }, { skip: !site || !agendaIds })
+  const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: !site || !agendaIds })
   const flatProceduresArray = useMemo(() => (allProcedures ?? []).flat(), [allProcedures])
 
   const serviceAndProcedures: ServiceWithProceduresTuple[] = services.map((service): ServiceWithProceduresTuple => {

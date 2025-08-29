@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const filteredServices = useMemo(() => (services && selectedSite ? services : []), [services, selectedSite])
   const [selectedService, setSelectedService] = useState<Agenda | undefined>(undefined)
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: selectedService?.id ?? '' }, { skip: skip || !selectedService })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(selectedService?.id ?? '', { skip: skip || !selectedService })
   const filteredProcedures = useMemo(() => (procedures && selectedService ? procedures : []), [procedures, selectedService])
   const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
 

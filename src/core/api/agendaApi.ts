@@ -1,8 +1,7 @@
 import { Agenda, AgendaFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { cardinalApi, guard } from '../services/auth.api'
-import { calendarItemTypeApiRtk } from './calendarItemTypeApi'
 import { GetAgendasByStringPropertyParameters } from './fetchType'
 import { loadFromIterator } from './utils'
 
@@ -75,60 +74,36 @@ export const agendaApiRtk = createApi({
       },
       invalidatesTags: (result, error, arg) => (result ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
     }),
+    deleteAgendas: builder.mutation<boolean | undefined, Agenda[]>({
+      async queryFn(agendas, { getState }) {
+        const agendaApi = (await cardinalApi(getState))?.agenda
+        return guard([agendaApi], async () => {
+          const result = await agendaApi?.deleteAgendas(agendas)
+          if (!result) {
+            throw new Error('HealthcareParty can’t be deleted')
+          }
+          return true
+        })
+      },
+      invalidatesTags: (result, error, arg) => (result ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
+    }),
     deleteAgenda: builder.mutation<string | undefined, Agenda>({
-      // Delete the agendas and the related CalendarItemTypes (demarches) and the TimeTable associated with it (backend will remove timetableItems related to the timetable)
       async queryFn(agenda, { getState }) {
         const agendaApi = (await cardinalApi(getState))?.agenda
         return guard([agendaApi], async () => {
           const result = await agendaApi?.deleteAgenda(agenda)
           if (!result) {
-            throw new Error('Agenda can’t be deleted')
+            throw new Error('HealthcareParty can’t be deleted')
           }
           return result.id
         })
       },
-      invalidatesTags: (id) => [
-        { type: AgendaTags.Agenda, id: 'all' },
-        { type: AgendaTags.Agenda, id },
-      ],
-      async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
-        let getCalendarItemTypesAction
-        try {
-          // --- Step 1: Fetch Calendar Item Types ---
-          getCalendarItemTypesAction = dispatch(calendarItemTypeApiRtk.endpoints.getCalendarItemTypes.initiate({ agendaId: id }))
-          const calendarItemsResult = await getCalendarItemTypesAction
-          getCalendarItemTypesAction.unsubscribe() // Unsubscribe after getting result
-
-          // Check for errors from queryFn (expects { data: ... } or { error: ... })
-          if (calendarItemsResult.error) {
-            throw calendarItemsResult.error // Propagate the error
-          }
-          const calendarItemTypes = calendarItemsResult.data // Extract data on success
-
-          // --- Step 2: Delete Calendar Item Types (if any) ---
-          if (calendarItemTypes && calendarItemTypes.length > 0) {
-            const idsToDelete = calendarItemTypes.map((item) => item.id)
-            // Initiate the deletion mutation, passing the array of IDs
-            // Use unwrap() to await completion and catch errors
-            await dispatch(calendarItemTypeApiRtk.endpoints.deleteCalendarItemType.initiate(idsToDelete)).unwrap()
-          } else {
-            console.log(`[onQueryStarted deleteAgenda] No CalendarItemTypes found for agenda ${id}. Skipping deletion.`)
-          }
-        } catch (error) {
-          console.error(`[onQueryStarted deleteAgenda] Error during orchestrated deletion for agenda ${id}:`, error)
-          // Error could be from fetching/deleting children, or deleting the parent.
-          // RTK Query handles the mutation's error state.
-          // Ensure subscriptions are cleaned up on error
-          getCalendarItemTypesAction?.unsubscribe()
-          // Let the error propagate so the calling hook's .unwrap() catches it.
-          throw error
-        }
-      },
+      invalidatesTags: (result, error, arg) => (result ? [{ type: AgendaTags.Agenda, id: 'all' }] : []),
     }),
   }),
 })
 
-export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendaMutation, useGetAgendasByStringPropertyQuery } = agendaApiRtk
+export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendasMutation, useDeleteAgendaMutation, useGetAgendasByStringPropertyQuery } = agendaApiRtk
 
 export const useGetAllAgendaByAuthorIds = (params: { skip: boolean; authorIds: string[] }) => {
   const { data, ...rest } = useGetAgendasQuery(undefined, {
@@ -155,39 +130,5 @@ export const useGetAgendaByAuthorId = (params: { skip: boolean; authorId: string
   return {
     data: agendaResult,
     ...rest,
-  }
-}
-
-export const useDeleteAgendaByAuthorId = () => {
-  const [deleteAgendaMutation, { isError: isDeleteError, isSuccess: isDeleteSuccess, isLoading: isDeleteLoading }] = useDeleteAgendaMutation()
-  const [authorId, setAuthorId] = useState<string | null>(null)
-
-  const {
-    data: agendas,
-    isError: isGetError,
-    isSuccess: isGetSuccess,
-    isLoading: isGetLoading,
-  } = useGetAgendasQuery(undefined, {
-    skip: !authorId,
-  })
-
-  const agendaToDelete = useMemo(() => agendas?.find((agenda) => agenda.author === authorId), [agendas, authorId])
-
-  const deleteAgenda = (params: { authorId: string }) => {
-    setAuthorId(params.authorId)
-  }
-
-  useEffect(() => {
-    if (agendaToDelete) {
-      deleteAgendaMutation(agendaToDelete)
-    }
-  }, [agendaToDelete])
-
-  return {
-    data: agendaToDelete,
-    deleteAgenda,
-    isLoading: isDeleteLoading || isGetLoading,
-    isError: isDeleteError || isGetError,
-    isSuccess: isDeleteSuccess && isGetSuccess,
   }
 }

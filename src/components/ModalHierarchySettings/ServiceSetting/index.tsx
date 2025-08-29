@@ -118,7 +118,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery({ agendaId: service?.id ?? '' }, { skip: !service })
+  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(service?.id ?? '', { skip: !service })
 
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
