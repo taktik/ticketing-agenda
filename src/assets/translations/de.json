@@ -182,7 +182,9 @@
     "please_select_site": "Bitte wählen Sie einen Standort aus",
     "site": "Standort",
     "save_current_schedule_before_adding": "Bitte ändern und speichern Sie Ihren aktuellen Zeitplan, bevor Sie einen neuen hinzufügen",
-    "service_name_in_lang": "Dienstname auf {{lang}}"
+    "service_name_in_lang": "Dienstname auf {{lang}}",
+    "no_events_today": "Für heute sind keine Veranstaltungen geplant",
+    "no_events_this_week": "Für diese Woche sind keine Veranstaltungen geplant"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

@@ -9,9 +9,9 @@ import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Segmented, Space, Typography } from 'antd'
-import { addDays, addHours, endOfDay, endOfWeek, startOfDay, startOfWeek } from 'date-fns'
+import { endOfDay, endOfWeek, startOfDay, startOfWeek } from 'date-fns'
 import { EventApi, EventClickArg, EventInput } from 'fullcalendar'
-import React, { ReactElement, useEffect, useMemo, useState } from 'react'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
@@ -107,23 +107,47 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     }
   }, [calendarDate, timeRange])
 
-  const handlePrev = () => calendarRef.current?.getApi().prev()
-  const handleNext = () => calendarRef.current?.getApi().next()
-  const handleToday = () => calendarRef.current?.getApi().today()
+  const handlePrev = useCallback(() => calendarRef.current?.getApi().prev(), [])
+  const handleNext = useCallback(() => calendarRef.current?.getApi().next(), [])
+  const handleToday = useCallback(() => calendarRef.current?.getApi().today(), [])
 
-  const handleDatesSet = (dateInfo: { view: { title: string } }) => {
-    setCalendarTitle(dateInfo.view.title)
-    handleFullCalendarDateChange()
-  }
+  const handleDatesSet = useCallback(
+    (dateInfo: { view: { title: string } }) => {
+      setCalendarTitle(dateInfo.view.title)
+      handleFullCalendarDateChange()
+    },
+    [setCalendarTitle, handleFullCalendarDateChange],
+  )
 
-  const handleEventClick = (clickInfo: EventClickArg) => {
-    setSelectedEvent(clickInfo.event)
-    setEventModalOpen(true)
-  }
+  const handleEventClick = useCallback(
+    (clickInfo: EventClickArg) => {
+      setSelectedEvent(clickInfo.event)
+      setEventModalOpen(true)
+    },
+    [setSelectedEvent, setEventModalOpen],
+  )
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     setCreateModalOpen(true)
-  }
+  }, [setCreateModalOpen])
+
+  const getEventContent = useCallback(({ view, event }: { view: { type: string }; event: EventApi }) => {
+    if (view.type.startsWith('list')) {
+      return <ListEventContent event={event} view={view.type} />
+    } else if (view.type.startsWith('timeGrid')) {
+      return <GridEventContent event={event} view={view.type} />
+    }
+    return <p>{event.title}</p>
+  }, [])
+
+  const noEventsContent = useMemo(() => {
+    if (timeRange === 'day') {
+      return t('content.no_events_today')
+    } else if (timeRange === 'week') {
+      return t('content.no_events_this_week')
+    }
+    return null
+  }, [timeRange])
 
   return (
     <div className="calendar-root">
@@ -134,10 +158,10 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             <Button onClick={handleNext} icon={<RightOutlined />} />
           </Space.Compact>
           <Button onClick={handleToday}>{t('content.today')}</Button>
-          <Button onClick={() => handleCreate()}>{t('content.create_appointment')}</Button>
+          <Button onClick={handleCreate}>{t('content.create_appointment')}</Button>
         </Space>
 
-        <Typography.Title level={4} style={{ margin: 0 }} ellipsis={{ rows: 2 }}>
+        <Typography.Title level={4} ellipsis={{ rows: 2 }} className="calendar-title">
           {calendarTitle}
         </Typography.Title>
 
@@ -178,14 +202,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         datesSet={handleDatesSet}
         events={events}
         eventClick={handleEventClick}
-        eventContent={(eventInfo) => {
-          if (eventInfo.view.type === 'listWeek' || eventInfo.view.type === 'listDay') {
-            return <ListEventContent event={eventInfo.event} view={eventInfo.view.type} />
-          } else if (eventInfo.view.type === 'timeGridDay' || eventInfo.view.type === 'timeGridWeek') {
-            return <GridEventContent event={eventInfo.event} view={eventInfo.view.type} />
-          }
-          return <p>{eventInfo.event.title}</p>
-        }}
+        eventContent={getEventContent}
+        noEventsContent={noEventsContent}
       />
       {eventModalOpen && createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} />, document.body)}
       {createModalOpen && createPortal(<CreateEvent isVisible={createModalOpen} onClose={() => setCreateModalOpen(false)} sites={sites} />, document.body)}

@@ -73,7 +73,7 @@ export default function DashboardPage() {
       const currentDate = calendarApi.getDate()
       setCalendarDate(currentDate)
     }
-  }, [calendarRef, setCalendarDate])
+  }, [setCalendarDate])
 
   return (
     <div className="Dashboard">
@@ -111,7 +111,7 @@ export default function DashboardPage() {
             calendarRef={calendarRef}
             handleFullCalendarDateChange={handleFullCalendarDateChange}
             selectedAgenda={selectedService}
-            procedures={procedures}
+            procedures={filteredProcedures}
             selectedProcedure={selectedProcedure}
             calendarDate={calendarDate}
             sites={sites}

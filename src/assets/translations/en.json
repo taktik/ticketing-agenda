@@ -181,7 +181,9 @@
     "please_select_site": "Please select a site",
     "site": "Site",
     "save_current_schedule_before_adding": "Please modify and save your current schedule before adding a new one",
-    "service_name_in_lang": "Service name in {{lang}}"
+    "service_name_in_lang": "Service name in {{lang}}",
+    "no_events_today": "No events planned for today",
+    "no_events_this_week": "No events planned for this week"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
