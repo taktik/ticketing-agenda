@@ -5,8 +5,6 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormValuesService, LanguageDescription } from '../ModalHierarchySettings/ServiceSetting'
 
-const { Paragraph } = Typography
-
 interface EditableServiceTitleProps {
   form: FormInstance<FormValuesService>
   initialTitles: LanguageDescription | undefined

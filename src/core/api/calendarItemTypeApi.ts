@@ -75,7 +75,7 @@ export const calendarItemTypeApiRtk = createApi({
       },
       invalidatesTags: (result) => (result ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
     }),
-    deleteCalendarItemType: builder.mutation<DocIdentifier[] | undefined, string[]>({
+    deleteCalendarItemTypes: builder.mutation<DocIdentifier[] | undefined, string[]>({
       async queryFn(ids, { getState }) {
         const calendarItemTypeIds = new ListOfIds({ ids: ids })
         const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
@@ -99,5 +99,5 @@ export const {
   useLazyGetCalendarItemTypesForMultipleAgendasQuery,
   useGetCalendarItemTypeQuery,
   useCreateUpdateCalendarItemTypeMutation,
-  useDeleteCalendarItemTypeMutation,
+  useDeleteCalendarItemTypesMutation,
 } = calendarItemTypeApiRtk

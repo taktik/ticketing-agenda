@@ -197,4 +197,7 @@ body * {
 .site-label-white {
   color: white !important;
 }
+.modal-settings-empty {
+  padding-top: 10rem;
+}
 /*# sourceMappingURL=index.css.map */

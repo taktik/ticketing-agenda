@@ -250,7 +250,8 @@
     "user_save_failed": "Nous n'avons pas pu enregistrer l'utilisateur !",
     "user_save_error": "Une erreur s'est produite lors de l'enregistrement de l'utilisateur.",
     "user_delete_failed": "Nous n'avons pas pu supprimer l'utilisateur !",
-    "user_delete_error": "Une erreur s'est produite lors de la suppression de l'utilisateur."
+    "user_delete_error": "Une erreur s'est produite lors de la suppression de l'utilisateur.",
+    "at_least_one_rule_required": "Au moins une règle est requise"
   },
   "rrule": {
     "every": "Tout(es) les",

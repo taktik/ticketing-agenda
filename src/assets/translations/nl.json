@@ -250,7 +250,8 @@
     "user_save_failed": "We konden de gebruiker niet opslaan!",
     "user_save_error": "Er is een fout opgetreden bij het opslaan van de gebruiker.",
     "user_delete_failed": "We konden de gebruiker niet verwijderen!",
-    "user_delete_error": "Er is een fout opgetreden bij het verwijderen van de gebruiker."
+    "user_delete_error": "Er is een fout opgetreden bij het verwijderen van de gebruiker.",
+    "at_least_one_rule_required": "Minstens één regel is vereist"
   },
   "rrule": {
     "every": "Elke",

@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined } from '@ant-design/icons'
 import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, CodeStub, DecryptedAddress, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType } from '@icure/cardinal-sdk'
 import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
-import { ReactElement, useContext, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { SettingContext } from '../../../contexts/SettingContext'
@@ -17,18 +17,66 @@ interface SiteSettingProps {
   site: HealthcareParty
   services: Agenda[]
   handleSiteDelete: (site: HealthcareParty) => Promise<void>
+  isSitesLoading: boolean
 }
 
 type ServiceWithProceduresTuple = [Agenda, CalendarItemType[]]
 
-export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingProps): ReactElement => {
+export const SiteSetting = ({ site, services, handleSiteDelete, isSitesLoading }: SiteSettingProps): ReactElement => {
   const { setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
   const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showEditableSite, setShowEditableSite] = useState<boolean>(false)
 
-  const [createUpdateAgendaMutation, { isError: isCreateUpdateAgendaError, isSuccess: isCreateUpdateAgendaSuccess, isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
-  const [createUpdateSite, { isError: isCreateUpdateSiteError, isSuccess: isCreateUpdateSiteSuccess, isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const agendaIds = useMemo(() => services?.map((agenda) => agenda.id), [services])
+
+  const { data: allProcedures, isLoading: isCalendarItemTypesLoading } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: !site || !agendaIds })
+  const flatProceduresArray = useMemo(() => (allProcedures ?? []).flat(), [allProcedures])
+
+  const serviceAndProcedures: ServiceWithProceduresTuple[] = useMemo(() => {
+    const proceduresByAgendaId = flatProceduresArray.reduce((acc, procedure) => {
+      if (procedure.agendaId && procedure.defaultCalendarItemType === true) {
+        const existingProcedures = acc.get(procedure.agendaId) || []
+        acc.set(procedure.agendaId, [...existingProcedures, procedure])
+      }
+      return acc
+    }, new Map<string, CalendarItemType[]>())
+
+    return services.map((service): ServiceWithProceduresTuple => {
+      const serviceProcedures = proceduresByAgendaId.get(service.id) || []
+      return [service, serviceProcedures]
+    })
+  }, [flatProceduresArray, services])
+
+  const [createUpdateAgendaMutation, { isLoading: isCreateUpdateAgendaLoading }] = useCreateUpdateAgendaMutation()
+  const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
+
+  const fetchIsLoading = useMemo(() => isSitesLoading || isCalendarItemTypesLoading, [isSitesLoading, isCalendarItemTypesLoading])
+  const mutationIsLoading = useMemo(() => isCreateUpdateAgendaLoading || isCreateUpdateSiteLoading, [isCreateUpdateAgendaLoading, isCreateUpdateSiteLoading])
+
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
 
   const siteActionItems: MenuProps['items'] = [
     {
@@ -46,19 +94,22 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
     },
   ]
 
-  const onSiteInfoSave = async (formValues: SiteInfoFormValues) => {
-    try {
-      if (!site) throw new Error()
-      await createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] })).unwrap()
-      showMessageFeedback('success', t('notification.site_saved'))
-    } catch (error) {
-      openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
-    } finally {
-      setShowEditableSite(false)
-    }
-  }
+  const onSiteInfoSave = useCallback(
+    async (formValues: SiteInfoFormValues) => {
+      try {
+        if (!site) throw new Error()
+        await createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] })).unwrap()
+        showMessageFeedback('success', t('notification.site_saved'))
+      } catch (error) {
+        openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
+      } finally {
+        setShowEditableSite(false)
+      }
+    },
+    [site, createUpdateSite, showMessageFeedback, openNotification, setShowEditableSite, t],
+  )
 
-  const handleCreateNewService = async () => {
+  const handleCreateNewService = useCallback(async () => {
     try {
       const parentProperty = new DecryptedPropertyStub({
         id: 'parentSite',
@@ -97,41 +148,7 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
     } catch (error) {
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     }
-  }
-
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
-
-  const agendaIds = useMemo(() => services?.map((agenda) => agenda.id), [services])
-
-  const { data: allProcedures } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: !site || !agendaIds })
-  const flatProceduresArray = useMemo(() => (allProcedures ?? []).flat(), [allProcedures])
-
-  const serviceAndProcedures: ServiceWithProceduresTuple[] = services.map((service): ServiceWithProceduresTuple => {
-    const serviceProcedures = flatProceduresArray.filter((procedure) => procedure.agendaId === service.id && procedure.defaultCalendarItemType === true)
-    return [service, serviceProcedures]
-  })
+  }, [site, createUpdateAgendaMutation, showMessageFeedback, openNotification, t])
 
   return (
     <div className="site-root">
@@ -143,21 +160,21 @@ export const SiteSetting = ({ site, services, handleSiteDelete }: SiteSettingPro
             {showEditableSite ? <EditableSiteInfo hcp={site} setShowEditableSite={setShowEditableSite} onSave={onSiteInfoSave} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
             {showEditableSite ? null : (
               <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
-                <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />
+                <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px' }} />} shape="circle" size="large" />
               </Dropdown>
             )}
           </Space>
           <Typography.Text type="secondary">{t('content.select_service_to_configure_procedures')}</Typography.Text>
         </div>
-        <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={() => handleCreateNewService()} style={{ alignSelf: 'baseline' }}>
+        <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleCreateNewService} style={{ alignSelf: 'baseline' }} loading={mutationIsLoading} disabled={fetchIsLoading || mutationIsLoading}>
           {t('content.add_service')}
         </StyledButton>
       </div>
 
       <div className="site-grid">
-        {serviceAndProcedures.map((service) => (
-          <Card key={service[0].id} hoverable onClick={() => setSelectedKey(`service-${service[0].id}`)} className="site-card">
-            <Card.Meta title={service[0].name} description={service[1].length && service[1].length > 1 ? `${service[1].length} ${t('content.procedures')}` : `${service[1].length} ${t('content.procedure')}`} />
+        {serviceAndProcedures.map(([service, procedures]) => (
+          <Card key={service.id} hoverable onClick={() => setSelectedKey(`service-${service.id}`)} className="site-card">
+            <Card.Meta title={service.name} description={procedures.length !== 1 ? `${procedures.length} ${t('content.procedures')}` : `${procedures.length} ${t('content.procedure')}`} />
           </Card>
         ))}
       </div>

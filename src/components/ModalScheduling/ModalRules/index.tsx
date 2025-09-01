@@ -1,6 +1,6 @@
 import { CloseOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { Agenda, CalendarItemType, EmbeddedTimeTableHour, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
-import { Button, DatePicker, Empty, Form, Input, InputNumber, message, notification, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
+import { Button, DatePicker, Empty, Form, Input, InputNumber, notification, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
 import { format, Locale, setDay, setMonth } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
@@ -120,11 +120,19 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
 
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(agenda?.id ?? '', { skip: !schedulingTableRow || !agenda })
 
-  const [updateAgenda, { isError: isUpdateAgendaError, isSuccess: isUpdateAgendaSuccess, isLoading: isUpdateAgendaLoading }] = useUpdateAgendaMutation()
+  const [updateAgenda, { isLoading: isUpdateAgendaLoading }] = useUpdateAgendaMutation()
 
   const [form] = Form.useForm<FormValues>()
   const nameValue = Form.useWatch('name', form)
   const initialName = useMemo(() => schedulingTableRow?.name || '', [schedulingTableRow])
+
+  const watchedCalendarItemTypesIds = Form.useWatch('calendarItemTypesIds', form)
+  const watchedFreq = Form.useWatch('_freq', form)
+  const watchedInterval = Form.useWatch('_interval', form)
+  const watchedByDay = Form.useWatch('_byday', form)
+  const watchedUntil = Form.useWatch('_until', form)
+  const watchedTimeTableStart = Form.useWatch('start', form)
+  const watchedTimeTableEnd = Form.useWatch('end', form)
 
   const isFetching = useMemo(() => isProceduresLoading, [isProceduresLoading])
   const isMutating = useMemo(() => isUpdateAgendaLoading, [isUpdateAgendaLoading])
@@ -237,158 +245,10 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
     setTimeout(api.destroy, 2500)
   }
 
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    setTimeout(messageApi.destroy, 2500)
-  }
-
-  const handleNameCancel = () => {
+  const handleNameCancel = useCallback(() => {
     form.resetFields(['public', 'availabilities', 'hours', 'rruleStart', 'rrule', '_until', '_byday', '_freq', '_interval', 'calendarItemTypesIds', 'notBeforeInMinutes', 'notAfterInMinutes'])
     form.setFieldsValue({ name: initialName })
-  }
-
-  const addRule = () => {
-    // Add new rule with default values
-    try {
-      if (!schedulingTableRow) throw new Error()
-      const newRule: TableRow = {
-        rrule: undefined,
-        availabilities: 1,
-        rowId: v4(),
-        calendarItemTypesIds: [],
-        public: true,
-        hours: [new EmbeddedTimeTableHour({ startHour: 0, endHour: 0 })],
-        timeConstraints: [NOT_BEFORE_IN_MINUTES, NOT_AFTER_IN_MINUTES],
-        rruleStart: watchedTimeTableStart ?? dayjs(),
-      }
-      setTableRows((prev) => [...prev, newRule])
-      tableRowEdit(newRule)
-      setIsDirty(true)
-    } catch (error) {
-      openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
-    }
-  }
-
-  const watchedCalendarItemTypesIds = Form.useWatch('calendarItemTypesIds', form)
-  const watchedRruleStart = Form.useWatch('rruleStart', form)
-  const watchedFreq = Form.useWatch('_freq', form)
-  const watchedInterval = Form.useWatch('_interval', form)
-  const watchedByDay = Form.useWatch('_byday', form)
-  const watchedUntil = Form.useWatch('_until', form)
-  const watchedTimeTableStart = Form.useWatch('start', form)
-  const watchedTimeTableEnd = Form.useWatch('end', form)
-
-  useEffect(() => {
-    // Building the rule whenever one of the rule values is changed. Could be moved in the update function.
-    // This check ensures we only try to build an RRULE if a frequency is actually selected.
-    // It also prevents running when the form is first initializing and these values might be transient.
-    if (watchedFreq !== undefined && form.isFieldsTouched(['_freq', '_interval', '_byday', '_until'])) {
-      let untilDate: Date | null = null
-      const rawUntilValue = watchedUntil?.toDate() ?? watchedTimeTableEnd?.toDate()
-
-      if (rawUntilValue) {
-        // Create a new Date object in UTC.
-        // This explicitly tells the Date constructor that the year, month, and day
-        // are UTC values, effectively stripping the timezone and time.
-        untilDate = new Date(Date.UTC(rawUntilValue.getFullYear(), rawUntilValue.getMonth(), rawUntilValue.getDate()))
-      }
-
-      const rruleOptions: Partial<Options> = {
-        freq: watchedFreq as Frequency, // Cast because Select value is number
-        until: untilDate,
-        interval: watchedInterval || 1,
-        wkst: RRule.MO,
-      }
-
-      if (watchedFreq === RRule.WEEKLY && watchedByDay && watchedByDay.length > 0) {
-        rruleOptions.byweekday = watchedByDay.map((dayValue: string) => RRuleWeekdays.find((d) => d.value === dayValue)?.rruleConst).filter(Boolean) as Weekday[] // Filter out undefined and cast
-      }
-
-      try {
-        if (rruleOptions.freq === undefined) {
-          // Don't generate if freq is not set
-          form.setFieldsValue({ rrule: undefined })
-          return
-        }
-        const rule = new RRule(rruleOptions)
-        const resultRrule = correctAndCleanRRuleString(rule.toString())
-        form.setFieldsValue({ rrule: resultRrule })
-      } catch (e) {
-        console.error('Error generating RRULE string:', e)
-        form.setFieldsValue({ rrule: undefined }) // Set to undefined or handle error state
-      }
-    }
-  }, [watchedFreq, watchedInterval, watchedByDay, watchedUntil, watchedTimeTableStart, watchedTimeTableEnd, form])
-
-  const getCurrentRruleLanguageOptions = (): Language => {
-    // Used to translate the rrule
-    const rruleWeekdaysOrdered = [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR, RRule.SA, RRule.SU]
-    const dayNames = rruleWeekdaysOrdered.map((rruleWd) => {
-      const dayIndexForDateFns = rruleWd.weekday % 7
-      return format(setDay(new Date(), dayIndexForDateFns), 'EEEE', { locale: dateFnsLocale }) // EEEE for full day name
-    })
-    const monthNames = [...Array(12)].map((_, i) => format(setMonth(new Date(), i), 'LLLL', { locale: dateFnsLocale }))
-
-    return {
-      dayNames,
-      monthNames,
-      tokens: TOKENS,
-    }
-  }
-
-  const rruleGettextAdapter = (id: string | number | Weekday): string => {
-    // Used to translate the rrule.
-    let translationKeySeed: string
-    let fallbackText: string
-
-    if (typeof id === 'string') {
-      // Handles keywords like "every", "on", "until", "and", "week", "weeks", "day", "days",
-      // and potentially "st", "nd", "rd", "th" for ordinals if rrule.js passes them as strings.
-      translationKeySeed = id
-      fallbackText = id
-      if (dateFnsLocale === fr) {
-        if (watchedFreq === Frequency.DAILY) {
-          translationKeySeed = id === 'day' ? 'days' : id
-        } else if (watchedFreq === Frequency.WEEKLY) {
-          if (id === 'every') {
-            translationKeySeed = 'weekly_plural_every'
-          } else if (id === 'week') {
-            translationKeySeed = 'weeks'
-          }
-        }
-      }
-    } else if (typeof id === 'number') {
-      // rrule.js might pass numbers in a few contexts:
-      // 1. For ordinals (e.g., it might pass 1, 2, 3, 21, 22, 23, 31) expecting
-      //    the gettext function to return the appropriate ordinal suffix (st, nd, rd, th)
-      //    or the full ordinal ("1st", "2nd"). This depends on the rrule.js version and how it forms sentences.
-      // 2. For counts if it doesn't use a string like "times".
-      // A simple approach is to try and translate it as a numeric key, or just return the number as a string.
-      // We need to observe what numbers are passed to translate them effectively.
-      // We'll treat it as a generic number that might be part of a phrase.
-      translationKeySeed = `num_${id}` // e.g., rrule:num_1, rrule:num_2
-      fallbackText = String(id)
-    } else if (id instanceof Weekday) {
-      const englishDayName = RRuleWeekdays.find((d) => d.rruleConst.weekday === id.weekday)?.label // e.g., "Monday"
-      translationKeySeed = englishDayName || `weekday_${id.weekday}`
-      fallbackText = englishDayName || `Day ${id.weekday + 1}` // Fallback if not in RRuleWeekdays
-    } else {
-      // Should not happen with the defined union type, but as a fallback:
-      console.warn('rruleGettextAdapter received unexpected id type:', id)
-      translationKeySeed = 'unknown'
-      fallbackText = 'unknown'
-    }
-
-    // Construct the final i18n key, e.g., "rrule:every", "rrule:Monday", "rrule:num_1"
-    const i18nKey = `rrule.${translationKeySeed}`
-    return t(i18nKey, fallbackText)
-  }
+  }, [form, initialName])
 
   const tableRowEdit = (tableRow: TableRow) => {
     // Edit the row
@@ -468,58 +328,192 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
     }
   }
 
-  const tableHandleDelete = (record: TableRow) => {
-    try {
-      if (!record) throw new Error()
-      // Simply remove it from the state. When user save the form it will be 'deleted'
-      setTableRows((prev) => prev.filter((item) => item.rowId !== record.rowId))
-      setIsDirty(true)
-    } catch (error) {
-      openNotification('error', t('notification.rule_delete_failed'), t('notification.rule_delete_error'))
+  const addRule = useCallback(() => {
+    if (!schedulingTableRow) {
+      openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
+      return
     }
+
+    const newRule: TableRow = {
+      rrule: undefined,
+      availabilities: 1,
+      rowId: v4(),
+      calendarItemTypesIds: [],
+      public: true,
+      hours: [new EmbeddedTimeTableHour({ startHour: 0, endHour: 0 })],
+      timeConstraints: [NOT_BEFORE_IN_MINUTES, NOT_AFTER_IN_MINUTES],
+      rruleStart: watchedTimeTableStart ?? dayjs(),
+    }
+
+    setTableRows((prev) => [...prev, newRule])
+    tableRowEdit(newRule)
+    setIsDirty(true)
+  }, [schedulingTableRow, setTableRows, tableRowEdit, setIsDirty, openNotification, watchedTimeTableStart, t])
+
+  useEffect(() => {
+    // Building the rule whenever one of the rule values is changed. Could be moved in the update function.
+    // This check ensures we only try to build an RRULE if a frequency is actually selected.
+    // It also prevents running when the form is first initializing and these values might be transient.
+    if (watchedFreq !== undefined && form.isFieldsTouched(['_freq', '_interval', '_byday', '_until'])) {
+      let untilDate: Date | null = null
+      const rawUntilValue = watchedUntil?.toDate() ?? watchedTimeTableEnd?.toDate()
+
+      if (rawUntilValue) {
+        // Create a new Date object in UTC.
+        // This explicitly tells the Date constructor that the year, month, and day
+        // are UTC values, effectively stripping the timezone and time.
+        untilDate = new Date(Date.UTC(rawUntilValue.getFullYear(), rawUntilValue.getMonth(), rawUntilValue.getDate()))
+      }
+
+      const rruleOptions: Partial<Options> = {
+        freq: watchedFreq as Frequency, // Cast because Select value is number
+        until: untilDate,
+        interval: watchedInterval || 1,
+        wkst: RRule.MO,
+      }
+
+      if (watchedFreq === RRule.WEEKLY && watchedByDay && watchedByDay.length > 0) {
+        rruleOptions.byweekday = watchedByDay.map((dayValue: string) => RRuleWeekdays.find((d) => d.value === dayValue)?.rruleConst).filter(Boolean) as Weekday[] // Filter out undefined and cast
+      }
+
+      try {
+        if (rruleOptions.freq === undefined) {
+          // Don't generate if freq is not set
+          form.setFieldsValue({ rrule: undefined })
+          return
+        }
+        const rule = new RRule(rruleOptions)
+        const resultRrule = correctAndCleanRRuleString(rule.toString())
+        form.setFieldsValue({ rrule: resultRrule })
+      } catch (e) {
+        console.error('Error generating RRULE string:', e)
+        form.setFieldsValue({ rrule: undefined }) // Set to undefined or handle error state
+      }
+    }
+  }, [watchedFreq, watchedInterval, watchedByDay, watchedUntil, watchedTimeTableStart, watchedTimeTableEnd, form])
+
+  const getCurrentRruleLanguageOptions = useCallback((): Language => {
+    // Used to translate the rrule
+    const rruleWeekdaysOrdered = [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR, RRule.SA, RRule.SU]
+    const dayNames = rruleWeekdaysOrdered.map((rruleWd) => {
+      const dayIndexForDateFns = rruleWd.weekday % 7
+      return format(setDay(new Date(), dayIndexForDateFns), 'EEEE', { locale: dateFnsLocale }) // EEEE for full day name
+    })
+    const monthNames = [...Array(12)].map((_, i) => format(setMonth(new Date(), i), 'LLLL', { locale: dateFnsLocale }))
+
+    return {
+      dayNames,
+      monthNames,
+      tokens: TOKENS,
+    }
+  }, [dateFnsLocale])
+
+  const rruleGettextAdapter = (id: string | number | Weekday): string => {
+    // Used to translate the rrule.
+    let translationKeySeed: string
+    let fallbackText: string
+
+    if (typeof id === 'string') {
+      // Handles keywords like "every", "on", "until", "and", "week", "weeks", "day", "days",
+      // and potentially "st", "nd", "rd", "th" for ordinals if rrule.js passes them as strings.
+      translationKeySeed = id
+      fallbackText = id
+      if (dateFnsLocale === fr) {
+        if (watchedFreq === Frequency.DAILY) {
+          translationKeySeed = id === 'day' ? 'days' : id
+        } else if (watchedFreq === Frequency.WEEKLY) {
+          if (id === 'every') {
+            translationKeySeed = 'weekly_plural_every'
+          } else if (id === 'week') {
+            translationKeySeed = 'weeks'
+          }
+        }
+      }
+    } else if (typeof id === 'number') {
+      // rrule.js might pass numbers in a few contexts:
+      // 1. For ordinals (e.g., it might pass 1, 2, 3, 21, 22, 23, 31) expecting
+      //    the gettext function to return the appropriate ordinal suffix (st, nd, rd, th)
+      //    or the full ordinal ("1st", "2nd"). This depends on the rrule.js version and how it forms sentences.
+      // 2. For counts if it doesn't use a string like "times".
+      // A simple approach is to try and translate it as a numeric key, or just return the number as a string.
+      // We need to observe what numbers are passed to translate them effectively.
+      // We'll treat it as a generic number that might be part of a phrase.
+      translationKeySeed = `num_${id}` // e.g., rrule:num_1, rrule:num_2
+      fallbackText = String(id)
+    } else if (id instanceof Weekday) {
+      const englishDayName = RRuleWeekdays.find((d) => d.rruleConst.weekday === id.weekday)?.label // e.g., "Monday"
+      translationKeySeed = englishDayName || `weekday_${id.weekday}`
+      fallbackText = englishDayName || `Day ${id.weekday + 1}` // Fallback if not in RRuleWeekdays
+    } else {
+      // Should not happen with the defined union type, but as a fallback:
+      console.warn('rruleGettextAdapter received unexpected id type:', id)
+      translationKeySeed = 'unknown'
+      fallbackText = 'unknown'
+    }
+
+    // Construct the final i18n key, e.g., "rrule:every", "rrule:Monday", "rrule:num_1"
+    const i18nKey = `rrule.${translationKeySeed}`
+    return t(i18nKey, fallbackText)
   }
+
+  const tableHandleDelete = useCallback(
+    (record: TableRow) => {
+      try {
+        if (!record) throw new Error()
+        // Simply remove it from the state. When user save the form it will be 'deleted'
+        setTableRows((prev) => prev.filter((item) => item.rowId !== record.rowId))
+        setIsDirty(true)
+      } catch (error) {
+        openNotification('error', t('notification.rule_delete_failed'), t('notification.rule_delete_error'))
+      }
+    },
+    [setTableRows, setIsDirty, openNotification, t],
+  )
 
   const tableRowCancel = useCallback(() => {
     setEditingKey('')
   }, [setEditingKey])
 
-  const tableRowUpdate = async (timeTableItemRow: TableRow) => {
-    try {
-      const rowValues = await form.validateFields()
+  const tableRowUpdate = useCallback(
+    async (timeTableItemRow: TableRow) => {
+      try {
+        const rowValues = await form.validateFields()
 
-      const hoursToSave = (rowValues.hours || []).map((h) => ({
-        startHour: dayjsToHhmmss(h.startHour),
-        endHour: dayjsToHhmmss(h.endHour),
-      }))
-      const sortedHoursToSave = sortEmbeddedTimeTableHours(hoursToSave)
+        const hoursToSave = (rowValues.hours || []).map((h) => ({
+          startHour: dayjsToHhmmss(h.startHour),
+          endHour: dayjsToHhmmss(h.endHour),
+        }))
+        const sortedHoursToSave = sortEmbeddedTimeTableHours(hoursToSave)
 
-      setTableRows((prevRows: TableRow[]) =>
-        prevRows.map((row) => {
-          if (row.rowId === timeTableItemRow.rowId) {
-            return {
-              ...row,
-              calendarItemTypesIds: rowValues.calendarItemTypesIds || [],
-              availabilities: rowValues.availabilities || 1,
-              rrule: rowValues.rrule,
-              hours: sortedHoursToSave,
-              public: rowValues.public,
-              timeConstraints: [rowValues.notBeforeInMinutes, rowValues.notAfterInMinutes],
-              rruleStart: rowValues.rruleStart,
+        setTableRows((prevRows: TableRow[]) =>
+          prevRows.map((row) => {
+            if (row.rowId === timeTableItemRow.rowId) {
+              return {
+                ...row,
+                calendarItemTypesIds: rowValues.calendarItemTypesIds || [],
+                availabilities: rowValues.availabilities || 1,
+                rrule: rowValues.rrule,
+                hours: sortedHoursToSave,
+                public: rowValues.public,
+                timeConstraints: [rowValues.notBeforeInMinutes, rowValues.notAfterInMinutes],
+                rruleStart: rowValues.rruleStart,
+              }
             }
-          }
-          return row
-        }),
-      )
-      setEditingKey('')
-      setIsDirty(true)
-    } catch (error) {
-      if (error && typeof error === 'object' && 'errorFields' in error && Array.isArray(error.errorFields) && error.errorFields.length > 0) {
-        openNotification('error', t('validation.validation_failed'), t('validation.check_highlighted_fields_correct_errors'))
-      } else {
-        openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
+            return row
+          }),
+        )
+        setEditingKey('')
+        setIsDirty(true)
+      } catch (error) {
+        if (error && typeof error === 'object' && 'errorFields' in error && Array.isArray(error.errorFields) && error.errorFields.length > 0) {
+          openNotification('error', t('validation.validation_failed'), t('validation.check_highlighted_fields_correct_errors'))
+        } else {
+          openNotification('error', t('notification.schedule_update_failed'), t('notification.schedule_update_error'))
+        }
       }
-    }
-  }
+    },
+    [form, setTableRows, setEditingKey, setIsDirty, openNotification, t],
+  )
 
   const handleSelectAll = useCallback(() => {
     form.setFieldsValue({ calendarItemTypesIds: allDefaultCalendarItemTypeIds })
@@ -549,6 +543,11 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
     try {
       if (!schedulingTableRow || !agenda) throw new Error()
       const { name, start, end } = form.getFieldsValue()
+
+      if (!tableRows || tableRows.length === 0) {
+        openNotification('error', t('notification.schedule_save_failed'), t('notification.at_least_one_rule_required'))
+        return
+      }
 
       const newEmbeddedTimeTableItems = tableRows.map((row: TableRow) => {
         if (!row.rrule) throw new Error()
@@ -585,19 +584,18 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
     }
   }
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (isDirty) {
       setShowConfirmCloseModal(true)
     } else {
       onClose()
     }
-  }
+  }, [isDirty, setShowConfirmCloseModal, onClose])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={handleClose} title={t('content.edit_schedule')} blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modalRule">
         {notificationContextHolder}
-        {messageContextHolder}
         <Form layout="vertical" colon={false} form={form} onFinish={handleSubmit} style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between', gap: '1rem' }}>
           <div className="formElements">
             <div className="header">
@@ -622,13 +620,13 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                 </div>
               </div>
               <div className="submitButton">
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" loading={isMutating} disabled={isLoading || !!editingKey}>
                   {t('content.save_schedule')}
                 </Button>
               </div>
             </div>
             <div className="table-add-entry">
-              <Button style={{ width: '100%' }} onClick={addRule}>
+              <Button style={{ width: '100%' }} onClick={addRule} loading={isMutating} disabled={isLoading || !!editingKey}>
                 {t('content.add_rule')}
               </Button>
             </div>

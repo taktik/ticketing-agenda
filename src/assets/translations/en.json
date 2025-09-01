@@ -250,7 +250,8 @@
     "user_save_failed": "We could not save the user!",
     "user_save_error": "An error occurred while saving the user.",
     "user_delete_failed": "We could not delete the user!",
-    "user_delete_error": "An error occurred while deleting the user."
+    "user_delete_error": "An error occurred while deleting the user.",
+    "at_least_one_rule_required": "At least one rule is required"
   },
   "rrule": {
     "every": "Every",

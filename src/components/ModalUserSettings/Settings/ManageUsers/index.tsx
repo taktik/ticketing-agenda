@@ -282,7 +282,7 @@ export const ManagerUsers = (): ReactElement => {
       {notificationContextHolder}
       {messageContextHolder}
       <div className="table-add-entry">
-        <Button style={{ width: '100%' }} onClick={addUser}>
+        <Button style={{ width: '100%' }} onClick={addUser} loading={isMutating} disabled={isLoading || !!editingKey}>
           {t('content.add_user')}
         </Button>
       </div>

@@ -3,17 +3,17 @@ import { Agenda, CalendarItemType, CodeStub } from '@icure/cardinal-sdk'
 import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
 import type { Color } from 'antd/es/color-picker'
 import Column from 'antd/es/table/Column'
-import { ReactElement, useEffect, useMemo, useState } from 'react'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
-import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypeMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
+import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 import './index.css'
 
-const SubjectEdit = () => {
+const SubjectEdit = React.memo(() => {
   const languages = ['FR', 'NL', 'EN', 'DE']
   const [selectedLang, setSelectedLang] = useState('FR')
 
@@ -30,12 +30,11 @@ const SubjectEdit = () => {
       ))}
     </div>
   )
-}
+})
 
-const SubjectDisplay = ({ subjects }: { subjects: { [key: string]: string } }): ReactElement => {
+const SubjectDisplay = React.memo(({ subjects }: { subjects: { [key: string]: string } }): ReactElement => {
   const { t } = useTranslation()
   const availableLangs = useMemo(() => Object.keys(subjects || {}), [subjects])
-
   const [viewedLang, setViewedLang] = useState<string | undefined>(availableLangs[0])
 
   useEffect(() => {
@@ -60,7 +59,7 @@ const SubjectDisplay = ({ subjects }: { subjects: { [key: string]: string } }): 
       <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '6px', minHeight: '60px' }}>{subjects[viewedLang || '']} </div>
     </div>
   )
-}
+})
 
 const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
   const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
@@ -105,15 +104,15 @@ export interface FormValuesService {
 interface ServiceSettingProps {
   service: Agenda
   handleDeleteService: (service: Agenda) => Promise<void>
+  isServicesLoading: boolean
 }
 
-export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingProps): ReactElement => {
+export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading }: ServiceSettingProps): ReactElement => {
   const { t } = useTranslation()
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
   const [showDeleteProcedureModal, setShowDeleteProcedureModal] = useState<boolean>(false)
   const [procedureRowToBeDeleted, setProcedureRowToBeDeleted] = useState<ProcedureRow | undefined>(undefined)
   const [proceduresList, setProceduresList] = useState<CalendarItemType[]>([])
-  const [tableRows, setTableRows] = useState<ProcedureRow[]>([])
   const [showEditServiceTitle, setShowEditServiceTitle] = useState<boolean>(false)
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
@@ -132,36 +131,70 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
 
   const [form] = Form.useForm<FormValuesService>()
 
+  const [createUpdateService, { isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateAgendaMutation()
+  const [createUpdateProcedure, { isLoading: isCreateUpdateDemarcheLoading }] = useCreateUpdateCalendarItemTypeMutation()
+  const [deleteProcedures, { isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypesMutation()
+
+  const isFetching = useMemo(() => isProceduresLoading || isServicesLoading, [isProceduresLoading, isServicesLoading])
+  const isMutating = useMemo(() => isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading, [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading])
+  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
+
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
+
+  const tableRows: ProcedureRow[] = useMemo(() => {
+    const proceduresByName = (procedures ?? []).reduce((acc, procedure) => {
+      if (!procedure.name) {
+        return acc
+      }
+      const existing = acc.get(procedure.name) || []
+      acc.set(procedure.name, [...existing, procedure])
+      return acc
+    }, new Map<string, CalendarItemType[]>())
+
+    const durationsMap = new Map<string, number[]>()
+    proceduresByName.forEach((procsForName, name) => {
+      const sortedDurations = getAllDurations(procsForName, name)
+      durationsMap.set(name, sortedDurations)
+    })
+
+    return (proceduresList ?? []).map((procedure) => ({
+      rowId: procedure.id,
+      procedureId: procedure.id,
+      procedureName: procedure.name,
+      appointmentDurations: procedure.name ? durationsMap.get(procedure.name) || [] : [],
+      isPublic: String(procedure.otherInfos.isPublic === 'true'),
+      procedureDetails: procedure.otherInfos.procedureDetails,
+      subjectByLanguage: procedure.subjectByLanguage,
+      color: procedure.color ?? '',
+    }))
+  }, [procedures, proceduresList])
+
   useEffect(() => {
     setProceduresList(sortedProcedures)
     setEditingKey('')
   }, [sortedProcedures, form])
-
-  useEffect(() => {
-    const tableRowsList: ProcedureRow[] = proceduresList.map((procedure) => {
-      const allDurations = getAllDurations(procedures, procedure.name)
-
-      return {
-        rowId: v4(),
-        procedureId: procedure.id,
-        procedureName: procedure.name,
-        appointmentDurations: allDurations,
-        isPublic: procedure.otherInfos.isPublic === 'true' ? 'true' : 'false',
-        procedureDetails: procedure.otherInfos.procedureDetails,
-        subjectByLanguage: procedure.subjectByLanguage,
-        color: procedure.color,
-      } as ProcedureRow
-    })
-    setTableRows(tableRowsList)
-  }, [proceduresList])
-
-  const [createUpdateService, { isError: isCreateUpdateServiceError, isSuccess: isCreateUpdateServiceSuccess, isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateAgendaMutation()
-  const [createUpdateProcedure, { isError: isCreateUpdateDemarcheError, isSuccess: isCreateUpdateDemarcheSuccess, isLoading: isCreateUpdateDemarcheLoading }] = useCreateUpdateCalendarItemTypeMutation()
-  const [deleteProcedure, { isError: isDeleteDemarcheError, isSuccess: isDeleteDemarcheSuccess, isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypeMutation()
-
-  const isFetching = useMemo(() => isProceduresLoading, [isProceduresLoading])
-  const isMutating = useMemo(() => isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading, [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading])
-  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   useEffect(() => {
     if (service) {
@@ -171,7 +204,7 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
     }
   }, [service, form])
 
-  const addProcedure = async () => {
+  const addProcedure = useCallback(async () => {
     try {
       if (!service) throw new Error()
       const procedure = new CalendarItemType({
@@ -198,13 +231,12 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
     } catch (error) {
       openNotification('error', t('notification.procedure_save_failed'), t('notification.procedure_save_error'))
     }
-  }
+  }, [service, createUpdateProcedure, showMessageFeedback, openNotification, t])
 
   const tableRowUpdate = async (procedureRow: ProcedureRow) => {
     try {
       // Step 1 : We first make sure everything is valid
       if (!service) throw new Error()
-
       const rowValues = await form.validateFields()
 
       // Step 2 : We get our current procedures and sort them by their order
@@ -245,8 +277,8 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
             existingItem.duration !== desiredProps.duration ||
             existingItem.defaultCalendarItemType !== desiredProps.defaultCalendarItemType ||
             existingItem.name !== desiredProps.name ||
-            existingItem.otherInfos !== desiredProps.otherInfos ||
-            existingItem.subjectByLanguage !== desiredProps.subjectByLanguage ||
+            JSON.stringify(existingItem.otherInfos) !== JSON.stringify(desiredProps.otherInfos) ||
+            JSON.stringify(existingItem.subjectByLanguage) !== JSON.stringify(desiredProps.subjectByLanguage) ||
             existingItem.color !== desiredProps.color
           ) {
             const procedure = new CalendarItemType({
@@ -268,16 +300,13 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
           mutationPromises.push(createUpdateProcedure(desiredProps).unwrap())
         } else if (!desiredProps && existingItem) {
           // === No longer desired at this position, but exists: DELETE ===
-          mutationPromises.push(deleteProcedure([existingItem.id]).unwrap())
+          mutationPromises.push(deleteProcedures([existingItem.id]).unwrap())
         }
       }
 
       // 3. Execute all collected mutations
-      try {
-        await Promise.allSettled(mutationPromises) // Use allSettled to attempt all operations
-      } catch (error) {
-        console.error('Error during sync/mutation execution:', error)
-        openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
+      if (mutationPromises.length > 0) {
+        await Promise.all(mutationPromises)
       }
       showMessageFeedback('success', t('notification.procedure_modified'))
     } catch (error) {
@@ -292,14 +321,18 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
     }
   }
 
-  const tableRowCancel = () => {
+  const tableRowCancel = useCallback(() => {
     setEditingKey('')
-  }
+  }, [setEditingKey])
 
-  const tableRowEdit = (procedureRow: ProcedureRow) => {
-    try {
-      if (!procedureRow.rowId) throw new Error()
-      // Set the state with the values
+  const tableRowEdit = useCallback(
+    (procedureRow: ProcedureRow) => {
+      if (!procedureRow?.rowId) {
+        console.error('Attempted to edit a row without a valid rowId.', procedureRow)
+        openNotification('error', t('content.unexpected_error'), '')
+        return
+      }
+
       form.setFieldsValue({
         appointmentDurations: procedureRow.appointmentDurations,
         isPublic: procedureRow.isPublic,
@@ -307,72 +340,53 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
         subjectByLanguage: procedureRow.subjectByLanguage,
         color: procedureRow.color,
       })
-      setEditingKey(procedureRow.rowId)
-    } catch (error) {
-      openNotification('error', t('content.unexpected_error'), '')
-    }
-  }
 
-  const tableRowDelete = async () => {
+      setEditingKey(procedureRow.rowId)
+    },
+    [form, setEditingKey, openNotification, t],
+  )
+
+  const tableRowDelete = useCallback(async () => {
     try {
       if (!procedureRowToBeDeleted) throw new Error()
-      // Simply remove it from the state. When user save the form it will be 'deleted'
-      const proceduresToDelete = procedures?.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR'])
-      if (!proceduresToDelete) throw new Error()
+      const proceduresToDelete = procedures?.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR']) || []
+      if (!proceduresToDelete || proceduresToDelete.length === 0) {
+        console.warn('No matching procedures found to delete by that name.')
+      }
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
-      await deleteProcedure(proceduresToDeleteIds).unwrap()
+      await deleteProcedures(proceduresToDeleteIds).unwrap()
       showMessageFeedback('success', t('notification.procedure_deleted'))
     } catch (error) {
+      console.error('Failed to delete procedure group:', error)
       openNotification('error', t('notification.procedure_delete_failed'), t('notification.procedure_delete_error'))
     } finally {
       setShowDeleteProcedureModal(false)
       setProcedureRowToBeDeleted(undefined)
     }
-  }
+  }, [procedureRowToBeDeleted, procedures, deleteProcedures, showMessageFeedback, openNotification, setProcedureRowToBeDeleted, t])
 
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
-
-  const renameService = async (newTitles: LanguageDescription) => {
-    try {
-      if (!service || !newTitles || !newTitles['FR']) throw new Error()
-      const newTags = service.tags.map((tag) =>
-        tag.id === 'SERVICE'
-          ? new CodeStub({
-              ...tag,
-              label: newTitles,
-            })
-          : tag,
-      )
-      await createUpdateService(new Agenda({ ...service, tags: newTags, name: newTitles['FR'] })).unwrap()
-      showMessageFeedback('success', t('notification.service_saved'))
-    } catch (error) {
-      openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
-    } finally {
-      setShowEditServiceTitle(false)
-    }
-  }
+  const renameService = useCallback(
+    async (newTitles: LanguageDescription) => {
+      try {
+        if (!service || !newTitles || !newTitles['FR']) throw new Error()
+        const newTags = service.tags.map((tag) =>
+          tag.id === 'SERVICE'
+            ? new CodeStub({
+                ...tag,
+                label: newTitles,
+              })
+            : tag,
+        )
+        await createUpdateService(new Agenda({ ...service, tags: newTags, name: newTitles['FR'] })).unwrap()
+        showMessageFeedback('success', t('notification.service_saved'))
+      } catch (error) {
+        openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
+      } finally {
+        setShowEditServiceTitle(false)
+      }
+    },
+    [service, createUpdateService, showMessageFeedback, openNotification, setShowEditServiceTitle, t],
+  )
 
   const watchedDurations = Form.useWatch('appointmentDurations', form)
 
@@ -392,6 +406,11 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
     },
   ]
 
+  const serviceTitles = useMemo(() => {
+    const serviceTag = service.tags?.find((tag) => tag.id === 'SERVICE')
+    return serviceTag?.label || { FR: '', NL: '', EN: '', DE: '' }
+  }, [service.tags])
+
   return (
     <div className="root">
       {notificationContextHolder}
@@ -403,22 +422,22 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
         initialValues={{
           name: service?.name,
         }}
-        style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between' }}
+        className="service-setting-form"
       >
         <div className="form-fields">
           <div className="service-title">
             <Space align="center">
-              <EditableServiceTitle form={form} initialTitles={service.tags[0].label} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
+              <EditableServiceTitle form={form} initialTitles={serviceTitles} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
               {showEditServiceTitle ? null : (
                 <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
-                  <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px', fontWeight: 'bold' }} />} shape="circle" size="large" />
+                  <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px' }} />} shape="circle" size="large" />
                 </Dropdown>
               )}
             </Space>
           </div>
 
           <div className="table-add-entry">
-            <Button style={{ width: '100%' }} onClick={addProcedure} disabled={editingKey !== ''}>
+            <Button style={{ width: '100%' }} onClick={addProcedure} loading={isMutating} disabled={isLoading || !!editingKey}>
               {t('content.add_procedure')}
             </Button>
           </div>
@@ -457,16 +476,8 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
                     )
                   } else {
                     return (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div
-                          style={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: 4,
-                            backgroundColor: color,
-                            border: '1px solid #d9d9d9',
-                          }}
-                        />
+                      <div className="color-swatch-wrapper">
+                        <div className="color-swatch" style={{ backgroundColor: color }} />
                       </div>
                     )
                   }
@@ -629,8 +640,8 @@ export const ServiceSetting = ({ service, handleDeleteService }: ServiceSettingP
                     )
                   } else {
                     return (
-                      <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '6px', minHeight: '60px' }}>
-                        <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{details || ''}</Typography.Paragraph>
+                      <div className="details-box">
+                        <Typography.Paragraph className="details-text">{details || ''}</Typography.Paragraph>
                       </div>
                     )
                   }

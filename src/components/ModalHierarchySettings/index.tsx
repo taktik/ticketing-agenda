@@ -9,10 +9,11 @@ import { v4 } from 'uuid'
 import emptyIcon from '../../assets/empty.svg'
 import { SettingContext } from '../../contexts/SettingContext'
 import { useDeleteAgendaMutation, useDeleteAgendasMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
-import { useDeleteCalendarItemTypeMutation, useLazyGetCalendarItemTypesForMultipleAgendasQuery, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
+import { useDeleteCalendarItemTypesMutation, useLazyGetCalendarItemTypesForMultipleAgendasQuery, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import { CustomModal } from '../common/CustomModal'
+import { SpinLoader } from '../common/SpinLoader'
 import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 import './index.css'
 import { ServiceSetting } from './ServiceSetting'
@@ -35,13 +36,29 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
+  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !rootHcp, authorIds: sitesIds ?? [] })
+
+  const sortedServices = useMemo(() => {
+    return [...(services ?? [])].sort((a, b) => {
+      const nameA = a.name ?? ''
+      const nameB = b.name ?? ''
+      return nameA.localeCompare(nameB)
+    })
+  }, [services])
+
   const [getCalendarItemTypesForAgendasIds] = useLazyGetCalendarItemTypesForMultipleAgendasQuery()
   const [getCalendarItemTypesForAgenda] = useLazyGetCalendarItemTypesQuery()
   const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
   const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
   const [deleteAgenda, { isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
   const [deleteAgendas, { isLoading: isDeleteAgendasLoading }] = useDeleteAgendasMutation()
-  const [deleteCalendarItemTypes, { isLoading: isDeleteCalendarItemTypesLoading }] = useDeleteCalendarItemTypeMutation()
+  const [deleteCalendarItemTypes, { isLoading: isDeleteCalendarItemTypesLoading }] = useDeleteCalendarItemTypesMutation()
+
+  const fetchIsLoading = useMemo(() => isSitesLoading || isServicesLoading, [isSitesLoading, isServicesLoading])
+  const mutationIsLoading = useMemo(
+    () => isCreateUpdateSiteLoading || isDeleteHcpLoading || isDeleteAgendaLoading || isDeleteAgendasLoading || isDeleteCalendarItemTypesLoading,
+    [isCreateUpdateSiteLoading, isDeleteHcpLoading, isDeleteAgendaLoading, isDeleteAgendasLoading, isDeleteCalendarItemTypesLoading],
+  )
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -66,15 +83,6 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
-  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !rootHcp, authorIds: sitesIds ?? [] })
-
-  const sortedServices = useMemo(() => {
-    return [...(services ?? [])].sort((a, b) => {
-      const nameA = a.name ?? ''
-      const nameB = b.name ?? ''
-      return nameA.localeCompare(nameB)
-    })
-  }, [services])
 
   const handleAddSite = useCallback(async () => {
     try {
@@ -200,12 +208,12 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   )
 
   const settingContent = useMemo(() => {
-    const match = selectedKey?.match(/^(site|service)-(.+)$/) // Added optional chaining for safety
+    const match = selectedKey?.match(/^(site|service)-(.+)$/)
     const type = match?.[1]
     const id = match?.[2]
 
     if (!type || !id) {
-      return <Empty image={emptyIcon} description={t('content.select_site_or_service_to_start')} style={{ paddingTop: '10rem' }} />
+      return <Empty image={emptyIcon} description={t('content.select_site_or_service_to_start')} className="modal-settings-empty" />
     }
 
     if (type === 'site') {
@@ -214,18 +222,18 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
       const servicesOfThisSite = sortedServices?.filter((service) => service.author === matchingSite.id) ?? []
 
-      return <SiteSetting site={matchingSite} services={servicesOfThisSite} handleSiteDelete={handleSiteDelete} />
+      return <SiteSetting site={matchingSite} services={servicesOfThisSite} handleSiteDelete={handleSiteDelete} isSitesLoading={isSitesLoading} />
     }
 
     if (type === 'service') {
       const matchingService = sortedServices?.find((service) => service.id === id)
-      if (!matchingService) return <div>{t('content.service_not_found')}</div> // Typo fixed here
+      if (!matchingService) return <div>{t('content.service_not_found')}</div>
 
-      return <ServiceSetting service={matchingService} handleDeleteService={handleDeleteService} />
+      return <ServiceSetting service={matchingService} handleDeleteService={handleDeleteService} isServicesLoading={isServicesLoading} />
     }
 
     return <div>{t('content.select_site_or_service')}</div>
-  }, [selectedKey, sites, sortedServices, t, handleSiteDelete, handleDeleteService])
+  }, [selectedKey, sites, sortedServices, t, handleSiteDelete, handleDeleteService, isSitesLoading, isServicesLoading])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>
@@ -234,9 +242,9 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
         {messageContextHolder}
         <Sider width={250} className="menu-sites-root">
           <div className="menu-sites">
-            <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />
+            {fetchIsLoading ? <SpinLoader /> : <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />}
             <div className="sider-footer">
-              <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite}>
+              <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite} loading={mutationIsLoading} disabled={fetchIsLoading || mutationIsLoading}>
                 {t('content.add_site')}
               </StyledButton>
             </div>
