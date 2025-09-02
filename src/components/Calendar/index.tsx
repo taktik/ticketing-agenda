@@ -51,7 +51,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     to: endOfWeek(new Date()),
   })
 
-  const { data: calendarItems, isLoading: isCalendarItemsLoading } = useGetCalendarItemByAgendaIdAndPeriodQuery(
+  const { data: calendarItems } = useGetCalendarItemByAgendaIdAndPeriodQuery(
     {
       agendaId: selectedAgenda?.id ?? '',
       from: dateToYYYYMMDD(calendarRange.from),

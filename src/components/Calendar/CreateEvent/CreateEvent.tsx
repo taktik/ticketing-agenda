@@ -2,13 +2,12 @@ import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } fro
 import { DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useGetAgendasQuery } from '../../../core/api/agendaApi'
+import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-import { useGetServicesForMultipleSitesQuery } from '../../../core/api/healthcarePartyApi'
 import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery } from '../../../core/api/patientApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
@@ -43,7 +42,7 @@ export const appointmentDuration = (formValues: AppointmentForm, procedures: Pro
 
     // 2. From that group, find the specific site variant the user chose
     // using the site ID stored in the form.
-    const siteVariant = masterProcedure.siteVariants.find((sv) => sv.site.id === currentFormProcedure.site)
+    const siteVariant = masterProcedure.siteVariants.find((sv) => sv.siteId === currentFormProcedure.site)
     if (!siteVariant) {
       return total
     }
@@ -72,7 +71,7 @@ export const findProcedureData = (selections: ProcedureSelection[], formProcedur
     return { masterProcedure: undefined, siteVariant: undefined, procedureVariant: undefined }
   }
 
-  const siteVariant = formProcedure.site ? masterProcedure.siteVariants.find((sv) => sv.site.id === formProcedure.site) : undefined
+  const siteVariant = formProcedure.site ? masterProcedure.siteVariants.find((sv) => sv.siteId === formProcedure.site) : undefined
   if (!siteVariant) {
     return { masterProcedure, siteVariant: undefined, procedureVariant: undefined }
   }
@@ -139,20 +138,18 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
 
-  const { data: allServices, isLoading: isServicesLoading } = useGetServicesForMultipleSitesQuery({ siteIds: siteIds }, { skip: !siteIds || siteIds.length === 0 })
-  const servicesIds = useMemo(() => (allServices ?? []).map((service) => service.id), [allServices])
+  const { data: allAgendas, isLoading: isAgendasLoading } = useGetAllAgendaByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
 
-  const { data: allAgendas, isLoading: isAgendasLoading } = useGetAgendasQuery(undefined, { skip: !allServices || allServices.length === 0 })
-  const filteredAgenda = useMemo(() => (allAgendas ?? []).filter((agenda) => servicesIds.includes(agenda.author ?? '')), [allAgendas, allServices])
+  const filteredAgenda = useMemo(() => (allAgendas ?? []).filter((agenda) => siteIds.includes(agenda.author ?? '')), [allAgendas, siteIds])
   const agendaIds = useMemo(() => (filteredAgenda ?? []).map((agenda) => agenda.id), [filteredAgenda])
 
   const { data: allProcedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: !agendaIds || agendaIds.length === 0 })
 
-  const selections = useMemo(() => transformProceduresForSelection(allServices ?? [], allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allServices, allProcedures, allAgendas, sites])
+  const selections = useMemo(() => transformProceduresForSelection(allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allProcedures, allAgendas, sites])
 
   useEffect(() => console.log('selections', selections), [selections])
 
-  const isLoading = useMemo(() => isServicesLoading || isAgendasLoading || isProceduresLoading, [isServicesLoading, isAgendasLoading, isProceduresLoading])
+  const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading, [isAgendasLoading, isProceduresLoading])
 
   const [getUserByMailLazy, { isError: isGetUserError, isSuccess: isGetUserSuccess, isLoading: isGetUserLoading }] = useLazyGetUserByEmailQuery()
   const [getPatientByIdLazy, { isError: isGetPatientError, isSuccess: isGetPatientSuccess, isLoading: isGetPatientLoading }] = useLazyGetPatientByIdQuery()
@@ -161,6 +158,30 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   const [createUpdateEvent, { isError: isCreateUpdateEventError, isSuccess: isCreateUpdateEventSuccess, isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
   const [processWorking, setProcessWorking] = useState<boolean>(false)
   const [isCreateEventSuccess, setIsCreateEventSuccess] = useState<boolean>(false)
+
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
 
   const isCreateLoading = useMemo(
     () => processWorking || isGetPatientLoading || isCreateUpdatePatientLoading || isCreateUpdateUserLoading || isGetUserLoading || isCreateUpdateEventLoading,
@@ -308,26 +329,32 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     }
   }
 
-  const next = async () => {
+  const next = useCallback(async () => {
     try {
       await form.validateFields()
-      setCurrentStep(currentStep + 1)
-      if (currentStep === 3) {
-        createAppointments()
-      }
+      setCurrentStep((prevStep) => prevStep + 1)
     } catch (err) {
       openNotification('error', t('content.complete_required_fields'), '')
     }
-  }
+  }, [form, t, setCurrentStep, openNotification])
 
-  const prev = () => setCurrentStep(currentStep - 1)
+  const prev = useCallback(() => setCurrentStep((prevStep) => prevStep - 1), [setCurrentStep])
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setCurrentStep(0)
     form.resetFields()
     form.setFieldsValue({ procedures: [{ procedureSelectionId: undefined, quantity: 1 }] })
     onClose()
-  }
+  }, [setCurrentStep, form, onClose])
+
+  const handleAppointmentCreation = useCallback(async () => {
+    try {
+      await form.validateFields()
+      await createAppointments()
+    } catch (err) {
+      openNotification('error', t('content.complete_required_fields'), '')
+    }
+  }, [form, createAppointments, openNotification, t])
 
   const stepContent = [
     <StepProcedureSelector selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
@@ -347,30 +374,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       language: 'Français',
       birthDate: dayjs(),
     },
-  }
-
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
   }
 
   return (
@@ -414,7 +417,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
                 </Button>
               )}
               {currentStep === 3 && (
-                <Button size="large" type="primary" onClick={next}>
+                <Button size="large" type="primary" onClick={handleAppointmentCreation}>
                   {t('content.confirm_booking_button')}
                 </Button>
               )}
