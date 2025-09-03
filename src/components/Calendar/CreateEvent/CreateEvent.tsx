@@ -148,6 +148,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   const selections = useMemo(() => transformProceduresForSelection(allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allProcedures, allAgendas, sites])
 
   useEffect(() => console.log('selections', selections), [selections])
+  useEffect(() => console.log('filteredAgenda', filteredAgenda), [filteredAgenda])
 
   const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading, [isAgendasLoading, isProceduresLoading])
 
@@ -358,7 +359,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const stepContent = [
     <StepProcedureSelector selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
-    <StepTimeSlotSelector form={form} procedures={formValues.procedures} selections={selections} key={'TimeStep'} />,
+    <StepTimeSlotSelector form={form} formProcedure={formValues.procedures} selections={selections} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
     <StepAppointmentreview formValues={form.getFieldsValue(true)} selections={selections} key={'reviewStep'} />,
     <StepCreateEventResult isCreateLoading={isCreateLoading} isCreateEventSuccess={isCreateEventSuccess} formValues={formValues} selections={selections} key={'resultStep'} />,

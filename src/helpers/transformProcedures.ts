@@ -28,6 +28,12 @@ export interface ProcedureSelection {
   displayTextByLanguage: { [key: string]: string }
 }
 
+const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+
 /*
  * Transforms flat lists of services and procedures into a structured list
  * of unique "Procedure Selections" grouped by service and procedure name.
@@ -52,6 +58,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
 
   // 4. Map over each group of same-named procedures to create the final structure
   const finalSelection = Array.from(proceduresGroupedByName.entries()).map(([procedureName, proceduresWithSameName]) => {
+    const procedureNameSlug = slugify(procedureName)
     // 5. Within this group, further group the procedures by the service that offers them
     const proceduresGroupedByAgendaId = new Map<string, CalendarItemType[]>()
     for (const procedure of proceduresWithSameName) {
@@ -83,10 +90,11 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
         const procedureVariants: ProcedureVariant[] = proceduresInOneService
           .map((p) => {
             const order = parseInt(p.otherInfos?.['order'] || '0', 10)
+            const attendees = isNaN(order) ? 1 : order + 1
             return {
-              id: v4(),
+              id: `proc-variant-${p.id}-${attendees}`,
               procedureId: p.id,
-              attendees: isNaN(order) ? 1 : order + 1,
+              attendees: attendees,
               duration: p.duration || 0,
               procedure: p,
             }
@@ -95,7 +103,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
 
         // Construct the final SiteVariants object
         return {
-          id: v4(),
+          id: `site-variant-${procedureNameSlug}-${site.id}`,
           siteId: site.id,
           agendaId: agenda?.id,
           siteName: site.name,
@@ -121,7 +129,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     )
 
     return {
-      id: v4(),
+      id: `selection-${procedureNameSlug}`,
       siteVariants: siteVariants,
       displayText: `${serviceName} - ${procedureName}`,
       serviceName: serviceName,

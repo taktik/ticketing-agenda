@@ -119,6 +119,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(service?.id ?? '', { skip: !service })
 
+  useEffect(() => console.log('procedures', procedures), [procedures])
+
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
       .sort((a, b) => {

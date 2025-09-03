@@ -27,16 +27,16 @@ interface ModalHierarchySettingsProps {
 type MenuItem = Required<MenuProps>['items'][number]
 
 export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySettingsProps): ReactElement => {
-  const { selectedSite, rootHcp, selectedKey, setSelectedKey } = useContext(SettingContext)
+  const { selectedSite, siteRoot, selectedKey, setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
 
-  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
+  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
-  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !rootHcp, authorIds: sitesIds ?? [] })
+  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !siteRoot, authorIds: sitesIds ?? [] })
 
   const sortedServices = useMemo(() => {
     return [...(services ?? [])].sort((a, b) => {
@@ -86,14 +86,14 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
   const handleAddSite = useCallback(async () => {
     try {
-      if (!rootHcp) throw new Error()
-      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: rootHcp.id, id: v4(), public: true, tags: [new CodeStub({ id: 'SITE', code: 'SITE', context: 'SITE', type: 'SITE' })] })
+      if (!siteRoot) throw new Error()
+      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: siteRoot.id, id: v4(), public: true, tags: [new CodeStub({ id: 'SITE', code: 'SITE', context: 'SITE', type: 'SITE' })] })
       await createUpdateSite(siteHcp).unwrap()
       showMessageFeedback('success', t('notification.site_saved'))
     } catch (error) {
       openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
     }
-  }, [selectedKey, rootHcp, t])
+  }, [selectedKey, siteRoot, t])
 
   const menuItems: MenuItem[] = useMemo(
     () =>

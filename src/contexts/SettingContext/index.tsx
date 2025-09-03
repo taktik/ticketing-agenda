@@ -3,7 +3,7 @@ import React, { createContext, useMemo, useState } from 'react'
 
 type SettingContextType = {
   selectedSite: HealthcareParty | undefined
-  rootHcp: HealthcareParty | undefined
+  siteRoot: HealthcareParty | undefined
   selectedKey: string
   setSelectedKey: React.Dispatch<React.SetStateAction<string>>
   selectedKeyId: string | undefined
@@ -11,7 +11,7 @@ type SettingContextType = {
 
 const defaultContext: SettingContextType = {
   selectedSite: undefined,
-  rootHcp: undefined,
+  siteRoot: undefined,
   selectedKey: 'default',
   setSelectedKey: () => {},
   selectedKeyId: undefined,
@@ -22,10 +22,10 @@ export const SettingContext = createContext<SettingContextType>(defaultContext)
 type SettingContextProviderProps = {
   children: React.ReactNode
   selectedSite: HealthcareParty | undefined
-  rootHcp: HealthcareParty | undefined
+  siteRoot: HealthcareParty | undefined
 }
 
-export const SettingContextProvider: React.FC<SettingContextProviderProps> = ({ children, selectedSite, rootHcp }) => {
+export const SettingContextProvider: React.FC<SettingContextProviderProps> = ({ children, selectedSite, siteRoot }) => {
   const [selectedKey, setSelectedKey] = useState<string>(selectedSite ? `site-${selectedSite.id}` : 'default')
   const selectedKeyId = useMemo(() => {
     const match = selectedKey.match(/^(site|service)-(.+)$/)
@@ -37,7 +37,7 @@ export const SettingContextProvider: React.FC<SettingContextProviderProps> = ({ 
     <SettingContext.Provider
       value={{
         selectedSite,
-        rootHcp,
+        siteRoot,
         selectedKey,
         setSelectedKey,
         selectedKeyId,

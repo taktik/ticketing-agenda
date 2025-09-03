@@ -84,8 +84,6 @@ export const StepProcedureSelector = ({ form, selections, isProcedureLoading }: 
 
     if (serviceHasChanged || siteHasChanged) {
       if (formProcedures && formProcedures.length > 1) {
-        console.log('Le service ou le site a changé, réinitialisation des démarches suivantes.')
-
         form.setFieldsValue({ procedures: [formProcedures[0]] })
       }
     }
@@ -160,9 +158,6 @@ export const ProcedureRow = ({ field, remove, isFirst, canRemove, procedureOptio
 
     return []
   }, [isFirst, selectedProcedure, lockedSiteId, lockedSiteName])
-
-  useEffect(() => console.log('selectedProcedure', selectedProcedure), [selectedProcedure])
-  useEffect(() => console.log('availableSites', availableSites), [availableSites])
 
   const selectedSiteVariant = useMemo(() => {
     return availableSites.find((sv) => sv.siteId === siteId)

@@ -18,7 +18,7 @@ import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
 
@@ -31,8 +31,10 @@ export default function DashboardPage() {
   const skip = !user
   const { t } = useTranslation()
 
-  const { data: rootHcp, isLoading: isRootHcpLoading } = useGetRootHealthcareParty({ skip: skip })
-  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: rootHcp?.id ?? '' }, { skip: skip || !rootHcp })
+  const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
+
+  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: skip, rootName: 'site-root' })
+  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
   const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'parentSite', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
@@ -43,7 +45,7 @@ export default function DashboardPage() {
   const filteredProcedures = useMemo(() => (procedures && selectedService ? procedures : []), [procedures, selectedService])
   const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
 
-  const isSitesRelatedLoading = useMemo(() => isSitesLoading || isRootHcpLoading, [isSitesLoading, isRootHcpLoading])
+  const isSitesRelatedLoading = useMemo(() => isSitesLoading || isSiteRootLoading, [isSitesLoading, isSiteRootLoading])
   const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
   const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
 
@@ -55,6 +57,10 @@ export default function DashboardPage() {
       setSelectedSite(sites[0])
     }
   }, [sites])
+
+  const updateItem = useCallback(async () => {
+    console.log('ok')
+  }, [])
 
   const handleAntCalendarDateChange = useCallback(
     (value: Dayjs) => {
@@ -90,6 +96,7 @@ export default function DashboardPage() {
                 <Tooltip title={t('content.manage_planning')}>
                   <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label={t('content.manage_planning')} />
                 </Tooltip>
+                <Button onClick={() => updateItem()}>UPDATE</Button>
               </Space>
             </div>
           </Card>
@@ -120,7 +127,7 @@ export default function DashboardPage() {
       </div>
       {settingsModalOpen &&
         createPortal(
-          <SettingContextProvider selectedSite={selectedSite} rootHcp={rootHcp}>
+          <SettingContextProvider selectedSite={selectedSite} siteRoot={siteRoot}>
             <ModalHierarchySettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
           </SettingContextProvider>,
           document.body,

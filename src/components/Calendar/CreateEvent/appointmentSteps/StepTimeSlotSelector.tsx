@@ -1,9 +1,9 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, Row, Space, Typography, notification } from 'antd'
+import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useGetAvailabilitiesQuery, useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
+import { useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 import { formatDayjsToYYYYMMDDHHmmssNumber } from '../../../common/helpers'
 import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
@@ -19,9 +19,9 @@ interface ProcessedAvailabilities {
 interface StepTimeSlotSelectorProps {
   form: FormInstance<AppointmentForm>
   selections: ProcedureSelection[]
-  procedures: FormProcedure[]
+  formProcedure: FormProcedure[]
 }
-export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeSlotSelectorProps) => {
+export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTimeSlotSelectorProps) => {
   const { t } = useTranslation()
   const [availabilities, setAvailabilities] = useState<dayjs.Dayjs[]>([])
   const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
@@ -30,7 +30,7 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
   const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
 
   const minDate = useMemo(() => dayjs().startOf('day'), [])
-  const maxDate = useMemo(() => dayjs().add(12, 'month').endOf('month'), [])
+  const maxDate = useMemo(() => dayjs().add(1, 'month').endOf('month'), [])
   const availableDatesSet = useMemo(() => {
     const dates = new Set()
     availabilities.forEach((slot) => {
@@ -38,8 +38,6 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
     })
     return dates
   }, [availabilities])
-
-  useEffect(() => console.log('procedures', procedures), [procedures])
 
   const disabledDate = (current: Dayjs) => {
     return current < minDate || current > maxDate || !availableDatesSet.has(current.format('YYYY-MM-DD'))
@@ -123,13 +121,13 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
   }
 
   useEffect(() => {
-    if (!procedures || procedures.length === 0) {
+    if (!formProcedure || formProcedure.length === 0) {
       return
     }
 
     const fetchAllAvailabilities = async () => {
       try {
-        const promises = procedures.map(async (item) => {
+        const promises = formProcedure.map(async (item) => {
           const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
             procedureSelectionId: item.procedureSelectionId,
             site: item.site,
@@ -167,7 +165,7 @@ export const StepTimeSlotSelector = ({ form, selections, procedures }: StepTimeS
       }
     }
     fetchAllAvailabilities()
-  }, [procedures, selections, minDate, maxDate, getAvailabilities])
+  }, [formProcedure, selections, minDate, maxDate, getAvailabilities])
 
   useEffect(() => {
     const firstAvailable = availabilities.find((d) => !disabledDate(d))

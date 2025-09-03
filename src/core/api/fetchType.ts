@@ -12,6 +12,7 @@ export type DeleteAgendaByIdParameters = {
 }
 
 export type GetRootHealthcarePartyParameters = {
+  rootName: string
   skip?: boolean
 }
 
