@@ -1,23 +1,11 @@
-import { ExclamationCircleOutlined, InfoCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, FormInstance, Select, Space, Tooltip, Typography } from 'antd'
-import React, { FC, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 import { AppointmentForm, FormProcedure } from '../CreateEvent'
 import './index.css'
-import { ProcedureSelection } from '../../../../helpers/transformProcedures'
-import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
-
 const { Title, Paragraph } = Typography
-const { Option } = Select
-
-interface ProcedureRowProps {
-  name: number
-  remove: (index: number) => void
-  isFirst: boolean
-  canRemove: boolean
-  selections: ProcedureSelection[]
-  isProcedureLoading: boolean
-}
 
 const languageMapping: { [key: string]: string } = {
   fr: 'FR',
@@ -26,204 +14,82 @@ const languageMapping: { [key: string]: string } = {
   de: 'DE',
 }
 
-export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isProcedureLoading }: ProcedureRowProps): React.ReactElement => {
-  const { t, i18n } = useTranslation()
-  const form = Form.useFormInstance<AppointmentForm>()
-  const formProcedures = Form.useWatch('procedures', form) || []
+function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>()
+  useEffect(() => {
+    ref.current = value
+  }, [value])
+  return ref.current
+}
 
-  const langCode = useMemo(() => {
-    return languageMapping[i18n.language] || 'FR'
-  }, [i18n.language])
+interface StepProcedureSelectorProps {
+  form: FormInstance<AppointmentForm>
+  selections: ProcedureSelection[]
+  isProcedureLoading: boolean
+}
 
-  // --- Watched values from the form ---
-  const procedureId = Form.useWatch(['procedures', name, 'procedureSelectionId'], form)
-  const siteId = Form.useWatch(['procedures', name, 'site'], form)
+interface ProcedureRowProps {
+  field: { key: number; name: number }
+  remove: (index: number) => void
+  isFirst: boolean
+  canRemove: boolean
+  procedureOptions: ProcedureSelection[]
+  isProcedureLoading: boolean
+  lockedSiteId: string | null
+  lockedSiteName: string | null
+}
 
-  // 1. Memoize the selected main procedure.
-  const selectedProcedure = useMemo(() => {
-    return selections.find((s) => s.id === procedureId)
-  }, [procedureId, selections])
+export const StepProcedureSelector = ({ form, selections, isProcedureLoading }: StepProcedureSelectorProps) => {
+  const { t } = useTranslation()
 
-  // 2. Memoize the selected site variant.
-  const selectedSiteVariant = useMemo(() => {
-    return selectedProcedure?.siteVariants.find((siteVariant) => siteVariant.siteId === siteId)
-  }, [selectedProcedure, siteId])
+  const formProcedures = Form.useWatch('procedures', form) as FormProcedure[] | undefined
 
-  // 3. Memoize the details of the *first* procedure row.
-  const { firstProcedureSelection, selectedSite, selectedServiceName } = useMemo(() => {
-    const firstProcId = formProcedures[0]?.procedureSelectionId
-    const firstSiteId = formProcedures[0]?.site
-    const firstProc = selections.find((s) => s.id === firstProcId)
-    const firstSite = firstProc?.siteVariants.find((p) => p.siteId === firstSiteId)
+  const { lockedServiceName, lockedSiteId, lockedSiteName } = useMemo(() => {
+    const firstProcedureSelectionId = formProcedures?.[0]?.procedureSelectionId
+    const firstSiteId = formProcedures?.[0]?.site
+
+    if (!firstProcedureSelectionId || !firstSiteId) {
+      return { lockedServiceName: null, lockedSiteId: null, lockedSiteName: null }
+    }
+
+    const firstProcedure = selections.find((p) => p.id === firstProcedureSelectionId)
+    const siteVariant = firstProcedure?.siteVariants.find((sv) => sv.siteId === firstSiteId)
 
     return {
-      firstProcedureSelection: firstProc,
-      selectedSite: firstSite,
-      selectedServiceName: firstProc?.serviceName,
+      lockedServiceName: firstProcedure?.serviceName ?? null,
+      lockedSiteId: firstSiteId,
+      lockedSiteName: siteVariant?.siteName ?? null,
     }
   }, [formProcedures, selections])
 
-  // 4. Memoize the filtered lists.
-  const availableProcedures = useMemo(() => {
-    return !isFirst && selectedServiceName ? selections.filter((s) => s.serviceName === selectedServiceName) : selections
-  }, [isFirst, selectedServiceName, selections])
-
-  const filteredAvailableProcedures = useMemo(() => {
-    const firstSiteId = formProcedures[0]?.site
-    return firstSiteId ? availableProcedures.filter((proc) => proc.siteVariants.some((variant) => variant.siteId === firstSiteId)) : selections
-  }, [formProcedures, availableProcedures, selections])
-
-  const availableSites = useMemo(() => {
-    const firstSiteId = formProcedures[0]?.site
-    const selectedSite = firstProcedureSelection?.siteVariants.find((p) => p.siteId === firstSiteId)
-    return !isFirst && selectedProcedure ? selectedProcedure.siteVariants.filter((s) => s.siteId === selectedSite?.siteId) : selectedProcedure?.siteVariants
-  }, [isFirst, selectedProcedure, formProcedures, firstProcedureSelection])
-
-  const onProcedureChange = (value: string, event: unknown) => {
-    // When a procedure changes, reset the quantity to 1
-    const newProcedures = [...formProcedures]
-    if (newProcedures[name]) {
-      newProcedures[name] = { ...newProcedures[name], procedureSelectionId: value, quantity: 1 }
-      form.setFieldsValue({ procedures: newProcedures })
+  const filteredProceduresForSubsequentRows = useMemo(() => {
+    if (!lockedServiceName || !lockedSiteId) {
+      return selections
     }
-  }
+
+    // Condition 3 ? On pourrait empêcher d'ajouter un rdv pour un calendaritemtype qu'on a déjà choisi auparavant.
+    // Si on fait ça, pas oublier de disable le add procedureRow par ex = disabled={!filteredProceduresForSubsequentRows}
+    const selectedProcedureIds = new Set((formProcedures || []).map((proc) => proc.procedureSelectionId).filter(Boolean))
+
+    // On ne garde que les démarches qui ont le bon service ET le bon site
+    return selections.filter((proc) => proc.serviceName === lockedServiceName && proc.siteVariants.some((variant) => variant.siteId === lockedSiteId))
+  }, [selections, lockedServiceName, lockedSiteId, formProcedures])
+
+  const previousLockedServiceName = usePrevious(lockedServiceName)
+  const previousLockedSiteId = usePrevious(lockedSiteId)
 
   useEffect(() => {
-    // 1. Check if there is exactly one site available.
-    if (availableSites && availableSites.length === 1) {
-      const singleSiteId = availableSites[0].siteId
+    const serviceHasChanged = previousLockedServiceName && lockedServiceName !== previousLockedServiceName
+    const siteHasChanged = previousLockedSiteId && lockedSiteId !== previousLockedSiteId
 
-      // 2. Get the current value of this specific field to avoid unnecessary updates.
-      const currentSiteValue = form.getFieldValue(['procedures', name, 'site'])
+    if (serviceHasChanged || siteHasChanged) {
+      if (formProcedures && formProcedures.length > 1) {
+        console.log('Le service ou le site a changé, réinitialisation des démarches suivantes.')
 
-      // 3. Only update the form if the current value isn't already set.
-      //    This prevents an infinite re-render loop.
-      if (currentSiteValue !== singleSiteId) {
-        // 4. Use form.setFieldValue to update ONLY the field we care about.
-        form.setFieldValue(['procedures', name, 'site'], singleSiteId)
+        form.setFieldsValue({ procedures: [formProcedures[0]] })
       }
     }
-  }, [availableSites, form, name])
-
-  return (
-    <Card style={{ width: '100%' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'baseline' }}>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0, width: '100%', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0 }}>
-            <Form.Item
-              name={[name, 'procedureSelectionId']}
-              label={t('content.procedure')}
-              rules={[{ required: true, message: t('content.select_procedure_prompt') }]}
-              style={{ marginBottom: 0 }}
-              className="procedure-select "
-            >
-              <Select
-                loading={isProcedureLoading}
-                placeholder={t('content.select_procedure_placeholder')}
-                showSearch
-                disabled={!isFirst && !selectedServiceName}
-                onChange={onProcedureChange}
-                filterOption={(input, option) =>
-                  String(option?.label ?? '')
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-              >
-                {filteredAvailableProcedures.map((procedure) => (
-                  <Option key={procedure.id} value={procedure.id} label={procedure.displayTextByLanguage[langCode]}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>{procedure.displayTextByLanguage[langCode]}</div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]} style={{ marginBottom: 0 }}>
-              <Select
-                placeholder="Site"
-                style={{ minWidth: '80px' }}
-                disabled={!procedureId}
-                loading={isProcedureLoading}
-                className="site-select "
-                defaultActiveFirstOption={availableSites ? availableSites.length === 1 : false}
-              >
-                {(availableSites ?? []).map((variant) => (
-                  <Option key={variant.siteId} value={variant.siteId}>
-                    {variant.siteName}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-
-          <div className="right">
-            <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
-              <Select placeholder="Qty" style={{ minWidth: '80px' }} disabled={!procedureId || !siteId} loading={isProcedureLoading}>
-                {selectedSiteVariant?.variants.map((variant) => (
-                  <Option key={variant.attendees} value={variant.attendees}>
-                    {variant.attendees}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Tooltip title={t('content.remove_selection')}>
-              <Button
-                type="text"
-                danger
-                icon={<MinusCircleOutlined />}
-                onClick={() => {
-                  remove(name)
-                }}
-                disabled={!canRemove}
-                size="middle"
-                style={{ fontSize: '18px', cursor: 'pointer', alignSelf: 'end' }}
-              />
-            </Tooltip>
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginBottom: 0, marginTop: '16px', width: '100%' }}>
-          {selectedSiteVariant?.procedureDetails && (
-            <Alert message={selectedSiteVariant?.procedureDetails} type="warning" showIcon icon={<ExclamationCircleOutlined />} style={{ width: '100%', whiteSpace: 'pre-wrap' }} />
-          )}
-        </div>
-      </div>
-    </Card>
-  )
-}
-
-export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; selections: ProcedureSelection[]; isProcedureLoading: boolean }> = ({ form, selections, isProcedureLoading }) => {
-  const { t } = useTranslation()
-  const formProcedures = Form.useWatch('procedures', form)
-
-  const firstProcedureId = formProcedures?.[0]?.procedureSelectionId
-  const firstProcedure = selections.find((p) => p.id === firstProcedureId)
-  const selectedServiceName = firstProcedure?.serviceName
-
-  useEffect(() => {
-    // This effect runs when the first procedure selection changes.
-    // It resets any subsequent selections that are no longer valid.
-    if (formProcedures && formProcedures.length > 1 && selectedServiceName) {
-      let hasChanges = false
-      // Create a new array by mapping, ensuring each object has the correct shape.
-      const newProcedures: FormProcedure[] = formProcedures.map((procedure, index) => {
-        if (index === 0 || !procedure || !procedure.procedureSelectionId) return procedure
-
-        const currentProcedureId = procedure.procedureSelectionId
-        if (currentProcedureId) {
-          const currentService = selections.find((s) => s.id === currentProcedureId)
-
-          // If the service name doesn't match, reset this item's procedureId.
-          if (currentService?.serviceName !== selectedServiceName) {
-            hasChanges = true
-            return { ...procedure, procedureId: undefined }
-          }
-        }
-        return procedure
-      })
-
-      if (hasChanges) {
-        form.setFieldsValue({ procedures: newProcedures })
-      }
-    }
-  }, [firstProcedureId, form, formProcedures, selectedServiceName])
+  }, [lockedServiceName, previousLockedServiceName, lockedSiteId, previousLockedSiteId, form, formProcedures])
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }} className="procedure-selector">
@@ -232,11 +98,21 @@ export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; se
       <Form.List name="procedures" initialValue={[{ procedureId: undefined, quantity: 1 }]}>
         {(fields, { add, remove }) => (
           <Space direction="vertical" style={{ width: '100%', maxHeight: '350px', overflow: 'auto' }}>
-            {fields.map(({ key, name, ...restField }, index) => {
-              return <ProcedureRow key={key} name={name} remove={remove} isFirst={index === 0} canRemove={fields.length > 1} selections={selections} isProcedureLoading={isProcedureLoading} />
-            })}
+            {fields.map((field, index) => (
+              <ProcedureRow
+                key={field.key}
+                field={field}
+                remove={remove}
+                isFirst={index === 0}
+                canRemove={fields.length > 1}
+                procedureOptions={index === 0 ? selections : filteredProceduresForSubsequentRows}
+                isProcedureLoading={isProcedureLoading}
+                lockedSiteId={lockedSiteId}
+                lockedSiteName={lockedSiteName}
+              />
+            ))}
             <Form.Item>
-              <Button type="dashed" onClick={() => add({ procedureId: undefined, quantity: 1 })} block icon={<PlusOutlined />}>
+              <Button type="dashed" disabled={!filteredProceduresForSubsequentRows.length} onClick={() => add({ procedureId: undefined, quantity: 1, site: lockedSiteId ?? undefined })} block icon={<PlusOutlined />}>
                 {t('content.add_another_procedure')}
               </Button>
             </Form.Item>
@@ -244,5 +120,131 @@ export const StepProcedureSelector: FC<{ form: FormInstance<AppointmentForm>; se
         )}
       </Form.List>
     </Space>
+  )
+}
+
+export const ProcedureRow = ({ field, remove, isFirst, canRemove, procedureOptions, isProcedureLoading, lockedSiteId, lockedSiteName }: ProcedureRowProps) => {
+  const { t, i18n } = useTranslation()
+  const form = Form.useFormInstance()
+  const { name } = field
+
+  const procedureId = Form.useWatch(['procedures', name, 'procedureSelectionId'], form)
+  const siteId = Form.useWatch(['procedures', name, 'site'], form)
+
+  const selectedProcedure = useMemo(() => {
+    return procedureOptions.find((s) => s.id === procedureId)
+  }, [procedureId, procedureOptions])
+
+  const availableSites = useMemo(() => {
+    if (isFirst) {
+      return selectedProcedure?.siteVariants || []
+    }
+
+    if (lockedSiteId && lockedSiteName) {
+      const realVariant = selectedProcedure?.siteVariants.find((sv) => sv.siteId === lockedSiteId)
+      if (realVariant) {
+        return [realVariant]
+      }
+
+      return [
+        {
+          id: `locked-${lockedSiteId}`,
+          siteId: lockedSiteId,
+          siteName: lockedSiteName,
+          agendaId: undefined,
+          procedureDetails: '',
+          variants: [],
+        },
+      ]
+    }
+
+    return []
+  }, [isFirst, selectedProcedure, lockedSiteId, lockedSiteName])
+
+  useEffect(() => console.log('selectedProcedure', selectedProcedure), [selectedProcedure])
+  useEffect(() => console.log('availableSites', availableSites), [availableSites])
+
+  const selectedSiteVariant = useMemo(() => {
+    return availableSites.find((sv) => sv.siteId === siteId)
+  }, [availableSites, siteId])
+
+  const onProcedureChange = useCallback(
+    (newProcedureId: string) => {
+      const currentProcedures = form.getFieldValue('procedures') as FormProcedure[]
+      const currentRowData = currentProcedures[name]
+
+      if (isFirst) {
+        const proc = procedureOptions.find((p) => p.id === newProcedureId)
+        const sites = proc?.siteVariants || []
+        form.setFieldValue(['procedures', name], {
+          procedureSelectionId: newProcedureId,
+          site: sites.length === 1 ? sites[0].siteId : undefined,
+          quantity: 1,
+        })
+      } else {
+        form.setFieldValue(['procedures', name], {
+          ...currentRowData,
+          procedureSelectionId: newProcedureId,
+          quantity: 1,
+        })
+      }
+    },
+    [form, name, isFirst, procedureOptions],
+  )
+
+  return (
+    <Card style={{ width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <Space align="end" style={{ gap: '2rem' }}>
+          <Form.Item name={[name, 'procedureSelectionId']} label={t('content.procedure')} rules={[{ required: true, message: t('content.select_procedure_prompt') }]}>
+            <Select
+              placeholder={t('content.select_procedure_placeholder')}
+              loading={isProcedureLoading}
+              showSearch
+              optionFilterProp="label"
+              style={{ width: '300px' }}
+              onChange={onProcedureChange}
+              options={procedureOptions.map((p) => ({
+                value: p.id,
+                label: p.displayTextByLanguage[i18n.language.toUpperCase()] || p.displayText,
+              }))}
+            />
+          </Form.Item>
+
+          <Form.Item name={[name, 'site']} label={t('content.site')} rules={[{ required: true, message: t('content.please_select_site') }]}>
+            <Select
+              placeholder={t('content.site')}
+              style={{ width: '200px' }}
+              disabled={!procedureId}
+              loading={isProcedureLoading}
+              options={availableSites.map((sv) => ({
+                value: sv.siteId,
+                label: sv.siteName,
+              }))}
+            />
+          </Form.Item>
+
+          <Form.Item name={[name, 'quantity']} label={t('content.quantity')} rules={[{ required: true }]}>
+            <Select
+              placeholder="Qty"
+              style={{ minWidth: '80px' }}
+              disabled={!siteId || !procedureId}
+              options={selectedSiteVariant?.variants.map((v) => ({
+                value: v.attendees,
+                label: v.attendees,
+              }))}
+            />
+          </Form.Item>
+        </Space>
+
+        <Form.Item>
+          <Tooltip title={t('content.remove_selection')}>
+            <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => remove(name)} disabled={!canRemove} size="middle" style={{ border: 'none', fontSize: '18px', cursor: 'pointer' }} />
+          </Tooltip>
+        </Form.Item>
+      </div>
+
+      {selectedSiteVariant?.procedureDetails && <Alert message={selectedSiteVariant.procedureDetails} type="warning" showIcon style={{ marginTop: '16px' }} />}
+    </Card>
   )
 }
