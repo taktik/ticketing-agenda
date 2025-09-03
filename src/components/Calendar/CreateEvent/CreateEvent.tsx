@@ -15,7 +15,7 @@ import { CustomModal } from '../../common/CustomModal'
 import { StepAppointmentreview } from './appointmentSteps/StepAppointmentReview'
 import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
-import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
+import { StepProcedureSelectorTest } from './appointmentSteps/StepProcedureSelectorTest'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
 
 const { Step } = Steps
@@ -357,7 +357,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   }, [form, createAppointments, openNotification, t])
 
   const stepContent = [
-    <StepProcedureSelector selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
+    <StepProcedureSelectorTest selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
     <StepTimeSlotSelector form={form} procedures={formValues.procedures} selections={selections} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
     <StepAppointmentreview formValues={form.getFieldsValue(true)} selections={selections} key={'reviewStep'} />,

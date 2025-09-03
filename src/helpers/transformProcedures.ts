@@ -13,6 +13,7 @@ export interface ProcedureVariant {
 export interface SiteVariants {
   id: string
   siteId: string
+  siteName: string
   agendaId: string | undefined
   procedureDetails: string
   variants: ProcedureVariant[]
@@ -54,7 +55,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     // 5. Within this group, further group the procedures by the service that offers them
     const proceduresGroupedByAgendaId = new Map<string, CalendarItemType[]>()
     for (const procedure of proceduresWithSameName) {
-      const agendaId = procedure.healthcarePartyId || 'unknown-service'
+      const agendaId = procedure.agendaId || 'unknown-service'
       if (!proceduresGroupedByAgendaId.has(agendaId)) {
         proceduresGroupedByAgendaId.set(agendaId, [])
       }
@@ -97,6 +98,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           id: v4(),
           siteId: site.id,
           agendaId: agenda?.id,
+          siteName: site.name,
           procedureDetails: firstProcInService.otherInfos?.['procedureDetails'] || '',
           variants: procedureVariants,
         }

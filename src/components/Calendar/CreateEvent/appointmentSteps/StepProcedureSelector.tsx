@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { AppointmentForm, FormProcedure } from '../CreateEvent'
 import './index.css'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
+import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
 
 const { Title, Paragraph } = Typography
 const { Option } = Select
@@ -45,7 +46,7 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
 
   // 2. Memoize the selected site variant.
   const selectedSiteVariant = useMemo(() => {
-    return selectedProcedure?.siteVariants.find((siteVariant) => siteVariant.site.id === siteId)
+    return selectedProcedure?.siteVariants.find((siteVariant) => siteVariant.siteId === siteId)
   }, [selectedProcedure, siteId])
 
   // 3. Memoize the details of the *first* procedure row.
@@ -53,7 +54,7 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
     const firstProcId = formProcedures[0]?.procedureSelectionId
     const firstSiteId = formProcedures[0]?.site
     const firstProc = selections.find((s) => s.id === firstProcId)
-    const firstSite = firstProc?.siteVariants.find((p) => p.site.id === firstSiteId)
+    const firstSite = firstProc?.siteVariants.find((p) => p.siteId === firstSiteId)
 
     return {
       firstProcedureSelection: firstProc,
@@ -69,13 +70,13 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
 
   const filteredAvailableProcedures = useMemo(() => {
     const firstSiteId = formProcedures[0]?.site
-    return firstSiteId ? availableProcedures.filter((proc) => proc.siteVariants.some((variant) => variant.site.id === firstSiteId)) : selections
+    return firstSiteId ? availableProcedures.filter((proc) => proc.siteVariants.some((variant) => variant.siteId === firstSiteId)) : selections
   }, [formProcedures, availableProcedures, selections])
 
   const availableSites = useMemo(() => {
     const firstSiteId = formProcedures[0]?.site
-    const selectedSite = firstProcedureSelection?.siteVariants.find((p) => p.site.id === firstSiteId)
-    return !isFirst && selectedProcedure ? selectedProcedure.siteVariants.filter((s) => s.site.id === selectedSite?.site.id) : selectedProcedure?.siteVariants
+    const selectedSite = firstProcedureSelection?.siteVariants.find((p) => p.siteId === firstSiteId)
+    return !isFirst && selectedProcedure ? selectedProcedure.siteVariants.filter((s) => s.siteId === selectedSite?.siteId) : selectedProcedure?.siteVariants
   }, [isFirst, selectedProcedure, formProcedures, firstProcedureSelection])
 
   const onProcedureChange = (value: string, event: unknown) => {
@@ -90,7 +91,7 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
   useEffect(() => {
     // 1. Check if there is exactly one site available.
     if (availableSites && availableSites.length === 1) {
-      const singleSiteId = availableSites[0].site.id
+      const singleSiteId = availableSites[0].siteId
 
       // 2. Get the current value of this specific field to avoid unnecessary updates.
       const currentSiteValue = form.getFieldValue(['procedures', name, 'site'])
@@ -145,8 +146,8 @@ export const ProcedureRow = ({ name, remove, isFirst, canRemove, selections, isP
                 defaultActiveFirstOption={availableSites ? availableSites.length === 1 : false}
               >
                 {(availableSites ?? []).map((variant) => (
-                  <Option key={variant.site.id} value={variant.site.id}>
-                    {variant.site.name}
+                  <Option key={variant.siteId} value={variant.siteId}>
+                    {variant.siteName}
                   </Option>
                 ))}
               </Select>
