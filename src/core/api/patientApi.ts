@@ -1,4 +1,4 @@
-import { DecryptedPatient, EncryptedPatient, IdWithRev, intersection, Patient } from '@icure/cardinal-sdk'
+import { DecryptedPatient, EncryptedPatient, IdWithRev, intersection, Patient, PatientShareOptions, RequestedPermission, SecretIdShareOptions, ShareMetadataBehaviour } from '@icure/cardinal-sdk'
 import { PatientFilters, union } from '@icure/cardinal-sdk/filters.mjs'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { allPatientsTagsEnum } from '../../helpers/types'
@@ -172,12 +172,35 @@ export const patientApiRtk = createApi({
       },
       invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
-
     sharePatientWith: builder.mutation<DecryptedPatient | undefined, { patient: DecryptedPatient; delegateId: string }>({
       async queryFn({ patient, delegateId }, { getState }) {
         const patientApi = (await cardinalApi(getState))?.patient
         return guard([patientApi], async (): Promise<DecryptedPatient> => {
           const updatedPatient = await patientApi?.shareWith(delegateId, patient)
+          if (!updatedPatient) {
+            throw new Error('Patient does not exist')
+          }
+          return new DecryptedPatient(updatedPatient)
+        })
+      },
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
+    }),
+    sharePatientWithMany: builder.mutation<DecryptedPatient | undefined, { patient: DecryptedPatient; delegates: string[] }>({
+      async queryFn({ patient, delegates }, { getState }) {
+        const patientApi = (await cardinalApi(getState))?.patient
+        return guard([patientApi], async (): Promise<DecryptedPatient> => {
+          const delegatesAcessLevel = delegates.reduce(
+            (acc, currentDelegateId) => {
+              acc[currentDelegateId] = new PatientShareOptions({
+                requestedPermissions: RequestedPermission.FullWrite,
+                shareEncryptionKey: ShareMetadataBehaviour.IfAvailable,
+                shareSecretIds: new SecretIdShareOptions.AllAvailable({ requireAtLeastOne: true }),
+              })
+              return acc
+            },
+            {} as { [key: string]: PatientShareOptions },
+          )
+          const updatedPatient = await patientApi?.shareWithMany(patient, delegatesAcessLevel)
           if (!updatedPatient) {
             throw new Error('Patient does not exist')
           }
@@ -200,4 +223,5 @@ export const {
   useCreatePatientsMutation,
   useLazyGetPatientByIdQuery,
   useUpdatePatientMutation,
+  useSharePatientWithManyMutation,
 } = patientApiRtk

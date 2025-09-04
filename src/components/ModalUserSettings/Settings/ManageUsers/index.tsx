@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { HealthcareParty, User } from '@icure/cardinal-sdk'
+import { CodeStub, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, Select, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
@@ -61,7 +61,6 @@ export const ManagerUsers = (): ReactElement => {
   const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
   const { data: users, isLoading: isUsersLoading } = useGetUsersQuery(undefined)
 
-  useEffect(() => console.log('users', users))
   const usersHcpIds = useMemo(() => {
     if (!users) return []
     return users.map((user) => user.healthcarePartyId).filter((id): id is string => id !== undefined)
@@ -76,8 +75,6 @@ export const ManagerUsers = (): ReactElement => {
   const userMap = useMemo(() => {
     return new Map((users ?? []).map((user) => [user.id, user]))
   }, [users])
-
-  useEffect(() => console.log('hcps', hcps))
 
   const isFetching = useMemo(() => isUsersLoading || isHcpsLoading || isAdminRootLoading, [isUsersLoading, isHcpsLoading, isAdminRootLoading])
   const isMutating = useMemo(
@@ -109,7 +106,7 @@ export const ManagerUsers = (): ReactElement => {
         firstName: hcp.firstName,
         lastName: hcp.lastName,
         email: user.email,
-        role: hcp.parentId === adminRoot?.id ? UserRole.ADMIN : undefined,
+        role: hcp && hcp.parentId && adminRoot && adminRoot.id && hcp.parentId === adminRoot.id ? UserRole.ADMIN : undefined,
       } as UserRow
     })
 
@@ -212,7 +209,7 @@ export const ManagerUsers = (): ReactElement => {
           firstName: rowValues.firstName,
           lastName: rowValues.lastName,
           name: rowValues.firstName + ' ' + rowValues.lastName,
-          parentId: adminRoot?.id,
+          parentId: rowValues.role === UserRole.ADMIN ? adminRoot?.id : undefined,
         }).unwrap()
         try {
           // Step 2: If HCP creation was successful, try to create User
@@ -253,7 +250,7 @@ export const ManagerUsers = (): ReactElement => {
           firstName: rowValues.firstName,
           lastName: rowValues.lastName,
           name: rowValues.firstName + ' ' + rowValues.lastName,
-          parentId: adminRoot?.id,
+          parentId: rowValues.role === UserRole.ADMIN ? adminRoot?.id : undefined,
         }).unwrap()
         try {
           // Step 2: If HCP update was successful, try to update User

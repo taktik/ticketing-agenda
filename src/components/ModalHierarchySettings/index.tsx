@@ -86,9 +86,12 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
   const handleAddSite = useCallback(async () => {
     try {
+      /*
       if (!siteRoot) throw new Error()
       const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: siteRoot.id, id: v4(), public: true, tags: [new CodeStub({ id: 'SITE', code: 'SITE', context: 'SITE', type: 'SITE' })] })
       await createUpdateSite(siteHcp).unwrap()
+      */
+      console.info('obsolete')
       showMessageFeedback('success', t('notification.site_saved'))
     } catch (error) {
       openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
@@ -243,11 +246,6 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
         <Sider width={250} className="menu-sites-root">
           <div className="menu-sites">
             {fetchIsLoading ? <SpinLoader /> : <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />}
-            <div className="sider-footer">
-              <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite} loading={mutationIsLoading} disabled={fetchIsLoading || mutationIsLoading}>
-                {t('content.add_site')}
-              </StyledButton>
-            </div>
           </div>
         </Sider>
         <Layout>
@@ -257,3 +255,12 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     </CustomModal>
   )
 }
+
+/*
+Must add site from cockpit
+<div className="sider-footer">
+              <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite} loading={mutationIsLoading} disabled={fetchIsLoading || mutationIsLoading}>
+                {t('content.add_site')}
+              </StyledButton>
+            </div>
+            */

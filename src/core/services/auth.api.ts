@@ -2,35 +2,26 @@ import {
   AuthenticationMethod,
   AuthenticationProcessTelecomType,
   CaptchaOptions,
+  CardinalAnonymousSdk,
   CardinalApis,
   CardinalSdk,
-  CardinalAnonymousSdk,
   CryptoStrategies,
-  KeypairFingerprintV1String,
+  DataOwnerWithType,
   KeyPairRecoverer,
   RecoveryDataKey,
-  RecoveryDataUseFailureReason,
   RecoveryKeyOptions,
   RecoveryKeySize,
   RecoveryResult,
   Solution,
-  spkiHexKeyToFingerprintV1,
-  SpkiHexString,
   StorageFacade,
   User,
   XCryptoService,
   XRsaKeypair,
-  DataOwnerWithType,
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
-import { Unsubscribe } from 'redux'
-import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID, DATABASE_ID } from '../../constants'
-
+import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID } from '../../constants'
 import { revertAll, setSavedCredentials } from '../app'
-import { store } from '../store'
-import { useAddUserKeyMutation, useLazyGetKeyQuery } from '../api/keyApi'
-import { error } from 'console'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
 const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
@@ -41,11 +32,9 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
       includeParentsKeys: true,
       recoveryKeyOptions: new RecoveryKeyOptions.Generate({ recoveryKeySize: RecoveryKeySize.Bytes32 }),
     })
-
     const formattedKey = recoveryKey.asBase32()
 
     const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
-
     if (!!formattedKey && !!hcp) {
       try {
         const response = await fetch('http://localhost:8080/api/keys', {

@@ -1,9 +1,9 @@
-import { CalendarItem, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
+import { AccessLevel, CalendarItem, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { addDays, endOfMonth, startOfMonth, subDays } from 'date-fns'
 import { cardinalApi, guard } from '../services/auth.api'
 import { GetCalendarItemsByAgendaAndPeriods } from './fetchType'
 import { loadFromIterator } from './utils'
-import { addDays, endOfMonth, startOfMonth, subDays } from 'date-fns'
 
 enum CalendarItemTags {
   CalendarItem = 'CalendarItem',
@@ -47,11 +47,21 @@ export const calendarItemApiRtk = createApi({
         ]
       },
     }),
-    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient }>({
-      async queryFn({ calendarItem, patient }, { getState }) {
+    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient; delegates: string[] }>({
+      async queryFn({ calendarItem, patient, delegates }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
-          const updatedCalendarItem = !!calendarItem.rev ? await calendarApi?.modifyCalendarItem(calendarItem) : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient))
+          const delegatesAcessLevel = delegates.reduce(
+            (acc, currentDelegateId) => {
+              acc[currentDelegateId] = AccessLevel.Write
+              return acc
+            },
+            {} as { [key: string]: AccessLevel },
+          )
+
+          const updatedCalendarItem = !!calendarItem.rev
+            ? await calendarApi?.modifyCalendarItem(calendarItem)
+            : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient, { delegates: delegatesAcessLevel }))
           if (!updatedCalendarItem) {
             throw new Error('CalendarItem update failed')
           }

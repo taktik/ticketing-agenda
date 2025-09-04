@@ -6,14 +6,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
-import { useCreateUpdateCalendarItemMutation, useShareCalendarItemWithMutation } from '../../../core/api/calendarItemApi'
+import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { RootHcpType } from '../../../core/api/fetchType'
 import { useGetRootHealthcareParty } from '../../../core/api/healthcarePartyApi'
-import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery, useSharePatientWithMutation } from '../../../core/api/patientApi'
+import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
+import { calculateNumericEventTimes } from '../../common/helpers'
 import { StepAppointmentreview } from './appointmentSteps/StepAppointmentReview'
 import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
@@ -96,6 +97,27 @@ export const formatDateTime = (dateForm: dayjs.Dayjs | undefined, timeForm: dayj
   return combinedDateTime.format('LLLL')
 }
 
+/**
+ * Combines a dayjs date object and a dayjs time object into a single dayjs object.
+ * @param {TimeSlot} timeslot - An object containing the date and time.
+ * @returns {Dayjs | null} - A new dayjs object with the combined date and time, or null if invalid.
+ */
+export const combineDateAndTime = (timeslot: TimeSlot): Dayjs | null => {
+  const { date, time } = timeslot
+
+  // Check if both inputs are valid dayjs objects
+  if (!date || !date.isValid() || !time || !time.isValid()) {
+    console.error('Invalid date or time provided for combination.')
+    return null
+  }
+
+  // Start with the date, then set the hour, minute, and second from the time object.
+  // Setting seconds and milliseconds to 0 ensures consistency.
+  const combinedDateTime = date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
+
+  return combinedDateTime
+}
+
 export interface FormProcedure {
   procedureSelectionId: string | undefined
   site: string | undefined
@@ -163,8 +185,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   const [createUpdatePatient, { isLoading: isCreateUpdatePatientLoading }] = useCreateOrUpdatePatientMutation()
   const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
 
-  const [sharePatient, { isLoading: isSharePatientLoading }] = useSharePatientWithMutation()
-  const [shareCalendarItem, { isLoading: isShareCalendarItemLoading }] = useShareCalendarItemWithMutation()
+  const [sharePatient, { isLoading: isSharePatientLoading }] = useSharePatientWithManyMutation()
 
   const [processWorking, setProcessWorking] = useState<boolean>(false)
   const [isCreateEventSuccess, setIsCreateEventSuccess] = useState<boolean>(false)
@@ -288,10 +309,13 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   const createAppointments = async () => {
     setProcessWorking(true)
     try {
-      const { personalInfo, procedures } = formValues
+      const { personalInfo, procedures, timeslot } = formValues
 
       if (!personalInfo) {
         throw new Error('Personal information is missing and required to create an appointment.')
+      }
+      if (!timeslot) {
+        throw new Error('Timeslot information is missing and required to create an appointment.')
       }
 
       // All user/patient logic is now contained in the helper function
@@ -316,6 +340,9 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           throw new Error(`Procedure data for selection ID ${item.procedureSelectionId} is incomplete.`)
         }
 
+        const eventStart = combineDateAndTime(timeslot)
+        const eventTimes = calculateNumericEventTimes(eventStart, procedureVariant.duration)
+
         const newEvent = new DecryptedCalendarItem({
           id: v4(),
           patientId: citizenPatient.id,
@@ -325,23 +352,15 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           details: siteVariant.procedureDetails,
           agendaId: siteVariant.agendaId,
           phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
+          startTime: eventTimes?.startTime,
+          endTime: eventTimes?.endTime,
         })
 
-        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient }).unwrap()
+        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()
       })
-      const createdEvents = await Promise.all(eventsCreationPromises)
+      await Promise.all(eventsCreationPromises)
 
-      const sharingPromises = createdEvents.flatMap((createdEvent, index) => {
-        if (!createdEvent) return []
-
-        const shareWithAdminRootPromise = shareCalendarItem({ calendarItem: createdEvent, delegateId: adminRoot.id })
-        const shareWithParentSitePromise = shareCalendarItem({ calendarItem: createdEvent, delegateId: procedures[index].site ?? '' })
-
-        return [shareWithAdminRootPromise, shareWithParentSitePromise]
-      })
-      await Promise.all(sharingPromises)
-
-      await sharePatient({ patient: citizenPatient, delegateId: siteRoot.id }).unwrap()
+      await sharePatient({ patient: citizenPatient, delegates: [siteRoot.id, adminRoot.id] }).unwrap()
 
       setIsCreateEventSuccess(true)
     } catch (error: unknown) {

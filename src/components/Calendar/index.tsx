@@ -16,7 +16,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetCalendarItemByAgendaIdAndPeriodQuery } from '../../core/api/calendarItemApi'
-import { dateToYYYYMMDD } from '../common/helpers'
+import { dateToYYYYMMDD, parseTimeRange } from '../common/helpers'
 import { CreateEvent } from './CreateEvent/CreateEvent'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
@@ -62,19 +62,28 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
   const events: EventInput[] = useMemo(() => {
     if (!calendarItems) return []
-    return calendarItems.map((calendarItem) => {
-      const linkedProcedure = procedures?.find((procedure) => procedure.id === calendarItem.calendarItemTypeId)
-      return {
-        id: v4(),
-        title: calendarItem.title,
-        start: calendarItem.startTime,
-        end: calendarItem.endTime,
-        color: linkedProcedure?.color,
-        details: '',
-        extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId },
-      }
-    })
-  }, [calendarItems])
+    return calendarItems
+      .map((calendarItem) => {
+        if (calendarItem.startTime === undefined || calendarItem.endTime === undefined) {
+          console.warn('Skipping calendar item with missing start time or duration', calendarItem)
+          return null
+        }
+
+        const linkedProcedure = procedures?.find((procedure) => procedure.id === calendarItem.calendarItemTypeId)
+        const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
+
+        return {
+          id: v4(),
+          title: calendarItem.title,
+          start: eventTimes?.start,
+          end: eventTimes?.end,
+          color: linkedProcedure?.color,
+          details: '',
+          extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId },
+        }
+      })
+      .filter(Boolean) as EventInput[]
+  }, [calendarItems, procedures])
 
   useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
   useEffect(() => console.log('events', events), [events])

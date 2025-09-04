@@ -1,7 +1,7 @@
 import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
-import { GetAllServiceBySiteIdParameters, GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, GetServicesForMultipleSitesParameters, UndeleteHcpByIdParameters } from './fetchType'
+import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, GetServicesForMultipleSitesParameters, UndeleteHcpByIdParameters } from './fetchType'
 import { loadFromIterator } from './utils'
 
 enum HealthcarePartyTags {

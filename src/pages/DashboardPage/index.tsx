@@ -19,7 +19,7 @@ import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { RootHcpType } from '../../core/api/fetchType'
-import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import { useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
 
@@ -33,6 +33,11 @@ export default function DashboardPage() {
   const { t } = useTranslation()
 
   const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: skip, rootType: RootHcpType.SITE_ROOT })
+  const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: skip, rootType: RootHcpType.ADMIN_ROOT })
+
+  const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
+
+  useEffect(() => console.log('siteroot', siteRoot), [siteRoot])
 
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
@@ -77,6 +82,10 @@ export default function DashboardPage() {
     }
   }, [setCalendarDate])
 
+  const updateItem = useCallback(async () => {
+    console.log('hey')
+  }, [siteRoot, adminRoot, deleteHcp])
+
   return (
     <div className="Dashboard">
       <Header />
@@ -92,6 +101,7 @@ export default function DashboardPage() {
                 <Tooltip title={t('content.manage_planning')}>
                   <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label={t('content.manage_planning')} />
                 </Tooltip>
+                <Button onClick={updateItem}>UPDATE</Button>
               </Space>
             </div>
           </Card>

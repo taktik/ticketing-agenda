@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
 
 export const minutesToDayjs = (totalMinutes: number): dayjs.Dayjs => {
   return dayjs().startOf('day').add(totalMinutes, 'minute')
@@ -221,4 +221,72 @@ export const correctAndCleanRRuleString = (rruleString: string): string => {
 export const dateToYYYYMMDD = (date: Date): number => {
   const dateTimeString = format(date, 'yyyyMMddHHmmss')
   return parseInt(dateTimeString, 10)
+}
+
+/**
+ * A helper function to parse a single YYYYMMDDHHmmss timestamp number.
+ * @param {number} timestamp - The 14-digit timestamp number.
+ * @returns {dayjs.Dayjs | null} - A dayjs object or null if invalid.
+ */
+const parseSingleTimestamp = (timestamp: number): dayjs.Dayjs | null => {
+  const timestampStr = timestamp.toString()
+
+  if (timestampStr.length !== 14 || !/^\d{14}$/.test(timestampStr)) {
+    console.warn(`Invalid timestamp: "${timestamp}". Expected 14-digit format.`)
+    return null
+  }
+
+  const dateObj = dayjs(timestampStr, 'YYYYMMDDHHmmss', true) // Using strict parsing
+
+  return dateObj.isValid() ? dateObj : null
+}
+
+/**
+ * Parses start and end timestamps into an object of Date objects.
+ * @param {number} startTimestamp - The 14-digit start timestamp.
+ * @param {number} endTimestamp - The 14-digit end timestamp.
+ * @returns {{start: Date, end: Date} | null} - An object with Date objects, or null if invalid.
+ */
+export const parseTimeRange = (startTimestamp: number, endTimestamp: number): { start: Date; end: Date } | null => {
+  // 1. Parse both start and end timestamps
+  const startTime = parseSingleTimestamp(startTimestamp)
+  const endTime = parseSingleTimestamp(endTimestamp)
+
+  // 2. Check if both are valid
+  if (!startTime || !endTime) {
+    return null
+  }
+
+  // 3. Return both values as standard Date objects
+  return {
+    start: startTime.toDate(),
+    end: endTime.toDate(),
+  }
+}
+
+/**
+ * Calculates start and end times in YYYYMMDDHHmmss numeric format.
+ * @param {Dayjs | null} startTime - The starting Dayjs object.
+ * @param {number} durationInMinutes - The duration to add.
+ * @returns {{startTime: number, endTime: number} | null} - An object with numeric timestamps, or null if invalid.
+ */
+export const calculateNumericEventTimes = (startTime: Dayjs | null, durationInMinutes: number): { startTime: number; endTime: number } | null => {
+  // 1. Validate the input Dayjs object
+  if (!startTime || !startTime.isValid()) {
+    console.warn('Invalid start time provided for numeric calculation.')
+    return null
+  }
+
+  // 2. Calculate the end time
+  const endTime = startTime.add(durationInMinutes, 'minute')
+
+  // 3. Format both dates to the required string format
+  const formattedStartTime = startTime.format('YYYYMMDDHHmmss')
+  const formattedEndTime = endTime.format('YYYYMMDDHHmmss')
+
+  // 4. Convert the formatted strings to numbers and return the object
+  return {
+    startTime: Number(formattedStartTime),
+    endTime: Number(formattedEndTime),
+  }
 }
