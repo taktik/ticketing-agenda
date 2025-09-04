@@ -1,3 +1,8 @@
+export enum RootHcpType {
+  SITE_ROOT = 'site-root',
+  ADMIN_ROOT = 'admin-root',
+}
+
 export type TimeTablesServiceParameters = {
   agendaId: string
 }
@@ -12,7 +17,7 @@ export type DeleteAgendaByIdParameters = {
 }
 
 export type GetRootHealthcarePartyParameters = {
-  rootName: string
+  rootType: RootHcpType
   skip?: boolean
 }
 

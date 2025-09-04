@@ -20,6 +20,7 @@ import {
   User,
   XCryptoService,
   XRsaKeypair,
+  DataOwnerWithType,
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
@@ -29,6 +30,7 @@ import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID, DATABASE_ID }
 import { revertAll, setSavedCredentials } from '../app'
 import { store } from '../store'
 import { useAddUserKeyMutation, useLazyGetKeyQuery } from '../api/keyApi'
+import { error } from 'console'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
 const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
@@ -40,10 +42,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
       recoveryKeyOptions: new RecoveryKeyOptions.Generate({ recoveryKeySize: RecoveryKeySize.Bytes32 }),
     })
 
-    const formattedKey = recoveryKey
-      .asBase32()
-      .match(/.{1,4}/g)
-      ?.join('-')
+    const formattedKey = recoveryKey.asBase32()
 
     const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
 
@@ -70,74 +69,75 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     }
   }
 
+  async fetchRecoveryKey(hcpId: string): Promise<string | undefined> {
+    try {
+      const response = await fetch(`http://localhost:8080/api/keys/${hcpId}`)
+
+      if (response.status === 404) {
+        return undefined
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Request failed')
+      }
+
+      const result = await response.json()
+      return result.key
+    } catch (error) {
+      console.error('Failed to fetch key:', error)
+      throw error
+    }
+  }
+
+  async generateNewKeyForDataOwner(self: DataOwnerWithType, cryptoPrimitives: XCryptoService): Promise<boolean | XRsaKeypair | 'keyless'> {
+    return self.dataOwner.publicKeysForOaepWithSha256.length == 0
+  }
+
   async recoverAndVerifySelfHierarchyKeys(
     keysData: Array<CryptoStrategies.KeyDataRecoveryRequest>,
     cryptoPrimitives: XCryptoService,
     keyPairRecoverer: KeyPairRecoverer,
   ): Promise<{ [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData }> {
-    let recovered: RecoveryResult<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }> | undefined = undefined
-    let reason = RecoveryDataUseFailureReason.Missing
-    const hcp = keysData.at(-1)?.dataOwnerDetails.dataOwner
-
-    const fetchRecoveryKey = async (hcpId: string): Promise<string | undefined> => {
-      try {
-        const response = await fetch(`http://localhost:8080/api/keys/${hcpId}`)
-
-        if (response.status === 404) {
-          return undefined
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Request failed')
-        }
-
-        const result = await response.json()
-        return result.key
-      } catch (error) {
-        console.error('Failed to fetch key:', error)
-        throw error
-      }
-    }
-
-    do {
-      const rk = hcp ? await fetchRecoveryKey(hcp?.id) : undefined
-
-      if (!rk) {
-        break
-      }
-      let decodedRecoveryKey: RecoveryDataKey
-      try {
-        decodedRecoveryKey = RecoveryDataKey.fromBase32(rk)
-      } catch (e) {
-        console.warn(e)
-        reason = RecoveryDataUseFailureReason.InvalidContent
-        continue
-      }
-      recovered = await keyPairRecoverer.recoverWithRecoveryKey(decodedRecoveryKey, false)
-    } while (!recovered || recovered instanceof RecoveryResult.Failure)
-    if (!recovered) {
-      return {}
-    }
     const result: { [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData } = {}
-    for (const recoveryRequest of keysData) {
-      const dataOwner = recoveryRequest.dataOwnerDetails.dataOwner
-      console.log('dataowner', dataOwner)
-      const currDataOwnerRecoveredData = (recovered as RecoveryResult.Success<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }>).data[dataOwner.id]
-      const currRecoveryResult: { [fp: KeypairFingerprintV1String]: XRsaKeypair } = {}
-      if (currDataOwnerRecoveredData != undefined) {
-        for (const unavailableKeyInfo of recoveryRequest.unavailableKeys) {
-          const recoveredKey = currDataOwnerRecoveredData[unavailableKeyInfo.publicKey]
-          if (recoveredKey != undefined) {
-            currRecoveryResult[spkiHexKeyToFingerprintV1(unavailableKeyInfo.publicKey)] = recoveredKey
-          }
-        }
+    for (const key of keysData) {
+      const hcp = key.dataOwnerDetails.dataOwner
+      //let recovered: RecoveryResult<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }> | undefined = undefined
+      const rk = hcp ? await this.fetchRecoveryKey(hcp.id) : undefined
+      if (!rk) {
+        throw new Error(`Can't retrieve key for dataowner ${hcp.id}`)
       }
-      result[dataOwner.id] = {
-        recoveredKeys: currRecoveryResult,
+      const decodedRecoveryKey = RecoveryDataKey.fromBase32(rk)
+      const recovered = await keyPairRecoverer.recoverWithRecoveryKey(decodedRecoveryKey, false)
+
+      if (!(recovered instanceof RecoveryResult.Success)) {
+        throw new Error('Recovery of key failed')
+      }
+
+      result[hcp.id] = {
+        recoveredKeys: recovered.data[hcp.id],
         keyAuthenticity: {},
       }
     }
+
+    // for (const recoveryRequest of keysData) {
+    //   const dataOwner = recoveryRequest.dataOwnerDetails.dataOwner
+    //   console.log('dataowner', dataOwner)
+    //   const currDataOwnerRecoveredData = (recovered as RecoveryResult.Success<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }>).data[dataOwner.id]
+    //   const currRecoveryResult: { [fp: KeypairFingerprintV1String]: XRsaKeypair } = {}
+    //   if (currDataOwnerRecoveredData != undefined) {
+    //     for (const unavailableKeyInfo of recoveryRequest.unavailableKeys) {
+    //       const recoveredKey = currDataOwnerRecoveredData[unavailableKeyInfo.publicKey]
+    //       if (recoveredKey != undefined) {
+    //         currRecoveryResult[spkiHexKeyToFingerprintV1(unavailableKeyInfo.publicKey)] = recoveredKey
+    //       }
+    //     }
+    //   }
+    //   result[dataOwner.id] = {
+    //     recoveredKeys: currRecoveryResult,
+    //     keyAuthenticity: {},
+    //   }
+    // }
     return result
   }
 }

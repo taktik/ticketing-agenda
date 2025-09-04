@@ -1,4 +1,4 @@
-import { CalendarItem, CalendarItemFilters, DecryptedCalendarItem } from '@icure/cardinal-sdk'
+import { CalendarItem, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { GetCalendarItemsByAgendaAndPeriods } from './fetchType'
@@ -47,11 +47,11 @@ export const calendarItemApiRtk = createApi({
         ]
       },
     }),
-    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, DecryptedCalendarItem>({
-      async queryFn(calendarItem, { getState }) {
+    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient }>({
+      async queryFn({ calendarItem, patient }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
-          const updatedCalendarItem = !!calendarItem.rev ? await calendarApi?.modifyCalendarItem(calendarItem) : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, undefined))
+          const updatedCalendarItem = !!calendarItem.rev ? await calendarApi?.modifyCalendarItem(calendarItem) : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient))
           if (!updatedCalendarItem) {
             throw new Error('CalendarItem update failed')
           }
@@ -76,7 +76,20 @@ export const calendarItemApiRtk = createApi({
         { type: CalendarItemTags.CalendarItem, id },
       ],
     }),
+    shareCalendarItemWith: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; delegateId: string }>({
+      async queryFn({ calendarItem, delegateId }, { getState }) {
+        const calendarItemApi = (await cardinalApi(getState))?.calendarItem
+        return guard([calendarItemApi], async (): Promise<DecryptedCalendarItem> => {
+          const updatedCalendarItem = await calendarItemApi?.shareWith(delegateId, calendarItem)
+          if (!updatedCalendarItem) {
+            throw new Error('CalendarItem does not exist')
+          }
+          return new DecryptedCalendarItem(updatedCalendarItem)
+        })
+      },
+      invalidatesTags: () => [{ type: CalendarItemTags.CalendarItem, id: 'all' }],
+    }),
   }),
 })
 
-export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery } = calendarItemApiRtk
+export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useShareCalendarItemWithMutation } = calendarItemApiRtk

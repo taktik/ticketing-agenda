@@ -18,7 +18,8 @@ import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useCreateUpdateHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import { RootHcpType } from '../../core/api/fetchType'
+import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
 
@@ -31,9 +32,8 @@ export default function DashboardPage() {
   const skip = !user
   const { t } = useTranslation()
 
-  const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
+  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: skip, rootType: RootHcpType.SITE_ROOT })
 
-  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: skip, rootName: 'site-root' })
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
@@ -57,10 +57,6 @@ export default function DashboardPage() {
       setSelectedSite(sites[0])
     }
   }, [sites])
-
-  const updateItem = useCallback(async () => {
-    console.log('ok')
-  }, [])
 
   const handleAntCalendarDateChange = useCallback(
     (value: Dayjs) => {
@@ -96,7 +92,6 @@ export default function DashboardPage() {
                 <Tooltip title={t('content.manage_planning')}>
                   <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label={t('content.manage_planning')} />
                 </Tooltip>
-                <Button onClick={() => updateItem()}>UPDATE</Button>
               </Space>
             </div>
           </Card>

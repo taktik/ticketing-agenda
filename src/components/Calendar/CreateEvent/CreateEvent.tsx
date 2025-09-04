@@ -6,9 +6,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
-import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
+import { useCreateUpdateCalendarItemMutation, useShareCalendarItemWithMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery } from '../../../core/api/patientApi'
+import { RootHcpType } from '../../../core/api/fetchType'
+import { useGetRootHealthcareParty } from '../../../core/api/healthcarePartyApi'
+import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery, useSharePatientWithMutation } from '../../../core/api/patientApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
@@ -136,6 +138,9 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     return languageMapping[i18n.language] || 'FR' // Fallback
   }, [i18n.language])
 
+  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.SITE_ROOT })
+  const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
+
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
 
   const { data: allAgendas, isLoading: isAgendasLoading } = useGetAllAgendaByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
@@ -150,13 +155,17 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   useEffect(() => console.log('selections', selections), [selections])
   useEffect(() => console.log('filteredAgenda', filteredAgenda), [filteredAgenda])
 
-  const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading, [isAgendasLoading, isProceduresLoading])
+  const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading || isSiteRootLoading || isAdminRootLoading, [isAgendasLoading, isProceduresLoading, isSiteRootLoading, isAdminRootLoading])
 
-  const [getUserByMailLazy, { isError: isGetUserError, isSuccess: isGetUserSuccess, isLoading: isGetUserLoading }] = useLazyGetUserByEmailQuery()
-  const [getPatientByIdLazy, { isError: isGetPatientError, isSuccess: isGetPatientSuccess, isLoading: isGetPatientLoading }] = useLazyGetPatientByIdQuery()
-  const [createUpdateUser, { isError: isCreateUpdateUserError, isSuccess: isCreateUpdateUserSuccess, isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
-  const [createUpdatePatient, { isError: isCreateUpdatePatientError, isSuccess: isCreateUpdatePatientSuccess, isLoading: isCreateUpdatePatientLoading }] = useCreateOrUpdatePatientMutation()
-  const [createUpdateEvent, { isError: isCreateUpdateEventError, isSuccess: isCreateUpdateEventSuccess, isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
+  const [getUserByMailLazy, { isLoading: isGetUserLoading }] = useLazyGetUserByEmailQuery()
+  const [getPatientByIdLazy, { isLoading: isGetPatientLoading }] = useLazyGetPatientByIdQuery()
+  const [createUpdateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
+  const [createUpdatePatient, { isLoading: isCreateUpdatePatientLoading }] = useCreateOrUpdatePatientMutation()
+  const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
+
+  const [sharePatient, { isLoading: isSharePatientLoading }] = useSharePatientWithMutation()
+  const [shareCalendarItem, { isLoading: isShareCalendarItemLoading }] = useShareCalendarItemWithMutation()
+
   const [processWorking, setProcessWorking] = useState<boolean>(false)
   const [isCreateEventSuccess, setIsCreateEventSuccess] = useState<boolean>(false)
 
@@ -198,97 +207,103 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const formValues: AppointmentForm = form.getFieldsValue(true)
 
-  const createAppointments = async () => {
-    setProcessWorking(true)
-    const { personalInfo, procedures } = formValues
-    const userEmail = personalInfo?.email
+  const getOrCreateCitizenProfile = async (personalInfo: PersonalInfo) => {
+    const { email, countryCode, phoneNumber, language, birthDate, firstName, lastName } = personalInfo
+    if (!email) {
+      throw new Error('User email is required but was not provided.')
+    }
 
-    try {
-      if (!userEmail) {
-        console.error('Email not found.')
-        throw Error()
+    const newPhoneNumber = countryCode && phoneNumber ? `${countryCode}${phoneNumber}` : undefined
+    const newBirthDate = birthDate ? Number(dayjs(birthDate).format('YYYYMMDD')) : undefined
+
+    // Find user by email
+    const { data: existingUser } = await getUserByMailLazy(email)
+
+    if (existingUser) {
+      // --- USER EXISTS ---
+      let citizenUser = { ...existingUser }
+
+      // 1. Update user's phone if it changed
+      if (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) {
+        const updatedUser = await createUpdateUser(new User({ ...citizenUser, mobilePhone: newPhoneNumber })).unwrap()
+        if (!updatedUser) throw new Error("Failed to update user's phone number.")
+        citizenUser = updatedUser
       }
 
-      let citizenUser: User | undefined
-      let citizenPatient: DecryptedPatient | undefined
-
-      // Step 1: fetch user by email
-      const foundUser = await getUserByMailLazy(userEmail)
-
-      // If we found a user
-      if (foundUser.data) {
-        citizenUser = { ...foundUser.data } // Create a mutable copy
-
-        // Step 2: Update existing user's phone if it changed
-        const newPhoneNumber = personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined
-        if (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) {
-          const userUpdatePayload = new User({ ...citizenUser, mobilePhone: newPhoneNumber })
-          const updatedUserResult = await createUpdateUser(userUpdatePayload).unwrap()
-          if (!updatedUserResult) {
-            console.error("Failed to update user's phone number.")
-            throw Error()
-          }
-          citizenUser = updatedUserResult
-        }
-
-        // Step 3: Get or Create/Update patient for the existing user
-        let patientNeedsUpdate = false
-        if (citizenUser.patientId) {
-          // fetch patient by id
-          const foundPatient = await getPatientByIdLazy(citizenUser.patientId)
-
-          if (foundPatient.data) {
-            citizenPatient = { ...foundPatient.data }
-          } else {
-            citizenPatient = new DecryptedPatient({ id: v4() })
-            patientNeedsUpdate = true
-          }
+      // 2. Find or initialize the associated patient
+      let citizenPatient: DecryptedPatient
+      if (citizenUser.patientId) {
+        const { data: foundPatient } = await getPatientByIdLazy(citizenUser.patientId)
+        if (foundPatient) {
+          citizenPatient = { ...foundPatient }
         } else {
-          citizenPatient = new DecryptedPatient({ id: v4() })
-          patientNeedsUpdate = true
-        }
-
-        const newLanguage = personalInfo.language
-        const newBirthDate = personalInfo.birthDate ? Number(dayjs(personalInfo.birthDate).format('YYYYMMDD')) : undefined
-        const hasLanguageChanged = newLanguage && newLanguage !== (citizenPatient.languages?.[0] || '')
-        const hasBirthDateChanged = newBirthDate && newBirthDate !== citizenPatient.dateOfBirth
-
-        if (patientNeedsUpdate || hasLanguageChanged || hasBirthDateChanged) {
-          const patientPayload = new DecryptedPatient({
-            ...citizenPatient,
-            languages: hasLanguageChanged ? [newLanguage!] : citizenPatient.languages,
-            dateOfBirth: hasBirthDateChanged ? newBirthDate : citizenPatient.dateOfBirth,
-            firstName: patientNeedsUpdate ? personalInfo.firstName : citizenPatient.firstName,
-            lastName: patientNeedsUpdate ? personalInfo.lastName : citizenPatient.lastName,
-          })
-          const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
-          if (updatedPatient) citizenPatient = updatedPatient
+          // Found user but patient was deleted/missing, create a new one
+          citizenPatient = new DecryptedPatient({ id: v4(), firstName, lastName })
         }
       } else {
-        //else not found user
-        const patientId = v4()
-        const newBirthDate = personalInfo.birthDate ? Number(dayjs(personalInfo.birthDate).format('YYYYMMDD')) : undefined
-        const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [personalInfo.language], dateOfBirth: newBirthDate, firstName: personalInfo.firstName, lastName: personalInfo.lastName })
-        const createdPatient = await createUpdatePatient(newPatientPayload).unwrap()
-
-        if (!createdPatient) {
-          console.error('Failed to create a new patient record.')
-          throw new Error()
-        }
-        citizenPatient = createdPatient
-
-        // Then create the new User linked to the new Patient
-        const newPhoneNumber = personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined
-        const newUserPayload = new User({ id: v4(), patientId: patientId, mobilePhone: newPhoneNumber, email: userEmail, login: userEmail, name: `${personalInfo.firstName} ${personalInfo.lastName}` })
-        const createdUser = await createUpdateUser(newUserPayload).unwrap()
-        if (!createdUser) {
-          console.error('Failed to create a new user record after creating patient.')
-          throw new Error()
-        }
-        citizenUser = createdUser
+        // User exists but has no patientId, create a new one
+        citizenPatient = new DecryptedPatient({ id: v4(), firstName, lastName })
       }
-      console.log('citizenUser', citizenUser)
-      console.log('citizenPatient', citizenPatient)
+
+      // 3. Check if patient record needs updates
+      const hasLanguageChanged = language && language !== (citizenPatient.languages?.[0] || '')
+      const hasBirthDateChanged = newBirthDate && newBirthDate !== citizenPatient.dateOfBirth
+      const needsNameUpdate = !citizenPatient.firstName // Update name if it's a freshly initialized patient
+
+      if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate) {
+        const patientPayload = new DecryptedPatient({
+          ...citizenPatient,
+          languages: hasLanguageChanged ? [language!] : citizenPatient.languages,
+          dateOfBirth: hasBirthDateChanged ? newBirthDate : citizenPatient.dateOfBirth,
+          firstName: needsNameUpdate ? firstName : citizenPatient.firstName,
+          lastName: needsNameUpdate ? lastName : citizenPatient.lastName,
+        })
+        const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
+        if (updatedPatient) citizenPatient = updatedPatient
+      }
+
+      return { citizenUser, citizenPatient }
+    } else {
+      // --- USER DOES NOT EXIST ---
+      // 1. Create a new Patient record first
+      const patientId = v4()
+      const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName })
+      const citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
+      if (!citizenPatient) {
+        throw new Error('Failed to create a new patient record.')
+      }
+
+      // 2. Create the new User and link it to the new Patient
+      const newUserPayload = new User({ id: v4(), patientId, mobilePhone: newPhoneNumber, email, login: email, name: `${firstName} ${lastName}` })
+      const citizenUser = await createUpdateUser(newUserPayload).unwrap()
+      if (!citizenUser) {
+        // This is where an orphaned patient record could be left
+        throw new Error('Failed to create a new user record after creating patient.')
+      }
+
+      return { citizenUser, citizenPatient }
+    }
+  }
+
+  const createAppointments = async () => {
+    setProcessWorking(true)
+    try {
+      const { personalInfo, procedures } = formValues
+
+      if (!personalInfo) {
+        throw new Error('Personal information is missing and required to create an appointment.')
+      }
+
+      // All user/patient logic is now contained in the helper function
+      const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile(personalInfo)
+
+      if (!citizenUser || !citizenPatient?.id) {
+        throw new Error('Could not retrieve or create a valid user/patient profile.')
+      }
+
+      if (!adminRoot?.id || !siteRoot?.id) {
+        throw new Error('Required administrator or site information is missing. Cannot proceed.')
+      }
 
       const eventsCreationPromises = procedures.map(async (item) => {
         const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
@@ -296,14 +311,9 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           site: item.site,
           quantity: item.quantity,
         })
-        if (!masterProcedure || !siteVariant || !procedureVariant) {
-          console.error('Missing data.')
-          throw Error()
-        }
 
-        if (!citizenUser || !citizenPatient) {
-          console.error('Missing data.')
-          throw Error()
+        if (!masterProcedure || !siteVariant || !procedureVariant) {
+          throw new Error(`Procedure data for selection ID ${item.procedureSelectionId} is incomplete.`)
         }
 
         const newEvent = new DecryptedCalendarItem({
@@ -316,14 +326,28 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           agendaId: siteVariant.agendaId,
           phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
         })
-        console.log('new event', newEvent)
-        return await createUpdateEvent(newEvent).unwrap()
+
+        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient }).unwrap()
       })
-      await Promise.all(eventsCreationPromises)
+      const createdEvents = await Promise.all(eventsCreationPromises)
+
+      const sharingPromises = createdEvents.flatMap((createdEvent, index) => {
+        if (!createdEvent) return []
+
+        const shareWithAdminRootPromise = shareCalendarItem({ calendarItem: createdEvent, delegateId: adminRoot.id })
+        const shareWithParentSitePromise = shareCalendarItem({ calendarItem: createdEvent, delegateId: procedures[index].site ?? '' })
+
+        return [shareWithAdminRootPromise, shareWithParentSitePromise]
+      })
+      await Promise.all(sharingPromises)
+
+      await sharePatient({ patient: citizenPatient, delegateId: siteRoot.id }).unwrap()
 
       setIsCreateEventSuccess(true)
     } catch (error: unknown) {
-      openNotification('error', t('content.unexpected_error'), '')
+      console.error('An error occurred during appointment creation:', error)
+      // Use the specific error message from the thrown Error
+      openNotification('error', t('content.unexpected_error'), error instanceof Error ? error.message : 'An unknown error occurred.')
       setIsCreateEventSuccess(false)
     } finally {
       setProcessWorking(false)

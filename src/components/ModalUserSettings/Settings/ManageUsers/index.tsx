@@ -1,20 +1,27 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { HealthcareParty, User } from '@icure/cardinal-sdk'
-import { Button, Empty, Form, Input, Space, Table, Tag, message, notification } from 'antd'
+import { Button, Empty, Form, Input, Select, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
+import { RootHcpType } from '../../../../core/api/fetchType'
 import {
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
   useGetHealthcarePartiesByIdsQuery,
+  useGetRootHealthcareParty,
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
 import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+
+enum UserRole {
+  ADMIN = 'admin',
+  CITY_WORKER = 'city_worker',
+}
 
 interface UserRow {
   rowId: string
@@ -23,12 +30,14 @@ interface UserRow {
   firstName: string | undefined
   lastName: string | undefined
   email: string | undefined
+  role: UserRole | undefined
 }
 
 interface FormValues {
   firstName: string
   lastName: string
   email: string
+  role: UserRole | undefined
 }
 
 export const ManagerUsers = (): ReactElement => {
@@ -49,7 +58,10 @@ export const ManagerUsers = (): ReactElement => {
   const [deleteSilentHcp, { isLoading: isSilentDeleteHcpLading }] = useSilentDeleteHealthcarePartyMutation()
   const [unDeleteHcp, { isLoading: isSilentUndeleteHcpLoading }] = useSilentUnDeleteHealthcarePartyMutation()
 
+  const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
   const { data: users, isLoading: isUsersLoading } = useGetUsersQuery(undefined)
+
+  useEffect(() => console.log('users', users))
   const usersHcpIds = useMemo(() => {
     if (!users) return []
     return users.map((user) => user.healthcarePartyId).filter((id): id is string => id !== undefined)
@@ -57,7 +69,17 @@ export const ManagerUsers = (): ReactElement => {
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds)
 
-  const isFetching = useMemo(() => isUsersLoading || isHcpsLoading, [isUsersLoading, isHcpsLoading])
+  const hcpMap = useMemo(() => {
+    return new Map((hcps ?? []).map((hcp) => [hcp.id, hcp]))
+  }, [hcps])
+
+  const userMap = useMemo(() => {
+    return new Map((users ?? []).map((user) => [user.id, user]))
+  }, [users])
+
+  useEffect(() => console.log('hcps', hcps))
+
+  const isFetching = useMemo(() => isUsersLoading || isHcpsLoading || isAdminRootLoading, [isUsersLoading, isHcpsLoading, isAdminRootLoading])
   const isMutating = useMemo(
     () => isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLading || isSilentUndeleteHcpLoading,
     [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLading, isSilentUndeleteHcpLoading],
@@ -66,8 +88,6 @@ export const ManagerUsers = (): ReactElement => {
 
   const mergedList = useMemo(() => {
     if (!users || !hcps) return []
-
-    const hcpMap = new Map(hcps.map((hcp) => [hcp.id, hcp]))
 
     const mergedPairs: Array<[User, HealthcareParty]> = users.flatMap((user) => {
       if (!user.healthcarePartyId) return []
@@ -89,6 +109,7 @@ export const ManagerUsers = (): ReactElement => {
         firstName: hcp.firstName,
         lastName: hcp.lastName,
         email: user.email,
+        role: hcp.parentId === adminRoot?.id ? UserRole.ADMIN : undefined,
       } as UserRow
     })
 
@@ -126,8 +147,9 @@ export const ManagerUsers = (): ReactElement => {
 
   const addUser = useCallback(() => {
     const hcpId = v4()
-    const newHcp = new HealthcareParty({ id: hcpId, firstName: undefined, lastName: undefined, name: undefined })
-    const newUser = new User({ id: v4(), email: undefined, name: undefined, healthcarePartyId: hcpId })
+    const userId = v4()
+    const newHcp = new HealthcareParty({ id: hcpId, firstName: undefined, lastName: undefined, name: undefined, userId: userId })
+    const newUser = new User({ id: userId, email: undefined, name: undefined, healthcarePartyId: hcpId })
 
     const newUserRow: UserRow = {
       rowId: v4(),
@@ -136,6 +158,7 @@ export const ManagerUsers = (): ReactElement => {
       firstName: undefined,
       lastName: undefined,
       email: undefined,
+      role: undefined,
     }
 
     setTableRows((prev) => [...prev, newUserRow])
@@ -184,7 +207,13 @@ export const ManagerUsers = (): ReactElement => {
         const rowValues = await form.validateFields()
 
         // Step 1: Create HealthcareParty
-        const createdHcpResult = await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
+        const createdHcpResult = await createUpdateHcp({
+          ...record.hcp,
+          firstName: rowValues.firstName,
+          lastName: rowValues.lastName,
+          name: rowValues.firstName + ' ' + rowValues.lastName,
+          parentId: adminRoot?.id,
+        }).unwrap()
         try {
           // Step 2: If HCP creation was successful, try to create User
           await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
@@ -209,7 +238,7 @@ export const ManagerUsers = (): ReactElement => {
         openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
       }
     },
-    [form, createUpdateHcp, createUpdateUser, deleteSilentHcp, showMessageFeedback, openNotification, t],
+    [form, createUpdateHcp, createUpdateUser, deleteSilentHcp, showMessageFeedback, openNotification, t, adminRoot],
   )
 
   const updateUser = useCallback(
@@ -219,7 +248,13 @@ export const ManagerUsers = (): ReactElement => {
         const rowValues = await form.validateFields()
 
         // Step 1: Update HealthcareParty
-        await createUpdateHcp({ ...record.hcp, firstName: rowValues.firstName, lastName: rowValues.lastName }).unwrap()
+        await createUpdateHcp({
+          ...record.hcp,
+          firstName: rowValues.firstName,
+          lastName: rowValues.lastName,
+          name: rowValues.firstName + ' ' + rowValues.lastName,
+          parentId: adminRoot?.id,
+        }).unwrap()
         try {
           // Step 2: If HCP update was successful, try to update User
           await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
@@ -235,7 +270,7 @@ export const ManagerUsers = (): ReactElement => {
         openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
       }
     },
-    [form, createUpdateHcp, createUpdateUser, showMessageFeedback, openNotification, t],
+    [form, createUpdateHcp, createUpdateUser, showMessageFeedback, openNotification, t, adminRoot],
   )
 
   const tableRowUpdate = useCallback(
@@ -386,22 +421,31 @@ export const ManagerUsers = (): ReactElement => {
             />
             <Column
               title={t('content.roles')}
-              dataIndex="email"
-              key="email"
+              dataIndex="role"
+              key="role"
               width="30%"
               render={(currentValue: string, record: UserRow) => {
                 const editable = isEditing(record)
                 if (editable) {
                   return (
-                    <>
-                      <Form.Item name="email">
-                        <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                          {t('content.not_set')}
-                        </Tag>
-                      </Form.Item>
-                    </>
+                    <Form.Item name="role" style={{ margin: 0 }} rules={[{ required: true, message: 'Role is required' }]}>
+                      <Select placeholder="Select a role" style={{ width: 150 }}>
+                        <Select.Option value={UserRole.ADMIN}>Admin</Select.Option>
+                        <Select.Option value={UserRole.CITY_WORKER}>City Worker</Select.Option>
+                      </Select>
+                    </Form.Item>
                   )
                 } else {
+                  if (record.role === UserRole.ADMIN) {
+                    return <Tag color="gold">Admin</Tag>
+                  }
+                  if (record.role === UserRole.CITY_WORKER) {
+                    return (
+                      <Space>
+                        <Tag color="blue">City Worker</Tag>
+                      </Space>
+                    )
+                  }
                   return (
                     <Tag icon={<ExclamationCircleOutlined />} color="warning">
                       {t('content.not_set')}
