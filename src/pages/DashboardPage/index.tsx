@@ -101,7 +101,6 @@ export default function DashboardPage() {
                 <Tooltip title={t('content.manage_planning')}>
                   <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label={t('content.manage_planning')} />
                 </Tooltip>
-                <Button onClick={updateItem}>UPDATE</Button>
               </Space>
             </div>
           </Card>

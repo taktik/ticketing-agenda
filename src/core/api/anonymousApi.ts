@@ -36,8 +36,7 @@ export const anonymousApiRtk = createApi({
       },
       providesTags: (res, error, params) => {
         const tagId = `${params.agendaId}-${params.calendarItemTypeId}-${params.startDate}-${params.endDate}`
-        //        return [{ type: AnonymousTags.Anonymous, id: tagId }]
-        return []
+        return [{ type: AnonymousTags.Anonymous, id: tagId }]
       },
     }),
   }),

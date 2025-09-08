@@ -61,7 +61,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   )
 
   const events: EventInput[] = useMemo(() => {
-    if (!calendarItems) return []
+    if (!calendarItems || !selectedAgenda) return []
     return calendarItems
       .map((calendarItem) => {
         if (calendarItem.startTime === undefined || calendarItem.endTime === undefined) {
@@ -79,11 +79,11 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           end: eventTimes?.end,
           color: linkedProcedure?.color,
           details: '',
-          extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId },
+          extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId, patientIdentifier: calendarItem.author },
         }
       })
       .filter(Boolean) as EventInput[]
-  }, [calendarItems, procedures])
+  }, [calendarItems, procedures, selectedAgenda])
 
   useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
   useEffect(() => console.log('events', events), [events])

@@ -1,11 +1,11 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
-import { formatDayjsToYYYYMMDDHHmmssNumber } from '../../../common/helpers'
+import { dayjsToYYYYMMDDHHmmss } from '../../../common/helpers'
 import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
 import './index.css'
 
@@ -21,16 +21,16 @@ interface StepTimeSlotSelectorProps {
   selections: ProcedureSelection[]
   formProcedure: FormProcedure[]
 }
+
 export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTimeSlotSelectorProps) => {
   const { t } = useTranslation()
   const [availabilities, setAvailabilities] = useState<dayjs.Dayjs[]>([])
-  const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
-  const timeValue = Form.useWatch(['timeslot', 'time'], form)
+  const [currentMonth, setCurrentMonth] = useState(dayjs())
   const [selectedHour, setSelectedHour] = useState<dayjs.Dayjs | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
+  const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
+  const minDate = useMemo(() => dayjs(), [])
 
-  const minDate = useMemo(() => dayjs().startOf('day'), [])
-  const maxDate = useMemo(() => dayjs().add(1, 'month').endOf('month'), [])
   const availableDatesSet = useMemo(() => {
     const dates = new Set()
     availabilities.forEach((slot) => {
@@ -40,16 +40,10 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
   }, [availabilities])
 
   const disabledDate = (current: Dayjs) => {
-    return current < minDate || current > maxDate || !availableDatesSet.has(current.format('YYYY-MM-DD'))
+    return current < minDate || !availableDatesSet.has(current.format('YYYY-MM-DD'))
   }
 
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
-
-  /*agendaId: string
-  calendarItemTypeId: string
-  startDate: number
-  endDate: number
-  */
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -138,11 +132,14 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
             throw Error()
           }
 
+          const startDate = currentMonth.startOf('month')
+          const endDate = currentMonth.endOf('month')
+
           const rawAvailabilities = await getAvailabilities({
             agendaId: siteVariant.agendaId,
             calendarItemTypeId: procedureVariant.procedureId,
-            startDate: formatDayjsToYYYYMMDDHHmmssNumber(minDate),
-            endDate: formatDayjsToYYYYMMDDHHmmssNumber(maxDate),
+            startDate: dayjsToYYYYMMDDHHmmss(startDate),
+            endDate: dayjsToYYYYMMDDHHmmss(endDate),
           }).unwrap()
 
           const availabilitiesAsDayjs = (rawAvailabilities || []).map((num) => dayjs(String(num), 'YYYYMMDDHHmmss'))
@@ -154,10 +151,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
         })
 
         const results = await Promise.all(promises)
-        console.log('results', results)
-
         const finalList = findConsecutiveSlots(results)
-        console.log('FINAL LIST', finalList)
 
         setAvailabilities(finalList)
       } catch (error: unknown) {
@@ -165,7 +159,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
       }
     }
     fetchAllAvailabilities()
-  }, [formProcedure, selections, minDate, maxDate, getAvailabilities])
+  }, [formProcedure, selections, getAvailabilities, currentMonth])
 
   useEffect(() => {
     const firstAvailable = availabilities.find((d) => !disabledDate(d))
@@ -242,20 +236,20 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
   }
 
   const renderCalendarHeader: CalendarProps<Dayjs>['headerRender'] = ({ value, onChange }) => {
-    const today = dayjs()
-    const latestMonth = useMemo(() => (availabilities.length ? dayjs(Math.max(...availabilities.map((d) => d.valueOf()))) : dayjs().add(1, 'month').endOf('month')), [availabilities])
-    const isPrevDisabled = useMemo(() => (value ? value.isSame(today, 'month') : true), [value, today])
-    const isNextDisabled = useMemo(() => (value ? value.isSame(latestMonth, 'month') : true), [value, latestMonth])
+    const isPrevDisabled = useMemo(() => currentMonth.isSame(dayjs(), 'month'), [currentMonth])
 
-    const handleMonthChange = (proposedDate: Dayjs) => {
-      if (proposedDate.isBefore(minDate)) {
-        onChange(minDate)
-      } else if (proposedDate.isAfter(maxDate)) {
-        onChange(maxDate)
-      } else {
-        onChange(proposedDate)
-      }
-    }
+    const handleMonthChange = useCallback(
+      (proposedDate: Dayjs) => {
+        if (proposedDate.isBefore(minDate)) {
+          onChange(minDate)
+          setCurrentMonth(minDate)
+        } else {
+          onChange(proposedDate)
+          setCurrentMonth(proposedDate)
+        }
+      },
+      [minDate, onChange, setCurrentMonth],
+    )
 
     return (
       <div style={{ padding: '8px' }}>
@@ -270,7 +264,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
               <Button onClick={() => handleMonthChange(value.clone().subtract(1, 'month'))} disabled={isPrevDisabled}>
                 {<LeftOutlined />} {t('content.previous')}
               </Button>
-              <Button onClick={() => handleMonthChange(value.clone().add(1, 'month'))} disabled={isNextDisabled}>
+              <Button onClick={() => handleMonthChange(value.clone().add(1, 'month'))}>
                 {t('content.next')} {<RightOutlined />}
               </Button>
             </Space>
@@ -301,7 +295,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
             <>
               <div>
                 <Title level={5} style={{ marginBottom: 12 }}>
-                  1. Choisissez une heure
+                  {t('content.choose_time')}
                 </Title>
                 <Space size={[8, 12]} wrap>
                   {availableHours.map((hour) => (
@@ -315,7 +309,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
               {selectedHour && (
                 <div style={{ marginTop: 24 }}>
                   <Title level={5} style={{ marginBottom: 12 }}>
-                    2. Choisissez un créneau
+                    {t('content.choose_slot')}
                   </Title>
                   <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]}>
                     <Space size={[8, 12]} wrap className="time-slot-buttons">
@@ -337,10 +331,9 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
               )}
             </>
           ) : (
-            <Empty description="Aucun créneau disponible pour cette date." />
+            <Empty description={t('content.no_slots_available')} />
           )}
         </div>
-        <Divider />
       </Col>
     </Row>
   )

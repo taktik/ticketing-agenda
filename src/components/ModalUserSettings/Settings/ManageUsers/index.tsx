@@ -76,6 +76,9 @@ export const ManagerUsers = (): ReactElement => {
     return new Map((users ?? []).map((user) => [user.id, user]))
   }, [users])
 
+  useEffect(() => console.log('hcpMap', hcpMap), [hcpMap])
+  useEffect(() => console.log('userMap', userMap), [userMap])
+
   const isFetching = useMemo(() => isUsersLoading || isHcpsLoading || isAdminRootLoading, [isUsersLoading, isHcpsLoading, isAdminRootLoading])
   const isMutating = useMemo(
     () => isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLading || isSilentUndeleteHcpLoading,

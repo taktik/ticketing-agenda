@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useUpdateAgendaMutation } from '../../core/api/agendaApi'
 import { CustomModal } from '../common/CustomModal'
-import { formatDateToYYYYMMDDHHmmssNumber, numberTimestampToDate } from '../common/helpers'
+import { dateToYYYYMMDDHHmmss, timestampToDate } from '../common/helpers'
 import { ModalConfirmAction } from '../common/ModalConfirmAction'
 import './index.css'
 import { ModalRules } from './ModalRules'
@@ -99,15 +99,15 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     try {
       if (!selectedService) throw new Error()
       const today = new Date()
-      const start = formatDateToYYYYMMDDHHmmssNumber(today)
-      const end = formatDateToYYYYMMDDHHmmssNumber(addMonths(endOfToday(), 1))
+      const start = dateToYYYYMMDDHHmmss(today)
+      const end = dateToYYYYMMDDHHmmss(addMonths(endOfToday(), 1))
       const newRow: SchedulingTableRow = { rowId: v4(), name: t('content.new_schedule'), startDateTime: start, endDateTime: end, items: [], tags: [], codes: [], resourceGroup: undefined }
       setSchedulingTableRow((prev) => [...prev, newRow])
       handleEditClick(newRow)
     } catch (error) {
       openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
     }
-  }, [selectedService, formatDateToYYYYMMDDHHmmssNumber, setSchedulingTableRow, handleEditClick, openNotification, t])
+  }, [selectedService, dateToYYYYMMDDHHmmss, setSchedulingTableRow, handleEditClick, openNotification, t])
 
   const showUpdateSuccessMessage = useCallback(
     (message: string) => {
@@ -198,7 +198,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               key="startDateTime"
               width={'23%'}
               render={(value: number) => {
-                const startDate = numberTimestampToDate(value) ?? new Date()
+                const startDate = timestampToDate(value) ?? new Date()
                 return format(startDate, 'P', { locale: dateFnsLocale })
               }}
             />
@@ -208,7 +208,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
               key="endDateTime"
               width={'23%'}
               render={(value: number) => {
-                const endDate = numberTimestampToDate(value) ?? new Date()
+                const endDate = timestampToDate(value) ?? new Date()
                 return format(endDate, 'P', { locale: dateFnsLocale })
               }}
             />

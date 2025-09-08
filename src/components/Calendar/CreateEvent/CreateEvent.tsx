@@ -174,9 +174,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const selections = useMemo(() => transformProceduresForSelection(allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allProcedures, allAgendas, sites])
 
-  useEffect(() => console.log('selections', selections), [selections])
-  useEffect(() => console.log('filteredAgenda', filteredAgenda), [filteredAgenda])
-
   const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading || isSiteRootLoading || isAdminRootLoading, [isAgendasLoading, isProceduresLoading, isSiteRootLoading, isAdminRootLoading])
 
   const [getUserByMailLazy, { isLoading: isGetUserLoading }] = useLazyGetUserByEmailQuery()
@@ -354,6 +351,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
           startTime: eventTimes?.startTime,
           endTime: eventTimes?.endTime,
+          author: `${citizenPatient.firstName} ${citizenPatient.lastName} - ${citizenUser.email}`,
         })
 
         return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()

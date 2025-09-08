@@ -108,25 +108,6 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
         keyAuthenticity: {},
       }
     }
-
-    // for (const recoveryRequest of keysData) {
-    //   const dataOwner = recoveryRequest.dataOwnerDetails.dataOwner
-    //   console.log('dataowner', dataOwner)
-    //   const currDataOwnerRecoveredData = (recovered as RecoveryResult.Success<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }>).data[dataOwner.id]
-    //   const currRecoveryResult: { [fp: KeypairFingerprintV1String]: XRsaKeypair } = {}
-    //   if (currDataOwnerRecoveredData != undefined) {
-    //     for (const unavailableKeyInfo of recoveryRequest.unavailableKeys) {
-    //       const recoveredKey = currDataOwnerRecoveredData[unavailableKeyInfo.publicKey]
-    //       if (recoveredKey != undefined) {
-    //         currRecoveryResult[spkiHexKeyToFingerprintV1(unavailableKeyInfo.publicKey)] = recoveredKey
-    //       }
-    //     }
-    //   }
-    //   result[dataOwner.id] = {
-    //     recoveredKeys: currRecoveryResult,
-    //     keyAuthenticity: {},
-    //   }
-    // }
     return result
   }
 }

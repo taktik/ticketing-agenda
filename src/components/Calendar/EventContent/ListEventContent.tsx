@@ -6,17 +6,12 @@ interface EventContentProps {
   view: string
 }
 
-export const ListEventContent = ({ event, view }: EventContentProps) => {
-  const email: string = event.extendedProps.email ?? ''
-  const fullName: string = event.extendedProps.fullName ?? ''
-
+export const ListEventContent = ({ event }: EventContentProps) => {
   return (
     <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Space direction="vertical" align="start" style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
         <Typography.Text strong>{event.title}</Typography.Text>
-        <Typography.Text strong>
-          {fullName} - {email}
-        </Typography.Text>
+        <Typography.Text strong>{event.extendedProps.patientIdentifier}</Typography.Text>
       </Space>
     </div>
   )

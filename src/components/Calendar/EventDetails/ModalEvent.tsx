@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { CustomModal } from '../../common/CustomModal'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import './index.css'
+import { useGetPatientByIdQuery } from '../../../core/api/patientApi'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -25,6 +26,8 @@ export const EventDetails = ({ isVisible, onClose, event, procedures }: EventDet
 
   const [isEditing, setIsEditing] = useState(false)
   const [form] = Form.useForm()
+
+  const { data: patient } = useGetPatientByIdQuery(event?.extendedProps.patientId ?? '')
 
   useEffect(() => {
     if (event) {

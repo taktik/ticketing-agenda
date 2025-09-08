@@ -29,10 +29,10 @@ export const calendarItemApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: 'all' }] : []),
     }),
-    getCalendarItemByAgendaIdAndPeriod: builder.query<CalendarItem[] | undefined, GetCalendarItemsByAgendaAndPeriods>({
+    getCalendarItemByAgendaIdAndPeriod: builder.query<DecryptedCalendarItem[] | undefined, GetCalendarItemsByAgendaAndPeriods>({
       async queryFn({ agendaId, from, to }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
-        return guard([calendarApi], async (): Promise<CalendarItem[]> => {
+        return guard([calendarApi], async (): Promise<DecryptedCalendarItem[]> => {
           return await loadFromIterator(await calendarApi!.filterCalendarItemsBy(CalendarItemFilters.byPeriodAndAgenda(agendaId, from, to)), 1000)
         })
       },

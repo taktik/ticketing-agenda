@@ -183,7 +183,10 @@
     "save_current_schedule_before_adding": "Veuillez modifier et enregistrer votre horaire actuel avant d'en ajouter un nouveau",
     "service_name_in_lang": "Nom du service en {{lang}}",
     "no_events_today": "Aucun événement prévu pour aujourd'hui",
-    "no_events_this_week": "Aucun événement prévu pour cette semaine"
+    "no_events_this_week": "Aucun événement prévu pour cette semaine",
+    "choose_time": "1. Choisissez une heure",
+    "choose_slot": "2. Choisissez un créneau",
+    "no_slots_available": "Aucun créneau disponible pour cette date."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

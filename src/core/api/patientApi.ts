@@ -224,4 +224,5 @@ export const {
   useLazyGetPatientByIdQuery,
   useUpdatePatientMutation,
   useSharePatientWithManyMutation,
+  useGetPatientByIdQuery,
 } = patientApiRtk

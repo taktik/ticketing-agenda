@@ -9,16 +9,7 @@ export const dayjsToMinutes = (time: dayjs.Dayjs): number => {
   return time.hour() * 60 + time.minute()
 }
 
-export const formatMinutesToHHMM = (totalMinutes?: number): string => {
-  if (totalMinutes === undefined || totalMinutes === null || isNaN(totalMinutes)) {
-    return 'N/A'
-  }
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-}
-
-export const numberTimestampToDate = (timestamp: number): Date | null => {
+export const timestampToDate = (timestamp: number): Date | null => {
   const timestampStr = timestamp.toString()
 
   if (timestampStr.length !== 14 || !/^\d{14}$/.test(timestampStr)) {
@@ -31,18 +22,7 @@ export const numberTimestampToDate = (timestamp: number): Date | null => {
   return dateObj.isValid() ? dateObj.toDate() : null
 }
 
-export const formatDateToYYYYMMDDHHmmssNumber = (dateInput: Date): number => {
-  const dateObj = dayjs(dateInput)
-  if (!dateObj.isValid()) {
-    return 0
-  }
-
-  const formated = dateObj.format('YYYYMMDDHHmmss')
-
-  return Number(formated)
-}
-
-export const numberTimestampToDayjs = (timestamp: number): dayjs.Dayjs | null => {
+export const timestampToDayjs = (timestamp: number): dayjs.Dayjs | null => {
   const timestampStr = timestamp.toString()
 
   if (timestampStr.length !== 14 || !/^\d{14}$/.test(timestampStr)) {
@@ -55,7 +35,18 @@ export const numberTimestampToDayjs = (timestamp: number): dayjs.Dayjs | null =>
   return dateObj.isValid() ? dateObj : null
 }
 
-export const formatDayjsToYYYYMMDDHHmmssNumber = (dayjsInput: dayjs.Dayjs): number => {
+export const dateToYYYYMMDDHHmmss = (dateInput: Date): number => {
+  const dateObj = dayjs(dateInput)
+  if (!dateObj.isValid()) {
+    return 0
+  }
+
+  const formated = dateObj.format('YYYYMMDDHHmmss')
+
+  return Number(formated)
+}
+
+export const dayjsToYYYYMMDDHHmmss = (dayjsInput: dayjs.Dayjs): number => {
   if (!dayjsInput.isValid()) {
     return 0
   }
@@ -65,7 +56,7 @@ export const formatDayjsToYYYYMMDDHHmmssNumber = (dayjsInput: dayjs.Dayjs): numb
   return Number(formated)
 }
 
-export function formatTotalMinutesForDisplay(totalMinutes: number | undefined, t: (key: string) => string): string {
+export const totalMinutesForDisplay = (totalMinutes: number | undefined, t: (key: string) => string): string => {
   if (totalMinutes === null || totalMinutes === undefined || isNaN(totalMinutes) || totalMinutes < 0) {
     return t('content.not_set')
   }
@@ -108,7 +99,7 @@ export const dayjsToHhmmss = (time: dayjs.Dayjs): number => {
   return parseInt(timeString, 10)
 }
 
-export const formatHhmmssToHHmm = (numericTime: number): string => {
+export const hhmmssToHHmm = (numericTime: number): string => {
   // Handle invalid or null inputs gracefully
   if (numericTime === null || isNaN(numericTime) || numericTime < 0) {
     return '00:00'

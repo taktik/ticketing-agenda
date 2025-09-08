@@ -1,7 +1,7 @@
 import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
-import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, GetServicesForMultipleSitesParameters, UndeleteHcpByIdParameters } from './fetchType'
+import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, UndeleteHcpByIdParameters } from './fetchType'
 import { loadFromIterator } from './utils'
 
 enum HealthcarePartyTags {
@@ -46,34 +46,6 @@ export const healthcarePartyApiRtk = createApi({
       },
       providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
-    getServicesForMultipleSites: builder.query<HealthcareParty[], GetServicesForMultipleSitesParameters>({
-      // TODO remove/adapt. Services are now agendas
-      async queryFn(params, { getState, dispatch }) {
-        const { siteIds } = params
-        if (!siteIds || siteIds.length === 0) {
-          return { data: [] as HealthcareParty[] }
-        }
-
-        const promises: Promise<HealthcareParty[] | undefined>[] = siteIds.map((siteId) =>
-          dispatch(healthcarePartyApiRtk.endpoints.getHealthcarePartiesByParent.initiate({ parentId: siteId }, { forceRefetch: true }))
-            .unwrap()
-            .catch((error: unknown) => {
-              console.error(`Failed to fetch services for site ID ${siteId}:`, error)
-              return undefined
-            }),
-        )
-
-        try {
-          const resultArray = await Promise.all(promises)
-          const finalData: HealthcareParty[] = resultArray.map((result) => result || []).flat()
-          return { data: finalData }
-        } catch (error: unknown) {
-          const err = error as { message?: string }
-          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Batch fetch for services failed.' } as FetchBaseQueryError }
-        }
-      },
-      providesTags: (result, error, arg) => (result ? arg.siteIds.map((id) => ({ type: HealthcarePartyTags.HealthcareParty, id: 'all' })) : []),
-    }),
     getRootHealthcareParty: builder.query<HealthcareParty[] | undefined, string>({
       async queryFn(rootType, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
@@ -95,6 +67,15 @@ export const healthcarePartyApiRtk = createApi({
         })
       },
       providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: res.id }] : []),
+    }),
+    getHealthcarePartyByName: builder.query<HealthcareParty[] | undefined, string>({
+      async queryFn(rootType, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
+          return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byName(rootType)), 1000)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
     createUpdateHealthcareParty: builder.mutation<HealthcareParty | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {
@@ -189,11 +170,11 @@ export const {
   useUnDeleteHealthcarePartyMutation,
   useUnDeleteHealthcarePartyByIdMutation,
   useSilentUnDeleteHealthcarePartyMutation,
-  useGetServicesForMultipleSitesQuery,
+  useGetHealthcarePartyByNameQuery,
 } = healthcarePartyApiRtk
 
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {
-  const { data, ...rest } = useGetRootHealthcarePartyQuery(params.rootType, {
+  const { data, ...rest } = useGetHealthcarePartyByNameQuery(params.rootType, {
     skip: params.skip,
   })
 

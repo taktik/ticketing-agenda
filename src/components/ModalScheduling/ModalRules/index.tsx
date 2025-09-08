@@ -16,17 +16,7 @@ import { useUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { CustomModal } from '../../common/CustomModal'
 import { DurationInput } from '../../common/DurationInput'
-import {
-  correctAndCleanRRuleString,
-  dayjsToFuzzyDateInt,
-  dayjsToHhmmss,
-  formatDayjsToYYYYMMDDHHmmssNumber,
-  formatHhmmssToHHmm,
-  formatTotalMinutesForDisplay,
-  fuzzyDateIntToDayjs,
-  hhmmssToDayjs,
-  numberTimestampToDayjs,
-} from '../../common/helpers'
+import { correctAndCleanRRuleString, dayjsToFuzzyDateInt, dayjsToHhmmss, dayjsToYYYYMMDDHHmmss, fuzzyDateIntToDayjs, hhmmssToDayjs, hhmmssToHHmm, timestampToDayjs, totalMinutesForDisplay } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { SchedulingTableRow } from '../index'
 import './index.css'
@@ -218,8 +208,8 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
   useEffect(() => {
     // Fetch update the state and form values
     if (schedulingTableRow) {
-      const parsedStart = numberTimestampToDayjs(schedulingTableRow.startDateTime ?? 0) ?? dayjs()
-      const parsedEnd = numberTimestampToDayjs(schedulingTableRow.endDateTime ?? 0) ?? dayjs()
+      const parsedStart = timestampToDayjs(schedulingTableRow.startDateTime ?? 0) ?? dayjs()
+      const parsedEnd = timestampToDayjs(schedulingTableRow.endDateTime ?? 0) ?? dayjs()
 
       form.setFieldsValue({
         name: schedulingTableRow.name,
@@ -569,8 +559,8 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       const newResourceGroup: ResourceGroupAllocationSchedule = {
         ...resourceGroup,
         name: name,
-        startDateTime: formatDayjsToYYYYMMDDHHmmssNumber(start),
-        endDateTime: formatDayjsToYYYYMMDDHHmmssNumber(end),
+        startDateTime: dayjsToYYYYMMDDHHmmss(start),
+        endDateTime: dayjsToYYYYMMDDHHmmss(end),
         items: newEmbeddedTimeTableItems,
       }
       const scheduleFiltered = schedulingTableRows.filter((sched) => sched.rowId !== schedulingTableRow.rowId).map(({ rowId, ...rest }) => new ResourceGroupAllocationSchedule(rest))
@@ -933,8 +923,8 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                       return (
                         <div>
                           {hoursArray.map((h, index) => {
-                            const startDisplay = formatHhmmssToHHmm(h.startHour)
-                            const endDisplay = formatHhmmssToHHmm(h.endHour)
+                            const startDisplay = hhmmssToHHmm(h.startHour)
+                            const endDisplay = hhmmssToHHmm(h.endHour)
 
                             // Check if both start and end are "N/A" (our placeholder for undefined/null)
                             if (startDisplay === 'N/A' && endDisplay === 'N/A') {
@@ -1003,11 +993,11 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                         <div>
                           <div style={{ whiteSpace: 'nowrap' }}>
                             <Typography.Text strong>{t('content.before')}: </Typography.Text>
-                            <Tag>{formatTotalMinutesForDisplay(notBeforeMins, t)}</Tag>
+                            <Tag>{totalMinutesForDisplay(notBeforeMins, t)}</Tag>
                           </div>
                           <div style={{ whiteSpace: 'nowrap', marginTop: '4px' }}>
                             <Typography.Text strong>{t('content.after')}: </Typography.Text>
-                            <Tag>{formatTotalMinutesForDisplay(notAfterMins, t)}</Tag>
+                            <Tag>{totalMinutesForDisplay(notAfterMins, t)}</Tag>
                           </div>
                         </div>
                       )
