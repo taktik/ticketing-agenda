@@ -186,7 +186,14 @@
     "no_events_this_week": "No events planned for this week",
     "choose_time": "1. Choose a time",
     "choose_slot": "2. Choose a time slot",
-    "no_slots_available": "No time slot available for this date."
+    "no_slots_available": "No time slot available for this date.",
+    "appointment_details": "Appointment details",
+    "edit_appointment": "Edit Appointment",
+    "no_details_provided": "No details provided.",
+    "citizen": "Citizen",
+    "citizen_information": "Citizen information",
+    "appointment_information": "Appointment information",
+    "citizen_details": "Citizen details"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

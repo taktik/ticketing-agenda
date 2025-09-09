@@ -1,25 +1,18 @@
 import { Agenda, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
 import { Select as AntSelect, Button, Empty, message, notification, Space, Table, Tooltip } from 'antd'
 import Column from 'antd/es/table/Column'
-import { addMonths, endOfToday, format, Locale } from 'date-fns'
-import { de, enUS, fr, nl } from 'date-fns/locale'
+import { addMonths, endOfToday, format } from 'date-fns'
+import { enUS } from 'date-fns/locale'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useUpdateAgendaMutation } from '../../core/api/agendaApi'
 import { CustomModal } from '../common/CustomModal'
-import { dateToYYYYMMDDHHmmss, timestampToDate } from '../common/helpers'
+import { dateToYYYYMMDDHHmmss, localeMap, timestampToDate } from '../common/helpers'
 import { ModalConfirmAction } from '../common/ModalConfirmAction'
 import './index.css'
 import { ModalRules } from './ModalRules'
-
-const localeMap: Record<string, Locale> = {
-  en: enUS,
-  fr: fr,
-  de: de,
-  nl: nl,
-}
 
 export interface SchedulingTableRow extends ResourceGroupAllocationSchedule {
   rowId: string

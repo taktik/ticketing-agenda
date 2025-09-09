@@ -187,7 +187,14 @@
     "no_events_this_week": "Für diese Woche sind keine Veranstaltungen geplant",
     "choose_time": "1. Wählen Sie eine Uhrzeit",
     "choose_slot": "2. Wählen Sie ein Zeitfenster aus",
-    "no_slots_available": "Für dieses Datum ist kein Zeitfenster verfügbar."
+    "no_slots_available": "Für dieses Datum ist kein Zeitfenster verfügbar.",
+    "appointment_details": "Termindetails",
+    "edit_appointment": "Termin bearbeiten",
+    "no_details_provided": "Keine Details angegeben.",
+    "citizen": "Bürger",
+    "citizen_information": "Bürgerinformationen",
+    "appointment_information": "Termininformationen",
+    "citizen_details": "Bürgerdetails"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

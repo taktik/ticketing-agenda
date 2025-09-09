@@ -2,8 +2,8 @@ import { CloseOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutl
 import { Agenda, CalendarItemType, EmbeddedTimeTableHour, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
 import { Button, DatePicker, Empty, Form, Input, InputNumber, notification, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
-import { format, Locale, setDay, setMonth } from 'date-fns'
-import { de, enUS, fr, nl } from 'date-fns/locale'
+import { format, setDay, setMonth } from 'date-fns'
+import { enUS, fr } from 'date-fns/locale'
 import dayjs from 'dayjs'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -16,17 +16,21 @@ import { useUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { CustomModal } from '../../common/CustomModal'
 import { DurationInput } from '../../common/DurationInput'
-import { correctAndCleanRRuleString, dayjsToFuzzyDateInt, dayjsToHhmmss, dayjsToYYYYMMDDHHmmss, fuzzyDateIntToDayjs, hhmmssToDayjs, hhmmssToHHmm, timestampToDayjs, totalMinutesForDisplay } from '../../common/helpers'
+import {
+  correctAndCleanRRuleString,
+  dayjsToFuzzyDateInt,
+  dayjsToHhmmss,
+  dayjsToYYYYMMDDHHmmss,
+  fuzzyDateIntToDayjs,
+  hhmmssToDayjs,
+  hhmmssToHHmm,
+  localeMap,
+  timestampToDayjs,
+  totalMinutesForDisplay,
+} from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { SchedulingTableRow } from '../index'
 import './index.css'
-
-const localeMap: Record<string, Locale> = {
-  en: enUS,
-  fr: fr,
-  de: de,
-  nl: nl,
-}
 
 interface TableRow {
   rowId: string

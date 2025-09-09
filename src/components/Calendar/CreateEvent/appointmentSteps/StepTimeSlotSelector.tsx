@@ -8,6 +8,7 @@ import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 import { dayjsToYYYYMMDDHHmmss } from '../../../common/helpers'
 import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
 import './index.css'
+import { SpinLoader } from '../../../common/SpinLoader'
 
 const { Title, Paragraph } = Typography
 
@@ -291,7 +292,9 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
 
         <Divider />
         <div style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto', padding: '0 16px 0 4px' }}>
-          {availableHours.length > 0 ? (
+          {availabilitiesLoading || availableHours.length === 0 ? (
+            <SpinLoader />
+          ) : (
             <>
               <div>
                 <Title level={5} style={{ marginBottom: 12 }}>
@@ -330,11 +333,11 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
                 </div>
               )}
             </>
-          ) : (
-            <Empty description={t('content.no_slots_available')} />
           )}
         </div>
       </Col>
     </Row>
   )
 }
+
+// <Empty description={t('content.no_slots_available')} />

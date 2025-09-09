@@ -186,7 +186,14 @@
     "no_events_this_week": "Aucun événement prévu pour cette semaine",
     "choose_time": "1. Choisissez une heure",
     "choose_slot": "2. Choisissez un créneau",
-    "no_slots_available": "Aucun créneau disponible pour cette date."
+    "no_slots_available": "Aucun créneau disponible pour cette date.",
+    "appointment_details": "Détails du rendez-vous",
+    "edit_appointment": "Modifier le rendez-vous",
+    "no_details_provided": "Aucun détail fourni.",
+    "citizen": "Citoyen",
+    "citizen_information": "Informations sur le citoyen",
+    "appointment_information": "Informations sur le rendez-vous",
+    "citizen_details": "Détails du citoyen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

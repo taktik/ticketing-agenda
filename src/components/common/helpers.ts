@@ -1,5 +1,7 @@
-import { format } from 'date-fns'
+import { format, Locale } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
+import { EventApi } from 'fullcalendar'
+import { de, enUS, fr, nl } from 'date-fns/locale'
 
 export const minutesToDayjs = (totalMinutes: number): dayjs.Dayjs => {
   return dayjs().startOf('day').add(totalMinutes, 'minute')
@@ -280,4 +282,30 @@ export const calculateNumericEventTimes = (startTime: Dayjs | null, durationInMi
     startTime: Number(formattedStartTime),
     endTime: Number(formattedEndTime),
   }
+}
+
+/**
+ * Formats an event's start and end dates into a display string using a dynamic locale.
+ * @param event - The event object with start and end dates.
+ * @param locale - The date-fns locale object (e.g., fr, enUS).
+ * @returns A formatted string or an empty string if dates are invalid.
+ */
+export const formatEventDate = (event: EventApi, locale: Locale): string => {
+  if (!event.start || !event.end) {
+    return ''
+  }
+
+  // Use the provided locale in each format call
+  const datePart = format(event.start, 'd MMMM yyyy', { locale })
+  const startTime = format(event.start, 'HH:mm')
+  const endTime = format(event.end, 'HH:mm')
+
+  return `${datePart}, ${startTime} - ${endTime}`
+}
+
+export const localeMap: Record<string, Locale> = {
+  en: enUS,
+  fr: fr,
+  de: de,
+  nl: nl,
 }

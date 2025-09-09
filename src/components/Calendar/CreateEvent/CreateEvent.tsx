@@ -1,8 +1,8 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
@@ -266,15 +266,17 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       // 3. Check if patient record needs updates
       const hasLanguageChanged = language && language !== (citizenPatient.languages?.[0] || '')
       const hasBirthDateChanged = newBirthDate && newBirthDate !== citizenPatient.dateOfBirth
-      const needsNameUpdate = !citizenPatient.firstName // Update name if it's a freshly initialized patient
+      const needsNameUpdate = !citizenPatient.firstName
+      const hasPhoneNumberChanged = newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone
 
-      if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate) {
+      if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate || hasPhoneNumberChanged) {
         const patientPayload = new DecryptedPatient({
           ...citizenPatient,
           languages: hasLanguageChanged ? [language!] : citizenPatient.languages,
           dateOfBirth: hasBirthDateChanged ? newBirthDate : citizenPatient.dateOfBirth,
           firstName: needsNameUpdate ? firstName : citizenPatient.firstName,
           lastName: needsNameUpdate ? lastName : citizenPatient.lastName,
+          codes: hasPhoneNumberChanged ? [...(citizenPatient.codes || []).filter((stub) => stub.type !== 'phone'), new CodeStub({ context: 'contact', type: 'phone', code: newPhoneNumber! })] : citizenPatient.codes,
         })
         const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
         if (updatedPatient) citizenPatient = updatedPatient
@@ -285,7 +287,18 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       // --- USER DOES NOT EXIST ---
       // 1. Create a new Patient record first
       const patientId = v4()
-      const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName })
+      const emailStub = new CodeStub({
+        context: 'contact',
+        type: 'email',
+        code: email,
+      })
+
+      const phoneStub = new CodeStub({
+        context: 'contact',
+        type: 'phone',
+        code: newPhoneNumber,
+      })
+      const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, codes: [emailStub, phoneStub] })
       const citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
       if (!citizenPatient) {
         throw new Error('Failed to create a new patient record.')
@@ -346,7 +359,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           title: masterProcedure.displayText,
           calendarItemTypeId: procedureVariant.procedureId,
           duration: procedureVariant.duration,
-          details: siteVariant.procedureDetails,
           agendaId: siteVariant.agendaId,
           phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
           startTime: eventTimes?.startTime,
