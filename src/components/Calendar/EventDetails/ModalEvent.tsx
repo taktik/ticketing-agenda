@@ -1,11 +1,13 @@
 import { CalendarItemType } from '@icure/cardinal-sdk'
 import { Button, Card, DatePicker, Descriptions, Form, Input, message, Select, Typography } from 'antd'
+import { format, parse } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import dayjs from 'dayjs'
 import { EventApi } from 'fullcalendar'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { useCreateUpdateCalendarItemMutation, useDeleteCalendarItemByIdMutation } from '../../../core/api/calendarItemApi'
 import { useGetPatientByIdQuery } from '../../../core/api/patientApi'
 import { CustomModal } from '../../common/CustomModal'
 import { formatEventDate, localeMap } from '../../common/helpers'
@@ -30,11 +32,14 @@ export const EventDetails = ({ isVisible, onClose, event, procedures }: EventDet
   const [isEditing, setIsEditing] = useState(false)
   const [form] = Form.useForm()
 
+  const [createUpdateCalendarItem] = useCreateUpdateCalendarItemMutation()
+
   const { data: patient } = useGetPatientByIdQuery(event?.extendedProps.patientId ?? '')
 
   const patientName = useMemo(() => (patient ? patient.firstName + ' ' + patient.lastName : undefined), [patient])
   const patientEmail = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'email')?.code : undefined), [patient])
   const patientPhoneNumber = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'phone')?.code : undefined), [patient])
+  const patientBirthDate = useMemo(() => (patient && patient.dateOfBirth ? format(parse(String(patient.dateOfBirth), 'yyyyMMdd', new Date()), 'dd MMMM yyyy', { locale: dateFnsLocale }) : undefined), [patient])
 
   useEffect(() => {
     if (event) {
@@ -52,13 +57,13 @@ export const EventDetails = ({ isVisible, onClose, event, procedures }: EventDet
     return null
   }
 
-  const handleModify = () => {
+  const handleModify = useCallback(() => {
     setIsEditing(true)
-  }
+  }, [])
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setIsEditing(false)
-  }
+  }, [])
 
   const handleSave = async () => {
     try {
@@ -74,10 +79,13 @@ export const EventDetails = ({ isVisible, onClose, event, procedures }: EventDet
     }
   }
 
-  const handleDelete = () => {
-    console.log('delete')
-    onClose()
-  }
+  const handleDelete = useCallback(async () => {
+    try {
+      if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
+      await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
+      onClose()
+    } catch (error) {}
+  }, [event, deleteCalendarItem, t])
 
   // --- Render Logic ---
 
@@ -110,13 +118,14 @@ export const EventDetails = ({ isVisible, onClose, event, procedures }: EventDet
           <Descriptions.Item label={t('content.full_name')}>{patientName}</Descriptions.Item>
           <Descriptions.Item label={t('content.email')}>{patientEmail}</Descriptions.Item>
           <Descriptions.Item label={t('content.phone_number')}>{patientPhoneNumber}</Descriptions.Item>
+          <Descriptions.Item label={t('content.birth_date')}>{patientBirthDate}</Descriptions.Item>
         </Descriptions>
       </Card>
     </div>
   )
 
   const renderEditMode = () => (
-    <Form form={form} layout="vertical" style={{ width: '100%', padding: '1rem' }}>
+    <Form form={form} layout="vertical" style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}>
       <Form.Item name="start" label={t('content.start_hour')} rules={[{ required: true }]}>
         <DatePicker showTime format="MMM D, YYYY HH:mm" style={{ width: '100%' }} />
       </Form.Item>

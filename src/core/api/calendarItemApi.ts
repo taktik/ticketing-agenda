@@ -86,6 +86,22 @@ export const calendarItemApiRtk = createApi({
         { type: CalendarItemTags.CalendarItem, id },
       ],
     }),
+    deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string; rev: string }>({
+      async queryFn({calendarItemId, rev}, { getState }) {
+        const calendarApi = (await cardinalApi(getState))?.calendarItem
+        return guard([calendarApi], async () => {
+          const result = await calendarApi?.deleteCalendarItemById(calendarItemId, rev)
+          if (!result) {
+            throw new Error('CalendarItem can’t be deleted')
+          }
+          return result.id
+        })
+      },
+      invalidatesTags: (id) => [
+        { type: CalendarItemTags.CalendarItem, id: 'all' },
+        { type: CalendarItemTags.CalendarItem, id },
+      ],
+    }),
     shareCalendarItemWith: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; delegateId: string }>({
       async queryFn({ calendarItem, delegateId }, { getState }) {
         const calendarItemApi = (await cardinalApi(getState))?.calendarItem
@@ -102,4 +118,4 @@ export const calendarItemApiRtk = createApi({
   }),
 })
 
-export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useShareCalendarItemWithMutation } = calendarItemApiRtk
+export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useShareCalendarItemWithMutation, useDeleteCalendarItemByIdMutation } = calendarItemApiRtk

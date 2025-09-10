@@ -8,14 +8,14 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Segmented, Space, Typography } from 'antd'
+import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfDay, endOfWeek, startOfDay, startOfWeek } from 'date-fns'
 import { EventApi, EventClickArg, EventInput } from 'fullcalendar'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useGetCalendarItemByAgendaIdAndPeriodQuery } from '../../core/api/calendarItemApi'
+import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery } from '../../core/api/calendarItemApi'
 import { dateToYYYYMMDD, parseTimeRange } from '../common/helpers'
 import { CreateEvent } from './CreateEvent/CreateEvent'
 import { GridEventContent } from './EventContent/GridEventContent'
@@ -60,6 +60,32 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     { skip: !selectedAgenda },
   )
 
+  const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
+
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = (type: 'error', message: string, description: string) => {
+    api.open({
+      type,
+      message,
+      description,
+      duration: 0,
+    })
+    setTimeout(api.destroy, 2500)
+  }
+
+  const [messageApi, messageContextHolder] = message.useMessage()
+
+  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
+    messageApi.open({
+      type,
+      content,
+      duration: 0,
+    })
+    // Dismiss manually and asynchronously
+    setTimeout(messageApi.destroy, 2500)
+  }
+
   const events: EventInput[] = useMemo(() => {
     if (!calendarItems || !selectedAgenda) return []
     return calendarItems
@@ -73,20 +99,17 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
 
         return {
-          id: v4(),
+          id: calendarItem.id,
           title: calendarItem.title,
           start: eventTimes?.start,
           end: eventTimes?.end,
           color: linkedProcedure?.color,
           details: '',
-          extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId, patientIdentifier: calendarItem.author },
+          extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId, patientIdentifier: calendarItem.author, rev: calendarItem.rev },
         }
       })
       .filter(Boolean) as EventInput[]
   }, [calendarItems, procedures, selectedAgenda])
-
-  useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
-  useEffect(() => console.log('events', events), [events])
 
   useEffect(() => {
     const calendarApi = calendarRef.current?.getApi()
@@ -158,8 +181,20 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     return null
   }, [timeRange, t])
 
+  const handleEventDelete = useCallback(
+    async (event: EventApi) => {
+      try {
+        if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
+        await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
+      } catch (error) {}
+    },
+    [event, deleteCalendarItem, t],
+  )
+
   return (
     <div className="calendar-root">
+      {notificationContextHolder}
+      {messageContextHolder}
       <div className="calendar-header">
         <Space>
           <Space.Compact>
