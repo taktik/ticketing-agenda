@@ -261,6 +261,15 @@
     "user_save_error": "Er is een fout opgetreden bij het opslaan van de gebruiker.",
     "user_delete_failed": "We konden de gebruiker niet verwijderen!",
     "user_delete_error": "Er is een fout opgetreden bij het verwijderen van de gebruiker.",
+    "appointment_deleted": "De afspraak is verwijderd!",
+    "appointment_saved": "De afspraak is opgeslagen!",
+    "appointment_save_failed": "We konden de afspraak niet opslaan!",
+    "appointment_save_error": "Er is een fout opgetreden bij het opslaan van de afspraak.",
+    "appointment_delete_failed": "We konden de afspraak niet verwijderen!",
+    "appointment_delete_error": "Er is een fout opgetreden bij het verwijderen van de afspraak.",
+    "appointment_updated": "De afspraak is bijgewerkt!",
+    "appointment_update_failed": "We konden de afspraak niet bijwerken!",
+    "appointment_update_error": "Er is een fout opgetreden bij het bijwerken van de afspraak.",
     "at_least_one_rule_required": "Minstens één regel is vereist"
   },
   "rrule": {

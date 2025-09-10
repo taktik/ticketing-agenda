@@ -261,6 +261,15 @@
     "user_save_error": "An error occurred while saving the user.",
     "user_delete_failed": "We could not delete the user!",
     "user_delete_error": "An error occurred while deleting the user.",
+    "appointment_deleted": "The appointment was deleted!",
+    "appointment_saved": "The appointment was saved!",
+    "appointment_save_failed": "We could not save the appointment!",
+    "appointment_save_error": "An error occurred while saving the appointment.",
+    "appointment_delete_failed": "We could not delete the appointment!",
+    "appointment_delete_error": "An error occurred while deleting the appointment.",
+    "appointment_updated": "The appointment was updated!",
+    "appointment_update_failed": "We could not update the appointment!",
+    "appointment_update_error": "An error occurred while updating the appointment.",
     "at_least_one_rule_required": "At least one rule is required"
   },
   "rrule": {

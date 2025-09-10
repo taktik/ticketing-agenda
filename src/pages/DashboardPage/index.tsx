@@ -37,8 +37,6 @@ export default function DashboardPage() {
 
   const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
 
-  useEffect(() => console.log('siteroot', siteRoot), [siteRoot])
-
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 

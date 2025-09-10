@@ -262,6 +262,15 @@
     "user_save_error": "Beim Speichern des Benutzers ist ein Fehler aufgetreten.",
     "user_delete_failed": "Wir konnten den Benutzer nicht löschen!",
     "user_delete_error": "Beim Löschen des Benutzers ist ein Fehler aufgetreten.",
+    "appointment_deleted": "Der Termin wurde gelöscht!",
+    "appointment_saved": "Der Termin wurde gespeichert!",
+    "appointment_save_failed": "Wir konnten den Termin nicht speichern!",
+    "appointment_save_error": "Beim Speichern des Termins ist ein Fehler aufgetreten.",
+    "appointment_delete_failed": "Wir konnten den Termin nicht löschen!",
+    "appointment_delete_error": "Beim Löschen des Termins ist ein Fehler aufgetreten.",
+    "appointment_updated": "Der Termin wurde aktualisiert!",
+    "appointment_update_failed": "Wir konnten den Termin nicht aktualisieren!",
+    "appointment_update_error": "Beim Aktualisieren des Termins ist ein Fehler aufgetreten.",
     "at_least_one_rule_required": "Mindestens eine Regel ist erforderlich"
   },
   "rrule": {

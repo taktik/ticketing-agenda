@@ -261,6 +261,15 @@
     "user_save_error": "Une erreur s'est produite lors de l'enregistrement de l'utilisateur.",
     "user_delete_failed": "Nous n'avons pas pu supprimer l'utilisateur !",
     "user_delete_error": "Une erreur s'est produite lors de la suppression de l'utilisateur.",
+    "appointment_deleted": "Le rendez-vous a été supprimé !",
+    "appointment_saved": "Le rendez-vous a été enregistré !",
+    "appointment_save_failed": "Nous n'avons pas pu enregistrer le rendez-vous !",
+    "appointment_save_error": "Une erreur s'est produite lors de l'enregistrement du rendez-vous.",
+    "appointment_delete_failed": "Nous n'avons pas pu supprimer le rendez-vous !",
+    "appointment_delete_error": "Une erreur s'est produite lors de la suppression du rendez-vous.",
+    "appointment_updated": "Le rendez-vous a été mis à jour !",
+    "appointment_update_failed": "Nous n'avons pas pu mettre à jour le rendez-vous !",
+    "appointment_update_error": "Une erreur s'est produite lors de la mise à jour du rendez-vous.",
     "at_least_one_rule_required": "Au moins une règle est requise"
   },
   "rrule": {

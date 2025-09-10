@@ -7,20 +7,19 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, DecryptedCalendarItem, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfDay, endOfWeek, startOfDay, startOfWeek } from 'date-fns'
 import { EventApi, EventClickArg, EventInput } from 'fullcalendar'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { v4 } from 'uuid'
-import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery } from '../../core/api/calendarItemApi'
-import { dateToYYYYMMDD, parseTimeRange } from '../common/helpers'
+import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
+import { dateToYYYYMMDD, dayjsToYYYYMMDDHHmmss, parseTimeRange } from '../common/helpers'
 import { CreateEvent } from './CreateEvent/CreateEvent'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
-import { EventDetails } from './EventDetails/ModalEvent'
+import { CalendarEventUpdateForm, EventDetails } from './EventDetails/ModalEvent'
 import './index.css'
 
 interface CalendarProps {
@@ -54,13 +53,16 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const { data: calendarItems } = useGetCalendarItemByAgendaIdAndPeriodQuery(
     {
       agendaId: selectedAgenda?.id ?? '',
-      from: dateToYYYYMMDD(calendarRange.from),
-      to: dateToYYYYMMDD(calendarRange.to),
+      from: calendarRange.from.getTime(),
+      to: calendarRange.to.getTime(),
     },
     { skip: !selectedAgenda },
   )
 
+  useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
+
   const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
+  const [updateCalendarItem] = useUpdateCalendarItemMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -104,7 +106,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           start: eventTimes?.start,
           end: eventTimes?.end,
           color: linkedProcedure?.color,
-          details: '',
+          details: calendarItem.details,
           extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId, patientIdentifier: calendarItem.author, rev: calendarItem.rev },
         }
       })
@@ -132,11 +134,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   }, [viewMode, timeRange])
 
   useEffect(() => {
-    if (timeRange === 'day') {
-      setCalendarRange({ from: startOfDay(calendarDate), to: endOfDay(calendarDate) })
-    } else if (timeRange === 'week') {
-      setCalendarRange({ from: startOfWeek(calendarDate), to: endOfWeek(calendarDate) })
-    }
+    setCalendarRange({ from: startOfWeek(calendarDate), to: endOfWeek(calendarDate) })
   }, [calendarDate, timeRange])
 
   const handlePrev = useCallback(() => calendarRef.current?.getApi().prev(), [])
@@ -181,14 +179,41 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     return null
   }, [timeRange, t])
 
-  const handleEventDelete = useCallback(
-    async (event: EventApi) => {
+  const deleteEvent = useCallback(
+    async (event: EventApi | undefined) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
-        await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
-      } catch (error) {}
+        await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev, from: event?.start?.toISOString(), to: event?.end?.toISOString() }).unwrap()
+        showMessageFeedback('success', t('notification.appointment_deleted'))
+      } catch (error) {
+        openNotification('error', t('notification.appointment_delete_failed'), t('notification.appointment_delete_error'))
+      }
     },
-    [event, deleteCalendarItem, t],
+    [deleteCalendarItem, t],
+  )
+
+  const updateEvent = useCallback(
+    async (event: EventApi | undefined, updatedValues: CalendarEventUpdateForm) => {
+      try {
+        if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
+        const calendarItem = calendarItems?.find((calendarItem) => calendarItem.id === event.id)
+        if (!calendarItem) throw new Error('No event to delete')
+
+        const updatedCalendarItem = new DecryptedCalendarItem({
+          ...calendarItem,
+          calendarItemTypeId: updatedValues.calendarItemTypeId,
+          details: updatedValues.details,
+          startTime: dayjsToYYYYMMDDHHmmss(updatedValues.start),
+          endTime: dayjsToYYYYMMDDHHmmss(updatedValues.end),
+        })
+
+        await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
+        showMessageFeedback('success', t('notification.appointment_updated'))
+      } catch (error) {
+        openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
+      }
+    },
+    [deleteCalendarItem, t, calendarItems],
   )
 
   return (
@@ -249,7 +274,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         eventContent={getEventContent}
         noEventsContent={noEventsContent}
       />
-      {eventModalOpen && createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} />, document.body)}
+      {eventModalOpen &&
+        createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
       {createModalOpen && createPortal(<CreateEvent isVisible={createModalOpen} onClose={() => setCreateModalOpen(false)} sites={sites} />, document.body)}
     </div>
   )

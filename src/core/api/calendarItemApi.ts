@@ -1,6 +1,7 @@
-import { AccessLevel, CalendarItem, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
+import { AccessLevel, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { addDays, endOfMonth, startOfMonth, subDays } from 'date-fns'
+import { endOfWeek, startOfWeek } from 'date-fns'
+import { dateToYYYYMMDD, timestampToDate } from '../../components/common/helpers'
 import { cardinalApi, guard } from '../services/auth.api'
 import { GetCalendarItemsByAgendaAndPeriods } from './fetchType'
 import { loadFromIterator } from './utils'
@@ -33,16 +34,17 @@ export const calendarItemApiRtk = createApi({
       async queryFn({ agendaId, from, to }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem[]> => {
-          return await loadFromIterator(await calendarApi!.filterCalendarItemsBy(CalendarItemFilters.byPeriodAndAgenda(agendaId, from, to)), 1000)
+          const fromFormat = dateToYYYYMMDD(new Date(from))
+          const toFormat = dateToYYYYMMDD(new Date(to))
+
+          return await loadFromIterator(await calendarApi!.filterCalendarItemsBy(CalendarItemFilters.byPeriodAndAgenda(agendaId, fromFormat, toFormat)), 1000)
         })
       },
       providesTags: (result, error, { from, to }) => {
-        const fromDate = from ? new Date(from) : subDays(startOfMonth(new Date()), 5)
-        const toDate = to ? new Date(to) : addDays(endOfMonth(new Date()), 5)
         return [
           {
             type: CalendarItemTags.CalendarItem,
-            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
+            id: `CALENDAR-${from}-${to}`,
           },
         ]
       },
@@ -68,26 +70,68 @@ export const calendarItemApiRtk = createApi({
           return new DecryptedCalendarItem(updatedCalendarItem)
         })
       },
-      invalidatesTags: () => [{ type: CalendarItemTags.CalendarItem, id: 'all' }],
+      invalidatesTags: (result, error) => {
+        if (error || !result?.startTime || !result?.endTime) {
+          return []
+        }
+
+        const eventStartDate = timestampToDate(result.startTime)
+        const eventEndDate = timestampToDate(result.endTime)
+
+        if (!eventStartDate || !eventEndDate) {
+          return []
+        }
+
+        const fromDate = startOfWeek(eventStartDate)
+        const toDate = endOfWeek(eventEndDate)
+
+        return [
+          {
+            type: CalendarItemTags.CalendarItem,
+            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
+          },
+        ]
+      },
     }),
-    deleteCalendarItem: builder.mutation<string | undefined, DecryptedCalendarItem>({
-      async queryFn(calendarItem, { getState }) {
+    updateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem }>({
+      async queryFn({ calendarItem }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
-        return guard([calendarApi], async () => {
-          const result = await calendarApi?.deleteCalendarItem(calendarItem)
-          if (!result) {
-            throw new Error('CalendarItem can’t be deleted')
+        return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
+          if (!calendarItem.rev) {
+            throw new Error('Only calendarItem update is allowed')
           }
-          return result.id
+          const updatedCalendarItem = await calendarApi?.modifyCalendarItem(calendarItem)
+          if (!updatedCalendarItem) {
+            throw new Error('CalendarItem update failed')
+          }
+          return updatedCalendarItem
         })
       },
-      invalidatesTags: (id) => [
-        { type: CalendarItemTags.CalendarItem, id: 'all' },
-        { type: CalendarItemTags.CalendarItem, id },
-      ],
+      invalidatesTags: (result, error) => {
+        if (error || !result?.startTime || !result?.endTime) {
+          return []
+        }
+
+        const eventStartDate = timestampToDate(result.startTime)
+        const eventEndDate = timestampToDate(result.endTime)
+
+        if (!eventStartDate || !eventEndDate) {
+          return []
+        }
+
+        const fromDate = startOfWeek(eventStartDate)
+        const toDate = endOfWeek(eventEndDate)
+
+        return [
+          {
+            type: CalendarItemTags.CalendarItem,
+            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
+          },
+        ]
+      },
     }),
-    deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string; rev: string }>({
-      async queryFn({calendarItemId, rev}, { getState }) {
+    deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string; rev: string; from?: string; to?: string }>({
+      async queryFn({ calendarItemId, rev, from, to }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async () => {
           const result = await calendarApi?.deleteCalendarItemById(calendarItemId, rev)
@@ -97,10 +141,16 @@ export const calendarItemApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: (id) => [
-        { type: CalendarItemTags.CalendarItem, id: 'all' },
-        { type: CalendarItemTags.CalendarItem, id },
-      ],
+      invalidatesTags: (result, error, { from, to }) => {
+        const fromDate = from ? startOfWeek(new Date(from)) : startOfWeek(new Date())
+        const toDate = to ? endOfWeek(new Date(to)) : endOfWeek(new Date())
+        return [
+          {
+            type: CalendarItemTags.CalendarItem,
+            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
+          },
+        ]
+      },
     }),
     shareCalendarItemWith: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; delegateId: string }>({
       async queryFn({ calendarItem, delegateId }, { getState }) {
@@ -118,4 +168,11 @@ export const calendarItemApiRtk = createApi({
   }),
 })
 
-export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useShareCalendarItemWithMutation, useDeleteCalendarItemByIdMutation } = calendarItemApiRtk
+export const {
+  useGetCalendarItemQuery,
+  useCreateUpdateCalendarItemMutation,
+  useGetCalendarItemByAgendaIdAndPeriodQuery,
+  useShareCalendarItemWithMutation,
+  useDeleteCalendarItemByIdMutation,
+  useUpdateCalendarItemMutation,
+} = calendarItemApiRtk
