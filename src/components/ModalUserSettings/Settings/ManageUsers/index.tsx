@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { CodeStub, HealthcareParty, User } from '@icure/cardinal-sdk'
+import { HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, Select, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
@@ -66,7 +66,7 @@ export const ManagerUsers = (): ReactElement => {
     return users.map((user) => user.healthcarePartyId).filter((id): id is string => id !== undefined)
   }, [users])
 
-  const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds)
+  const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds, { skip: usersHcpIds.length === 0 || !users })
 
   const hcpMap = useMemo(() => {
     return new Map((hcps ?? []).map((hcp) => [hcp.id, hcp]))

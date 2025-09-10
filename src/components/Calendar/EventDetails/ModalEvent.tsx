@@ -141,11 +141,13 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
               </Form.Item>
               <Form.Item name="calendarItemTypeId" label={t('content.procedure')} rules={[{ required: true }]}>
                 <Select>
-                  {(procedures ?? []).map((type) => (
-                    <Select.Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
+                  {(procedures ?? [])
+                    .filter((proc) => proc.defaultCalendarItemType)
+                    .map((type) => (
+                      <Select.Option key={type.id} value={type.id}>
+                        {type.name}
+                      </Select.Option>
+                    ))}
                 </Select>
               </Form.Item>
               <Form.Item name="details" label={t('content.details')}>
