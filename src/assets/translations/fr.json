@@ -193,7 +193,12 @@
     "citizen": "Citoyen",
     "citizen_information": "Informations sur le citoyen",
     "appointment_information": "Informations sur le rendez-vous",
-    "citizen_details": "Détails du citoyen"
+    "citizen_details": "Détails du citoyen",
+    "creating_appointment": "Création de votre rendez-vous en cours...",
+    "appointment_created_successfully": "Rendez-vous créé avec succès !",
+    "appointment_details_email_sent": "Un e-mail contenant les détails du rendez-vous a été envoyé au destinataire spécifié.",
+    "submission_failed": "Échec de la soumission",
+    "submission_error_generic": "Une erreur s'est produite. Veuillez réessayer ou contacter le support."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

@@ -184,8 +184,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const [sharePatient, { isLoading: isSharePatientLoading }] = useSharePatientWithManyMutation()
 
-  const [processWorking, setProcessWorking] = useState<boolean>(false)
-  const [isCreateEventSuccess, setIsCreateEventSuccess] = useState<boolean>(false)
+  const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -211,11 +210,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     setTimeout(messageApi.destroy, 2500)
   }
 
-  const isCreateLoading = useMemo(
-    () => processWorking || isGetPatientLoading || isCreateUpdatePatientLoading || isCreateUpdateUserLoading || isGetUserLoading || isCreateUpdateEventLoading,
-    [processWorking, isGetPatientLoading, isCreateUpdatePatientLoading, isGetUserLoading, isCreateUpdateEventLoading],
-  )
-
   const steps = [
     { title: t('content.procedure'), icon: <ToolOutlined /> },
     { title: t('content.date_and_time'), icon: <CalendarOutlined /> },
@@ -225,7 +219,13 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const formValues: AppointmentForm = form.getFieldsValue(true)
 
-  const getOrCreateCitizenProfile = async (personalInfo: PersonalInfo) => {
+  const getOrCreateCitizenProfile = async () => {
+    const { personalInfo } = formValues
+
+    if (!personalInfo) {
+      throw new Error('Personal information is missing and required to create an appointment.')
+    }
+
     const { email, countryCode, phoneNumber, language, birthDate, firstName, lastName } = personalInfo
     if (!email) {
       throw new Error('User email is required but was not provided.')
@@ -239,7 +239,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
     if (existingUser) {
       // --- USER EXISTS ---
-      let citizenUser = { ...existingUser }
+      let citizenUser = { ...existingUser } as User
 
       // 1. Update user's phone if it changed
       if (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) {
@@ -316,8 +316,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     }
   }
 
-  const createAppointments = async () => {
-    setProcessWorking(true)
+  const createAppointments = async (citizenUser: User, citizenPatient: DecryptedPatient) => {
     try {
       const { personalInfo, procedures, timeslot } = formValues
 
@@ -327,9 +326,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       if (!timeslot) {
         throw new Error('Timeslot information is missing and required to create an appointment.')
       }
-
-      // All user/patient logic is now contained in the helper function
-      const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile(personalInfo)
 
       if (!citizenUser || !citizenPatient?.id) {
         throw new Error('Could not retrieve or create a valid user/patient profile.')
@@ -371,15 +367,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       await Promise.all(eventsCreationPromises)
 
       await sharePatient({ patient: citizenPatient, delegates: [siteRoot.id, adminRoot.id] }).unwrap()
-
-      setIsCreateEventSuccess(true)
     } catch (error: unknown) {
       console.error('An error occurred during appointment creation:', error)
       // Use the specific error message from the thrown Error
       openNotification('error', t('content.unexpected_error'), error instanceof Error ? error.message : 'An unknown error occurred.')
-      setIsCreateEventSuccess(false)
-    } finally {
-      setProcessWorking(false)
     }
   }
 
@@ -403,9 +394,14 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const handleAppointmentCreation = useCallback(async () => {
     try {
+      setCreationStatus('loading')
+      setCurrentStep((prevStep) => prevStep + 1)
       await form.validateFields()
-      await createAppointments()
+      const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile()
+      await createAppointments(citizenUser, citizenPatient)
+      setCreationStatus('success')
     } catch (err) {
+      setCreationStatus('failure')
       openNotification('error', t('content.complete_required_fields'), '')
     }
   }, [form, createAppointments, openNotification, t])
@@ -415,7 +411,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     <StepTimeSlotSelector form={form} formProcedure={formValues.procedures} selections={selections} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
     <StepAppointmentreview formValues={form.getFieldsValue(true)} selections={selections} key={'reviewStep'} />,
-    <StepCreateEventResult isCreateLoading={isCreateLoading} isCreateEventSuccess={isCreateEventSuccess} formValues={formValues} selections={selections} key={'resultStep'} />,
+    <StepCreateEventResult creationStatus={creationStatus} key={'resultStep'} />,
   ]
 
   const initialFormValues = {
@@ -442,17 +438,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         </Steps>
 
         <Form form={form} layout="vertical" initialValues={initialFormValues}>
-          <div style={{ minHeight: '350px' }}>
-            {currentStep < 4 ? (
-              stepContent[currentStep]
-            ) : (
-              <>
-                {isCreateLoading && <div>Loading</div>}
-                {!isCreateLoading && isCreateEventSuccess && <div>Success !</div>}
-                {!isCreateLoading && !isCreateEventSuccess && <div>Failure !</div>}
-              </>
-            )}
-          </div>
+          <div style={{ minHeight: '350px' }}>{stepContent[currentStep]}</div>
 
           <Divider />
 

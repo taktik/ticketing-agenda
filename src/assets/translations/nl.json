@@ -193,7 +193,12 @@
     "citizen": "Burger",
     "citizen_information": "Burgerinformatie",
     "appointment_information": "Afspraakinformatie",
-    "citizen_details": "Burgerdetails"
+    "citizen_details": "Burgerdetails",
+    "creating_appointment": "Uw afspraak wordt aangemaakt...",
+    "appointment_created_successfully": "Afspraak succesvol aangemaakt!",
+    "appointment_details_email_sent": "Er is een e-mail met de afspraakdetails naar de opgegeven ontvanger verzonden.",
+    "submission_failed": "Indiening mislukt",
+    "submission_error_generic": "Er is iets misgegaan. Probeer het opnieuw of neem contact op met de ondersteuning."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

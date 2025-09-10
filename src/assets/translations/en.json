@@ -193,7 +193,12 @@
     "citizen": "Citizen",
     "citizen_information": "Citizen information",
     "appointment_information": "Appointment information",
-    "citizen_details": "Citizen details"
+    "citizen_details": "Citizen details",
+    "creating_appointment": "Creating your appointment...",
+    "appointment_created_successfully": "Appointment Created Successfully!",
+    "appointment_details_email_sent": "An email with the appointment details has been sent to the specified recipient.",
+    "submission_failed": "Submission Failed",
+    "submission_error_generic": "Something went wrong. Please try again or contact support."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

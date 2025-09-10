@@ -194,7 +194,12 @@
     "citizen": "Bürger",
     "citizen_information": "Bürgerinformationen",
     "appointment_information": "Termininformationen",
-    "citizen_details": "Bürgerdetails"
+    "citizen_details": "Bürgerdetails",
+    "creating_appointment": "Ihr Termin wird erstellt...",
+    "appointment_created_successfully": "Termin erfolgreich erstellt!",
+    "appointment_details_email_sent": "Eine E-Mail mit den Termindetails wurde an den angegebenen Empfänger gesendet.",
+    "submission_failed": "Übermittlung fehlgeschlagen",
+    "submission_error_generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

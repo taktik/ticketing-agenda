@@ -1,30 +1,31 @@
-import { Descriptions, Space, Typography } from 'antd'
-import dayjs from 'dayjs'
-import { FC, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { appointmentDuration, AppointmentForm, formatDateTime, FormProcedure, languageMapping } from '../CreateEvent'
+import { Result, Spin, Typography } from 'antd'
 import './index.css'
-import { ProcedureSelection } from '../../../../helpers/transformProcedures'
+import { useTranslation } from 'react-i18next'
 
 const { Title, Text } = Typography
 
 interface StepCreateEventResultProps {
-  formValues: AppointmentForm
-  selections: ProcedureSelection[]
-  isCreateLoading: boolean
-  isCreateEventSuccess: boolean
+  creationStatus: 'loading' | 'success' | 'failure' | null
 }
-export const StepCreateEventResult = ({ formValues, selections, isCreateLoading, isCreateEventSuccess }: StepCreateEventResultProps) => {
-  const { t, i18n } = useTranslation()
-  const langCode = useMemo(() => {
-    return languageMapping[i18n.language] || 'FR' // Fallback
-  }, [i18n.language])
+export const StepCreateEventResult = ({ creationStatus }: StepCreateEventResultProps) => {
+  const { t } = useTranslation()
 
-  return (
-    <>
-      {isCreateLoading && <div>Loading</div>}
-      {!isCreateLoading && isCreateEventSuccess && <div>Success !</div>}
-      {!isCreateLoading && !isCreateEventSuccess && <div>Failure !</div>}
-    </>
-  )
+  switch (creationStatus) {
+    case 'loading':
+      return (
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <Spin size="large" />
+          <p style={{ marginTop: '20px' }}>{t('content.creating_appointment')}</p>
+        </div>
+      )
+
+    case 'success':
+      return <Result status="success" title={t('content.appointment_created_successfully')} subTitle={t('content.appointment_details_email_sent')} />
+
+    case 'failure':
+      return <Result status="error" title={t('content.submission_failed')} subTitle={t('content.submission_error_generic')} />
+
+    default:
+      return null
+  }
 }
