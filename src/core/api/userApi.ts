@@ -14,7 +14,7 @@ export const userApiRtk = createApi({
     baseUrl: '',
   }),
   endpoints: (builder) => ({
-    getUsers: builder.query<User[] | undefined, undefined>({
+    getUsers: builder.query<User[] | undefined, void>({
       async queryFn(_, { getState }) {
         const userApi = (await cardinalApi(getState))?.user
         return guard([userApi], async (): Promise<User[]> => {

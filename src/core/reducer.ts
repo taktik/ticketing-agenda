@@ -16,6 +16,7 @@ import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { groupApiRtk } from './api/groupApi'
 import { keyApiRtk } from './api/keyApi'
 import { anonymousApiRtk } from './api/anonymousApi'
+import { roleApiRtk } from './api/roleApi'
 
 export const appReducer = combineReducers({
   app: app.reducer,
@@ -34,6 +35,7 @@ export const appReducer = combineReducers({
   groupApi: groupApiRtk.reducer,
   keyApi: keyApiRtk.reducer,
   anonymousApi: anonymousApiRtk.reducer,
+  roleApi: roleApiRtk.reducer,
 })
 
 export const persistedReducer = persistReducer(persistConfig, appReducer)

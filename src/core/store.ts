@@ -16,6 +16,7 @@ import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { groupApiRtk } from './api/groupApi'
 import { keyApiRtk } from './api/keyApi'
 import { anonymousApiRtk } from './api/anonymousApi'
+import { roleApiRtk } from './api/roleApi'
 
 export const store = configureStore({
   reducer: persistedReducer,
@@ -35,6 +36,7 @@ export const store = configureStore({
       groupApiRtk.middleware,
       keyApiRtk.middleware,
       anonymousApiRtk.middleware,
+      roleApiRtk.middleware,
       thunk,
       // Add your own middleware here. For example, you can add a logger:
     ),

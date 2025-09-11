@@ -15,6 +15,7 @@ import {
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
+import { useGetAllRolesQuery } from '../../../../core/api/roleApi'
 import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
 
@@ -59,7 +60,8 @@ export const ManagerUsers = (): ReactElement => {
   const [unDeleteHcp, { isLoading: isSilentUndeleteHcpLoading }] = useSilentUnDeleteHealthcarePartyMutation()
 
   const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
-  const { data: users, isLoading: isUsersLoading } = useGetUsersQuery(undefined)
+  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.SITE_ROOT })
+  const { data: users, isLoading: isUsersLoading } = useGetUsersQuery()
 
   const usersHcpIds = useMemo(() => {
     if (!users) return []
@@ -67,9 +69,10 @@ export const ManagerUsers = (): ReactElement => {
   }, [users])
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds, { skip: usersHcpIds.length === 0 || !users })
+  const { data: roles, isLoading: isRolesLoading } = useGetAllRolesQuery()
 
   const hcpMap = useMemo(() => {
-    return new Map((hcps ?? []).map((hcp) => [hcp.id, hcp]))
+    return new Map((hcps ?? []).filter((hcp) => !(hcp.parentId === siteRoot?.id || hcp.firstName === 'admin-root' || hcp.firstName === 'site-root')).map((hcp) => [hcp.id, hcp]))
   }, [hcps])
 
   const userMap = useMemo(() => {
@@ -78,6 +81,7 @@ export const ManagerUsers = (): ReactElement => {
 
   useEffect(() => console.log('hcpMap', hcpMap), [hcpMap])
   useEffect(() => console.log('userMap', userMap), [userMap])
+  useEffect(() => console.log('roles', roles), [roles])
 
   const isFetching = useMemo(() => isUsersLoading || isHcpsLoading || isAdminRootLoading, [isUsersLoading, isHcpsLoading, isAdminRootLoading])
   const isMutating = useMemo(
@@ -96,7 +100,7 @@ export const ManagerUsers = (): ReactElement => {
     })
 
     return mergedPairs
-  }, [users, hcps])
+  }, [users, hcpMap])
 
   useEffect(() => {
     const tableRowsList: UserRow[] = mergedList.map((pair) => {
