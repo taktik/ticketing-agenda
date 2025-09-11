@@ -119,9 +119,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(service?.id ?? '', { skip: !service })
 
-  useEffect(() => console.log('procedures', procedures), [procedures])
-  useEffect(() => console.log('service', service), [service])
-
   const sortedProcedures = useMemo(() => {
     return [...(procedures ?? [])]
       .sort((a, b) => {
@@ -236,6 +233,32 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     }
   }, [service, createUpdateProcedure, showMessageFeedback, openNotification, t])
 
+  const updateAgendaSchedules = useCallback(
+    async (defaultCalendarItemTypeId: string, service: Agenda, addedCalendarItemTypesIds: string[], removedCalendarItemTypesIds: string[]) => {
+      const newSchedules = service.schedules?.map((schedule) => {
+        const newItems = schedule.items?.map((item) => {
+          if (item.calendarItemTypesIds?.includes(defaultCalendarItemTypeId)) {
+            const filteredIds = item.calendarItemTypesIds.filter((calendarItemTypeId) => !removedCalendarItemTypesIds.includes(calendarItemTypeId))
+            const newIds = [...filteredIds, ...addedCalendarItemTypesIds]
+            return {
+              ...item,
+              calendarItemTypesIds: newIds,
+            }
+          }
+          return item
+        })
+
+        return {
+          ...schedule,
+          items: newItems,
+        }
+      })
+
+      await createUpdateService(new Agenda({ ...service, schedules: newSchedules })).unwrap()
+    },
+    [createUpdateService],
+  )
+
   const tableRowUpdate = async (procedureRow: ProcedureRow) => {
     try {
       // Step 1 : We first make sure everything is valid
@@ -267,6 +290,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
       // Step 4 : We will compare both our current array and our desired array and UPDATE, CREATE or DELETE as needed.
       const mutationPromises: Promise<unknown>[] = []
+      const addedCalendarItemTypesIds: string[] = []
+      const removedCalendarItemTypesIds: string[] = []
       const maxLen = Math.max(desiredArray.length, sortedMatchingProcedures.length)
 
       for (let i = 0; i < maxLen; i++) {
@@ -301,15 +326,20 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         } else if (desiredProps && !existingItem) {
           // === Desired, but no corresponding existing item: CREATE ===
           mutationPromises.push(createUpdateProcedure(desiredProps).unwrap())
+          addedCalendarItemTypesIds.push(desiredProps.id)
         } else if (!desiredProps && existingItem) {
           // === No longer desired at this position, but exists: DELETE ===
           mutationPromises.push(deleteProcedures([existingItem.id]).unwrap())
+          removedCalendarItemTypesIds.push(existingItem.id)
         }
       }
 
       // 3. Execute all collected mutations
       if (mutationPromises.length > 0) {
         await Promise.all(mutationPromises)
+        if (addedCalendarItemTypesIds.length || removedCalendarItemTypesIds.length) {
+          await updateAgendaSchedules(procedureRow.procedureId, service, addedCalendarItemTypesIds, removedCalendarItemTypesIds)
+        }
       }
       showMessageFeedback('success', t('notification.procedure_modified'))
     } catch (error) {
@@ -358,6 +388,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       }
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
       await deleteProcedures(proceduresToDeleteIds).unwrap()
+      await updateAgendaSchedules(procedureRowToBeDeleted.procedureId, service, [], proceduresToDeleteIds)
       showMessageFeedback('success', t('notification.procedure_deleted'))
     } catch (error) {
       console.error('Failed to delete procedure group:', error)

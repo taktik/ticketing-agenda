@@ -59,8 +59,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     { skip: !selectedAgenda },
   )
 
-  useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
-
   const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
   const [updateCalendarItem] = useUpdateCalendarItemMutation()
 
