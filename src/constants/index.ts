@@ -11,6 +11,8 @@ export const DATABASE_ID = process.env.REACT_APP_DATABASE_ID
 export const DATE_FORMAT = 'dd.MM.yyyy'
 export const DATE_FORMAT_TO_DISPLAY = 'DD.MM.YYYY'
 
+export const RESERVED_WORDS = ['site-root', 'admin-root']
+
 export const TOKENS = {
   SKIP: /^[ \r\n\t]+|^\.$/,
   number: /^[1-9][0-9]*/,

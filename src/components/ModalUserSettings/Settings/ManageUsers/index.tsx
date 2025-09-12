@@ -6,6 +6,7 @@ import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
+import { RESERVED_WORDS } from '../../../../constants'
 import { RootHcpType } from '../../../../core/api/fetchType'
 import {
   useCreateUpdateHealthcarePartyMutation,
@@ -83,7 +84,7 @@ export const ManagerUsers = (): ReactElement => {
   useEffect(() => console.log('userMap', userMap), [userMap])
   useEffect(() => console.log('roles', roles), [roles])
 
-  const isFetching = useMemo(() => isUsersLoading || isHcpsLoading || isAdminRootLoading, [isUsersLoading, isHcpsLoading, isAdminRootLoading])
+  const isFetching = useMemo(() => isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading, [isUsersLoading, isHcpsLoading, isAdminRootLoading, isSiteRootLoading])
   const isMutating = useMemo(
     () => isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLading || isSilentUndeleteHcpLoading,
     [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLading, isSilentUndeleteHcpLoading],
@@ -347,7 +348,21 @@ export const ManagerUsers = (): ReactElement => {
                 if (editable) {
                   return (
                     <>
-                      <Form.Item name="firstName" rules={[{ required: true, message: t('validation.firstname_required') }]}>
+                      <Form.Item
+                        name="firstName"
+                        rules={[
+                          { required: true, message: t('validation.firstname_required') },
+                          {
+                            validator: (_, value) => {
+                              const cleanedValue = value ? value.toLowerCase().trim() : undefined
+                              if (cleanedValue && RESERVED_WORDS.includes(cleanedValue)) {
+                                return Promise.reject(new Error(t('validation.name_is_reserved', { word: cleanedValue })))
+                              }
+                              return Promise.resolve()
+                            },
+                          },
+                        ]}
+                      >
                         <Input autoFocus />
                       </Form.Item>
                     </>
@@ -374,7 +389,21 @@ export const ManagerUsers = (): ReactElement => {
                 if (editable) {
                   return (
                     <>
-                      <Form.Item name="lastName" rules={[{ required: true, message: t('validation.lastname_required') }]}>
+                      <Form.Item
+                        name="lastName"
+                        rules={[
+                          { required: true, message: t('validation.lastname_required') },
+                          {
+                            validator: (_, value) => {
+                              const cleanedValue = value ? value.toLowerCase().trim() : undefined
+                              if (cleanedValue && RESERVED_WORDS.includes(cleanedValue)) {
+                                return Promise.reject(new Error(t('validation.name_is_reserved', { word: cleanedValue })))
+                              }
+                              return Promise.resolve()
+                            },
+                          },
+                        ]}
+                      >
                         <Input autoFocus />
                       </Form.Item>
                     </>

@@ -1,8 +1,9 @@
 import { CheckOutlined, CloseOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import { HealthcareParty } from '@icure/cardinal-sdk'
-import { Form, Input, Button, Space, Card, Col, Row, message, notification } from 'antd'
-import React, { useEffect } from 'react'
+import { Button, Card, Col, Form, Input, Row, Space, notification } from 'antd'
+import React, { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { RESERVED_WORDS } from '../../../constants'
 
 export type SiteInfoFormValues = {
   name: string
@@ -34,10 +35,10 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
     }
   }
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     form.resetFields()
     setShowEditableSite(false)
-  }
+  }, [form, setShowEditableSite])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -57,7 +58,22 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
       <Form form={form} layout="vertical" autoComplete="off">
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="name" label={t('content.site_name')} rules={[{ required: true }]}>
+            <Form.Item
+              name="name"
+              label={t('content.site_name')}
+              rules={[
+                { required: true },
+                {
+                  validator: (_, value) => {
+                    const cleanedValue = value ? value.toLowerCase().trim() : undefined
+                    if (cleanedValue && RESERVED_WORDS.includes(cleanedValue)) {
+                      return Promise.reject(new Error(t('validation.name_is_reserved', { word: cleanedValue })))
+                    }
+                    return Promise.resolve()
+                  },
+                },
+              ]}
+            >
               <Input size="large" autoFocus />
             </Form.Item>
           </Col>
