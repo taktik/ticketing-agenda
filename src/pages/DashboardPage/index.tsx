@@ -80,10 +80,6 @@ export default function DashboardPage() {
     }
   }, [setCalendarDate])
 
-  const updateItem = useCallback(async () => {
-    console.log('hey')
-  }, [siteRoot, adminRoot, deleteHcp])
-
   return (
     <div className="Dashboard">
       <Header />

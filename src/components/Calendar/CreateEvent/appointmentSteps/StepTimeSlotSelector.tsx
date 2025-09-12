@@ -136,18 +136,19 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
           const startDate = currentMonth.startOf('month')
           const endDate = currentMonth.endOf('month')
 
-          const rawAvailabilities = await getAvailabilities({
-            agendaId: siteVariant.agendaId,
-            calendarItemTypeId: procedureVariant.procedureId,
-            startDate: dayjsToYYYYMMDDHHmmss(startDate),
-            endDate: dayjsToYYYYMMDDHHmmss(endDate),
-          }).unwrap()
-
-          const availabilitiesAsDayjs = (rawAvailabilities || []).map((num) => dayjs(String(num), 'YYYYMMDDHHmmss'))
+          const availabilities = await getAvailabilities(
+            {
+              agendaId: siteVariant.agendaId,
+              calendarItemTypeId: procedureVariant.procedureId,
+              startDate: dayjsToYYYYMMDDHHmmss(startDate),
+              endDate: dayjsToYYYYMMDDHHmmss(endDate),
+            },
+            true,
+          ).unwrap()
 
           return {
             procedureDuration: procedureVariant.duration,
-            availabilityList: availabilitiesAsDayjs,
+            availabilityList: availabilities,
           } as ProcessedAvailabilities
         })
 
