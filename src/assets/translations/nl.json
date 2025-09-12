@@ -330,6 +330,7 @@
     "end_time_required": "Eindtijd is vereist",
     "value_required": "Waarde is vereist",
     "unit_required": "Eenheid is vereist",
-    "service_name_in_french_mandatory": "De servicenaam in het Frans is verplicht."
+    "service_name_in_french_mandatory": "De servicenaam in het Frans is verplicht.",
+    "name_is_reserved": "'{{word}}' is een gereserveerde naam. Kies alstublieft een andere."
   }
 }

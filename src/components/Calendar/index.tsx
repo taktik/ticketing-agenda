@@ -87,7 +87,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   }
 
   const events: EventInput[] = useMemo(() => {
-    if (!calendarItems || !selectedAgenda) return []
+    if (!calendarItems) return []
     return calendarItems
       .map((calendarItem) => {
         if (calendarItem.startTime === undefined || calendarItem.endTime === undefined) {
@@ -109,7 +109,15 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         }
       })
       .filter(Boolean) as EventInput[]
-  }, [calendarItems, procedures, selectedAgenda])
+  }, [calendarItems, procedures])
+
+  const filteredEvents: EventInput[] = useMemo(() => {
+    if (!events || !selectedAgenda) return []
+    if (selectedProcedure) {
+      return events.filter((event) => event.extendedProps?.calendarItemTypeId === selectedProcedure.id)
+    }
+    return events
+  }, [events, selectedAgenda, selectedProcedure])
 
   useEffect(() => {
     const calendarApi = calendarRef.current?.getApi()
@@ -267,7 +275,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         weekends={false}
         height="90%"
         datesSet={handleDatesSet}
-        events={events}
+        events={filteredEvents}
         eventClick={handleEventClick}
         eventContent={getEventContent}
         noEventsContent={noEventsContent}

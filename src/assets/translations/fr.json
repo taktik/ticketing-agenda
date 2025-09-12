@@ -330,6 +330,7 @@
     "end_time_required": "L'heure de fin est requise",
     "value_required": "La valeur est requise",
     "unit_required": "L'unité est requise",
-    "service_name_in_french_mandatory": "Le nom du service en français est obligatoire."
+    "service_name_in_french_mandatory": "Le nom du service en français est obligatoire.",
+    "name_is_reserved": "'{{word}}' est un nom réservé. Veuillez en choisir un autre."
   }
 }

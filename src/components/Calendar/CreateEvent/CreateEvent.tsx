@@ -59,7 +59,7 @@ export const appointmentDuration = (formValues: AppointmentForm, procedures: Pro
 
     // 4. If we successfully found the exact variant, add its duration to the running total.
     return total + (procedureVariant.duration || 0)
-  }, 0) // The 0 here is the starting value for our total.
+  }, 0)
 
   return totalDuration
 }

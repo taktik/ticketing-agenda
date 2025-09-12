@@ -1,14 +1,14 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
+import { Button, Calendar, CalendarProps, Col, Divider, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 import { dayjsToYYYYMMDDHHmmss } from '../../../common/helpers'
+import { SpinLoader } from '../../../common/SpinLoader'
 import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
 import './index.css'
-import { SpinLoader } from '../../../common/SpinLoader'
 
 const { Title, Paragraph } = Typography
 
@@ -152,7 +152,8 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
         })
 
         const results = await Promise.all(promises)
-        const finalList = findConsecutiveSlots(results)
+
+        const finalList = results.length === 1 ? results[0].availabilityList : findConsecutiveSlots(results)
 
         setAvailabilities(finalList)
       } catch (error: unknown) {

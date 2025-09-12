@@ -331,6 +331,7 @@
     "end_time_required": "Endzeit ist erforderlich",
     "value_required": "Wert ist erforderlich",
     "unit_required": "Einheit ist erforderlich",
-    "service_name_in_french_mandatory": "Der Dienstname auf Französisch ist obligatorisch."
+    "service_name_in_french_mandatory": "Der Dienstname auf Französisch ist obligatorisch.",
+    "name_is_reserved": "'{{word}}' ist ein reservierter Name. Bitte wählen Sie einen anderen."
   }
 }
