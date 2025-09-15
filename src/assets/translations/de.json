@@ -199,7 +199,12 @@
     "appointment_created_successfully": "Termin erfolgreich erstellt!",
     "appointment_details_email_sent": "Eine E-Mail mit den Termindetails wurde an den angegebenen Empfänger gesendet.",
     "submission_failed": "Übermittlung fehlgeschlagen",
-    "submission_error_generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support."
+    "submission_error_generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "booking_type_prompt": "Handelt es sich um eine Standardbuchung für einen Bürger oder blockieren Sie Zeit für Personalurlaub?",
+    "schedule_citizen_appointment_title": "Bürgertermin planen",
+    "schedule_citizen_appointment_desc": "Buchen Sie einen Bürger in einem verfügbaren Zeitfenster.",
+    "manage_staff_leave_title": "Personalurlaub verwalten",
+    "manage_staff_leave_desc": "Kalenderzeit für Feiertage, Krankheitsurlaub oder andere Abwesenheiten blockieren."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

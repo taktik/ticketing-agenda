@@ -198,7 +198,12 @@
     "appointment_created_successfully": "Afspraak succesvol aangemaakt!",
     "appointment_details_email_sent": "Er is een e-mail met de afspraakdetails naar de opgegeven ontvanger verzonden.",
     "submission_failed": "Indiening mislukt",
-    "submission_error_generic": "Er is iets misgegaan. Probeer het opnieuw of neem contact op met de ondersteuning."
+    "submission_error_generic": "Er is iets misgegaan. Probeer het opnieuw of neem contact op met de ondersteuning.",
+    "booking_type_prompt": "Is dit een standaardboeking voor een burger, of blokkeert u tijd voor personeelsverlof?",
+    "schedule_citizen_appointment_title": "Afspraak voor burger inplannen",
+    "schedule_citizen_appointment_desc": "Boek een burger in een beschikbaar tijdslot.",
+    "manage_staff_leave_title": "Personeelsverlof beheren",
+    "manage_staff_leave_desc": "Blokkeer kalendertijd voor vakanties, ziekteverlof of andere afwezigheden."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

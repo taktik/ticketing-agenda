@@ -1,6 +1,5 @@
 import { Agenda, AgendaFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { useMemo } from 'react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { GetAgendasByStringPropertyParameters } from './fetchType'
 import { loadFromIterator } from './utils'
@@ -123,12 +122,10 @@ export const useGetAgendaByAuthorId = (params: { skip: boolean; authorId: string
     skip: params.skip,
   })
 
-  const agendas = useMemo(() => (data?.length ? data : []), [data])
-
-  const agendaResult = useMemo(() => agendas.find((agenda) => agenda.author === params.authorId), [agendas, params.authorId])
+  const result = data?.filter((item) => item.author && params.authorId === item.author) ?? []
 
   return {
-    data: agendaResult,
+    data: result,
     ...rest,
   }
 }

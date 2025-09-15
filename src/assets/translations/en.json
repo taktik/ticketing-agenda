@@ -198,7 +198,12 @@
     "appointment_created_successfully": "Appointment Created Successfully!",
     "appointment_details_email_sent": "An email with the appointment details has been sent to the specified recipient.",
     "submission_failed": "Submission Failed",
-    "submission_error_generic": "Something went wrong. Please try again or contact support."
+    "submission_error_generic": "Something went wrong. Please try again or contact support.",
+    "booking_type_prompt": "Is this a standard booking for a citizen, or are you blocking time for staff leave?",
+    "schedule_citizen_appointment_title": "Schedule Citizen Appointment",
+    "schedule_citizen_appointment_desc": "Book a citizen into an available time slot.",
+    "manage_staff_leave_title": "Manage Staff Leave",
+    "manage_staff_leave_desc": "Block calendar time for holidays, sick leave, or other absences."
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

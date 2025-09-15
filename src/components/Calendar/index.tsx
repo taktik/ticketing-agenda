@@ -9,14 +9,16 @@ import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItemType, DecryptedCalendarItem, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
-import { endOfDay, endOfWeek, startOfDay, startOfWeek } from 'date-fns'
+import { endOfWeek, startOfWeek } from 'date-fns'
 import { EventApi, EventClickArg, EventInput } from 'fullcalendar'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
-import { dateToYYYYMMDD, dayjsToYYYYMMDDHHmmss, parseTimeRange } from '../common/helpers'
+import { dayjsToYYYYMMDDHHmmss, parseTimeRange } from '../common/helpers'
+import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { CreateEvent } from './CreateEvent/CreateEvent'
+import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
 import { CalendarEventUpdateForm, EventDetails } from './EventDetails/ModalEvent'
@@ -39,7 +41,9 @@ type calendarRangeType = {
 
 export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate, procedures, sites }: CalendarProps): ReactElement => {
   const [eventModalOpen, setEventModalOpen] = useState(false)
-  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createApptModalOpen, setCreateApptModalOpen] = useState(false)
+  const [timeOffModalOpen, setTimeOffModalOpen] = useState(false)
+  const [apptSelectorModalOpen, setApptSelectorModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<EventApi | undefined>(undefined)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
   const [timeRange, setTimeRange] = useState<'week' | 'day'>('week')
@@ -164,8 +168,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   )
 
   const handleCreate = useCallback(() => {
-    setCreateModalOpen(true)
-  }, [setCreateModalOpen])
+    setApptSelectorModalOpen(true)
+  }, [setApptSelectorModalOpen])
 
   const getEventContent = useCallback(({ view, event }: { view: { type: string }; event: EventApi }) => {
     if (view.type.startsWith('list')) {
@@ -282,7 +286,13 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       />
       {eventModalOpen &&
         createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
-      {createModalOpen && createPortal(<CreateEvent isVisible={createModalOpen} onClose={() => setCreateModalOpen(false)} sites={sites} />, document.body)}
+      {createApptModalOpen && createPortal(<CreateEvent isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} sites={sites} />, document.body)}
+      {apptSelectorModalOpen &&
+        createPortal(
+          <AppointmentSelector isVisible={apptSelectorModalOpen} onClose={() => setApptSelectorModalOpen(false)} setCreateApptModalOpen={setCreateApptModalOpen} setTimeOffModalOpen={setTimeOffModalOpen} />,
+          document.body,
+        )}
+      {timeOffModalOpen && createPortal(<CreateTimeOff isVisible={timeOffModalOpen} onClose={() => setTimeOffModalOpen(false)} sites={sites} />, document.body)}
     </div>
   )
 }
