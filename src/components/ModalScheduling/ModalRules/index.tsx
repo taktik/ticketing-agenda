@@ -588,13 +588,13 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
 
   return (
     <CustomModal isVisible={isVisible} handleClose={handleClose} title={t('content.edit_schedule')} blockAntModalBodyVerticalScroll noFooter width={1300}>
-      <div className="modalRule">
+      <div className="modal-rule">
         {notificationContextHolder}
         <Form layout="vertical" colon={false} form={form} onFinish={handleSubmit} style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'space-between', gap: '1rem' }}>
           <div className="formElements">
-            <div className="header">
+            <div className="header-rule">
               <div className="selectors">
-                <div className="antSelect">
+                <div className="ant-select-rule">
                   {t('content.name')}
                   <Form.Item name="name" rules={[{ required: true, message: t('validation.schedule_name_required') }]}>
                     <Input suffix={<CloseOutlined disabled={nameValue === schedulingTableRow?.name} onClick={handleNameCancel} />} onChange={() => setIsDirty(true)} />

@@ -1,6 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons'
 import { CodeStub, DecryptedCalendarItem, HealthcareParty } from '@icure/cardinal-sdk'
-import { Alert, Button, DatePicker, Form, Select, Space, Tooltip, Typography } from 'antd'
+import { Alert, Button, DatePicker, Form, Select, Space, Typography } from 'antd'
 import { Dayjs } from 'dayjs'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -110,6 +110,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
           <Form.Item name="site" label={t('content.site')} rules={[{ required: true }]}>
             <Select
               showSearch
+              allowClear
               placeholder={t('content.select_site')}
               options={(sites ?? []).map((site) => ({
                 value: site.id,
@@ -117,43 +118,38 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
               }))}
             />
           </Form.Item>
-          <Tooltip title={watchedSite ? null : t('content.select_site_for_service')}>
-            <Form.Item name="service" label={t('content.service')} rules={[{ required: true }]}>
-              <Select
-                showSearch
-                placeholder={t('content.select_service')}
-                optionFilterProp="label"
-                loading={isAgendasLoading}
-                filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}
-                disabled={!watchedSite}
-                options={(allAgendas ?? []).map((agenda) => ({
-                  label: agenda.name,
-                  value: agenda.id,
-                }))}
-              />
-            </Form.Item>
-          </Tooltip>
-          <Tooltip title={watchedService ? null : t('content.select_service_for_period')}>
-            <Form.Item name="period" label={t('content.absence_period')} rules={[{ required: true }]}>
-              <RangePicker showTime={{ format: 'HH:mm' }} format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} placeholder={[t('content.start'), t('content.end')]} disabled={!watchedService} />
-            </Form.Item>
-          </Tooltip>
+          <Form.Item name="service" label={t('content.service')} rules={[{ required: true }]} tooltip={watchedSite ? null : t('content.select_site_for_service')}>
+            <Select
+              showSearch
+              placeholder={t('content.select_service')}
+              optionFilterProp="label"
+              allowClear
+              loading={isAgendasLoading}
+              filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}
+              disabled={!watchedSite}
+              options={(allAgendas ?? []).map((agenda) => ({
+                label: agenda.name,
+                value: agenda.id,
+              }))}
+            />
+          </Form.Item>
+          <Form.Item name="period" label={t('content.absence_period')} rules={[{ required: true }]} tooltip={watchedService ? null : t('content.select_service_for_period')}>
+            <RangePicker showTime={{ format: 'HH:mm' }} format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} placeholder={[t('content.start'), t('content.end')]} disabled={!watchedService} allowEmpty />
+          </Form.Item>
 
-          <Tooltip title={watchedService ? null : t('content.select_service_for_reason')}>
-            <Form.Item name="reason" label={t('content.reason')} rules={[{ required: true }]}>
-              <Select
-                placeholder={t('content.select_reason')}
-                allowClear
-                disabled={!watchedService}
-                options={[
-                  { value: 'Congé', label: t('content.reason_leave') },
-                  { value: 'Maladie', label: t('content.reason_sickness') },
-                  { value: 'Formation', label: t('content.reason_training') },
-                  { value: 'Autre', label: t('content.reason_other') },
-                ]}
-              />
-            </Form.Item>
-          </Tooltip>
+          <Form.Item name="reason" label={t('content.reason')} rules={[{ required: true }]} tooltip={watchedService ? null : t('content.select_service_for_reason')}>
+            <Select
+              placeholder={t('content.select_reason')}
+              allowClear
+              disabled={!watchedService}
+              options={[
+                { value: 'Congé', label: t('content.reason_leave') },
+                { value: 'Maladie', label: t('content.reason_sickness') },
+                { value: 'Formation', label: t('content.reason_training') },
+                { value: 'Autre', label: t('content.reason_other') },
+              ]}
+            />
+          </Form.Item>
         </Form>
       </Space>
     </CustomModal>

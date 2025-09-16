@@ -143,10 +143,10 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.schedule_list')} blockAntModalBodyVerticalScroll noFooter width={1300}>
-      <div className="modalSchedule">
+      <div className="modal-schedule">
         {notificationContextHolder}
         {messageContextHolder}
-        <div className="antSelect">
+        <div className="ant-select-schedule">
           {t('content.services')}
           <AntSelect
             allowClear

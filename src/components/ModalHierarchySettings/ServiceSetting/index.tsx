@@ -458,7 +458,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         }}
         className="service-setting-form"
       >
-        <div className="form-fields">
+        <>
           <div className="service-title">
             <Space align="center">
               <EditableServiceTitle form={form} initialTitles={serviceTitles} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
@@ -715,7 +715,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
               />
             </Table>
           </div>
-        </div>
+        </>
       </Form>
 
       {showDeleteServiceModal &&
