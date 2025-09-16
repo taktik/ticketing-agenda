@@ -291,6 +291,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         eventClick={handleEventClick}
         eventContent={getEventContent}
         noEventsContent={noEventsContent}
+        allDaySlot={false}
       />
       {eventModalOpen &&
         createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
