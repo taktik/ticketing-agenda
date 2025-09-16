@@ -157,7 +157,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
   const [form] = Form.useForm<AppointmentForm>()
 
   const langCode = useMemo(() => {
-    return languageMapping[i18n.language] || 'FR' // Fallback
+    return languageMapping[i18n.language] || 'FR'
   }, [i18n.language])
 
   const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.SITE_ROOT })
@@ -231,6 +231,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       throw new Error('User email is required but was not provided.')
     }
 
+    if (!adminRoot?.id || !siteRoot?.id) {
+      throw new Error('Required root or site information missing. Cannot proceed.')
+    }
+
     const newPhoneNumber = countryCode && phoneNumber ? `${countryCode}${phoneNumber}` : undefined
     const newBirthDate = birthDate ? Number(dayjs(birthDate).format('YYYYMMDD')) : undefined
 
@@ -279,7 +283,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           codes: hasPhoneNumberChanged ? [...(citizenPatient.codes || []).filter((stub) => stub.type !== 'phone'), new CodeStub({ context: 'contact', type: 'phone', code: newPhoneNumber! })] : citizenPatient.codes,
         })
         const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
-        if (updatedPatient) citizenPatient = updatedPatient
+        if (updatedPatient) {
+          citizenPatient = updatedPatient
+          await sharePatient({ patient: updatedPatient, delegates: [siteRoot.id, adminRoot.id] }).unwrap()
+        }
       }
 
       return { citizenUser, citizenPatient }
@@ -287,16 +294,21 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       // --- USER DOES NOT EXIST ---
       // 1. Create a new Patient record first
       const patientId = v4()
-      const emailStub = new CodeStub({
-        context: 'contact',
-        type: 'email',
-        code: email,
-      })
 
-      const phoneStub = new CodeStub({
+      const tagVersion = '1'
+      const emailStub = new CodeStub({
+        id: `EMAIL|${tagVersion}`,
         context: 'contact',
-        type: 'phone',
+        type: 'EMAIL',
+        code: email,
+        version: tagVersion,
+      })
+      const phoneStub = new CodeStub({
+        id: `PHONE|${tagVersion}`,
+        context: 'contact',
+        type: 'PHONE',
         code: newPhoneNumber,
+        version: tagVersion,
       })
       const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, codes: [emailStub, phoneStub] })
       const citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
@@ -311,6 +323,8 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         // This is where an orphaned patient record could be left
         throw new Error('Failed to create a new user record after creating patient.')
       }
+
+      await sharePatient({ patient: citizenPatient, delegates: [siteRoot.id, adminRoot.id] }).unwrap()
 
       return { citizenUser, citizenPatient }
     }
@@ -332,7 +346,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       }
 
       if (!adminRoot?.id || !siteRoot?.id) {
-        throw new Error('Required administrator or site information is missing. Cannot proceed.')
+        throw new Error('Required root or site information missing. Cannot proceed.')
       }
 
       const eventsCreationPromises = procedures.map(async (item) => {
@@ -349,6 +363,16 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         const eventStart = combineDateAndTime(timeslot)
         const eventTimes = calculateNumericEventTimes(eventStart, procedureVariant.duration)
 
+        const tagType = 'APPOINTMENT'
+        const tagVersion = '1'
+
+        const eventTag = new CodeStub({
+          id: `${tagType}|${tagVersion}`,
+          code: tagType,
+          type: tagType,
+          version: tagVersion,
+        })
+
         const newEvent = new DecryptedCalendarItem({
           id: v4(),
           patientId: citizenPatient.id,
@@ -360,13 +384,12 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           startTime: eventTimes?.startTime,
           endTime: eventTimes?.endTime,
           author: `${citizenPatient.firstName} ${citizenPatient.lastName} - ${citizenUser.email}`,
+          tags: [eventTag],
         })
 
         return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()
       })
       await Promise.all(eventsCreationPromises)
-
-      await sharePatient({ patient: citizenPatient, delegates: [siteRoot.id, adminRoot.id] }).unwrap()
     } catch (error: unknown) {
       console.error('An error occurred during appointment creation:', error)
       // Use the specific error message from the thrown Error

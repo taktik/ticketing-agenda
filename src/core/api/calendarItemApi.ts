@@ -49,7 +49,7 @@ export const calendarItemApiRtk = createApi({
         ]
       },
     }),
-    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient; delegates: string[] }>({
+    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient | undefined; delegates: string[] }>({
       async queryFn({ calendarItem, patient, delegates }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {

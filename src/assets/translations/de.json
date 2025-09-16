@@ -204,7 +204,19 @@
     "schedule_citizen_appointment_title": "Bürgertermin planen",
     "schedule_citizen_appointment_desc": "Buchen Sie einen Bürger in einem verfügbaren Zeitfenster.",
     "manage_staff_leave_title": "Personalurlaub verwalten",
-    "manage_staff_leave_desc": "Kalenderzeit für Feiertage, Krankheitsurlaub oder andere Abwesenheiten blockieren."
+    "manage_staff_leave_desc": "Kalenderzeit für Feiertage, Krankheitsurlaub oder andere Abwesenheiten blockieren.",
+    "select_site_for_service": "Sie müssen einen Standort auswählen, um einen Dienst zu wählen",
+    "select_service_for_period": "Sie müssen einen Dienst auswählen, um einen Zeitraum zu wählen",
+    "select_service_for_reason": "Sie müssen einen Dienst auswählen, um einen Grund zu wählen",
+    "absence_management": "Abwesenheitsverwaltung",
+    "absence_warning_details": "Diese Aktion blockiert die Terminbuchung für den ausgewählten Dienst und Zeitraum für 1 Slot.",
+    "absence_period": "Abwesenheitszeitraum",
+    "select_reason": "Wählen Sie einen Grund",
+    "reason_leave": "Urlaub",
+    "reason_sickness": "Krankheit",
+    "reason_training": "Fortbildung",
+    "reason_other": "Sonstiges",
+    "reason": "Grund"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

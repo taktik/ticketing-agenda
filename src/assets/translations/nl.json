@@ -203,7 +203,19 @@
     "schedule_citizen_appointment_title": "Afspraak voor burger inplannen",
     "schedule_citizen_appointment_desc": "Boek een burger in een beschikbaar tijdslot.",
     "manage_staff_leave_title": "Personeelsverlof beheren",
-    "manage_staff_leave_desc": "Blokkeer kalendertijd voor vakanties, ziekteverlof of andere afwezigheden."
+    "manage_staff_leave_desc": "Blokkeer kalendertijd voor vakanties, ziekteverlof of andere afwezigheden.",
+    "select_site_for_service": "U moet een locatie selecteren om een dienst te kiezen",
+    "select_service_for_period": "U moet een dienst selecteren om een periode te kiezen",
+    "select_service_for_reason": "U moet een dienst selecteren om een reden te kiezen",
+    "absence_management": "Afwezigheidsbeheer",
+    "absence_warning_details": "Deze actie blokkeert het boeken van afspraken voor de geselecteerde dienst en periode voor 1 slot.",
+    "absence_period": "Afwezigheidsperiode",
+    "select_reason": "Selecteer een reden",
+    "reason_leave": "Verlof",
+    "reason_sickness": "Ziekte",
+    "reason_training": "Opleiding",
+    "reason_other": "Overig",
+    "reason": "Reden"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

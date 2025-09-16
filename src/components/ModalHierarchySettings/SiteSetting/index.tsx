@@ -121,6 +121,10 @@ export const SiteSetting = ({ site, services, handleSiteDelete, isSitesLoading }
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({
         intervalMinutes: 5,
       })
+
+      const tagType = 'SERVICE'
+      const tagVersion = '1'
+
       await createUpdateAgendaMutation(
         new Agenda({
           author: site.id,
@@ -129,10 +133,10 @@ export const SiteSetting = ({ site, services, handleSiteDelete, isSitesLoading }
           name: t('content.new_service'),
           tags: [
             new CodeStub({
-              id: 'SERVICE',
-              code: 'SERVICE',
-              context: 'SERVICE',
-              type: 'SERVICE',
+              id: `${tagType}|${tagVersion}`,
+              code: tagType,
+              type: tagType,
+              version: tagVersion,
               label: {
                 FR: t('content.new_service'),
                 NL: '',

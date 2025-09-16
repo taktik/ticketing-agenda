@@ -19,7 +19,7 @@ const { Text } = Typography
 export interface CalendarEventUpdateForm {
   start: dayjs.Dayjs
   end: dayjs.Dayjs
-  calendarItemTypeId: string
+  calendarItemTypeId?: string
   details: string
 }
 
@@ -39,9 +39,10 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
 
   const [isEditing, setIsEditing] = useState(false)
   const [form] = Form.useForm<CalendarEventUpdateForm>()
-  const currentValues = Form.useWatch([], form)
 
-  const { data: patient } = useGetPatientByIdQuery(event?.extendedProps.patientId ?? '')
+  const { data: patient } = useGetPatientByIdQuery(event?.extendedProps.patientId ?? '', { skip: !event || !event.extendedProps.patientId })
+
+  const isTimeOff = useMemo(() => !!event?.extendedProps.isTimeOff, [event])
 
   const patientName = useMemo(() => (patient ? patient.firstName + ' ' + patient.lastName : undefined), [patient])
   const patientEmail = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'email')?.code : undefined), [patient])
@@ -96,28 +97,30 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
         </Descriptions>
       </Card>
 
-      <Card
-        title={t('content.citizen_details')}
-        variant="borderless"
-        styles={{
-          header: { paddingLeft: 0, borderBottom: 0, minHeight: 'auto' },
-          body: { padding: 0 },
-        }}
-        style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
-      >
-        <Descriptions
-          bordered
-          column={1}
+      {!isTimeOff && (
+        <Card
+          title={t('content.citizen_details')}
+          variant="borderless"
           styles={{
-            label: { width: '250px' },
+            header: { paddingLeft: 0, borderBottom: 0, minHeight: 'auto' },
+            body: { padding: 0 },
           }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
         >
-          <Descriptions.Item label={t('content.full_name')}>{patientName}</Descriptions.Item>
-          <Descriptions.Item label={t('content.email')}>{patientEmail}</Descriptions.Item>
-          <Descriptions.Item label={t('content.phone_number')}>{patientPhoneNumber}</Descriptions.Item>
-          <Descriptions.Item label={t('content.birth_date')}>{patientBirthDate}</Descriptions.Item>
-        </Descriptions>
-      </Card>
+          <Descriptions
+            bordered
+            column={1}
+            styles={{
+              label: { width: '250px' },
+            }}
+          >
+            <Descriptions.Item label={t('content.full_name')}>{patientName}</Descriptions.Item>
+            <Descriptions.Item label={t('content.email')}>{patientEmail}</Descriptions.Item>
+            <Descriptions.Item label={t('content.phone_number')}>{patientPhoneNumber}</Descriptions.Item>
+            <Descriptions.Item label={t('content.birth_date')}>{patientBirthDate}</Descriptions.Item>
+          </Descriptions>
+        </Card>
+      )}
     </div>
   )
 
@@ -139,7 +142,7 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
               <Form.Item name="end" label={t('content.end_hour')} rules={[{ required: true }]}>
                 <DatePicker showTime format="MMM D, YYYY HH:mm" style={{ width: '100%' }} />
               </Form.Item>
-              <Form.Item name="calendarItemTypeId" label={t('content.procedure')} rules={[{ required: true }]}>
+              <Form.Item name="calendarItemTypeId" label={t('content.procedure')}>
                 <Select>
                   {(procedures ?? [])
                     .filter((proc) => proc.defaultCalendarItemType)

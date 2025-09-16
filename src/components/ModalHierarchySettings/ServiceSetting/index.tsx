@@ -404,7 +404,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       try {
         if (!service || !newTitles || !newTitles['FR']) throw new Error()
         const newTags = service.tags.map((tag) =>
-          tag.id === 'SERVICE'
+          tag.type === 'SERVICE'
             ? new CodeStub({
                 ...tag,
                 label: newTitles,
@@ -441,7 +441,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   ]
 
   const serviceTitles = useMemo(() => {
-    const serviceTag = service.tags?.find((tag) => tag.id === 'SERVICE')
+    const serviceTag = service.tags?.find((tag) => tag.type === 'SERVICE')
     return serviceTag?.label || { FR: '', NL: '', EN: '', DE: '' }
   }, [service.tags])
 

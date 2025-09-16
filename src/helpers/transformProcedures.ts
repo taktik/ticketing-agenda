@@ -117,7 +117,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     const firstProcedureInGroup = proceduresWithSameName[0]
     const representativeService = firstProcedureInGroup.agendaId ? agendaMap.get(firstProcedureInGroup.agendaId) : undefined
     const serviceName = representativeService?.name || 'Unknown Service'
-    const serviceTag = representativeService?.tags.find((tag) => tag.id === 'SERVICE')
+    const serviceTag = representativeService?.tags.find((tag) => tag.type === 'SERVICE')
 
     //8. Get the translations for service - procedure
     const displayTextByLanguage = Object.fromEntries(

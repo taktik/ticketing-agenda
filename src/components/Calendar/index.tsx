@@ -101,15 +101,23 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
         const linkedProcedure = procedures?.find((procedure) => procedure.id === calendarItem.calendarItemTypeId)
         const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
+        const isTimeOff = calendarItem.tags.some((tag) => tag.type === 'TIMEOFF')
 
         return {
           id: calendarItem.id,
           title: calendarItem.title,
           start: eventTimes?.start,
           end: eventTimes?.end,
-          color: linkedProcedure?.color,
+          color: isTimeOff ? 'orange' : linkedProcedure?.color,
           details: calendarItem.details,
-          extendedProps: { calendarItemTypeId: calendarItem.calendarItemTypeId, agendaId: calendarItem.agendaId, patientId: calendarItem.patientId, patientIdentifier: calendarItem.author, rev: calendarItem.rev },
+          extendedProps: {
+            calendarItemTypeId: calendarItem.calendarItemTypeId,
+            agendaId: calendarItem.agendaId,
+            patientId: calendarItem.patientId,
+            patientIdentifier: calendarItem.author,
+            isTimeOff: isTimeOff,
+            rev: calendarItem.rev,
+          },
         }
       })
       .filter(Boolean) as EventInput[]
@@ -292,7 +300,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           <AppointmentSelector isVisible={apptSelectorModalOpen} onClose={() => setApptSelectorModalOpen(false)} setCreateApptModalOpen={setCreateApptModalOpen} setTimeOffModalOpen={setTimeOffModalOpen} />,
           document.body,
         )}
-      {timeOffModalOpen && createPortal(<CreateTimeOff isVisible={timeOffModalOpen} onClose={() => setTimeOffModalOpen(false)} sites={sites} />, document.body)}
+      {timeOffModalOpen &&
+        createPortal(<CreateTimeOff isVisible={timeOffModalOpen} onClose={() => setTimeOffModalOpen(false)} sites={sites} showMessageFeedback={showMessageFeedback} openNotification={openNotification} />, document.body)}
     </div>
   )
 }

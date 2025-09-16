@@ -203,7 +203,19 @@
     "schedule_citizen_appointment_title": "Planifier un rendez-vous citoyen",
     "schedule_citizen_appointment_desc": "Réserver un créneau disponible pour un citoyen.",
     "manage_staff_leave_title": "Gérer les congés du personnel",
-    "manage_staff_leave_desc": "Bloquer des plages horaires pour les vacances, les congés maladie ou autres absences."
+    "manage_staff_leave_desc": "Bloquer des plages horaires pour les vacances, les congés maladie ou autres absences.",
+    "select_site_for_service": "Vous devez sélectionner un site pour choisir un service",
+    "select_service_for_period": "Vous devez sélectionner un service pour choisir une période",
+    "select_service_for_reason": "Vous devez sélectionner un service pour choisir un motif",
+    "absence_management": "Gestion des absences",
+    "absence_warning_details": "Cette action bloquera la prise de rendez-vous pour le service et la période sélectionnés pour 1 créneau.",
+    "absence_period": "Période d'absence",
+    "select_reason": "Sélectionnez un motif",
+    "reason_leave": "Congé",
+    "reason_sickness": "Maladie",
+    "reason_training": "Formation",
+    "reason_other": "Autre",
+    "reason": "Motif"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
