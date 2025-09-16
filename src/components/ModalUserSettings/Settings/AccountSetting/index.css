@@ -118,6 +118,7 @@ body * {
   display: flex;
   align-self: stretch;
   position: relative;
+  padding: 1.5rem;
 }
 @media screen and (max-width: calc(768px - 1px)) {
   .manage-account-root {

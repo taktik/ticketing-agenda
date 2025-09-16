@@ -215,7 +215,11 @@
     "reason_sickness": "Sickness",
     "reason_training": "Training",
     "reason_other": "Other",
-    "reason": "Reason"
+    "reason": "Reason",
+    "role_administrator": "Administrator",
+    "role_city_worker": "City Worker",
+    "select_an_assignment": "Select an assignment",
+    "select_a_role": "Select a role"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -348,6 +352,8 @@
     "value_required": "Value is required",
     "unit_required": "Unit is required",
     "service_name_in_french_mandatory": "The service name in French is mandatory.",
-    "name_is_reserved": "'{{word}}' is a reserved name. Please choose another."
+    "name_is_reserved": "'{{word}}' is a reserved name. Please choose another.",
+    "role_is_required": "Role is required",
+    "assignment_is_required": "Assignment is required"
   }
 }

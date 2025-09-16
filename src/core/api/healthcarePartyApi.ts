@@ -54,6 +54,7 @@ export const healthcarePartyApiRtk = createApi({
         })
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      keepUnusedDataFor: Infinity,
     }),
     getHealthcareParty: builder.query<HealthcareParty | undefined, string>({
       async queryFn(id, { getState }) {
@@ -76,6 +77,7 @@ export const healthcarePartyApiRtk = createApi({
         })
       },
       providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      keepUnusedDataFor: Infinity,
     }),
     createUpdateHealthcareParty: builder.mutation<HealthcareParty | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {

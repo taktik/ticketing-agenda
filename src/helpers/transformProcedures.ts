@@ -1,7 +1,7 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 
-const languages = ['FR', 'EN', 'NDLS', 'DE']
+export const languages = ['FR', 'EN', 'NDLS', 'DE']
 
 export interface ProcedureVariant {
   id: string

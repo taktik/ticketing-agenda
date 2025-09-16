@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { HealthcareParty, User } from '@icure/cardinal-sdk'
+import { HealthcareParty, ListOfIds, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, Select, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
@@ -7,23 +7,31 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { RESERVED_WORDS } from '../../../../constants'
+import { useGetAllAgendaByAuthorIds } from '../../../../core/api/agendaApi'
 import { RootHcpType } from '../../../../core/api/fetchType'
 import {
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
   useGetHealthcarePartiesByIdsQuery,
+  useGetHealthcarePartiesByParentQuery,
   useGetRootHealthcareParty,
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
-import { useGetAllRolesQuery } from '../../../../core/api/roleApi'
-import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery } from '../../../../core/api/userApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+
+interface Assignment {
+  siteId: string | undefined
+  agendaId: string | undefined
+}
 
 enum UserRole {
   ADMIN = 'admin',
   CITY_WORKER = 'city_worker',
 }
+const CityWorkerRoles = new ListOfIds({ ids: ['BASIC_USER', 'BASIC_DATA_OWNER', 'CALENDAR_ITEM_MANAGER', 'PATIENT_USER_MANAGER'] })
+const AdminRoles = new ListOfIds({ ids: ['BASIC_USER', 'BASIC_DATA_OWNER', 'CALENDAR_ITEM_MANAGER', 'PATIENT_USER_MANAGER', 'HIERARCHICAL_DATA_OWNER', 'HCP_USER_MANAGER'] })
 
 interface UserRow {
   rowId: string
@@ -33,13 +41,15 @@ interface UserRow {
   lastName: string | undefined
   email: string | undefined
   role: UserRole | undefined
+  assignment: Assignment | undefined
 }
 
 interface FormValues {
   firstName: string
   lastName: string
   email: string
-  role: UserRole | undefined
+  role: UserRole
+  assignment: Assignment | undefined
 }
 
 export const ManagerUsers = (): ReactElement => {
@@ -51,17 +61,41 @@ export const ManagerUsers = (): ReactElement => {
   const isEditing = useMemo(() => (record: UserRow) => record.rowId === editingKey, [editingKey])
   const [form] = Form.useForm<FormValues>()
 
+  const watchedRole = Form.useWatch('role', form)
+
   const [createUpdateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
   const [createUpdateHcp, { isLoading: isCreateUpdateHcpLoading }] = useCreateUpdateHealthcarePartyMutation()
 
   const [deleteUser, { isLoading: isDeleteUserLoading }] = useDeleteUserMutation()
   const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
 
-  const [deleteSilentHcp, { isLoading: isSilentDeleteHcpLading }] = useSilentDeleteHealthcarePartyMutation()
+  const [deleteSilentHcp, { isLoading: isSilentDeleteHcpLoading }] = useSilentDeleteHealthcarePartyMutation()
   const [unDeleteHcp, { isLoading: isSilentUndeleteHcpLoading }] = useSilentUnDeleteHealthcarePartyMutation()
+
+  const [setUserRoles, { isLoading: isSetUserRolesLoading }] = useSetUserRolesMutation()
 
   const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
   const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.SITE_ROOT })
+  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: !siteRoot })
+  const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
+  const { data: agendas, isLoading: isAgendasLoading } = useGetAllAgendaByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
+
+  const siteAndAgendaOptions = useMemo(() => {
+    if (!sites) return []
+
+    const siteNameMap = new Map(sites.map((site) => [site.id, site.name]))
+
+    return agendas.map((agenda) => {
+      const siteName = agenda.author ? siteNameMap.get(agenda.author) || 'Site Inconnu' : 'Site Inconnu'
+      const serviceLabel = agenda.name ?? 'Service Inconnu'
+
+      return {
+        label: `${siteName} - ${serviceLabel}`,
+        value: `${agenda.author}:${agenda.id}`,
+      }
+    })
+  }, [agendas, sites])
+
   const { data: users, isLoading: isUsersLoading } = useGetUsersQuery()
 
   const usersHcpIds = useMemo(() => {
@@ -70,7 +104,16 @@ export const ManagerUsers = (): ReactElement => {
   }, [users])
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds, { skip: usersHcpIds.length === 0 || !users })
-  const { data: roles, isLoading: isRolesLoading } = useGetAllRolesQuery()
+
+  const isFetching = useMemo(
+    () => isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading || isSitesLoading || isAgendasLoading,
+    [isUsersLoading, isHcpsLoading, isAdminRootLoading, isSiteRootLoading, isSitesLoading, isAgendasLoading],
+  )
+  const isMutating = useMemo(
+    () => isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLoading || isSilentUndeleteHcpLoading || isSetUserRolesLoading,
+    [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLoading, isSilentUndeleteHcpLoading, isSetUserRolesLoading],
+  )
+  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   const hcpMap = useMemo(() => {
     return new Map((hcps ?? []).filter((hcp) => !(hcp.parentId === siteRoot?.id || hcp.firstName === 'admin-root' || hcp.firstName === 'site-root')).map((hcp) => [hcp.id, hcp]))
@@ -79,17 +122,6 @@ export const ManagerUsers = (): ReactElement => {
   const userMap = useMemo(() => {
     return new Map((users ?? []).map((user) => [user.id, user]))
   }, [users])
-
-  useEffect(() => console.log('hcpMap', hcpMap), [hcpMap])
-  useEffect(() => console.log('userMap', userMap), [userMap])
-  useEffect(() => console.log('roles', roles), [roles])
-
-  const isFetching = useMemo(() => isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading, [isUsersLoading, isHcpsLoading, isAdminRootLoading, isSiteRootLoading])
-  const isMutating = useMemo(
-    () => isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLading || isSilentUndeleteHcpLoading,
-    [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLading, isSilentUndeleteHcpLoading],
-  )
-  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   const mergedList = useMemo(() => {
     if (!users || !hcps) return []
@@ -114,7 +146,8 @@ export const ManagerUsers = (): ReactElement => {
         firstName: hcp.firstName,
         lastName: hcp.lastName,
         email: user.email,
-        role: hcp && hcp.parentId && adminRoot && adminRoot.id && hcp.parentId === adminRoot.id ? UserRole.ADMIN : undefined,
+        role: hcp?.parentId === adminRoot?.id ? UserRole.ADMIN : hcp?.parentId && siteIds.includes(hcp.parentId) ? UserRole.CITY_WORKER : undefined,
+        assignment: { agendaId: hcp.supervisorId, siteId: hcp.parentId },
       } as UserRow
     })
 
@@ -150,6 +183,29 @@ export const ManagerUsers = (): ReactElement => {
     setTimeout(messageApi.destroy, 2500)
   }
 
+  const parentIdMap = useMemo(() => {
+    return {
+      [UserRole.ADMIN]: adminRoot?.id,
+      [UserRole.CITY_WORKER]: siteRoot?.id,
+    }
+  }, [adminRoot, siteRoot])
+
+  const roleConfig = useMemo(() => {
+    return {
+      [UserRole.ADMIN]: { label: t('content.role_administrator'), color: 'gold' },
+      [UserRole.CITY_WORKER]: { label: t('content.role_city_worker'), color: 'blue' },
+    }
+  }, [])
+
+  const roleOptions = useMemo(
+    () =>
+      Object.entries(roleConfig).map(([value, { label }]) => ({
+        value,
+        label,
+      })),
+    [roleConfig],
+  )
+
   const addUser = useCallback(() => {
     const hcpId = v4()
     const userId = v4()
@@ -164,6 +220,7 @@ export const ManagerUsers = (): ReactElement => {
       lastName: undefined,
       email: undefined,
       role: undefined,
+      assignment: undefined,
     }
 
     setTableRows((prev) => [...prev, newUserRow])
@@ -217,11 +274,15 @@ export const ManagerUsers = (): ReactElement => {
           firstName: rowValues.firstName,
           lastName: rowValues.lastName,
           name: rowValues.firstName + ' ' + rowValues.lastName,
-          parentId: rowValues.role === UserRole.ADMIN ? adminRoot?.id : undefined,
+          parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+          supervisorId: rowValues.assignment?.agendaId,
         }).unwrap()
         try {
           // Step 2: If HCP creation was successful, try to create User
           await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
+          if (record.user.id && rowValues.role) {
+            await setUserRoles({ userId: record.user.id, roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles }).unwrap()
+          }
           showMessageFeedback('success', t('notification.user_saved'))
         } catch (userError) {
           // User creation failed, roll back the HCP creation
@@ -258,11 +319,15 @@ export const ManagerUsers = (): ReactElement => {
           firstName: rowValues.firstName,
           lastName: rowValues.lastName,
           name: rowValues.firstName + ' ' + rowValues.lastName,
-          parentId: rowValues.role === UserRole.ADMIN ? adminRoot?.id : undefined,
+          parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+          supervisorId: rowValues.assignment?.agendaId,
         }).unwrap()
         try {
           // Step 2: If HCP update was successful, try to update User
           await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
+          if (record.user.id && rowValues.role) {
+            await setUserRoles({ userId: record.user.id, roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles }).unwrap()
+          }
           showMessageFeedback('success', t('notification.user_saved'))
         } catch (userError) {
           // User update failed, but HCP was updated.
@@ -308,6 +373,7 @@ export const ManagerUsers = (): ReactElement => {
           firstName: record.firstName,
           lastName: record.lastName,
           email: record.email,
+          role: record.role,
         })
         setEditingKey(record.rowId)
       } catch (error) {
@@ -461,30 +527,37 @@ export const ManagerUsers = (): ReactElement => {
                 const editable = isEditing(record)
                 if (editable) {
                   return (
-                    <Form.Item name="role" style={{ margin: 0 }} rules={[{ required: true, message: 'Role is required' }]}>
-                      <Select placeholder="Select a role" style={{ width: 150 }}>
-                        <Select.Option value={UserRole.ADMIN}>Admin</Select.Option>
-                        <Select.Option value={UserRole.CITY_WORKER}>City Worker</Select.Option>
-                      </Select>
-                    </Form.Item>
-                  )
-                } else {
-                  if (record.role === UserRole.ADMIN) {
-                    return <Tag color="gold">Admin</Tag>
-                  }
-                  if (record.role === UserRole.CITY_WORKER) {
-                    return (
-                      <Space>
-                        <Tag color="blue">City Worker</Tag>
-                      </Space>
-                    )
-                  }
-                  return (
-                    <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                      {t('content.not_set')}
-                    </Tag>
+                    <div className="role-column">
+                      <Form.Item name="role" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.role_is_required') }]}>
+                        <Select placeholder={t('content.select_a_role')} options={roleOptions} />
+                      </Form.Item>
+                      {watchedRole === UserRole.CITY_WORKER && (
+                        <Form.Item name="assignment" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.assignment_is_required') }]}>
+                          <Select
+                            style={{ width: '100%' }}
+                            options={siteAndAgendaOptions}
+                            placeholder={t('content.select_an_assignment')}
+                            showSearch
+                            optionFilterProp="label"
+                            allowClear
+                            loading={isSitesLoading || isAgendasLoading}
+                          />
+                        </Form.Item>
+                      )}
+                    </div>
                   )
                 }
+                const roleInfo = record.role ? roleConfig[record.role] : undefined
+
+                if (roleInfo) {
+                  return <Tag color={roleInfo.color}>{roleInfo.label}</Tag>
+                }
+
+                return (
+                  <Tag icon={<ExclamationCircleOutlined />} color="warning">
+                    {t('content.not_set')}
+                  </Tag>
+                )
               }}
             />
             <Column

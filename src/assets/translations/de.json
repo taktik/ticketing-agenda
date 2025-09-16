@@ -216,7 +216,11 @@
     "reason_sickness": "Krankheit",
     "reason_training": "Fortbildung",
     "reason_other": "Sonstiges",
-    "reason": "Grund"
+    "reason": "Grund",
+    "role_administrator": "Administrator",
+    "role_city_worker": "Stadtmitarbeiter",
+    "select_an_assignment": "Wählen Sie eine Zuweisung",
+    "select_a_role": "Wählen Sie eine Rolle"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -349,6 +353,8 @@
     "value_required": "Wert ist erforderlich",
     "unit_required": "Einheit ist erforderlich",
     "service_name_in_french_mandatory": "Der Dienstname auf Französisch ist obligatorisch.",
-    "name_is_reserved": "'{{word}}' ist ein reservierter Name. Bitte wählen Sie einen anderen."
+    "name_is_reserved": "'{{word}}' ist ein reservierter Name. Bitte wählen Sie einen anderen.",
+    "role_is_required": "Rolle ist erforderlich",
+    "assignment_is_required": "Zuweisung ist erforderlich"
   }
 }

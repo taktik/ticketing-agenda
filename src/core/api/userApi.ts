@@ -1,4 +1,4 @@
-import { randomUuid, User, UserFilters } from '@icure/cardinal-sdk'
+import { ListOfIds, randomUuid, User, UserFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { loadFromIterator } from './utils'
@@ -82,7 +82,35 @@ export const userApiRtk = createApi({
       },
       invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
+    setUserRoles: builder.mutation<User | undefined, { userId: string; roleIds: ListOfIds }>({
+      async queryFn(params, { getState }) {
+        const { userId, roleIds } = params
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async () => {
+          const result = await userApi?.setUserRoles(userId, roleIds)
+          if (!result) {
+            throw new Error('User role update failed')
+          }
+          return result
+        })
+      },
+      invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
+    }),
+    resetUserRoles: builder.mutation<User | undefined, string>({
+      async queryFn(userId, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async () => {
+          const result = await userApi?.resetUserRoles(userId)
+          if (!result) {
+            throw new Error('User role reset failed')
+          }
+          return result
+        })
+      },
+      invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
+    }),
   }),
 })
 
-export const { useGetUsersQuery, useGetUserByEmailQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation, useLazyGetUserByEmailQuery } = userApiRtk
+export const { useGetUsersQuery, useGetUserByEmailQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation, useLazyGetUserByEmailQuery, useSetUserRolesMutation, useResetUserRolesMutation } =
+  userApiRtk

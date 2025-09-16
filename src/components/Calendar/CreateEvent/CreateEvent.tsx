@@ -383,7 +383,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
           startTime: eventTimes?.startTime,
           endTime: eventTimes?.endTime,
-          author: `${citizenPatient.firstName} ${citizenPatient.lastName} - ${citizenUser.email}`,
+          addressText: `${citizenPatient.firstName} ${citizenPatient.lastName} - ${citizenUser.email}`,
           tags: [eventTag],
         })
 

@@ -215,7 +215,11 @@
     "reason_sickness": "Maladie",
     "reason_training": "Formation",
     "reason_other": "Autre",
-    "reason": "Motif"
+    "reason": "Motif",
+    "role_administrator": "Administrateur",
+    "role_city_worker": "Agent communal",
+    "select_an_assignment": "Sélectionnez une affectation",
+    "select_a_role": "Sélectionnez un rôle"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -348,6 +352,8 @@
     "value_required": "La valeur est requise",
     "unit_required": "L'unité est requise",
     "service_name_in_french_mandatory": "Le nom du service en français est obligatoire.",
-    "name_is_reserved": "'{{word}}' est un nom réservé. Veuillez en choisir un autre."
+    "name_is_reserved": "'{{word}}' est un nom réservé. Veuillez en choisir un autre.",
+    "role_is_required": "Le rôle est requis",
+    "assignment_is_required": "L'affectation est requise"
   }
 }

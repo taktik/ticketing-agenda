@@ -215,7 +215,11 @@
     "reason_sickness": "Ziekte",
     "reason_training": "Opleiding",
     "reason_other": "Overig",
-    "reason": "Reden"
+    "reason": "Reden",
+    "role_administrator": "Beheerder",
+    "role_city_worker": "Gemeentemedewerker",
+    "select_an_assignment": "Selecteer een toewijzing",
+    "select_a_role": "Selecteer een rol"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -348,6 +352,8 @@
     "value_required": "Waarde is vereist",
     "unit_required": "Eenheid is vereist",
     "service_name_in_french_mandatory": "De servicenaam in het Frans is verplicht.",
-    "name_is_reserved": "'{{word}}' is een gereserveerde naam. Kies alstublieft een andere."
+    "name_is_reserved": "'{{word}}' is een gereserveerde naam. Kies alstublieft een andere.",
+    "role_is_required": "Rol is verplicht",
+    "assignment_is_required": "Toewijzing is verplicht"
   }
 }

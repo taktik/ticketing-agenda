@@ -143,7 +143,7 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
                 <DatePicker showTime format="MMM D, YYYY HH:mm" style={{ width: '100%' }} />
               </Form.Item>
               <Form.Item name="calendarItemTypeId" label={t('content.procedure')}>
-                <Select>
+                <Select disabled={isTimeOff}>
                   {(procedures ?? [])
                     .filter((proc) => proc.defaultCalendarItemType)
                     .map((type) => (

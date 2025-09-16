@@ -114,7 +114,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             calendarItemTypeId: calendarItem.calendarItemTypeId,
             agendaId: calendarItem.agendaId,
             patientId: calendarItem.patientId,
-            patientIdentifier: calendarItem.author,
+            patientIdentifier: calendarItem.addressText ?? '',
             isTimeOff: isTimeOff,
             rev: calendarItem.rev,
           },

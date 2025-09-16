@@ -35,8 +35,6 @@ export default function DashboardPage() {
   const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: skip, rootType: RootHcpType.SITE_ROOT })
   const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: skip, rootType: RootHcpType.ADMIN_ROOT })
 
-  const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
-
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
