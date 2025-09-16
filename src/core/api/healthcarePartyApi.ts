@@ -116,7 +116,6 @@ export const healthcarePartyApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: () => [],
     }),
     unDeleteHealthcareParty: builder.mutation<string | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {
@@ -155,7 +154,6 @@ export const healthcarePartyApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: () => [],
     }),
   }),
 })

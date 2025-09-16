@@ -18,7 +18,7 @@ import {
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
-import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation } from '../../../../core/api/userApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
 
 interface Assignment {
@@ -69,6 +69,7 @@ export const ManagerUsers = (): ReactElement => {
   const [deleteUser, { isLoading: isDeleteUserLoading }] = useDeleteUserMutation()
   const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
 
+  const [deleteSilentUser, { isLoading: isSilentDeleteUserLoading }] = useSilentDeleteUserMutation()
   const [deleteSilentHcp, { isLoading: isSilentDeleteHcpLoading }] = useSilentDeleteHealthcarePartyMutation()
   const [unDeleteHcp, { isLoading: isSilentUndeleteHcpLoading }] = useSilentUnDeleteHealthcarePartyMutation()
 
@@ -110,8 +111,9 @@ export const ManagerUsers = (): ReactElement => {
     [isUsersLoading, isHcpsLoading, isAdminRootLoading, isSiteRootLoading, isSitesLoading, isAgendasLoading],
   )
   const isMutating = useMemo(
-    () => isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLoading || isSilentUndeleteHcpLoading || isSetUserRolesLoading,
-    [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLoading, isSilentUndeleteHcpLoading, isSetUserRolesLoading],
+    () =>
+      isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLoading || isSilentUndeleteHcpLoading || isSetUserRolesLoading || isSilentDeleteUserLoading,
+    [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLoading, isSilentUndeleteHcpLoading, isSetUserRolesLoading, isSilentDeleteUserLoading],
   )
   const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
@@ -264,83 +266,112 @@ export const ManagerUsers = (): ReactElement => {
 
   const createUser = useCallback(
     async (record: UserRow) => {
+      let createdHcp: HealthcareParty | undefined = undefined
+      let createdUser: User | undefined = undefined
+
       try {
         if (!record.hcp || !record.user) throw new Error('No user selected')
         const rowValues = await form.validateFields()
 
-        // Step 1: Create HealthcareParty
-        const createdHcpResult = await createUpdateHcp({
+        // --- Step 1: Create HealthcareParty ---
+        createdHcp = await createUpdateHcp({
           ...record.hcp,
           firstName: rowValues.firstName,
           lastName: rowValues.lastName,
-          name: rowValues.firstName + ' ' + rowValues.lastName,
+          name: `${rowValues.firstName} ${rowValues.lastName}`,
           parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
           supervisorId: rowValues.assignment?.agendaId,
         }).unwrap()
+
         try {
-          // Step 2: If HCP creation was successful, try to create User
-          await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
-          if (record.user.id && rowValues.role) {
-            await setUserRoles({ userId: record.user.id, roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles }).unwrap()
+          // --- Step 2: Create User ---
+          createdUser = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
+
+          try {
+            // --- Step 3: Set User Roles ---
+            if (createdUser && createdUser.id && rowValues.role) {
+              await setUserRoles({
+                userId: createdUser.id,
+                roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles,
+              }).unwrap()
+            }
+            showMessageFeedback('success', t('notification.user_saved'))
+          } catch (rolesError) {
+            console.error('Failed to set user roles:', rolesError)
+            openNotification('error', t('notification.user_save_failed'), t('notification.roles_save_error'))
+
+            // ROLES FAILED: Roll back Userand HCP
+            if (createdUser) await deleteSilentUser(createdUser).unwrap()
+            if (createdHcp) await deleteSilentHcp(createdHcp).unwrap()
           }
-          showMessageFeedback('success', t('notification.user_saved'))
         } catch (userError) {
-          // User creation failed, roll back the HCP creation
           console.error('Failed to create user:', userError)
           openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
 
-          if (createdHcpResult && createdHcpResult.id) {
-            console.warn(`Attempting to roll back HCP creation for ID: ${createdHcpResult.id}`)
-            try {
-              await deleteSilentHcp(createdHcpResult).unwrap()
-            } catch (rollbackError) {
-              console.error(`Failed to roll back HCP creation (ID: ${createdHcpResult.id}):`, rollbackError)
-            }
-          }
+          // USER FAILED: Roll back HCP
+          if (createdHcp) await deleteSilentHcp(createdHcp).unwrap()
         }
       } catch (hcpError) {
-        // HealthcareParty creation failed, so User creation was not attempted.
         console.error('Failed to create HealthcareParty:', hcpError)
-        openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
+        openNotification('error', t('notification.user_save_failed'), t('notification.hcp_save_error'))
       }
     },
-    [form, createUpdateHcp, createUpdateUser, deleteSilentHcp, showMessageFeedback, openNotification, t, adminRoot],
+    [form, createUpdateHcp, createUpdateUser, setUserRoles, deleteSilentHcp, deleteSilentUser, showMessageFeedback, openNotification, t, parentIdMap],
   )
 
   const updateUser = useCallback(
     async (record: UserRow) => {
+      // The 'record' parameter holds the original state, which we'll use for rollbacks.
       try {
         if (!record.hcp || !record.user) throw new Error('No user selected')
         const rowValues = await form.validateFields()
 
-        // Step 1: Update HealthcareParty
+        // --- Step 1: Update HealthcareParty ---
         await createUpdateHcp({
           ...record.hcp,
           firstName: rowValues.firstName,
           lastName: rowValues.lastName,
-          name: rowValues.firstName + ' ' + rowValues.lastName,
+          name: `${rowValues.firstName} ${rowValues.lastName}`,
           parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
           supervisorId: rowValues.assignment?.agendaId,
         }).unwrap()
+
         try {
-          // Step 2: If HCP update was successful, try to update User
+          // --- Step 2: Update User ---
           await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
-          if (record.user.id && rowValues.role) {
-            await setUserRoles({ userId: record.user.id, roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles }).unwrap()
+
+          try {
+            // --- Step 3: Set User Roles ---
+            if (record.user.id && rowValues.role) {
+              await setUserRoles({
+                userId: record.user.id,
+                roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles,
+              }).unwrap()
+            }
+
+            showMessageFeedback('success', t('notification.user_saved'))
+          } catch (rolesError) {
+            console.error('Failed to set user roles:', rolesError)
+            openNotification('error', t('notification.user_modify_failed'), t('notification.roles_modify_error'))
+
+            // ROLES FAILED: Revert User and HCP
+            console.warn('Attempting to roll back User and HCP updates...')
+            await createUpdateUser(record.user).unwrap()
+            await createUpdateHcp(record.hcp).unwrap()
           }
-          showMessageFeedback('success', t('notification.user_saved'))
         } catch (userError) {
-          // User update failed, but HCP was updated.
           console.error('Failed to update user:', userError)
           openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
+
+          console.warn('Attempting to roll back HCP update...')
+          await createUpdateHcp(record.hcp).unwrap()
         }
       } catch (hcpError) {
-        // HealthcareParty update failed, so User update was not attempted.
         console.error('Failed to update HealthcareParty:', hcpError)
-        openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
+        openNotification('error', t('notification.user_modify_failed'), t('notification.hcp_modify_error'))
       }
     },
-    [form, createUpdateHcp, createUpdateUser, showMessageFeedback, openNotification, t, adminRoot],
+    [form, createUpdateHcp, createUpdateUser, setUserRoles, showMessageFeedback, openNotification, t, parentIdMap],
   )
 
   const tableRowUpdate = useCallback(

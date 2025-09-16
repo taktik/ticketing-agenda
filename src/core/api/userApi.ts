@@ -82,6 +82,18 @@ export const userApiRtk = createApi({
       },
       invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
+    silentDeleteUser: builder.mutation<string | undefined, User>({
+      async queryFn(user, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async () => {
+          const result = await userApi?.deleteUser(user)
+          if (!result) {
+            throw new Error('User deletion failed')
+          }
+          return result.id
+        })
+      },
+    }),
     setUserRoles: builder.mutation<User | undefined, { userId: string; roleIds: ListOfIds }>({
       async queryFn(params, { getState }) {
         const { userId, roleIds } = params
@@ -112,5 +124,14 @@ export const userApiRtk = createApi({
   }),
 })
 
-export const { useGetUsersQuery, useGetUserByEmailQuery, useCreateUserMutation, useCreateUpdateUserMutation, useDeleteUserMutation, useLazyGetUserByEmailQuery, useSetUserRolesMutation, useResetUserRolesMutation } =
-  userApiRtk
+export const {
+  useGetUsersQuery,
+  useGetUserByEmailQuery,
+  useCreateUserMutation,
+  useCreateUpdateUserMutation,
+  useDeleteUserMutation,
+  useLazyGetUserByEmailQuery,
+  useSetUserRolesMutation,
+  useResetUserRolesMutation,
+  useSilentDeleteUserMutation,
+} = userApiRtk
