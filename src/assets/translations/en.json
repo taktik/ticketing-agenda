@@ -296,6 +296,15 @@
     "appointment_updated": "The appointment was updated!",
     "appointment_update_failed": "We could not update the appointment!",
     "appointment_update_error": "An error occurred while updating the appointment.",
+    "role_deleted": "The role was deleted!",
+    "role_saved": "The role was saved!",
+    "role_save_failed": "We could not save the role!",
+    "role_save_error": "An error occurred while saving the role.",
+    "role_delete_failed": "We could not delete the role!",
+    "role_delete_error": "An error occurred while deleting the role.",
+    "role_updated": "The role was updated!",
+    "role_update_failed": "We could not update the role!",
+    "role_update_error": "An error occurred while updating the role.",
     "at_least_one_rule_required": "At least one rule is required"
   },
   "rrule": {

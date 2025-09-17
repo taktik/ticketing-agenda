@@ -296,6 +296,15 @@
     "appointment_updated": "De afspraak is bijgewerkt!",
     "appointment_update_failed": "We konden de afspraak niet bijwerken!",
     "appointment_update_error": "Er is een fout opgetreden bij het bijwerken van de afspraak.",
+    "role_deleted": "De rol is verwijderd!",
+    "role_saved": "De rol is opgeslagen!",
+    "role_save_failed": "We konden de rol niet opslaan!",
+    "role_save_error": "Er is een fout opgetreden bij het opslaan van de rol.",
+    "role_delete_failed": "We konden de rol niet verwijderen!",
+    "role_delete_error": "Er is een fout opgetreden bij het verwijderen van de rol.",
+    "role_updated": "De rol is bijgewerkt!",
+    "role_update_failed": "We konden de rol niet bijwerken!",
+    "role_update_error": "Er is een fout opgetreden bij het bijwerken van de rol.",
     "at_least_one_rule_required": "Minstens één regel is vereist"
   },
   "rrule": {
