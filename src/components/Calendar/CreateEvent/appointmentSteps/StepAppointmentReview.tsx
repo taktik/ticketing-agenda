@@ -2,16 +2,16 @@ import { Descriptions, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { appointmentDuration, AppointmentForm, formatDateTime, FormProcedure, languageMapping } from '../CreateEvent'
-import './index.css'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
+import { appointmentDuration, AppointmentForm, formatDateTime, languageMapping } from '../CreateEvent'
+import './index.css'
 
 const { Title, Text } = Typography
 
 export const StepAppointmentreview: FC<{ formValues: AppointmentForm; selections: ProcedureSelection[] }> = ({ formValues, selections }) => {
   const { t, i18n } = useTranslation()
   const langCode = useMemo(() => {
-    return languageMapping[i18n.language] || 'FR' // Fallback
+    return languageMapping[i18n.language] || 'FR'
   }, [i18n.language])
 
   return (

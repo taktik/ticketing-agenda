@@ -317,7 +317,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
                     {t('content.choose_slot')}
                   </Title>
                   <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]}>
-                    <Space size={[8, 12]} wrap className="time-slot-buttons">
+                    <Space size={[8, 12]} wrap>
                       {slotsByHour[selectedHour.format('HH')].map((time) => (
                         <Button
                           key={time.format('HH:mm')}

@@ -1,8 +1,6 @@
-import { Result, Spin, Typography } from 'antd'
-import './index.css'
+import { Result, Spin } from 'antd'
 import { useTranslation } from 'react-i18next'
-
-const { Title, Text } = Typography
+import './index.css'
 
 interface StepCreateEventResultProps {
   creationStatus: 'loading' | 'success' | 'failure' | null

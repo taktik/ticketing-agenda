@@ -137,6 +137,9 @@ export const ManagerUsers = (): ReactElement => {
     return mergedPairs
   }, [users, hcpMap])
 
+  useEffect(() => console.log('hcpMap', hcpMap), [hcpMap])
+  useEffect(() => console.log('userMap', userMap), [userMap])
+
   useEffect(() => {
     const tableRowsList: UserRow[] = mergedList.map((pair) => {
       const user = pair[0]

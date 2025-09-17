@@ -1,5 +1,4 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { v4 } from 'uuid'
 
 export const languages = ['FR', 'EN', 'NDLS', 'DE']
 

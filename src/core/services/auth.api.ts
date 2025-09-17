@@ -264,6 +264,7 @@ export const completeAuthentication = createAsyncThunk('cardinalApi/completeAuth
     dispatch(setLoginProcessStarted(false))
     throw new Error('No token provided')
   }
+
   try {
     const api = await authProcess.completeAuthentication(token)
     const user = await api.user.getCurrentUser()

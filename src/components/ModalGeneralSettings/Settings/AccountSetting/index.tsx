@@ -10,17 +10,17 @@ import { SpinLoader } from '../../../common/SpinLoader'
 import './index.css'
 
 interface AccountSettingProps {
-  currentUser?: HealthcareParty
+  currentUserHcp?: HealthcareParty
   user?: User
 }
 
-export const AccountSetting = ({ currentUser, user }: AccountSettingProps): ReactElement => {
+export const AccountSetting = ({ currentUserHcp, user }: AccountSettingProps): ReactElement => {
   const [form] = Form.useForm()
   const [updateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
   const [updateHcp, { isLoading: isHcpUpdatingLoading }] = useCreateUpdateHealthcarePartyMutation()
   const { t } = useTranslation()
 
-  const userAvatarSrc = getImgSRC(currentUser?.picture)
+  const userAvatarSrc = getImgSRC(currentUserHcp?.picture)
 
   const [patientPictureAsBase64, setPatientPictureAsBase64] = useState<Int8Array | undefined>(undefined)
   const [fileList, setFileList] = useState<UploadFile[]>(
@@ -38,8 +38,8 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
   const handleSubmit = async (value: { firstName: string; lastName: string; emailAddress: string }) => {
     try {
       const { firstName, lastName, emailAddress } = value
-      const picture = patientPictureAsBase64 ?? currentUser?.picture
-      await updateHcp(new HealthcareParty({ ...currentUser, firstName, lastName, picture })).unwrap()
+      const picture = patientPictureAsBase64 ?? currentUserHcp?.picture
+      await updateHcp(new HealthcareParty({ ...currentUserHcp, firstName, lastName, picture })).unwrap()
       await updateUser(new User({ ...user, email: emailAddress })).unwrap()
       showMessageFeedback('success', t('notification.user_modified'))
       form.resetFields()
@@ -108,9 +108,9 @@ export const AccountSetting = ({ currentUser, user }: AccountSettingProps): Reac
         form={form}
         initialValues={{
           emailAddress: currentUserEmail,
-          firstName: currentUser?.firstName,
-          lastName: currentUser?.lastName,
-          file: currentUser?.picture,
+          firstName: currentUserHcp?.firstName,
+          lastName: currentUserHcp?.lastName,
+          file: currentUserHcp?.picture,
         }}
       >
         <div className="manage-account-root__form__inputs">

@@ -3,31 +3,33 @@ import { HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Layout, Menu, MenuProps } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
-import { ReactElement, useCallback, useState } from 'react'
+import { ReactElement, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomModal } from '../common/CustomModal'
-import '../ModalUserSettings/index.css'
+import './index.css'
 import { AccountSetting } from './Settings/AccountSetting'
 import { ManagerUsers } from './Settings/ManageUsers'
 
 interface ModalSettingsProps {
   isVisible: boolean
   onClose: () => void
-  currentUser?: HealthcareParty
+  currentUserHcp?: HealthcareParty
   user?: User
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
 
-export const ModalSettings = ({ isVisible, onClose, currentUser, user }: ModalSettingsProps): ReactElement => {
+export const ModalSettings = ({ isVisible, onClose, currentUserHcp, user }: ModalSettingsProps): ReactElement => {
   const [selectedKey, setSelectedKey] = useState<string>('profil')
 
   const { t } = useTranslation()
 
-  const items: MenuItem[] = [
-    { key: 'profil', icon: <ProfileOutlined />, label: t('content.your_profile') },
-    { key: 'manageUsers', icon: <UsergroupAddOutlined />, label: t('content.manage_users') },
-  ]
+  const items: MenuItem[] = useMemo(() => {
+    return [
+      { key: 'profil', icon: <ProfileOutlined />, label: t('content.your_profile') },
+      { key: 'manageUsers', icon: <UsergroupAddOutlined />, label: t('content.manage_users') },
+    ]
+  }, [t])
 
   const onClick: MenuProps['onClick'] = ({ key }) => {
     setSelectedKey(key)
@@ -36,13 +38,13 @@ export const ModalSettings = ({ isVisible, onClose, currentUser, user }: ModalSe
   const renderSetting = useCallback(() => {
     switch (selectedKey) {
       case 'profil':
-        return <AccountSetting currentUser={currentUser} user={user} />
+        return <AccountSetting currentUserHcp={currentUserHcp} user={user} />
       case 'manageUsers':
         return <ManagerUsers />
       default:
-        return <AccountSetting currentUser={currentUser} user={user} />
+        return <AccountSetting currentUserHcp={currentUserHcp} user={user} />
     }
-  }, [selectedKey, currentUser])
+  }, [selectedKey, currentUserHcp, user])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.your_settings')} noFooter blockAntModalBodyVerticalScroll width={1300}>

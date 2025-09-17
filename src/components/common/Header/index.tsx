@@ -11,7 +11,7 @@ import { useGetPractitionerQuery } from '../../../core/api/practitionerApi'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
-import { ModalSettings } from '../../ModalUserSettings'
+import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
 import './index.css'
 
@@ -30,9 +30,9 @@ export const Header = () => {
 
   const { user, healthcarePartyId } = useAppSelector(reduxSelector)
 
-  const { data: practitioner, isFetching: isPractitionerFetching } = useGetPractitionerQuery(healthcarePartyId ?? '', { skip: !healthcarePartyId })
+  const { data: currentUserHcp, isFetching: isPractitionerFetching } = useGetPractitionerQuery(healthcarePartyId ?? '', { skip: !healthcarePartyId })
 
-  const userAvatarSrc = getImgSRC(practitioner?.picture)
+  const userAvatarSrc = getImgSRC(currentUserHcp?.picture)
   const handleLogout = () => {
     dispatch(logout())
   }
@@ -82,7 +82,7 @@ export const Header = () => {
             <Dropdown menu={{ items, onClick }} placement="bottomRight" arrow onOpenChange={(open: boolean) => setUserDropdownOpen(open)}>
               <div className={`header__userDropdown ${isUserDropdownOpen && 'header__userDropdown--active'}`}>
                 <div className="header__userDropdown__heading">
-                  <p className="header__userDropdown__heading__name">{practitioner?.firstName + ' ' + practitioner?.lastName}</p>
+                  <p className="header__userDropdown__heading__name">{currentUserHcp?.firstName + ' ' + currentUserHcp?.lastName}</p>
                 </div>
                 {userAvatarSrc ? (
                   <div className="header__userDropdown__picture">
@@ -102,7 +102,8 @@ export const Header = () => {
           <LanguageSelector />
         </div>
       </div>
-      {isModalManageAccountFormOpen && createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUser={practitioner} user={user} />, document.body)}
+      {isModalManageAccountFormOpen &&
+        createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUserHcp={currentUserHcp} user={user} />, document.body)}
     </>
   )
 }
