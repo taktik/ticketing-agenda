@@ -298,7 +298,7 @@ export const ManagerUsers = (): ReactElement => {
             showMessageFeedback('success', t('notification.user_saved'))
           } catch (rolesError) {
             console.error('Failed to set user roles:', rolesError)
-            openNotification('error', t('notification.user_save_failed'), t('notification.roles_save_error'))
+            openNotification('error', t('notification.user_save_failed'), t('notification.role_save_error'))
 
             // ROLES FAILED: Roll back Userand HCP
             if (createdUser) await deleteSilentUser(createdUser).unwrap()
@@ -352,7 +352,7 @@ export const ManagerUsers = (): ReactElement => {
             showMessageFeedback('success', t('notification.user_saved'))
           } catch (rolesError) {
             console.error('Failed to set user roles:', rolesError)
-            openNotification('error', t('notification.user_modify_failed'), t('notification.roles_modify_error'))
+            openNotification('error', t('notification.user_modify_failed'), t('notification.role_modify_error'))
 
             // ROLES FAILED: Revert User and HCP
             console.warn('Attempting to roll back User and HCP updates...')
