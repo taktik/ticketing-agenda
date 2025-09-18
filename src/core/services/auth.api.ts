@@ -17,6 +17,7 @@ import {
   User,
   XCryptoService,
   XRsaKeypair,
+  CardinalBaseSdk
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'

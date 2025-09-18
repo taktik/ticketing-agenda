@@ -7,6 +7,7 @@ export const MSG_GW_URL = 'https://msg-gw.icure.cloud'
 export const SPEC_ID = process.env.REACT_APP_EXTERNAL_SERVICES_SPEC_ID
 export const PROCESS_ID = process.env.REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID
 export const DATABASE_ID = process.env.REACT_APP_DATABASE_ID
+export const ADMIN_SOLUTIONS_AUTH_TOKEN = process.env.REACT_APP_ADMIN_SOLUTION_AUTH_TOKEN
 
 export const DATE_FORMAT = 'dd.MM.yyyy'
 export const DATE_FORMAT_TO_DISPLAY = 'DD.MM.YYYY'
