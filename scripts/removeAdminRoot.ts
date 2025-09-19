@@ -1,6 +1,8 @@
-import { AuthenticationMethod, CardinalBaseSdk, HealthcarePartyFilters } from '@icure/cardinal-sdk'
+import * as dotenv from 'dotenv'
+dotenv.config()
+
+import { AuthenticationMethod, CardinalBaseSdk } from '@icure/cardinal-sdk'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, NIGHTLY_ICURE_CLOUD_URL, RootHcpType } from './consts'
-import { loadFromIterator } from './utils'
 
 async function removeAdminRootToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))

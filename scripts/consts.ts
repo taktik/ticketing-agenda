@@ -1,4 +1,5 @@
 export const NIGHTLY_ICURE_CLOUD_URL = 'https://nightly.icure.cloud'
+export const ICURE_API = 'https://api.icure.cloud'
 export const MSG_GW_URL = 'https://msg-gw.icure.cloud'
 export const SPEC_ID = process.env.REACT_APP_EXTERNAL_SERVICES_SPEC_ID
 export const PROCESS_ID = process.env.REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID

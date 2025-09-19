@@ -1,5 +1,7 @@
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, HealthcareParty, User } from '@icure/cardinal-sdk'
-import { v4 } from 'uuid'
+import * as dotenv from 'dotenv'
+dotenv.config()
+
+import { AuthenticationMethod, CardinalBaseSdk } from '@icure/cardinal-sdk'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, NIGHTLY_ICURE_CLOUD_URL } from './consts'
 
 async function removeSiteOfGroupId() {
@@ -8,6 +10,7 @@ async function removeSiteOfGroupId() {
   // Modify this to the correct databaseId
   const concernedGroupId = DATABASE_ID!
 
+  // Modifiy this to the site you'd like to delete. It has to be unique. Otherwise delete through the cockpit.
   const siteNameToDelete = 'The site name'
 
   try {
@@ -35,7 +38,6 @@ async function removeSiteOfGroupId() {
     console.log('SITE USER ---')
     console.log(`ID: ${deletedUser.id}`)
     console.log('SITE USER ---')
-
   } catch (error) {
     console.error('❌ An error occurred while deleting the Site:', error)
   }

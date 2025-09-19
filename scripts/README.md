@@ -43,6 +43,12 @@ When creating an Administrator, we give gim the Adminisrator set of permissions.
 3. Connect with each Site
 4. Add an administrator
 
+## How the use the scripts ?
+
+From the root of the project you can use
+npx ts-node -P tsconfig.scripts.json scripts/getAdminRoot.ts
+Don't forget to modify the variables inside the objects you wish to modify
+
 # Permissions and roles :
 
 To fetch all possible permissions :

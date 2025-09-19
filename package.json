@@ -36,6 +36,7 @@
     "redux": "^4.1.2",
     "redux-persist": "^6.0.0",
     "rrule": "^2.8.1",
+    "ts-node": "10.9.2",
     "uuid": "^11.0.5",
     "xlsx": "^0.18.5"
   },
@@ -75,7 +76,9 @@
     "@typescript-eslint/parser": "^8.23.0",
     "@typescript-eslint/scope-manager": "8.31.0",
     "@typescript-eslint/typescript-estree": "8.31.0",
+    "axios": "1.12.2",
     "concurrently": "^9.1.2",
+    "dotenv": "17.2.2",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.0.1",
     "eslint-config-react": "^1.1.7",
