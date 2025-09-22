@@ -5,6 +5,14 @@ import { AuthenticationMethod, CardinalBaseSdk, CodeStub, HealthcareParty } from
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, NIGHTLY_ICURE_CLOUD_URL } from './consts'
 
+/*
+What you need to modify here :
+
+- Verify the DATABASE_ID
+- The parentId needs to set to the admin-root id
+
+*/
+
 async function addSiteRootToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
 
@@ -18,6 +26,7 @@ async function addSiteRootToGroupId() {
     firstName: 'site-root',
     lastName: 'site-root',
     public: true,
+    parentId: "admin root ID",
     tags: [new CodeStub({ id: 'site-root|1', code: 'site-root', type: 'site-root', version: '1' })],
   })
 

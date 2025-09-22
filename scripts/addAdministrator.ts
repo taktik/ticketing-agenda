@@ -6,6 +6,16 @@ import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_API, NIGHTLY_ICURE_CLOUD_URL } from './consts'
 import axios from 'axios'
 
+/*
+What you need to modify here :
+
+- Verify the DATABASE_ID
+- verify the set of role given.
+- For the administratorHcp : Modify the name, firstname, lastname, parentId. ParentId need to be set to admin-root id
+- For the administratorUser: Modify  the email, name.
+
+*/
+
 async function addAdministratorToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
 
@@ -15,8 +25,6 @@ async function addAdministratorToGroupId() {
   const hcpId = v4()
   const userId = v4()
 
-  // Modify this with the correct name and AdminRoot ID
-  // Name it however you want
   // You can get the AdminRoot ID by either
   // 1) Running the addAdminRoot script and we console.log the resulting object, giving you the id
   // 2) Running the getAdminRoot script, which console.logs the AdminRoot object

@@ -5,6 +5,15 @@ import { AuthenticationMethod, CardinalBaseSdk, CodeStub, HealthcareParty, User 
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, NIGHTLY_ICURE_CLOUD_URL } from './consts'
 
+/*
+What you need to modify here :
+
+- Verify the DATABASE_ID
+- Modify the name and parentd of the siteHcp. ParentId need to be set to site-root id
+- Modify the email, name of the siteUser
+
+*/
+
 async function addSiteToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
 
@@ -19,13 +28,13 @@ async function addSiteToGroupId() {
   // You can get the siteRoot ID by either
   // 1) Running the addSiteRoot script and we console.log the resulting object, giving you the id
   // 2) Running the getSiteRoot script, which console.logs the siteRoot object
-  const siteToAdd = new HealthcareParty({ id: hcpId, name: 'Name of the site', parentId: 'siteRoot ID', public: true, tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })] })
+  const siteHcp = new HealthcareParty({ id: hcpId, name: 'Name of the site', parentId: 'siteRoot ID', public: true, tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })] })
   const siteUser = new User({ id: userId, email: 'Appropriate Email', name: 'Name of the site', healthcarePartyId: hcpId })
 
   try {
-    console.log(`Creating Site "${siteToAdd.name}" in group ${concernedGroupId}...`)
+    console.log(`Creating Site "${siteHcp.name}" in group ${concernedGroupId}...`)
 
-    const createdSite = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, siteToAdd)
+    const createdSite = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, siteHcp)
     const createdUser = await sdk.user.createUserInGroup(concernedGroupId, siteUser)
 
     console.log('✅ Successfully created new Site!')
