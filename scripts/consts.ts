@@ -7,6 +7,7 @@ export const DATABASE_ID = process.env.REACT_APP_DATABASE_ID
 
 export const ADMIN_SOLUTIONS_EMAIL = 'om+101@taktik.com'
 export const ADMIN_SOLUTIONS_AUTH_TOKEN = process.env.REACT_APP_ADMIN_SOLUTION_AUTH_TOKEN
+export const EMAIL_TEMPLATE = 'ec7d9b00-948c-11f0-a83d-fffe07e305e2'
 
 export enum RootHcpType {
   SITE_ROOT = 'site-root',

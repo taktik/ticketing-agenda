@@ -40,7 +40,6 @@ async function addAdminRootToGroupId() {
     console.log(`Group ID: ${concernedGroupId}`)
     console.log('---')
 
-    return createdHcp
   } catch (error) {
     console.error('❌ An error occurred while creating the adminRoot:', error)
   }

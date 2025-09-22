@@ -49,7 +49,6 @@ async function addSiteToGroupId() {
     console.log(`Email: ${createdUser.email}`)
     console.log('SITE USER ---')
 
-    return createdSite
   } catch (error) {
     console.error('❌ An error occurred while creating the Site:', error)
   }
