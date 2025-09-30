@@ -162,7 +162,7 @@
     "complete_required_fields": "Please complete all required fields.",
     "book_another": "Book Another",
     "select_time_prompt": "Please select a time",
-    "select_phone_number_promp": "Please enter a Phone Number",
+    "select_phone_number_prompt": "Please enter a Phone Number",
     "select_procedure_prompt": "Please enter a Procedure",
     "minutes": "minutes",
     "phone_must_be_number": "Phone number must be a number",

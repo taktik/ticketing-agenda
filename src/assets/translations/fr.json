@@ -162,7 +162,7 @@
     "complete_required_fields": "Veuillez remplir tous les champs obligatoires.",
     "book_another": "Nouveau rendez-vous",
     "select_time_prompt": "Veuillez sélectionner une heure",
-    "select_phone_number_promp": "Le champ Numéro de téléphone est obligatoire",
+    "select_phone_number_prompt": "Le champ Numéro de téléphone est obligatoire",
     "select_procedure_prompt": "Le champ Démarche est obligatoire",
     "minutes": "minutes",
     "phone_must_be_number": "Le numéro de téléphone doit être un nombre",

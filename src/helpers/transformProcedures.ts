@@ -42,12 +42,12 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
   const agendaMap = new Map(allAgendas.map((agenda) => [agenda.id, agenda]))
   const siteMap = new Map(allSites.map((site) => [site.id, site]))
 
-  // 2. Filter for only the procedures marked as public
-  const publicProcedures = allProcedures.filter((procedure) => (procedure.otherInfos?.['isPublic'] ?? 'false').toLowerCase() === 'true')
+  // 2. Filter for only the procedures marked as public ONLY FOR CITIZENS
+  //const publicProcedures = allProcedures.filter((procedure) => (procedure.otherInfos?.['isPublic'] ?? 'false').toLowerCase() === 'true')
 
   // 3. Group all procedures by their name (e.g., group all "Demande de passeport")
   const proceduresGroupedByName = new Map<string, CalendarItemType[]>()
-  for (const procedure of publicProcedures) {
+  for (const procedure of allProcedures) {
     const nameKey = procedure.name || 'Unnamed Procedure'
     if (!proceduresGroupedByName.has(nameKey)) {
       proceduresGroupedByName.set(nameKey, [])

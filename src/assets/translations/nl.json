@@ -162,7 +162,7 @@
     "complete_required_fields": "Vul alstublieft alle verplichte velden in.",
     "book_another": "Nieuwe afspraak",
     "select_time_prompt": "Selecteer alstublieft een tijd",
-    "select_phone_number_promp": "Gelieve Telefoonnummer in te vullen",
+    "select_phone_number_prompt": "Gelieve Telefoonnummer in te vullen",
     "select_procedure_prompt": "Gelieve Procedure in te vullen",
     "minutes": "minuten",
     "phone_must_be_number": "Telefoonnummer moet een getal zijn",

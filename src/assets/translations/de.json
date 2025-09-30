@@ -163,7 +163,7 @@
     "complete_required_fields": "Bitte füllen Sie alle Pflichtfelder aus.",
     "book_another": "Weiteren Termin buchen",
     "select_time_prompt": "Bitte wählen Sie eine Uhrzeit aus",
-    "select_phone_number_promp": "Bitte geben Sie Telefonnummer an",
+    "select_phone_number_prompt": "Bitte geben Sie Telefonnummer an",
     "select_procedure_prompt": "Bitte geben Sie Verfahren an",
     "minutes": "minuten",
     "phone_must_be_number": "Die Telefonnummer muss eine Zahl sein",

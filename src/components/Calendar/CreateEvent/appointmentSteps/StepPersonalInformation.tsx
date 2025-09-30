@@ -106,12 +106,16 @@ export const StepPersonalInformation: FC = () => {
               name={['personalInfo', 'phoneNumber']}
               noStyle
               rules={[
-                { required: true, message: t('content.select_phone_number_promp') },
+                { required: true, message: t('content.select_phone_number_prompt') },
                 { type: 'number', message: t('content.phone_must_be_number') },
 
                 {
                   validator: (_, value) => {
-                    const length = String(value || '').length
+                    if (!value) {
+                      return Promise.resolve()
+                    }
+
+                    const length = String(value).length
 
                     if (length < 8) {
                       return Promise.reject(new Error(t('content.phone_min_8_digits')))

@@ -62,18 +62,7 @@ export const StepProcedureSelector = ({ form, selections, isProcedureLoading }: 
     }
   }, [formProcedures, selections])
 
-  const filteredProceduresForSubsequentRows = useMemo(() => {
-    if (!lockedServiceName || !lockedSiteId) {
-      return selections
-    }
-
-    // Condition 3 ? On pourrait empêcher d'ajouter un rdv pour un calendaritemtype qu'on a déjà choisi auparavant.
-    // Si on fait ça, pas oublier de disable le add procedureRow par ex = disabled={!filteredProceduresForSubsequentRows}
-    const selectedProcedureIds = new Set((formProcedures || []).map((proc) => proc.procedureSelectionId).filter(Boolean))
-
-    // On ne garde que les démarches qui ont le bon service ET le bon site
-    return selections.filter((proc) => proc.serviceName === lockedServiceName && proc.siteVariants.some((variant) => variant.siteId === lockedSiteId))
-  }, [selections, lockedServiceName, lockedSiteId, formProcedures])
+  const selectedProcedureIds = useMemo(() => new Set((formProcedures || []).map((proc) => proc.procedureSelectionId).filter(Boolean)), [formProcedures])
 
   const previousLockedServiceName = usePrevious(lockedServiceName)
   const previousLockedSiteId = usePrevious(lockedSiteId)
@@ -96,21 +85,33 @@ export const StepProcedureSelector = ({ form, selections, isProcedureLoading }: 
       <Form.List name="procedures" initialValue={[{ procedureId: undefined, quantity: 1 }]}>
         {(fields, { add, remove }) => (
           <Space direction="vertical" style={{ width: '100%', maxHeight: '350px', overflow: 'auto' }}>
-            {fields.map((field, index) => (
-              <ProcedureRow
-                key={field.key}
-                field={field}
-                remove={remove}
-                isFirst={index === 0}
-                canRemove={fields.length > 1}
-                procedureOptions={index === 0 ? selections : filteredProceduresForSubsequentRows}
-                isProcedureLoading={isProcedureLoading}
-                lockedSiteId={lockedSiteId}
-                lockedSiteName={lockedSiteName}
-              />
-            ))}
+            {fields.map((field, index) => {
+              const procedureOptionsForRow =
+                index === 0
+                  ? selections
+                  : selections.filter((proc) => {
+                      const currentRowProcedureId = form.getFieldValue(['procedures', index, 'procedureSelectionId'])
+                      const isServiceAndSiteMatch = proc.serviceName === lockedServiceName && proc.siteVariants.some((variant) => variant.siteId === lockedSiteId)
+                      const isAlreadySelected = selectedProcedureIds.has(proc.id)
+                      const isSelectedInThisRow = proc.id === currentRowProcedureId
+                      return isServiceAndSiteMatch && (isSelectedInThisRow || !isAlreadySelected)
+                    })
+              return (
+                <ProcedureRow
+                  key={field.key}
+                  field={field}
+                  remove={remove}
+                  isFirst={index === 0}
+                  canRemove={fields.length > 1}
+                  procedureOptions={procedureOptionsForRow}
+                  isProcedureLoading={isProcedureLoading}
+                  lockedSiteId={lockedSiteId}
+                  lockedSiteName={lockedSiteName}
+                />
+              )
+            })}
             <Form.Item>
-              <Button type="dashed" disabled={!filteredProceduresForSubsequentRows.length} onClick={() => add({ procedureId: undefined, quantity: 1, site: lockedSiteId ?? undefined })} block icon={<PlusOutlined />}>
+              <Button type="dashed" disabled={fields.length >= selections.length} onClick={() => add({ procedureId: undefined, quantity: 1, site: lockedSiteId ?? undefined })} block icon={<PlusOutlined />}>
                 {t('content.add_another_procedure')}
               </Button>
             </Form.Item>

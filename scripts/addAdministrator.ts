@@ -49,13 +49,13 @@ async function addAdministratorToGroupId() {
     // get the auth Token from making a request on cockpit
     const authToken = ''
     const apiEndpoint = `${ICURE_API}/rest/v2/user/${userId}/inGroup/${concernedGroupId}/roles/set`
-    const requestBody = { ids: 'Administrator' }
+    const requestBody = { ids: ['Administrator'] }
     const requestHeaders = {
       Authorization: `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     }
 
-    //const response = await axios.post(apiEndpoint, requestBody, { headers: requestHeaders }) Currently the role doesnt exit TODO
+    await axios.post(apiEndpoint, requestBody, { headers: requestHeaders }) 
 
     console.log('✅ Successfully created new Administrator!')
     console.log(`Group ID: ${concernedGroupId}`)

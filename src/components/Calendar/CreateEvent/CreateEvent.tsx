@@ -2,7 +2,7 @@ import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } fro
 import { CodeStub, DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
@@ -15,7 +15,7 @@ import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../.
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
 import { calculateNumericEventTimes } from '../../common/helpers'
-import { StepAppointmentreview } from './appointmentSteps/StepAppointmentReview'
+import { StepAppointmentReview } from './appointmentSteps/StepAppointmentReview'
 import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
@@ -119,8 +119,8 @@ export const combineDateAndTime = (timeslot: TimeSlot): Dayjs | null => {
 }
 
 export interface FormProcedure {
-  procedureSelectionId: string | undefined
-  site: string | undefined
+  procedureSelectionId: string
+  site: string
   quantity: number
 }
 
@@ -141,8 +141,8 @@ interface TimeSlot {
 
 export interface AppointmentForm {
   procedures: FormProcedure[]
-  timeslot: TimeSlot | undefined
-  personalInfo: PersonalInfo | undefined
+  timeslot: TimeSlot
+  personalInfo: PersonalInfo
 }
 
 interface CreateEventProps {
@@ -151,10 +151,26 @@ interface CreateEventProps {
   sites: HealthcareParty[] | undefined
 }
 
+enum AppointmentStep {
+  PROCEDURE = 0,
+  TIMESLOT = 1,
+  PERSONAL_INFO = 2,
+  REVIEW = 3,
+  RESULT = 4,
+}
+
+const orderedSteps = [AppointmentStep.PROCEDURE, AppointmentStep.TIMESLOT, AppointmentStep.PERSONAL_INFO, AppointmentStep.REVIEW, AppointmentStep.RESULT]
+
 export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => {
   const { t, i18n } = useTranslation()
-  const [currentStep, setCurrentStep] = useState<number>(0)
+  const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
   const [form] = Form.useForm<AppointmentForm>()
+
+  const formValues: AppointmentForm = form.getFieldsValue(true)
+
+  const watchedProcedures = Form.useWatch('procedures', form)
+  const watchedSelectedTime = Form.useWatch(['timeslot', 'time'], form)
+  const watchedPersonalInfo = Form.useWatch('personalInfo', form)
 
   const langCode = useMemo(() => {
     return languageMapping[i18n.language] || 'FR'
@@ -216,8 +232,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     { title: t('content.your_info'), icon: <UserOutlined /> },
     { title: t('content.confirm'), icon: <CheckCircleOutlined /> },
   ]
-
-  const formValues: AppointmentForm = form.getFieldsValue(true)
 
   const getOrCreateCitizenProfile = async () => {
     const { personalInfo } = formValues
@@ -433,7 +447,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     <StepProcedureSelector selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,
     <StepTimeSlotSelector form={form} formProcedure={formValues.procedures} selections={selections} key={'TimeStep'} />,
     <StepPersonalInformation key={'InformationStep'} />,
-    <StepAppointmentreview formValues={form.getFieldsValue(true)} selections={selections} key={'reviewStep'} />,
+    <StepAppointmentReview formValues={form.getFieldsValue(true)} selections={selections} key={'reviewStep'} />,
     <StepCreateEventResult creationStatus={creationStatus} key={'resultStep'} />,
   ]
 
@@ -448,6 +462,10 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       birthDate: dayjs(),
     },
   }
+
+  const disabledRules = [!watchedProcedures || watchedProcedures.length === 0 || !watchedProcedures.every((p) => p && p.procedureSelectionId), !watchedSelectedTime]
+
+  const isNextButtonDisabled = disabledRules[currentStep] ?? false
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={1100}>
@@ -467,24 +485,24 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>
-              {currentStep > 0 && currentStep < 4 && (
+              {currentStep > AppointmentStep.PROCEDURE && currentStep < AppointmentStep.RESULT && (
                 <Button size="large" onClick={prev}>
                   {t('content.previous')}
                 </Button>
               )}
             </div>
             <div>
-              {currentStep < 3 && (
-                <Button size="large" type="primary" onClick={next}>
+              {currentStep < AppointmentStep.REVIEW && (
+                <Button size="large" type="primary" onClick={next} disabled={isNextButtonDisabled}>
                   {t('content.next')}
                 </Button>
               )}
-              {currentStep === 3 && (
+              {currentStep === AppointmentStep.REVIEW && (
                 <Button size="large" type="primary" onClick={handleAppointmentCreation}>
                   {t('content.confirm_booking_button')}
                 </Button>
               )}
-              {currentStep === 4 && (
+              {currentStep === AppointmentStep.RESULT && (
                 <Button size="large" type="primary" onClick={reset}>
                   {t('content.close')}
                 </Button>

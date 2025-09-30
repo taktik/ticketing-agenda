@@ -1,5 +1,5 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Calendar, CalendarProps, Col, Divider, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
+import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -294,9 +294,9 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
 
         <Divider />
         <div style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto', padding: '0 16px 0 4px' }}>
-          {availabilitiesLoading || availableHours.length === 0 ? (
+          {availabilitiesLoading ? (
             <SpinLoader />
-          ) : (
+          ) : availableHours.length > 0 ? (
             <>
               <div>
                 <Title level={5} style={{ marginBottom: 12 }}>
@@ -311,12 +311,12 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
                 </Space>
               </div>
 
-              {selectedHour && (
-                <div style={{ marginTop: 24 }}>
-                  <Title level={5} style={{ marginBottom: 12 }}>
-                    {t('content.choose_slot')}
-                  </Title>
-                  <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]}>
+              <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]} noStyle>
+                {selectedHour && (
+                  <div style={{ marginTop: 24 }}>
+                    <Title level={5} style={{ marginBottom: 12 }}>
+                      {t('content.choose_slot')}
+                    </Title>
                     <Space size={[8, 12]} wrap>
                       {slotsByHour[selectedHour.format('HH')].map((time) => (
                         <Button
@@ -331,9 +331,13 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
                         </Button>
                       ))}
                     </Space>
-                  </Form.Item>
-                </div>
-              )}
+                  </div>
+                )}
+              </Form.Item>
+            </>
+          ) : (
+            <>
+              <Empty description={t('content.no_slots_available')} />
             </>
           )}
         </div>
@@ -341,5 +345,3 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
     </Row>
   )
 }
-
-// <Empty description={t('content.no_slots_available')} />

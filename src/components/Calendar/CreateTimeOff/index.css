@@ -117,4 +117,7 @@ body * {
   flex-direction: column;
   gap: 1.5rem;
 }
+.ant-picker-content th {
+  text-align: center;
+}
 /*# sourceMappingURL=index.css.map */

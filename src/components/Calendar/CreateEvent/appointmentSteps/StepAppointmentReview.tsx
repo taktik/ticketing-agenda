@@ -8,7 +8,7 @@ import './index.css'
 
 const { Title, Text } = Typography
 
-export const StepAppointmentreview: FC<{ formValues: AppointmentForm; selections: ProcedureSelection[] }> = ({ formValues, selections }) => {
+export const StepAppointmentReview: FC<{ formValues: AppointmentForm; selections: ProcedureSelection[] }> = ({ formValues, selections }) => {
   const { t, i18n } = useTranslation()
   const langCode = useMemo(() => {
     return languageMapping[i18n.language] || 'FR'
