@@ -30,8 +30,13 @@ enum UserRole {
   ADMIN = 'admin',
   CITY_WORKER = 'city_worker',
 }
-const CityWorkerRoles = new ListOfIds({ ids: ['BASIC_USER', 'BASIC_DATA_OWNER', 'CALENDAR_ITEM_MANAGER', 'PATIENT_USER_MANAGER'] })
-const AdminRoles = new ListOfIds({ ids: ['BASIC_USER', 'BASIC_DATA_OWNER', 'CALENDAR_ITEM_MANAGER', 'PATIENT_USER_MANAGER', 'HIERARCHICAL_DATA_OWNER', 'HCP_USER_MANAGER'] })
+const CityWorkerRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CityWorker'] })
+const AdminRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:Administrator'] })
+
+const RolesMap = {
+  [UserRole.ADMIN]: AdminRoles,
+  [UserRole.CITY_WORKER]: CityWorkerRoles,
+}
 
 interface UserRow {
   rowId: string
@@ -295,7 +300,7 @@ export const ManagerUsers = (): ReactElement => {
             if (createdUser && createdUser.id && rowValues.role) {
               await setUserRoles({
                 userId: createdUser.id,
-                roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles,
+                roleIds: RolesMap[rowValues.role],
               }).unwrap()
             }
             showMessageFeedback('success', t('notification.user_saved'))
@@ -348,7 +353,7 @@ export const ManagerUsers = (): ReactElement => {
             if (record.user.id && rowValues.role) {
               await setUserRoles({
                 userId: record.user.id,
-                roleIds: rowValues.role === UserRole.ADMIN ? AdminRoles : CityWorkerRoles,
+                roleIds: RolesMap[rowValues.role],
               }).unwrap()
             }
 

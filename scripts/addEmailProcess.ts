@@ -4,20 +4,9 @@ dotenv.config()
 import axios from 'axios'
 import { DATABASE_ID, EMAIL_TEMPLATE, SPEC_ID } from './consts'
 
-/*
-What you need to modify here :
-
-- Global admin jwt. Get it by making any request from the cockpit.
-- Modify the emailLanguage, it's basically just a tag. For example fr, nl, en, de
-- Modify the emailSubject. For example : "Welcome {{firstName}}"
-- Modify the emailBody. For example : "<div>Welcome {{firstName}}<br><div>How are you today on this {{date}}</div>"
-
-*/
-
 async function addEmailProcess() {
   const JWT_TOKEN = ''
   const emailLanguage = ''
-
   const emailSubject = ''
   const emailBody = ''
 
@@ -33,8 +22,6 @@ async function addEmailProcess() {
     }
 
     console.log(`📡 Making POST request to ${apiEndpoint}...`)
-
-    // 4. Use axios to make the authenticated request
     const response = await axios.post(apiEndpoint, requestBody, { headers: requestHeaders })
 
     const processId = response.data.id

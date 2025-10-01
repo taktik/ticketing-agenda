@@ -105,7 +105,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
       result[hcp.id] = {
         recoveredKeys: recovered.data[hcp.id],
-        keyAuthenticity: {},
+        keyAuthenticity: Object.fromEntries(Object.entries(recovered.data[hcp.id]).map(([a, _]) => [a, true])),
       }
     }
     return result
@@ -233,7 +233,7 @@ export const startAuthentication = createAsyncThunk(
         StorageFacade.usingBrowserLocalStorage(),
         { firstName, lastName },
         {
-          useHierarchicalDataOwners: false,
+          useHierarchicalDataOwners: true,
           encryptedFields: { patient: [], calendarItem: [] },
           cryptoStrategies: new PetraCareCryptoStrategies(),
         },

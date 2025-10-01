@@ -4,13 +4,6 @@ dotenv.config()
 import { AuthenticationMethod, CardinalBaseSdk } from '@icure/cardinal-sdk'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, NIGHTLY_ICURE_CLOUD_URL, RootHcpType } from './consts'
 
-/*
-What you need to modify here :
-
-- Verify the DATABASE_ID
-
-*/
-
 async function removeAdminRootToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
 

@@ -5,31 +5,24 @@ import { AuthenticationMethod, CardinalBaseSdk, CodeStub, HealthcareParty, User 
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, NIGHTLY_ICURE_CLOUD_URL } from './consts'
 
-/*
-What you need to modify here :
-
-- Verify the DATABASE_ID
-- Modify the name and parentd of the siteHcp. ParentId need to be set to site-root id
-- Modify the email, name of the siteUser
-
-*/
-
 async function addSiteToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
 
   // Modify this to the correct databaseId
   const concernedGroupId = DATABASE_ID!
 
+  // - You can get the siteRoot ID by either
+  //     1) Running the addSiteRoot script and we console.log the resulting object, giving you the id
+  //     2) Running the getSiteRoot script, which console.logs the siteRoot object
+
   const hcpId = v4()
   const userId = v4()
+  const siteName = ''
+  const siteRoot_ID = ''
+  const siteEmail = ''
 
-  // Modify this with the correct site name and siteRoot ID
-  // Name it however you want
-  // You can get the siteRoot ID by either
-  // 1) Running the addSiteRoot script and we console.log the resulting object, giving you the id
-  // 2) Running the getSiteRoot script, which console.logs the siteRoot object
-  const siteHcp = new HealthcareParty({ id: hcpId, name: 'Name of the site', parentId: 'siteRoot ID', public: true, tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })] })
-  const siteUser = new User({ id: userId, email: 'Appropriate Email', name: 'Name of the site', healthcarePartyId: hcpId })
+  const siteHcp = new HealthcareParty({ id: hcpId, name: siteName, parentId: siteRoot_ID, public: true, tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })] })
+  const siteUser = new User({ id: userId, email: siteEmail, name: siteName, healthcarePartyId: hcpId })
 
   try {
     console.log(`Creating Site "${siteHcp.name}" in group ${concernedGroupId}...`)
@@ -48,7 +41,6 @@ async function addSiteToGroupId() {
     console.log(`Name: ${createdUser.name}`)
     console.log(`Email: ${createdUser.email}`)
     console.log('SITE USER ---')
-
   } catch (error) {
     console.error('❌ An error occurred while creating the Site:', error)
   }
