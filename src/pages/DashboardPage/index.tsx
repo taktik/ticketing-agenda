@@ -19,7 +19,7 @@ import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { RootHcpType } from '../../core/api/fetchType'
-import { useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
 import { useAppSelector } from '../../core/hooks'
 import './index.css'
 

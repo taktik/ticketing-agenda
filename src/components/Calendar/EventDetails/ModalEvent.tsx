@@ -45,8 +45,8 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
   const isTimeOff = useMemo(() => !!event?.extendedProps.isTimeOff, [event])
 
   const patientName = useMemo(() => (patient ? patient.firstName + ' ' + patient.lastName : undefined), [patient])
-  const patientEmail = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'email')?.code : undefined), [patient])
-  const patientPhoneNumber = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'phone')?.code : undefined), [patient])
+  const patientEmail = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'EMAIL')?.code : undefined), [patient])
+  const patientPhoneNumber = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'PHONE')?.code : undefined), [patient])
   const patientBirthDate = useMemo(() => (patient && patient.dateOfBirth ? format(parse(String(patient.dateOfBirth), 'yyyyMMdd', new Date()), 'dd MMMM yyyy', { locale: dateFnsLocale }) : undefined), [patient])
 
   const handleModify = useCallback(() => {

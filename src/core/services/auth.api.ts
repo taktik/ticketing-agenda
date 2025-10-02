@@ -309,7 +309,8 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
 
   try {
     const api = await CardinalSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
-      useHierarchicalDataOwners: false,
+      useHierarchicalDataOwners: true,
+      encryptedFields: { patient: [], calendarItem: [] },
     })
     const user = await api.user.getCurrentUser()
     apiCache[`${user.groupId}/${user.id}`] = api
