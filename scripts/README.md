@@ -33,7 +33,7 @@ We have to create a first administrator using the addAdmin.ts script.
 ## --- What about permissions ? ---
 
 See below for the list of permissions and how to handle roles.
-The basics is that we have created custom roles ('Administrator', 'City_Worker') and attached custom set of permissions to them
+The basics is that we have created custom roles ('ADMINISTRATOR', 'CHIEF-OF-SERVICE', 'CITY_WORKER') and attached custom set of permissions to them
 When creating an Administrator, we give gim the Adminisrator set of permissions.
 
 ## Order of things :
@@ -56,14 +56,15 @@ curl -X POST https://nightly.icure.cloud/rest/v2/aa/icure/permissions
 
 Roles endpoints :
 POST https://api.icure.cloud/rest/v2/role/{roleName} with body being a json array of the permission name string (e.g. "UserManagement.Delete.Patient") to create a role
-GET https://api.icure.cloud/rest/v2/role/{roleName} to get back the role you created
+GET https://api.icure.cloud/rest/v2/role/{roleID} to get back the role you created
 GET https://api.icure.cloud/rest/v2/role/inGroup/{groupId} to get all the roles available in that group (including the builtin roles)
-PUT https://api.icure.cloud/rest/v2/role/{roleName} with body being a json array of the permission name string (e.g. "UserManagement.Delete.Patient") to update the permissions of an existing role
-DELETE https://api.icure.cloud/rest/v2/role/{roleName} to delete a role
+PUT https://api.icure.cloud/rest/v2/role/{roleID} with body being a json array of the permission name string (e.g. "UserManagement.Delete.Patient") to update the permissions of an existing role
+DELETE https://api.icure.cloud/rest/v2/role/{roleID} to delete a role
 POST https://api.icure.cloud/rest/v2/user/{userId}/inGroup/{groupId}/roles/set to set the roles of a user (cockpit won’t work with custom roles) - the body must be { "ids": [role1, role2, …] }
 
-Current existing roles : 
+Existing roles : 
 - Administrator
+- Chief of service
 - CityWorker
 
 # Emails

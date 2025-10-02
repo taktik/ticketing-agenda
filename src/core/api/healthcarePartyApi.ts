@@ -105,6 +105,19 @@ export const healthcarePartyApiRtk = createApi({
       },
       invalidatesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
+    deleteHealthcareParties: builder.mutation<boolean | undefined, HealthcareParty[]>({
+      async queryFn(hcps, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async () => {
+          const result = await hcpApi?.deleteHealthcareParties(hcps)
+          if (!result) {
+            throw new Error('HealthcareParties can’t be deleted')
+          }
+          return true
+        })
+      },
+      invalidatesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+    }),
     silentDeleteHealthcareParty: builder.mutation<string | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
@@ -160,12 +173,14 @@ export const healthcarePartyApiRtk = createApi({
 
 export const {
   useGetHealthcarePartiesQuery,
+  useLazyGetHealthcarePartiesQuery,
   useGetHealthcarePartiesByParentQuery,
   useGetHealthcarePartiesByIdsQuery,
   useGetRootHealthcarePartyQuery,
   useGetHealthcarePartyQuery,
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
+  useDeleteHealthcarePartiesMutation,
   useSilentDeleteHealthcarePartyMutation,
   useUnDeleteHealthcarePartyMutation,
   useUnDeleteHealthcarePartyByIdMutation,
