@@ -1,31 +1,27 @@
-import { DeleteOutlined, EditOutlined, EllipsisOutlined } from '@ant-design/icons'
+import { EditOutlined, EllipsisOutlined } from '@ant-design/icons'
 import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, CodeStub, DecryptedAddress, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType } from '@icure/cardinal-sdk'
 import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
 import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { SettingContext } from '../../../contexts/SettingContext'
 import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/healthcarePartyApi'
 import { EditableSiteInfo, SiteInfoFormValues } from '../../common/EditableSiteInfo'
-import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import './index.css'
 
 interface SiteSettingProps {
   site: HealthcareParty
   services: Agenda[]
-  handleSiteDelete: (site: HealthcareParty) => Promise<void>
   isSitesLoading: boolean
 }
 
 type ServiceWithProceduresTuple = [Agenda, CalendarItemType[]]
 
-export const SiteSetting = ({ site, services, handleSiteDelete, isSitesLoading }: SiteSettingProps): ReactElement => {
+export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps): ReactElement => {
   const { setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
-  const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
   const [showEditableSite, setShowEditableSite] = useState<boolean>(false)
 
   const agendaIds = useMemo(() => services?.map((agenda) => agenda.id), [services])
@@ -84,13 +80,6 @@ export const SiteSetting = ({ site, services, handleSiteDelete, isSitesLoading }
       label: t('content.edit'),
       icon: <EditOutlined />,
       onClick: () => setShowEditableSite(true),
-    },
-    {
-      key: 'delete',
-      label: t('content.delete'),
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => setShowDeleteSiteModal(true),
     },
   ]
 
@@ -182,7 +171,12 @@ export const SiteSetting = ({ site, services, handleSiteDelete, isSitesLoading }
           </Card>
         ))}
       </div>
-      {showDeleteSiteModal &&
+    </div>
+  )
+}
+
+/*
+{showDeleteSiteModal &&
         createPortal(
           <ModalConfirmAction
             title={t('delete_modal.confirm_delete_site_prompt')}
@@ -205,6 +199,4 @@ export const SiteSetting = ({ site, services, handleSiteDelete, isSitesLoading }
           />,
           document.body,
         )}
-    </div>
-  )
-}
+          */

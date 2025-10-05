@@ -34,7 +34,7 @@ async function addSiteRootToGroupId() {
   try {
     console.log(`Creating siteRoot in group ${concernedGroupId}...`)
 
-    if (!siteRootEmail || !adminRoot_ID) {
+    if (!hcpId || !userId || !siteRootEmail || !adminRoot_ID || !concernedGroupId) {
       throw new Error('Missing mandatory args')
     }
     const createdHcp = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, siteRootHcp)

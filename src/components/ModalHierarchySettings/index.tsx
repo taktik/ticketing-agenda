@@ -1,11 +1,10 @@
 import { AppstoreOutlined, BankOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
-import { Agenda, CodeStub, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
 import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
 import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { v4 } from 'uuid'
 import emptyIcon from '../../assets/empty.svg'
 import { SettingContext } from '../../contexts/SettingContext'
 import { useDeleteAgendaMutation, useDeleteAgendasMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
@@ -14,7 +13,6 @@ import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutatio
 import { useAppSelector } from '../../core/hooks'
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
-import { ButtonStyleType, StyledButton } from '../common/StyledButton'
 import './index.css'
 import { ServiceSetting } from './ServiceSetting'
 import { SiteSetting } from './SiteSetting'
@@ -225,7 +223,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
       const servicesOfThisSite = sortedServices?.filter((service) => service.author === matchingSite.id) ?? []
 
-      return <SiteSetting site={matchingSite} services={servicesOfThisSite} handleSiteDelete={handleSiteDelete} isSitesLoading={isSitesLoading} />
+      return <SiteSetting site={matchingSite} services={servicesOfThisSite} isSitesLoading={isSitesLoading} />
     }
 
     if (type === 'service') {
@@ -236,7 +234,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     }
 
     return <div>{t('content.select_site_or_service')}</div>
-  }, [selectedKey, sites, sortedServices, t, handleSiteDelete, handleDeleteService, isSitesLoading, isServicesLoading])
+  }, [selectedKey, sites, sortedServices, t, handleDeleteService, isSitesLoading, isServicesLoading])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>

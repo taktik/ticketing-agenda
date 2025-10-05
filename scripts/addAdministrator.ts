@@ -41,6 +41,10 @@ async function addAdministratorToGroupId() {
   try {
     console.log(`Creating Administrator "${administratorHcp.name}" in group ${concernedGroupId}...`)
 
+    if (!hcpId || !userId || !adminName || !adminFirstName || !adminLastName || !adminRoot_ID || !adminEmail || !JWT_TOKEN || !concernedGroupId) {
+      throw new Error('Missing mandatory args')
+    }
+
     const createdAdministratorHcp = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, administratorHcp)
     const createdAdministratorUser = await sdk.user.createUserInGroup(concernedGroupId, administratorUser)
 

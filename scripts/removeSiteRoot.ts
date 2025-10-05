@@ -18,6 +18,10 @@ async function removeSiteRootToGroupId() {
   try {
     console.log(`Deleting siteRoot in group ${concernedGroupId}...`)
 
+    if (!concernedGroupId) {
+      throw new Error('Missing mandatory args')
+    }
+
     const deletedHcps = await sdk.healthcareParty.deleteHealthcarePartiesInGroup(concernedGroupId, siteRoots)
 
     console.log('✅ Successfully removed the siteRoot!')

@@ -13,9 +13,13 @@ async function getSiteRootFromGroupId() {
   try {
     console.log(`Fetching SiteRoot in group ${concernedGroupId}...`)
 
+    if (!concernedGroupId) {
+      throw new Error('Missing mandatory args')
+    }
+
     const healthcareParties = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
     const siteRoots = healthcareParties.filter((hcp) => hcp.tags.some((tag) => tag.type === RootHcpType.SITE_ROOT))
-    if (siteRoots.length !== 0) throw Error(`Error, expected unique result but found ${siteRoots.length}`)
+    if (siteRoots.length !== 1) throw Error(`Error, expected unique result but found ${siteRoots.length}`)
     const result = siteRoots[0]
 
     console.log('✅ Successfully fetched siteRoot!')
@@ -24,7 +28,7 @@ async function getSiteRootFromGroupId() {
     console.log(`Group ID: ${concernedGroupId}`)
     console.log('---')
   } catch (error) {
-    console.error('❌ An error occurred while creating the siteRoot:', error)
+    console.error('❌ An error occurred while fetching the siteRoot:', error)
   }
 }
 

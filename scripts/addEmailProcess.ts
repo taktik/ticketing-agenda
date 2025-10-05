@@ -11,6 +11,10 @@ async function addEmailProcess() {
   const emailBody = ''
 
   try {
+    if (!JWT_TOKEN || !emailLanguage || !emailSubject || !emailBody) {
+      throw new Error('Missing mandatory args')
+    }
+
     const apiEndpoint = `https://msg-gw.icure.cloud/${SPEC_ID}/process/template/${EMAIL_TEMPLATE}/${DATABASE_ID}?language=${emailLanguage}`
     const requestBody = {
       subject: emailSubject,

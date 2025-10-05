@@ -29,7 +29,7 @@ async function addAdminRootToGroupId() {
   try {
     console.log(`Creating adminRoot in group ${concernedGroupId}...`)
 
-    if (!adminRootEmail) {
+    if (!hcpId || !userId || !adminRootEmail || !concernedGroupId) {
       throw new Error('Missing mandatory args')
     }
     const createdAdminRootHcp = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, adminRootHcp)

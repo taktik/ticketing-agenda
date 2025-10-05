@@ -18,6 +18,10 @@ async function removeAdminRootToGroupId() {
   try {
     console.log(`Deleting adminRoot in group ${concernedGroupId}...`)
 
+    if (!concernedGroupId) {
+      throw new Error('Missing mandatory args')
+    }
+
     const deletedHcps = await sdk.healthcareParty.deleteHealthcarePartiesInGroup(concernedGroupId, adminRoots)
 
     console.log('✅ Successfully removed the adminRoot!')

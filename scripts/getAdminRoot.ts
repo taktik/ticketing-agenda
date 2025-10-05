@@ -11,7 +11,11 @@ async function getAdminRootFromGroupId() {
   const concernedGroupId = DATABASE_ID!
 
   try {
-    console.log(`Fetching SiteRoot in group ${concernedGroupId}...`)
+    console.log(`Fetching AdminRoot in group ${concernedGroupId}...`)
+
+    if (!concernedGroupId) {
+      throw new Error('Missing mandatory args')
+    }
 
     const healthcareParties = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
     const adminRoots = healthcareParties.filter((hcp) => hcp.tags.some((tag) => tag.type === RootHcpType.ADMIN_ROOT))
@@ -24,7 +28,7 @@ async function getAdminRootFromGroupId() {
     console.log(`Group ID: ${concernedGroupId}`)
     console.log('---')
   } catch (error) {
-    console.error('❌ An error occurred while fetching the siteRoot:', error)
+    console.error('❌ An error occurred while fetching the adminRoot:', error)
   }
 }
 

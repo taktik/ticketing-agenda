@@ -12,20 +12,34 @@ async function addSiteToGroupId() {
   const concernedGroupId = DATABASE_ID!
 
   // - You can get the siteRoot ID by either
-  //     1) Running the addSiteRoot script and we console.log the resulting object, giving you the id
+  //     1) Running the addSiteRoot script and we console.log the resulting object, giving you the id. Max one SiteRoot !
   //     2) Running the getSiteRoot script, which console.logs the siteRoot object
 
   const hcpId = v4()
   const userId = v4()
   const siteName = ''
-  const siteRoot_ID = ''
+  const siteRoot_ID = 'db3ce37c-cb88-497c-98f5-70d86906da34'
   const siteEmail = ''
 
-  const siteHcp = new HealthcareParty({ id: hcpId, name: siteName, parentId: siteRoot_ID, public: true, tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })] })
+  const siteHcp = new HealthcareParty({
+    id: hcpId,
+    name: siteName,
+    firstName: siteName,
+    lastName: siteName,
+    parentId: siteRoot_ID,
+    public: true,
+    userId: userId,
+    tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })],
+  })
+  
   const siteUser = new User({ id: userId, email: siteEmail, name: siteName, healthcarePartyId: hcpId })
 
   try {
     console.log(`Creating Site "${siteHcp.name}" in group ${concernedGroupId}...`)
+
+    if (!hcpId || !userId || !siteName || !siteEmail || !siteRoot_ID || !concernedGroupId) {
+      throw new Error('Missing mandatory args')
+    }
 
     const createdSite = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, siteHcp)
     const createdUser = await sdk.user.createUserInGroup(concernedGroupId, siteUser)

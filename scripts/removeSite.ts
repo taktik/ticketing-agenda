@@ -11,10 +11,14 @@ async function removeSiteOfGroupId() {
   const concernedGroupId = DATABASE_ID!
 
   // Modifiy this to the site you'd like to delete. It has to be unique. Otherwise delete through the cockpit.
-  const siteNameToDelete = 'The site name'
+  const siteNameToDelete = ''
 
   try {
     console.log(`Fetch Site "${siteNameToDelete}" in group ${concernedGroupId}...`)
+
+    if (!siteNameToDelete || !concernedGroupId) {
+      throw new Error('Missing mandatory args')
+    }
 
     const sites = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
 
