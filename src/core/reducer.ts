@@ -12,6 +12,7 @@ import { agendaApiRtk } from './api/agendaApi'
 import { timeTableApiRtk } from './api/timeTableApi'
 import { calendarItemApiRtk } from './api/calendarItemApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
+import { dataOwnerTypeApiRtk } from './api/dataOwnerApi'
 import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { groupApiRtk } from './api/groupApi'
 import { keyApiRtk } from './api/keyApi'
@@ -32,6 +33,7 @@ export const appReducer = combineReducers({
   calendarItemApi: calendarItemApiRtk.reducer,
   healthcarePartyApi: healthcarePartyApiRtk.reducer,
   calendarItemTypeApi: calendarItemTypeApiRtk.reducer,
+  dataOwnerTypeApi: dataOwnerTypeApiRtk.reducer,
   groupApi: groupApiRtk.reducer,
   keyApi: keyApiRtk.reducer,
   anonymousApi: anonymousApiRtk.reducer,

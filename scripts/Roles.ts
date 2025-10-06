@@ -1,6 +1,6 @@
 const ADMINISTRATOR = {
-  id: '',
-  rev: '',
+  id: 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR',
+  rev: '1-7cb995b30436473bc1608b723d481d74',
   name: 'ADMINISTRATOR',
   permissions: [
     'AgendaManagement.ExtendedRead.Any',
@@ -76,10 +76,10 @@ const ADMINISTRATOR = {
   ],
 }
 
-const SERVICE_CHIEF = {
+const HEAD_OF_SERVICE = {
   id: 'todo',
   rev: 'todo',
-  name: 'SERVICE_CHIEF',
+  name: 'HEAD_OF_SERVICE',
   permissions: [
     'AgendaManagement.ExtendedRead.Any',
     'AgendaManagement.ExtendedWrite.Any',
@@ -155,8 +155,8 @@ const SERVICE_CHIEF = {
 }
 
 const CITY_WORKER = {
-  id: '',
-  rev: '',
+  id: 'todo',
+  rev: 'todo',
   name: 'CITY_WORKER',
   permissions: [
     'AgendaManagement.ExtendedRead.Any',

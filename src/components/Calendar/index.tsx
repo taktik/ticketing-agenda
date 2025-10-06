@@ -15,6 +15,7 @@ import React, { ReactElement, useCallback, useEffect, useMemo, useState } from '
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
+import { usePermissions } from '../../core/hooks/usePermissions'
 import { dayjsToYYYYMMDDHHmmss, parseTimeRange } from '../common/helpers'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { CreateEvent } from './CreateEvent/CreateEvent'
@@ -54,6 +55,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     to: endOfWeek(new Date()),
   })
 
+  const { isAdminLevel } = usePermissions()
+
   const { data: calendarItems } = useGetCalendarItemByAgendaIdAndPeriodQuery(
     {
       agendaId: selectedAgenda?.id ?? '',
@@ -86,7 +89,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       content,
       duration: 0,
     })
-    // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
 
@@ -94,14 +96,15 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     if (!calendarItems) return []
     return calendarItems
       .map((calendarItem) => {
-        if (calendarItem.startTime === undefined || calendarItem.endTime === undefined) {
+        const isTimeOff = calendarItem.tags.some((tag) => tag.type === 'TIMEOFF')
+
+        if (calendarItem.startTime === undefined || calendarItem.endTime === undefined || isTimeOff) {
           console.warn('Skipping calendar item with missing start time or duration', calendarItem)
           return null
         }
 
         const linkedProcedure = procedures?.find((procedure) => procedure.id === calendarItem.calendarItemTypeId)
         const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
-        const isTimeOff = calendarItem.tags.some((tag) => tag.type === 'TIMEOFF')
 
         return {
           id: calendarItem.id,
@@ -176,8 +179,12 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   )
 
   const handleCreate = useCallback(() => {
-    setApptSelectorModalOpen(true)
-  }, [setApptSelectorModalOpen])
+    if (isAdminLevel) {
+      setApptSelectorModalOpen(true)
+    } else {
+      setCreateApptModalOpen(true)
+    }
+  }, [setApptSelectorModalOpen, setCreateApptModalOpen])
 
   const getEventContent = useCallback(({ view, event }: { view: { type: string }; event: EventApi }) => {
     if (view.type.startsWith('list')) {

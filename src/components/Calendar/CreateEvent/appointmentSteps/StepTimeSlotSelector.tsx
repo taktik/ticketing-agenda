@@ -143,7 +143,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
               startDate: dayjsToYYYYMMDDHHmmss(startDate),
               endDate: dayjsToYYYYMMDDHHmmss(endDate),
             },
-            true,
+            true, // TODO: This is buggy
           ).unwrap()
 
           return {

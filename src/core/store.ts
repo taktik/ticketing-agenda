@@ -13,6 +13,7 @@ import { timeTableApiRtk } from './api/timeTableApi'
 import { calendarItemApiRtk } from './api/calendarItemApi'
 import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
+import { dataOwnerTypeApiRtk } from './api/dataOwnerApi'
 import { groupApiRtk } from './api/groupApi'
 import { keyApiRtk } from './api/keyApi'
 import { anonymousApiRtk } from './api/anonymousApi'
@@ -33,6 +34,7 @@ export const store = configureStore({
       calendarItemApiRtk.middleware,
       healthcarePartyApiRtk.middleware,
       calendarItemTypeApiRtk.middleware,
+      dataOwnerTypeApiRtk.middleware,
       groupApiRtk.middleware,
       keyApiRtk.middleware,
       anonymousApiRtk.middleware,

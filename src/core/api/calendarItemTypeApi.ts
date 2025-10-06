@@ -1,7 +1,6 @@
 import { CalendarItemType, DocIdentifier, ListOfIds } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
-import { AllCalendarItemTypeServiceParameters, CalendarItemTypeServiceParameters } from './fetchType'
 
 enum calendarItemTypeTag {
   CalendarItemType = 'CalendarItemTypeTag',

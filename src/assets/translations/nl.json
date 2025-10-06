@@ -219,7 +219,8 @@
     "role_administrator": "Beheerder",
     "role_city_worker": "Gemeentemedewerker",
     "select_an_assignment": "Selecteer een toewijzing",
-    "select_a_role": "Selecteer een rol"
+    "select_a_role": "Selecteer een rol",
+    "head_of_service": "Diensthoofd"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

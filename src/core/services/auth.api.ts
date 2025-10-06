@@ -7,6 +7,7 @@ import {
   CardinalSdk,
   CryptoStrategies,
   DataOwnerWithType,
+  HealthcareParty,
   KeyPairRecoverer,
   RecoveryDataKey,
   RecoveryKeyOptions,

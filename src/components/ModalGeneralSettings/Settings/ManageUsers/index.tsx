@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { HealthcareParty, ListOfIds, User } from '@icure/cardinal-sdk'
+import { CodeStub, HealthcareParty, ListOfIds, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, Select, Space, Table, Tag, message, notification } from 'antd'
 import Column from 'antd/es/table/Column'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
@@ -20,22 +20,11 @@ import {
 } from '../../../../core/api/healthcarePartyApi'
 import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+import { rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
 
 interface Assignment {
   siteId: string | undefined
   agendaId: string | undefined
-}
-
-enum UserRole {
-  ADMIN = 'admin',
-  CITY_WORKER = 'city_worker',
-}
-const CityWorkerRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CityWorker'] })
-const AdminRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:Administrator'] })
-
-const RolesMap = {
-  [UserRole.ADMIN]: AdminRoles,
-  [UserRole.CITY_WORKER]: CityWorkerRoles,
 }
 
 interface UserRow {
@@ -142,13 +131,11 @@ export const ManagerUsers = (): ReactElement => {
     return mergedPairs
   }, [users, hcpMap])
 
-  useEffect(() => console.log('hcpMap', hcpMap), [hcpMap])
-  useEffect(() => console.log('userMap', userMap), [userMap])
-
   useEffect(() => {
     const tableRowsList: UserRow[] = mergedList.map((pair) => {
       const user = pair[0]
       const hcp = pair[1]
+      const hcpTag = getHcpTag(hcp)
       return {
         rowId: v4(),
         user: user,
@@ -156,7 +143,7 @@ export const ManagerUsers = (): ReactElement => {
         firstName: hcp.firstName,
         lastName: hcp.lastName,
         email: user.email,
-        role: hcp?.parentId === adminRoot?.id ? UserRole.ADMIN : hcp?.parentId && siteIds.includes(hcp.parentId) ? UserRole.CITY_WORKER : undefined,
+        role: hcpTag && hcpTag.type ? roleTypeMap[hcpTag.type] : undefined,
         assignment: { agendaId: hcp.supervisorId, siteId: hcp.parentId },
       } as UserRow
     })
@@ -195,17 +182,21 @@ export const ManagerUsers = (): ReactElement => {
 
   const parentIdMap = useMemo(() => {
     return {
-      [UserRole.ADMIN]: adminRoot?.id,
+      [UserRole.ADMINISTRATOR]: adminRoot?.id,
+      [UserRole.HEAD_OF_SERVICE]: siteRoot?.id,
       [UserRole.CITY_WORKER]: siteRoot?.id,
     }
   }, [adminRoot, siteRoot])
 
   const roleConfig = useMemo(() => {
     return {
-      [UserRole.ADMIN]: { label: t('content.role_administrator'), color: 'gold' },
+      [UserRole.ADMINISTRATOR]: { label: t('content.role_administrator'), color: 'gold' },
+      [UserRole.HEAD_OF_SERVICE]: { label: t('content.head_of_service'), color: 'purple' },
       [UserRole.CITY_WORKER]: { label: t('content.role_city_worker'), color: 'blue' },
     }
   }, [])
+
+  const getHcpTag = useCallback((hcp: HealthcareParty) => hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type]), [roleTypeMap])
 
   const roleOptions = useMemo(
     () =>
@@ -288,6 +279,7 @@ export const ManagerUsers = (): ReactElement => {
           lastName: rowValues.lastName,
           name: `${rowValues.firstName} ${rowValues.lastName}`,
           parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+          tags: rowValues.role ? tagMap[rowValues.role] : [],
           supervisorId: rowValues.assignment?.agendaId,
         }).unwrap()
 
@@ -300,7 +292,7 @@ export const ManagerUsers = (): ReactElement => {
             if (createdUser && createdUser.id && rowValues.role) {
               await setUserRoles({
                 userId: createdUser.id,
-                roleIds: RolesMap[rowValues.role],
+                roleIds: rolesMap[rowValues.role],
               }).unwrap()
             }
             showMessageFeedback('success', t('notification.user_saved'))
@@ -341,6 +333,7 @@ export const ManagerUsers = (): ReactElement => {
           lastName: rowValues.lastName,
           name: `${rowValues.firstName} ${rowValues.lastName}`,
           parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+          tags: rowValues.role ? [...record.hcp.tags, ...tagMap[rowValues.role]] : record.hcp.tags,
           supervisorId: rowValues.assignment?.agendaId,
         }).unwrap()
 
@@ -353,7 +346,7 @@ export const ManagerUsers = (): ReactElement => {
             if (record.user.id && rowValues.role) {
               await setUserRoles({
                 userId: record.user.id,
-                roleIds: RolesMap[rowValues.role],
+                roleIds: rolesMap[rowValues.role],
               }).unwrap()
             }
 
@@ -570,29 +563,28 @@ export const ManagerUsers = (): ReactElement => {
                       <Form.Item name="role" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.role_is_required') }]}>
                         <Select placeholder={t('content.select_a_role')} options={roleOptions} />
                       </Form.Item>
-                      {watchedRole === UserRole.CITY_WORKER && (
-                        <Form.Item name="assignment" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.assignment_is_required') }]}>
-                          <Select
-                            style={{ width: '100%' }}
-                            options={siteAndAgendaOptions}
-                            placeholder={t('content.select_an_assignment')}
-                            showSearch
-                            optionFilterProp="label"
-                            allowClear
-                            loading={isSitesLoading || isAgendasLoading}
-                          />
-                        </Form.Item>
-                      )}
+                      {watchedRole === UserRole.CITY_WORKER ||
+                        (watchedRole === UserRole.HEAD_OF_SERVICE && (
+                          <Form.Item name="assignment" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.assignment_is_required') }]}>
+                            <Select
+                              style={{ width: '100%' }}
+                              options={siteAndAgendaOptions}
+                              placeholder={t('content.select_an_assignment')}
+                              showSearch
+                              optionFilterProp="label"
+                              allowClear
+                              loading={isSitesLoading || isAgendasLoading}
+                            />
+                          </Form.Item>
+                        ))}
                     </div>
                   )
                 }
-                const roleInfo = record.role ? roleConfig[record.role] : undefined
+                const roleInfo = record.role && roleConfig[record.role]
 
-                if (roleInfo) {
-                  return <Tag color={roleInfo.color}>{roleInfo.label}</Tag>
-                }
-
-                return (
+                return roleInfo ? (
+                  <Tag color={roleInfo.color}>{roleInfo.label}</Tag>
+                ) : (
                   <Tag icon={<ExclamationCircleOutlined />} color="warning">
                     {t('content.not_set')}
                   </Tag>

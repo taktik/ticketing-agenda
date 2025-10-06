@@ -18,9 +18,11 @@ import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { RootHcpType } from '../../core/api/fetchType'
-import { useGetHealthcarePartiesByParentQuery, useGetRootHealthcareParty } from '../../core/api/healthcarePartyApi'
+import { useDeleteHealthcarePartiesMutation, useGetHealthcarePartiesByParentQuery, useLazyGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
+import { useDeleteUserMutation, useLazyGetUsersQuery } from '../../core/api/userApi'
 import { useAppSelector } from '../../core/hooks'
+import { usePermissions } from '../../core/hooks/usePermissions'
+import { useRoot } from '../../core/hooks/useRoot'
 import './index.css'
 
 export default function DashboardPage() {
@@ -32,8 +34,8 @@ export default function DashboardPage() {
   const skip = !user
   const { t } = useTranslation()
 
-  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: skip, rootType: RootHcpType.SITE_ROOT })
-  const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: skip, rootType: RootHcpType.ADMIN_ROOT })
+  const { isAdminLevel } = usePermissions()
+  const { siteRoot, isSiteRootLoading } = useRoot()
 
   const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
@@ -49,6 +51,12 @@ export default function DashboardPage() {
   const isSitesRelatedLoading = useMemo(() => isSitesLoading || isSiteRootLoading, [isSitesLoading, isSiteRootLoading])
   const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
   const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
+
+  const [getAllHcps] = useLazyGetHealthcarePartiesQuery(undefined)
+  const [deleteAllHcps] = useDeleteHealthcarePartiesMutation()
+
+  const [getAllusers] = useLazyGetUsersQuery(undefined)
+  const [deleteUser] = useDeleteUserMutation()
 
   useEffect(() => setSelectedService(undefined), [services])
   useEffect(() => setSelectedProcedure(undefined), [procedures])
@@ -86,14 +94,16 @@ export default function DashboardPage() {
           <Card className="card">
             <div className="SiteSelectorRow">
               <SiteSelector sites={sites ?? []} isSitesLoading={isSitesRelatedLoading} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
-              <Space>
-                <Tooltip title={t('content.organize_hierarchy')}>
-                  <Button icon={<ApartmentOutlined />} onClick={() => setSettingsModalOpen(true)} aria-label={t('content.organize_hierarchy')} />
-                </Tooltip>
-                <Tooltip title={t('content.manage_planning')}>
-                  <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label={t('content.manage_planning')} />
-                </Tooltip>
-              </Space>
+              {isAdminLevel && (
+                <Space>
+                  <Tooltip title={t('content.organize_hierarchy')}>
+                    <Button icon={<ApartmentOutlined />} onClick={() => setSettingsModalOpen(true)} aria-label={t('content.organize_hierarchy')} />
+                  </Tooltip>
+                  <Tooltip title={t('content.manage_planning')}>
+                    <Button icon={<ScheduleOutlined />} onClick={() => setSchedulingModalOpen(true)} aria-label={t('content.manage_planning')} />
+                  </Tooltip>
+                </Space>
+              )}
             </div>
           </Card>
           <div className="ant-calendar-wrapper">
