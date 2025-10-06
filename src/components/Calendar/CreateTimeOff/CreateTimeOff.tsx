@@ -7,8 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
-import { RootHcpType } from '../../../core/api/fetchType'
-import { useGetRootHealthcareParty } from '../../../core/api/healthcarePartyApi'
+import { useRoot } from '../../../core/hooks/useRoot'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss } from '../../common/helpers'
 import './index.css'
@@ -38,7 +37,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
   const watchedService = Form.useWatch('service', form)
 
   const { data: allAgendas, isLoading: isAgendasLoading } = useGetAgendaByAuthorId({ skip: !watchedSite, authorId: watchedSite ?? '' })
-  const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
+  const { adminRoot } = useRoot()
 
   const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
 

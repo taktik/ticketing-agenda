@@ -35,7 +35,6 @@ export const dataOwnerTypeApiRtk = createApi({
           const currentDataOwner = await dataOwnerTypeApi!.getCurrentDataOwner()
           const roleTag = currentDataOwner.dataOwner.tags?.find((tag) => tag.type && roleTypeMap[tag.type])
           const role = roleTag && roleTag.type ? roleTypeMap[roleTag.type] : undefined
-
           return {
             dataOwner: currentDataOwner,
             role: role,

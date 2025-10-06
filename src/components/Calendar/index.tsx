@@ -184,7 +184,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     } else {
       setCreateApptModalOpen(true)
     }
-  }, [setApptSelectorModalOpen, setCreateApptModalOpen])
+  }, [setApptSelectorModalOpen, setCreateApptModalOpen, isAdminLevel])
 
   const getEventContent = useCallback(({ view, event }: { view: { type: string }; event: EventApi }) => {
     if (view.type.startsWith('list')) {

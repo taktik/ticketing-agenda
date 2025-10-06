@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { CodeStub, HealthcareParty, ListOfIds, User } from '@icure/cardinal-sdk'
-import { Button, Empty, Form, Input, Select, Space, Table, Tag, message, notification } from 'antd'
+import { HealthcareParty, User } from '@icure/cardinal-sdk'
+import { Button, Empty, Form, Input, message, notification, Select, Space, Table, Tag } from 'antd'
 import Column from 'antd/es/table/Column'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -8,19 +8,18 @@ import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { RESERVED_WORDS } from '../../../../constants'
 import { useGetAllAgendaByAuthorIds } from '../../../../core/api/agendaApi'
-import { RootHcpType } from '../../../../core/api/fetchType'
 import {
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
   useGetHealthcarePartiesByIdsQuery,
-  useGetHealthcarePartiesByParentQuery,
-  useGetRootHealthcareParty,
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
-import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
-import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
 import { rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
+import { useRoot } from '../../../../core/hooks/useRoot'
+import { useSites } from '../../../../core/hooks/useSites'
+import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
 
 interface Assignment {
   siteId: string | undefined
@@ -69,9 +68,9 @@ export const ManagerUsers = (): ReactElement => {
 
   const [setUserRoles, { isLoading: isSetUserRolesLoading }] = useSetUserRolesMutation()
 
-  const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
-  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.SITE_ROOT })
-  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: !siteRoot })
+  const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
+  const { sites, isSitesLoading } = useSites()
+
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
   const { data: agendas, isLoading: isAgendasLoading } = useGetAllAgendaByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
 

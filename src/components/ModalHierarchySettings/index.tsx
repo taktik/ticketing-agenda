@@ -1,5 +1,5 @@
 import { AppstoreOutlined, BankOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
-import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda } from '@icure/cardinal-sdk'
 import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
@@ -7,10 +7,10 @@ import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import emptyIcon from '../../assets/empty.svg'
 import { SettingContext } from '../../contexts/SettingContext'
-import { useDeleteAgendaMutation, useDeleteAgendasMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
-import { useDeleteCalendarItemTypesMutation, useLazyGetCalendarItemTypesForMultipleAgendasQuery, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useCreateUpdateHealthcarePartyMutation, useDeleteHealthcarePartyMutation, useGetHealthcarePartiesByParentQuery } from '../../core/api/healthcarePartyApi'
+import { useDeleteAgendaMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
+import { useDeleteCalendarItemTypesMutation, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { useAppSelector } from '../../core/hooks'
+import { useSites } from '../../core/hooks/useSites'
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
@@ -25,16 +25,16 @@ interface ModalHierarchySettingsProps {
 type MenuItem = Required<MenuProps>['items'][number]
 
 export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySettingsProps): ReactElement => {
-  const { selectedSite, siteRoot, selectedKey, setSelectedKey } = useContext(SettingContext)
+  const { selectedSite, selectedKey, setSelectedKey } = useContext(SettingContext)
   const { t } = useTranslation()
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
 
-  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
+  const { sites, isSitesLoading } = useSites()
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
-  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !siteRoot, authorIds: sitesIds ?? [] })
+  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !sites, authorIds: sitesIds ?? [] })
 
   const sortedServices = useMemo(() => {
     return [...(services ?? [])].sort((a, b) => {
@@ -44,19 +44,12 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     })
   }, [services])
 
-  const [getCalendarItemTypesForAgendasIds] = useLazyGetCalendarItemTypesForMultipleAgendasQuery()
   const [getCalendarItemTypesForAgenda] = useLazyGetCalendarItemTypesQuery()
-  const [createUpdateSite, { isLoading: isCreateUpdateSiteLoading }] = useCreateUpdateHealthcarePartyMutation()
-  const [deleteHcp, { isLoading: isDeleteHcpLoading }] = useDeleteHealthcarePartyMutation()
   const [deleteAgenda, { isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
-  const [deleteAgendas, { isLoading: isDeleteAgendasLoading }] = useDeleteAgendasMutation()
   const [deleteCalendarItemTypes, { isLoading: isDeleteCalendarItemTypesLoading }] = useDeleteCalendarItemTypesMutation()
 
   const fetchIsLoading = useMemo(() => isSitesLoading || isServicesLoading, [isSitesLoading, isServicesLoading])
-  const mutationIsLoading = useMemo(
-    () => isCreateUpdateSiteLoading || isDeleteHcpLoading || isDeleteAgendaLoading || isDeleteAgendasLoading || isDeleteCalendarItemTypesLoading,
-    [isCreateUpdateSiteLoading, isDeleteHcpLoading, isDeleteAgendaLoading, isDeleteAgendasLoading, isDeleteCalendarItemTypesLoading],
-  )
+  const mutationIsLoading = useMemo(() => isDeleteAgendaLoading || isDeleteCalendarItemTypesLoading, [isDeleteAgendaLoading, isDeleteCalendarItemTypesLoading])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -81,20 +74,6 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
-
-  const handleAddSite = useCallback(async () => {
-    try {
-      /*
-      if (!siteRoot) throw new Error()
-      const siteHcp = new HealthcareParty({ name: t('content.new_site'), parentId: siteRoot.id, id: v4(), public: true, tags: [new CodeStub({ id: 'SITE', code: 'SITE', context: 'SITE', type: 'SITE' })] })
-      await createUpdateSite(siteHcp).unwrap()
-      */
-      console.info('obsolete')
-      showMessageFeedback('success', t('notification.site_saved'))
-    } catch (error) {
-      openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
-    }
-  }, [selectedKey, siteRoot, t])
 
   const menuItems: MenuItem[] = useMemo(
     () =>
@@ -163,29 +142,6 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
       setOpenKeys(keys)
     },
     [openKeys, setSelectedKey, setOpenKeys],
-  )
-
-  const handleSiteDelete = useCallback(
-    async (site: HealthcareParty) => {
-      try {
-        if (!site) throw new Error('No site selected')
-        const relatedServices = services.filter((service) => service.author === site.id)
-        const relatedServicesIds = relatedServices.map((service) => service.id)
-        const calendarItemTypes = await getCalendarItemTypesForAgendasIds(relatedServicesIds).unwrap()
-        const calendarItemTypesToDelete = calendarItemTypes.flat().map((CIT) => CIT.id)
-        if (calendarItemTypesToDelete.length > 0) {
-          await deleteCalendarItemTypes(calendarItemTypesToDelete).unwrap()
-        }
-        await deleteAgendas(relatedServices).unwrap()
-        await deleteHcp(site).unwrap()
-        showMessageFeedback('success', t('notification.site_deleted'))
-      } catch (error) {
-        openNotification('error', t('notification.site_delete_failed'), t('notification.site_delete_error'))
-      } finally {
-        setSelectedKey('default')
-      }
-    },
-    [services, getCalendarItemTypesForAgendasIds, deleteCalendarItemTypes, deleteAgendas, deleteHcp, showMessageFeedback, openNotification, setSelectedKey, t],
   )
 
   const handleDeleteService = useCallback(

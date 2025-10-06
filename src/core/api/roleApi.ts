@@ -14,8 +14,8 @@ export const roleTypeMap: { [key: string]: UserRole } = {
   CITY_WORKER: UserRole.CITY_WORKER,
 }
 
-export const cityWorkerRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CityWorker'] })
-export const headOfServiceRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:Administrator'] })
+export const cityWorkerRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
+export const headOfServiceRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
 export const adminRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
 
 export const administratorTag = [new CodeStub({ id: 'ADMINISTRATOR|1', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })]

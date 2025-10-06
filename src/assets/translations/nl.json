@@ -104,7 +104,7 @@
     "is_public": "Is openbaar",
     "public": "Openbaar",
     "visibility": "Zichtbaarheid",
-    "booking_window_min": "Reserveringsvenster (min)",
+    "booking_window_min": "Reserveringsvenster",
     "before": "Voor",
     "after": "Na",
     "all_procedures": "Alle procedures",
@@ -335,8 +335,8 @@
     "from_date": "Vanaf",
     "weekday": "weekdagen",
     "until": "Tot",
-    "rrule_time_min": "Boek minimaal (min. vooraf)",
-    "rrule_time_max": "Boek maximaal (min. vooraf)"
+    "rrule_time_min": "Boeking opent",
+    "rrule_time_max": "Boeking sluit"
   },
   "validation": {
     "check_highlighted_fields_correct_errors": "Controleer de gemarkeerde velden en corrigeer de fouten.",

@@ -2,14 +2,12 @@ import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } fro
 import { CodeStub, DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-import { RootHcpType } from '../../../core/api/fetchType'
-import { useGetRootHealthcareParty } from '../../../core/api/healthcarePartyApi'
 import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
@@ -20,6 +18,7 @@ import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
+import { useRoot } from '../../../core/hooks/useRoot'
 
 const { Step } = Steps
 
@@ -176,8 +175,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
     return languageMapping[i18n.language] || 'FR'
   }, [i18n.language])
 
-  const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.SITE_ROOT })
-  const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ skip: false, rootType: RootHcpType.ADMIN_ROOT })
+  const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
 
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
 

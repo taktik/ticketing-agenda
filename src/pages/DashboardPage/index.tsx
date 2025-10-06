@@ -18,11 +18,9 @@ import { SiteSelector } from '../../components/SiteSelector'
 import { SettingContextProvider } from '../../contexts/SettingContext'
 import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useDeleteHealthcarePartiesMutation, useGetHealthcarePartiesByParentQuery, useLazyGetHealthcarePartiesQuery } from '../../core/api/healthcarePartyApi'
-import { useDeleteUserMutation, useLazyGetUsersQuery } from '../../core/api/userApi'
 import { useAppSelector } from '../../core/hooks'
 import { usePermissions } from '../../core/hooks/usePermissions'
-import { useRoot } from '../../core/hooks/useRoot'
+import { useSites } from '../../core/hooks/useSites'
 import './index.css'
 
 export default function DashboardPage() {
@@ -35,9 +33,8 @@ export default function DashboardPage() {
   const { t } = useTranslation()
 
   const { isAdminLevel } = usePermissions()
-  const { siteRoot, isSiteRootLoading } = useRoot()
+  const { sites, isSitesLoading } = useSites()
 
-  const { data: sites, isLoading: isSitesLoading } = useGetHealthcarePartiesByParentQuery({ parentId: siteRoot?.id ?? '' }, { skip: skip || !siteRoot })
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
 
   const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'parentSite', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
@@ -48,15 +45,9 @@ export default function DashboardPage() {
   const filteredProcedures = useMemo(() => (procedures && selectedService ? procedures : []), [procedures, selectedService])
   const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
 
-  const isSitesRelatedLoading = useMemo(() => isSitesLoading || isSiteRootLoading, [isSitesLoading, isSiteRootLoading])
+  const isSitesRelatedLoading = useMemo(() => isSitesLoading, [isSitesLoading])
   const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
   const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
-
-  const [getAllHcps] = useLazyGetHealthcarePartiesQuery(undefined)
-  const [deleteAllHcps] = useDeleteHealthcarePartiesMutation()
-
-  const [getAllusers] = useLazyGetUsersQuery(undefined)
-  const [deleteUser] = useDeleteUserMutation()
 
   useEffect(() => setSelectedService(undefined), [services])
   useEffect(() => setSelectedProcedure(undefined), [procedures])
@@ -133,7 +124,7 @@ export default function DashboardPage() {
       </div>
       {settingsModalOpen &&
         createPortal(
-          <SettingContextProvider selectedSite={selectedSite} siteRoot={siteRoot}>
+          <SettingContextProvider selectedSite={selectedSite}>
             <ModalHierarchySettings isVisible={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
           </SettingContextProvider>,
           document.body,
