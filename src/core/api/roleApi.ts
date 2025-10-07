@@ -18,15 +18,15 @@ export const cityWorkerRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4
 export const headOfServiceRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
 export const adminRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
 
-export const administratorTag = [new CodeStub({ id: 'ADMINISTRATOR|1', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })]
-export const headOfServiceTag = [new CodeStub({ id: 'HEAD_OF_SERVICE|1', code: 'HEAD_OF_SERVICE', type: 'HEAD_OF_SERVICE', version: '1' })]
-export const cityWorkerTag = [new CodeStub({ id: 'CITY_WORKER|1', code: 'CITY_WORKER', type: 'CITY_WORKER', version: '1' })]
-
 export const rolesMap = {
   [UserRole.ADMINISTRATOR]: adminRoles,
   [UserRole.HEAD_OF_SERVICE]: headOfServiceRoles,
   [UserRole.CITY_WORKER]: cityWorkerRoles,
 }
+
+export const administratorTag = [new CodeStub({ id: 'ADMINISTRATOR|1', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })]
+export const headOfServiceTag = [new CodeStub({ id: 'HEAD_OF_SERVICE|1', code: 'HEAD_OF_SERVICE', type: 'HEAD_OF_SERVICE', version: '1' })]
+export const cityWorkerTag = [new CodeStub({ id: 'CITY_WORKER|1', code: 'CITY_WORKER', type: 'CITY_WORKER', version: '1' })]
 
 export const tagMap = {
   [UserRole.ADMINISTRATOR]: administratorTag,

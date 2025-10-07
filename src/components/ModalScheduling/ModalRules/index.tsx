@@ -287,7 +287,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
             uiRruleParts._byday = []
           }
         } catch (error) {
-          openNotification('error', t('content.unexpected_error'), '')
+          openNotification('error', t('validation.unexpected_error'), '')
           console.error('Error parsing existing RRULE string:', error, initialRruleString)
           initialRruleString = undefined // Clear if invalid to avoid issues
           // Reset to defaults if parsing failed
@@ -318,7 +318,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       })
       setEditingKey(tableRow.rowId)
     } catch (error) {
-      openNotification('error', t('content.unexpected_error'), '')
+      openNotification('error', t('validation.unexpected_error'), '')
     }
   }
 
@@ -569,7 +569,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       }
       const scheduleFiltered = schedulingTableRows.filter((sched) => sched.rowId !== schedulingTableRow.rowId).map(({ rowId, ...rest }) => new ResourceGroupAllocationSchedule(rest))
       const newSchedule = [...scheduleFiltered, newResourceGroup]
-      await updateAgenda({ ...agenda, schedules: [...newSchedule] }).unwrap()
+      await updateAgenda(new Agenda({ ...agenda, schedules: [...newSchedule] })).unwrap()
       showUpdateSuccessMessage(t('notification.schedule_saved'))
       onClose()
       setIsDirty(false)

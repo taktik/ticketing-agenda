@@ -113,7 +113,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
     try {
       if (!selectedService || !resourceGroupToBeDelete) throw new Error('Missing service or resource group to delete')
       const updatedSchedule = schedulingTableRows.filter((row) => row.rowId !== resourceGroupToBeDelete.rowId).map(({ rowId, ...resourceGroup }) => new ResourceGroupAllocationSchedule({ ...resourceGroup }))
-      await updateAgenda({ ...selectedService, schedules: updatedSchedule }).unwrap()
+      await updateAgenda(new Agenda({ ...selectedService, schedules: updatedSchedule })).unwrap()
       showMessageFeedback('success', t('notification.schedule_deleted'))
     } catch (error) {
       console.error('Failed to delete resource group:', error)

@@ -70,28 +70,7 @@ export const calendarItemApiRtk = createApi({
           return new DecryptedCalendarItem(updatedCalendarItem)
         })
       },
-      invalidatesTags: (result, error) => {
-        if (error || !result?.startTime || !result?.endTime) {
-          return []
-        }
-
-        const eventStartDate = timestampToDate(result.startTime)
-        const eventEndDate = timestampToDate(result.endTime)
-
-        if (!eventStartDate || !eventEndDate) {
-          return []
-        }
-
-        const fromDate = startOfWeek(eventStartDate)
-        const toDate = endOfWeek(eventEndDate)
-
-        return [
-          {
-            type: CalendarItemTags.CalendarItem,
-            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
-          },
-        ]
-      },
+      invalidatesTags: [{ type: CalendarItemTags.CalendarItem }],
     }),
     updateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem }>({
       async queryFn({ calendarItem }, { getState }) {
@@ -107,31 +86,10 @@ export const calendarItemApiRtk = createApi({
           return updatedCalendarItem
         })
       },
-      invalidatesTags: (result, error) => {
-        if (error || !result?.startTime || !result?.endTime) {
-          return []
-        }
-
-        const eventStartDate = timestampToDate(result.startTime)
-        const eventEndDate = timestampToDate(result.endTime)
-
-        if (!eventStartDate || !eventEndDate) {
-          return []
-        }
-
-        const fromDate = startOfWeek(eventStartDate)
-        const toDate = endOfWeek(eventEndDate)
-
-        return [
-          {
-            type: CalendarItemTags.CalendarItem,
-            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
-          },
-        ]
-      },
+      invalidatesTags: [{ type: CalendarItemTags.CalendarItem }],
     }),
-    deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string; rev: string; from?: string; to?: string }>({
-      async queryFn({ calendarItemId, rev, from, to }, { getState }) {
+    deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string; rev: string }>({
+      async queryFn({ calendarItemId, rev }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async () => {
           const result = await calendarApi?.deleteCalendarItemById(calendarItemId, rev)
@@ -141,16 +99,7 @@ export const calendarItemApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: (result, error, { from, to }) => {
-        const fromDate = from ? startOfWeek(new Date(from)) : startOfWeek(new Date())
-        const toDate = to ? endOfWeek(new Date(to)) : endOfWeek(new Date())
-        return [
-          {
-            type: CalendarItemTags.CalendarItem,
-            id: `CALENDAR-${fromDate.getTime()}-${toDate.getTime()}`,
-          },
-        ]
-      },
+      invalidatesTags: [{ type: CalendarItemTags.CalendarItem }],
     }),
     shareCalendarItemWith: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; delegateId: string }>({
       async queryFn({ calendarItem, delegateId }, { getState }) {

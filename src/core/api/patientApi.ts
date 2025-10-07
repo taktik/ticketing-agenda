@@ -189,7 +189,7 @@ export const patientApiRtk = createApi({
       async queryFn({ patient, delegates }, { getState }) {
         const patientApi = (await cardinalApi(getState))?.patient
         return guard([patientApi], async (): Promise<DecryptedPatient> => {
-          const delegatesAcessLevel = delegates.reduce(
+          const delegatesAccessLevel = delegates.reduce(
             (acc, currentDelegateId) => {
               acc[currentDelegateId] = new PatientShareOptions({
                 requestedPermissions: RequestedPermission.FullWrite,
@@ -200,7 +200,7 @@ export const patientApiRtk = createApi({
             },
             {} as { [key: string]: PatientShareOptions },
           )
-          const updatedPatient = await patientApi?.shareWithMany(patient, delegatesAcessLevel)
+          const updatedPatient = await patientApi?.shareWithMany(patient, delegatesAccessLevel)
           if (!updatedPatient) {
             throw new Error('Patient does not exist')
           }

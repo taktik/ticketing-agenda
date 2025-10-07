@@ -1,7 +1,7 @@
-import { format, Locale } from 'date-fns'
+import { format, isSameDay, Locale } from 'date-fns'
+import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs, { Dayjs } from 'dayjs'
 import { EventApi } from 'fullcalendar'
-import { de, enUS, fr, nl } from 'date-fns/locale'
 
 export const minutesToDayjs = (totalMinutes: number): dayjs.Dayjs => {
   return dayjs().startOf('day').add(totalMinutes, 'minute')
@@ -284,23 +284,21 @@ export const calculateNumericEventTimes = (startTime: Dayjs | null, durationInMi
   }
 }
 
-/**
- * Formats an event's start and end dates into a display string using a dynamic locale.
- * @param event - The event object with start and end dates.
- * @param locale - The date-fns locale object (e.g., fr, enUS).
- * @returns A formatted string or an empty string if dates are invalid.
- */
 export const formatEventDate = (event: EventApi, locale: Locale): string => {
   if (!event.start || !event.end) {
     return ''
   }
 
-  // Use the provided locale in each format call
-  const datePart = format(event.start, 'd MMMM yyyy', { locale })
-  const startTime = format(event.start, 'HH:mm')
-  const endTime = format(event.end, 'HH:mm')
-
-  return `${datePart}, ${startTime} - ${endTime}`
+  if (isSameDay(event.start, event.end)) {
+    const datePart = format(event.start, 'd MMMM yyyy', { locale })
+    const startTime = format(event.start, 'HH:mm')
+    const endTime = format(event.end, 'HH:mm')
+    return `${datePart}, ${startTime} - ${endTime}`
+  } else {
+    const startDateTime = format(event.start, 'd MMMM yyyy, HH:mm', { locale })
+    const endDateTime = format(event.end, 'd MMMM yyyy, HH:mm', { locale })
+    return `${startDateTime} - ${endDateTime}`
+  }
 }
 
 export const localeMap: Record<string, Locale> = {
@@ -308,4 +306,23 @@ export const localeMap: Record<string, Locale> = {
   fr: fr,
   de: de,
   nl: nl,
+}
+
+/**
+ * Checks if an event is a standard FullCalendar all-day event.
+ * It's considered all-day if it starts and ends exactly at midnight.
+ */
+export const isAllDayEvent = (start: Date | undefined, end: Date | undefined): boolean => {
+  if (!start || !end) {
+    return false
+  }
+
+  if (start.getTime() === end.getTime()) {
+    return false
+  }
+
+  const startsAtMidnight = start.getHours() === 0 && start.getMinutes() === 0 && start.getSeconds() === 0
+  const endsAtMidnight = end.getHours() === 0 && end.getMinutes() === 0 && end.getSeconds() === 0
+
+  return startsAtMidnight && endsAtMidnight
 }

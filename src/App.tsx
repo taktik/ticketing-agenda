@@ -23,7 +23,9 @@ import 'dayjs/locale/en'
 import 'dayjs/locale/de'
 
 import localizedFormat from 'dayjs/plugin/localizedFormat'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 dayjs.extend(localizedFormat)
+dayjs.extend(isSameOrAfter)
 
 // Mapping from i18n language codes to antd locale objects
 const antdLocales: { [key: string]: typeof enGB } = {

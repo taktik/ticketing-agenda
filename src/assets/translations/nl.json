@@ -220,7 +220,8 @@
     "role_city_worker": "Gemeentemedewerker",
     "select_an_assignment": "Selecteer een toewijzing",
     "select_a_role": "Selecteer een rol",
-    "head_of_service": "Diensthoofd"
+    "head_of_service": "Diensthoofd",
+    "all_day": "Hele dag"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

@@ -15,13 +15,14 @@ import {
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
-import { rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
+import { administratorTag, cityWorkerTag, headOfServiceTag, rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
 import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
 import { useRoot } from '../../../../core/hooks/useRoot'
 import { useSites } from '../../../../core/hooks/useSites'
+import { AssignmentSelector } from '../../../AssignmentSelector/AssignmentSelector'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
 
-interface Assignment {
+export interface Assignment {
   siteId: string | undefined
   agendaId: string | undefined
 }
@@ -110,13 +111,12 @@ export const ManagerUsers = (): ReactElement => {
   )
   const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
-  const hcpMap = useMemo(() => {
-    return new Map((hcps ?? []).filter((hcp) => !(hcp.parentId === siteRoot?.id || hcp.firstName === 'admin-root' || hcp.firstName === 'site-root')).map((hcp) => [hcp.id, hcp]))
-  }, [hcps])
+  const allowedRoleIds = useMemo(() => new Set([administratorTag[0].id, headOfServiceTag[0].id, cityWorkerTag[0].id]), [administratorTag, headOfServiceTag, cityWorkerTag])
 
-  const userMap = useMemo(() => {
-    return new Map((users ?? []).map((user) => [user.id, user]))
-  }, [users])
+  const hcpMap = useMemo(() => {
+    const filteredHcps = (hcps ?? []).filter((hcp) => hcp.tags?.some((tag) => allowedRoleIds.has(tag.id)))
+    return new Map(filteredHcps.map((hcp) => [hcp.id, hcp]))
+  }, [hcps, allowedRoleIds])
 
   const mergedList = useMemo(() => {
     if (!users || !hcps) return []
@@ -257,7 +257,6 @@ export const ManagerUsers = (): ReactElement => {
         setTableRows((prev) => prev.filter((user) => user.rowId !== userRowToBeDeleted.rowId))
       }
     } catch (hcpError) {
-      // HealthcareParty deletion failed, so User deletion was not attempted.
       console.error('Failed to delete HealthcareParty:', hcpError)
       openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
     }
@@ -273,20 +272,22 @@ export const ManagerUsers = (): ReactElement => {
         const rowValues = await form.validateFields()
 
         // --- Step 1: Create HealthcareParty ---
-        createdHcp = await createUpdateHcp({
-          ...record.hcp,
-          firstName: rowValues.firstName,
-          lastName: rowValues.lastName,
-          name: `${rowValues.firstName} ${rowValues.lastName}`,
-          parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
-          tags: rowValues.role ? tagMap[rowValues.role] : [],
-          supervisorId: rowValues.assignment?.agendaId,
-          public: false,
-        }).unwrap()
+        createdHcp = await createUpdateHcp(
+          new HealthcareParty({
+            ...record.hcp,
+            firstName: rowValues.firstName,
+            lastName: rowValues.lastName,
+            name: `${rowValues.firstName} ${rowValues.lastName}`,
+            parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+            tags: rowValues.role ? tagMap[rowValues.role] : [],
+            supervisorId: rowValues.assignment?.agendaId,
+            public: false,
+          }),
+        ).unwrap()
 
         try {
           // --- Step 2: Create User ---
-          createdUser = await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
+          createdUser = await createUpdateUser(new User({ ...record.user, email: rowValues.email })).unwrap()
 
           try {
             // --- Step 3: Set User Roles ---
@@ -331,19 +332,21 @@ export const ManagerUsers = (): ReactElement => {
         const finalTags = [...nonRoleTags, ...newRoleTag]
 
         // --- Step 1: Update HealthcareParty ---
-        await createUpdateHcp({
-          ...record.hcp,
-          firstName: rowValues.firstName,
-          lastName: rowValues.lastName,
-          name: `${rowValues.firstName} ${rowValues.lastName}`,
-          parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
-          tags: finalTags,
-          supervisorId: rowValues.assignment?.agendaId,
-        }).unwrap()
+        await createUpdateHcp(
+          new HealthcareParty({
+            ...record.hcp,
+            firstName: rowValues.firstName,
+            lastName: rowValues.lastName,
+            name: `${rowValues.firstName} ${rowValues.lastName}`,
+            parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+            tags: finalTags,
+            supervisorId: rowValues.assignment?.agendaId,
+          }),
+        ).unwrap()
 
         try {
           // --- Step 2: Update User ---
-          await createUpdateUser({ ...record.user, email: rowValues.email }).unwrap()
+          await createUpdateUser(new User({ ...record.user, email: rowValues.email })).unwrap()
 
           try {
             // --- Step 3: Set User Roles ---
@@ -389,7 +392,6 @@ export const ManagerUsers = (): ReactElement => {
       } else if (isExisting) {
         updateUser(record)
       } else {
-        // This single block now handles all invalid states (missing data, inconsistent data, etc.)
         console.error('Failed to save user due to inconsistent or missing data', { record })
         openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
       }
@@ -413,7 +415,7 @@ export const ManagerUsers = (): ReactElement => {
         })
         setEditingKey(record.rowId)
       } catch (error) {
-        openNotification('error', 'Update failed', error instanceof Error ? error.message : 'An unexpected error occurred.')
+        openNotification('error', 'Update failed', error instanceof Error ? error.message : t('validation.unexpected_error'))
       }
     },
     [form, setEditingKey],
@@ -567,20 +569,11 @@ export const ManagerUsers = (): ReactElement => {
                       <Form.Item name="role" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.role_is_required') }]}>
                         <Select placeholder={t('content.select_a_role')} options={roleOptions} />
                       </Form.Item>
-                      {watchedRole === UserRole.CITY_WORKER ||
-                        (watchedRole === UserRole.HEAD_OF_SERVICE && (
-                          <Form.Item name="assignment" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.assignment_is_required') }]}>
-                            <Select
-                              style={{ width: '100%' }}
-                              options={siteAndAgendaOptions}
-                              placeholder={t('content.select_an_assignment')}
-                              showSearch
-                              optionFilterProp="label"
-                              allowClear
-                              loading={isSitesLoading || isAgendasLoading}
-                            />
-                          </Form.Item>
-                        ))}
+                      {(watchedRole === UserRole.CITY_WORKER || watchedRole === UserRole.HEAD_OF_SERVICE) && (
+                        <Form.Item name="assignment" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.assignment_is_required') }]}>
+                          <AssignmentSelector sites={sites ?? []} agendas={agendas} isSitesLoading={isSitesLoading} isAgendasLoading={isAgendasLoading} />
+                        </Form.Item>
+                      )}
                     </div>
                   )
                 }

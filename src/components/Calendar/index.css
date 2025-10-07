@@ -127,4 +127,11 @@ body * {
 .calendar-title {
   margin: 0 !important;
 }
+.fc-timegrid-axis-cushion {
+  font-size: 15px;
+  white-space: wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
 /*# sourceMappingURL=index.css.map */

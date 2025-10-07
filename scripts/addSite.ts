@@ -18,7 +18,7 @@ async function addSiteToGroupId() {
   const hcpId = v4()
   const userId = v4()
   const siteName = ''
-  const siteRoot_ID = 'db3ce37c-cb88-497c-98f5-70d86906da34'
+  const siteRoot_ID = ''
   const siteEmail = ''
 
   const siteHcp = new HealthcareParty({

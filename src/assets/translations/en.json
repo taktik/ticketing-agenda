@@ -220,7 +220,8 @@
     "role_city_worker": "City Worker",
     "select_an_assignment": "Select an assignment",
     "select_a_role": "Select a role",
-    "head_of_service": "Head of Service"
+    "head_of_service": "Head of Service",
+    "all_day": "All day"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

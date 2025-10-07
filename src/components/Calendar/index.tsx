@@ -10,13 +10,13 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItemType, DecryptedCalendarItem, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
-import { EventApi, EventClickArg, EventInput } from 'fullcalendar'
+import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalendar'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { usePermissions } from '../../core/hooks/usePermissions'
-import { dayjsToYYYYMMDDHHmmss, parseTimeRange } from '../common/helpers'
+import { dayjsToYYYYMMDDHHmmss, isAllDayEvent, parseTimeRange } from '../common/helpers'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { CreateEvent } from './CreateEvent/CreateEvent'
 import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
@@ -66,8 +66,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     { skip: !selectedAgenda },
   )
 
-  useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
-
   const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
   const [updateCalendarItem] = useUpdateCalendarItemMutation()
 
@@ -111,6 +109,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
         const linkedProcedure = procedures?.find((procedure) => procedure.id === calendarItem.calendarItemTypeId)
         const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
+        const isAllDay = isAllDayEvent(eventTimes?.start, eventTimes?.end)
 
         return {
           id: calendarItem.id,
@@ -119,6 +118,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           end: eventTimes?.end,
           color: isTimeOff ? 'orange' : linkedProcedure?.color,
           details: calendarItem.details,
+          allDay: isAllDay,
           extendedProps: {
             calendarItemTypeId: calendarItem.calendarItemTypeId,
             agendaId: calendarItem.agendaId,
@@ -192,7 +192,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     }
   }, [setApptSelectorModalOpen, setCreateApptModalOpen, isAdminLevel])
 
-  const getEventContent = useCallback(({ view, event }: { view: { type: string }; event: EventApi }) => {
+  const getEventContent = useCallback((arg: EventContentArg) => {
+    const { view, event, timeText } = arg
+
     if (view.type.startsWith('list')) {
       return <ListEventContent event={event} view={view.type} />
     } else if (view.type.startsWith('timeGrid')) {
@@ -214,7 +216,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     async (event: EventApi | undefined) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
-        await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev, from: event?.start?.toISOString(), to: event?.end?.toISOString() }).unwrap()
+        await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
         showMessageFeedback('success', t('notification.appointment_deleted'))
       } catch (error) {
         openNotification('error', t('notification.appointment_delete_failed'), t('notification.appointment_delete_error'))
@@ -244,7 +246,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
       }
     },
-    [deleteCalendarItem, t, calendarItems],
+    [updateCalendarItem, t, calendarItems],
   )
 
   return (
@@ -304,7 +306,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         eventClick={handleEventClick}
         eventContent={getEventContent}
         noEventsContent={noEventsContent}
-        allDaySlot={true}
+        allDaySlot={isAdminLevel}
+        allDayText={t('content.all_day')}
       />
       {eventModalOpen &&
         createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}

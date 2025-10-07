@@ -220,7 +220,8 @@
     "role_city_worker": "Agent communal",
     "select_an_assignment": "Sélectionnez une affectation",
     "select_a_role": "Sélectionnez un rôle",
-    "head_of_service": "Chef de service"
+    "head_of_service": "Chef de service",
+    "all_day": "Toute la journée"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

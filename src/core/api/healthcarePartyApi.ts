@@ -46,7 +46,7 @@ export const healthcarePartyApiRtk = createApi({
       },
       providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
-    getRootHealthcareParty: builder.query<HealthcareParty[] | undefined, string>({
+    getHealthcarePartyByTag: builder.query<HealthcareParty[] | undefined, string>({
       async queryFn(rootType, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
         return guard([hcpApi], async (): Promise<HealthcareParty[]> => {
@@ -176,7 +176,7 @@ export const {
   useLazyGetHealthcarePartiesQuery,
   useGetHealthcarePartiesByParentQuery,
   useGetHealthcarePartiesByIdsQuery,
-  useGetRootHealthcarePartyQuery,
+  useGetHealthcarePartyByTagQuery,
   useGetHealthcarePartyQuery,
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
@@ -189,7 +189,7 @@ export const {
 } = healthcarePartyApiRtk
 
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {
-  const { data, ...rest } = useGetHealthcarePartyByNameQuery(params.rootType, {
+  const { data, ...rest } = useGetHealthcarePartyByTagQuery(params.rootType, {
     skip: params.skip,
   })
 

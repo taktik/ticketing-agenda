@@ -1,6 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons'
 import { CodeStub, DecryptedCalendarItem, HealthcareParty } from '@icure/cardinal-sdk'
-import { Alert, Button, DatePicker, Form, Select, Space, Typography } from 'antd'
+import { Alert, Button, DatePicker, Form, Select, Space } from 'antd'
 import { Dayjs } from 'dayjs'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,8 +11,29 @@ import { useRoot } from '../../../core/hooks/useRoot'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss } from '../../common/helpers'
 import './index.css'
-const { Title, Text } = Typography
 const { RangePicker } = DatePicker
+
+/**
+ * Splits a date range into smaller chunks, with each chunk ending at the end of a week.
+ * @param start The start of the entire date range.
+ * @param end The end of the entire date range.
+ * @returns An array of objects, each with a `start` and `end` Dayjs object.
+ */
+export const splitDateRangeIntoWeeks = (start: Dayjs, end: Dayjs): { start: Dayjs; end: Dayjs }[] => {
+  const currentChunkStart = start.startOf('day')
+
+  if (currentChunkStart.isSameOrAfter(end)) {
+    return []
+  }
+
+  const startOfNextWeek = currentChunkStart.endOf('week').add(1, 'day').startOf('day')
+  const firstChunkEnd = startOfNextWeek.isAfter(end) ? end : startOfNextWeek
+  const firstChunk = { start: currentChunkStart, end: firstChunkEnd }
+
+  const remainingChunks = splitDateRangeIntoWeeks(firstChunkEnd, end)
+
+  return [firstChunk, ...remainingChunks]
+}
 
 interface AbsenceFormData {
   site: string
@@ -50,6 +71,10 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
         const startTime = values.period[0]
         const endTime = values.period[1]
 
+        // 1. Split the total period into weekly chunks
+        // We do that because we can't fetc properly events spanning several weeks.
+        const weeklyChunks = splitDateRangeIntoWeeks(startTime, endTime)
+
         const tagType = 'TIMEOFF'
         const tagVersion = '1'
 
@@ -60,17 +85,27 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
           version: tagVersion,
         })
 
-        const newEvent = new DecryptedCalendarItem({
-          id: v4(),
-          title: values.reason,
-          duration: endTime.diff(startTime, 'minute'),
-          agendaId: values.service,
-          startTime: dayjsToYYYYMMDDHHmmss(startTime),
-          endTime: dayjsToYYYYMMDDHHmmss(endTime),
-          tags: [timeOffTag],
+        // 2. Create an array of creation promises, one for each chunk
+        const eventsCreationPromises = weeklyChunks.map(async (chunk) => {
+          const newEvent = new DecryptedCalendarItem({
+            id: v4(),
+            title: values.reason,
+            startTime: dayjsToYYYYMMDDHHmmss(chunk.start),
+            endTime: dayjsToYYYYMMDDHHmmss(chunk.end),
+            duration: chunk.end.diff(chunk.start, 'minute'),
+            agendaId: values.service,
+            tags: [timeOffTag],
+          })
+
+          return createUpdateEvent({
+            calendarItem: newEvent,
+            patient: undefined,
+            delegates: [adminRoot.id, values.site],
+          }).unwrap()
         })
 
-        await createUpdateEvent({ calendarItem: newEvent, patient: undefined, delegates: [adminRoot.id, values.site] }).unwrap()
+        await Promise.all(eventsCreationPromises)
+
         showMessageFeedback('success', t('notification.appointment_saved'))
       } catch (error) {
         openNotification('error', t('notification.appointment_save_failed'), t('notification.appointment_save_error'))

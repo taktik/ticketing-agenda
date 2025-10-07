@@ -362,7 +362,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     (procedureRow: ProcedureRow) => {
       if (!procedureRow?.rowId) {
         console.error('Attempted to edit a row without a valid rowId.', procedureRow)
-        openNotification('error', t('content.unexpected_error'), '')
+        openNotification('error', t('validation.unexpected_error'), '')
         return
       }
 

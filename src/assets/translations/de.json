@@ -221,7 +221,8 @@
     "role_city_worker": "Stadtmitarbeiter",
     "select_an_assignment": "Wählen Sie eine Zuweisung",
     "select_a_role": "Wählen Sie eine Rolle",
-    "head_of_service": "Abteilungsleiter"
+    "head_of_service": "Abteilungsleiter",
+    "all_day": "Ganztägig"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

@@ -1,6 +1,7 @@
-export enum RootHcpType {
+export enum HcpTag {
   SITE_ROOT = 'site-root',
   ADMIN_ROOT = 'admin-root',
+  SITE = 'SITE',
 }
 
 export type TimeTablesServiceParameters = {
@@ -17,7 +18,7 @@ export type DeleteAgendaByIdParameters = {
 }
 
 export type GetRootHealthcarePartyParameters = {
-  rootType: RootHcpType
+  rootType: HcpTag
   skip?: boolean
 }
 

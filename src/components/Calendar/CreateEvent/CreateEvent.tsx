@@ -10,6 +10,7 @@ import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarI
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
+import { useRoot } from '../../../core/hooks/useRoot'
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
 import { calculateNumericEventTimes } from '../../common/helpers'
@@ -18,7 +19,6 @@ import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
-import { useRoot } from '../../../core/hooks/useRoot'
 
 const { Step } = Steps
 
@@ -255,7 +255,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
     if (existingUser) {
       // --- USER EXISTS ---
-      let citizenUser = { ...existingUser } as User
+      let citizenUser = new User({ ...existingUser })
 
       // 1. Update user's phone if it changed
       if (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) {
@@ -269,7 +269,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       if (citizenUser.patientId) {
         const { data: foundPatient } = await getPatientByIdLazy(citizenUser.patientId)
         if (foundPatient) {
-          citizenPatient = { ...foundPatient }
+          citizenPatient = new DecryptedPatient({ ...foundPatient })
         } else {
           // Found user but patient was deleted/missing, create a new one
           citizenPatient = new DecryptedPatient({ id: v4(), firstName, lastName })
@@ -297,9 +297,13 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
         if (updatedPatient) {
           citizenPatient = updatedPatient
-          await sharePatient({ patient: updatedPatient, delegates: [siteRoot.id, adminRoot.id] }).unwrap()
         }
       }
+      const sharedPatient = await sharePatient({
+        patient: citizenPatient,
+        delegates: [siteRoot.id, adminRoot.id],
+      }).unwrap()
+      if (sharedPatient) citizenPatient = sharedPatient
 
       return { citizenUser, citizenPatient }
     } else {
@@ -323,7 +327,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         version: tagVersion,
       })
       const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, codes: [emailStub, phoneStub] })
-      const citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
+      let citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
       if (!citizenPatient) {
         throw new Error('Failed to create a new patient record.')
       }
@@ -336,7 +340,11 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
         throw new Error('Failed to create a new user record after creating patient.')
       }
 
-      await sharePatient({ patient: citizenPatient, delegates: [siteRoot.id, adminRoot.id] }).unwrap()
+      const sharedPatient = await sharePatient({
+        patient: citizenPatient,
+        delegates: [siteRoot.id, adminRoot.id],
+      }).unwrap()
+      if (sharedPatient) citizenPatient = sharedPatient
 
       return { citizenUser, citizenPatient }
     }
@@ -399,12 +407,14 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
           tags: [eventTag],
         })
 
-        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()
+        const test = createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()
+
+        return test
       })
       await Promise.all(eventsCreationPromises)
     } catch (error: unknown) {
       console.error('An error occurred during appointment creation:', error)
-      openNotification('error', t('content.unexpected_error'), error instanceof Error ? error.message : 'An unknown error occurred.')
+      openNotification('error', t('validation.unexpected_error'), error instanceof Error ? error.message : 'An unknown error occurred.')
     }
   }
 
