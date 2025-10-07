@@ -66,6 +66,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     { skip: !selectedAgenda },
   )
 
+  useEffect(() => console.log('calendarItems', calendarItems), [calendarItems])
+
   const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
   const [updateCalendarItem] = useUpdateCalendarItemMutation()
 
@@ -98,7 +100,11 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       .map((calendarItem) => {
         const isTimeOff = calendarItem.tags.some((tag) => tag.type === 'TIMEOFF')
 
-        if (calendarItem.startTime === undefined || calendarItem.endTime === undefined || isTimeOff) {
+        if (isTimeOff && !isAdminLevel) {
+          return null
+        }
+
+        if (calendarItem.startTime === undefined || calendarItem.endTime === undefined) {
           console.warn('Skipping calendar item with missing start time or duration', calendarItem)
           return null
         }
@@ -298,7 +304,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         eventClick={handleEventClick}
         eventContent={getEventContent}
         noEventsContent={noEventsContent}
-        allDaySlot={false}
+        allDaySlot={true}
       />
       {eventModalOpen &&
         createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}

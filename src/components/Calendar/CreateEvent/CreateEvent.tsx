@@ -404,7 +404,6 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
       await Promise.all(eventsCreationPromises)
     } catch (error: unknown) {
       console.error('An error occurred during appointment creation:', error)
-      // Use the specific error message from the thrown Error
       openNotification('error', t('content.unexpected_error'), error instanceof Error ? error.message : 'An unknown error occurred.')
     }
   }

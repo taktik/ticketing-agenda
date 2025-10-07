@@ -14,11 +14,22 @@ export const usePermissions = () => {
 
   const isAdminLevel = useMemo(() => isAdministrator || isHeadOfService, [isAdministrator, isHeadOfService])
 
+  const attachedService = useMemo(() => {
+    const dataOwner = dataOwnerInfo?.dataOwner
+
+    if (dataOwner && 'supervisorId' in dataOwner) {
+      return dataOwner.supervisorId
+    }
+
+    return undefined
+  }, [dataOwnerInfo])
+
   return {
     isRoleLoading,
     isAdministrator,
     isHeadOfService,
     isCityWorker,
     isAdminLevel,
+    attachedService,
   }
 }

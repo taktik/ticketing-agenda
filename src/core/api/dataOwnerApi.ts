@@ -1,4 +1,4 @@
-import { DataOwnerWithType } from '@icure/cardinal-sdk'
+import { DataOwnerWithType, Device, EncryptedPatient, HealthcareParty } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { roleTypeMap, UserRole } from './roleApi'
@@ -8,7 +8,7 @@ enum dataOwnerTypeTag {
 }
 
 export interface DataOwnerWithRole {
-  dataOwner: DataOwnerWithType
+  dataOwner: Device | EncryptedPatient | HealthcareParty
   role: UserRole | undefined
 }
 
@@ -36,7 +36,7 @@ export const dataOwnerTypeApiRtk = createApi({
           const roleTag = currentDataOwner.dataOwner.tags?.find((tag) => tag.type && roleTypeMap[tag.type])
           const role = roleTag && roleTag.type ? roleTypeMap[roleTag.type] : undefined
           return {
-            dataOwner: currentDataOwner,
+            dataOwner: currentDataOwner.dataOwner,
             role: role,
           }
         })

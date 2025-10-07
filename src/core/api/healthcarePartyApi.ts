@@ -67,7 +67,7 @@ export const healthcarePartyApiRtk = createApi({
           return hcp
         })
       },
-      providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: res.id }] : []),
+      providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
     }),
     getHealthcarePartyByName: builder.query<HealthcareParty[] | undefined, string>({
       async queryFn(rootType, { getState }) {

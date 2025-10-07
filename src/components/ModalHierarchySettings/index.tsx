@@ -10,6 +10,7 @@ import { SettingContext } from '../../contexts/SettingContext'
 import { useDeleteAgendaMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
 import { useDeleteCalendarItemTypesMutation, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { useAppSelector } from '../../core/hooks'
+import { usePermissions } from '../../core/hooks/usePermissions'
 import { useSites } from '../../core/hooks/useSites'
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
@@ -30,6 +31,8 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const user = useAppSelector((state) => state.cardinalApi.user)
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
+
+  const { attachedService } = usePermissions()
 
   const { sites, isSitesLoading } = useSites()
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
@@ -78,8 +81,14 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const menuItems: MenuItem[] = useMemo(
     () =>
       (sites ?? []).map((site) => {
-        const matchingServices = sortedServices?.filter((service) => service.author === site.id) ?? []
+        const matchingServices =
+          sortedServices?.filter((service) => {
+            const matchesSite = service.author === site.id
 
+            const matchesAttached = !attachedService || service.id === attachedService
+
+            return matchesSite && matchesAttached
+          }) ?? []
         const children: MenuItem[] = (matchingServices ?? []).map((service) => ({
           key: `service-${service.id}`,
           label: service.name,

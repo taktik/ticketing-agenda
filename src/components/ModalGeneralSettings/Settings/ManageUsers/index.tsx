@@ -130,6 +130,10 @@ export const ManagerUsers = (): ReactElement => {
     return mergedPairs
   }, [users, hcpMap])
 
+  const allRoleTypes = useMemo(() => new Set(Object.keys(tagMap)), [tagMap])
+
+  const getHcpTag = useCallback((hcp: HealthcareParty) => hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type]), [roleTypeMap])
+
   useEffect(() => {
     const tableRowsList: UserRow[] = mergedList.map((pair) => {
       const user = pair[0]
@@ -175,7 +179,6 @@ export const ManagerUsers = (): ReactElement => {
       content,
       duration: 0,
     })
-    // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
 
@@ -194,8 +197,6 @@ export const ManagerUsers = (): ReactElement => {
       [UserRole.CITY_WORKER]: { label: t('content.role_city_worker'), color: 'blue' },
     }
   }, [])
-
-  const getHcpTag = useCallback((hcp: HealthcareParty) => hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type]), [roleTypeMap])
 
   const roleOptions = useMemo(
     () =>
@@ -280,6 +281,7 @@ export const ManagerUsers = (): ReactElement => {
           parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
           tags: rowValues.role ? tagMap[rowValues.role] : [],
           supervisorId: rowValues.assignment?.agendaId,
+          public: false,
         }).unwrap()
 
         try {
@@ -320,10 +322,13 @@ export const ManagerUsers = (): ReactElement => {
 
   const updateUser = useCallback(
     async (record: UserRow) => {
-      // The 'record' parameter holds the original state, which we'll use for rollbacks.
       try {
         if (!record.hcp || !record.user) throw new Error('No user selected')
         const rowValues = await form.validateFields()
+
+        const nonRoleTags = record.hcp.tags.filter((tag) => !allRoleTypes.has(tag.type ?? ''))
+        const newRoleTag = rowValues.role ? tagMap[rowValues.role] : []
+        const finalTags = [...nonRoleTags, ...newRoleTag]
 
         // --- Step 1: Update HealthcareParty ---
         await createUpdateHcp({
@@ -332,7 +337,7 @@ export const ManagerUsers = (): ReactElement => {
           lastName: rowValues.lastName,
           name: `${rowValues.firstName} ${rowValues.lastName}`,
           parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
-          tags: rowValues.role ? [...record.hcp.tags, ...tagMap[rowValues.role]] : record.hcp.tags,
+          tags: finalTags,
           supervisorId: rowValues.assignment?.agendaId,
         }).unwrap()
 

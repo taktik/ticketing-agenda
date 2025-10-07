@@ -14,6 +14,19 @@ export const userApiRtk = createApi({
     baseUrl: '',
   }),
   endpoints: (builder) => ({
+    getCurrentUser: builder.query<User | undefined, void>({
+      async queryFn(_, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async (): Promise<User> => {
+          const result = await userApi?.getCurrentUser()
+          if (!result) {
+            throw new Error('Cannot find current user')
+          }
+          return result
+        })
+      },
+      providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
+    }),
     getUsers: builder.query<User[] | undefined, void>({
       async queryFn(_, { getState }) {
         const userApi = (await cardinalApi(getState))?.user
@@ -125,6 +138,7 @@ export const userApiRtk = createApi({
 })
 
 export const {
+  useGetCurrentUserQuery,
   useGetUsersQuery,
   useLazyGetUsersQuery,
   useGetUserByEmailQuery,

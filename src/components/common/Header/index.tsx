@@ -7,13 +7,14 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { arrowDownIcn, logOutIcn, manageUserIcn, userIcn } from '../../../assets/CustomIcons'
 import mouscronLogo from '../../../assets/mouscronLogo.png'
-import { useGetPractitionerQuery } from '../../../core/api/practitionerApi'
+import { useGetHealthcarePartyQuery } from '../../../core/api/healthcarePartyApi'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
 import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
 import './index.css'
+import { useGetCurrentUserQuery } from '../../../core/api/userApi'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,
@@ -28,9 +29,10 @@ export const Header = () => {
   const dispatch = useAppDispatch()
   const { t } = useTranslation()
 
-  const { user, healthcarePartyId } = useAppSelector(reduxSelector)
+  const { healthcarePartyId } = useAppSelector(reduxSelector)
 
-  const { data: currentUserHcp, isFetching: isPractitionerFetching } = useGetPractitionerQuery(healthcarePartyId ?? '', { skip: !healthcarePartyId })
+  const { data: currentUser } = useGetCurrentUserQuery(undefined, { skip: !healthcarePartyId })
+  const { data: currentUserHcp, isFetching: isPractitionerFetching } = useGetHealthcarePartyQuery(healthcarePartyId ?? '', { skip: !healthcarePartyId })
 
   const userAvatarSrc = getImgSRC(currentUserHcp?.picture)
   const handleLogout = () => {
@@ -86,7 +88,7 @@ export const Header = () => {
                 </div>
                 {userAvatarSrc ? (
                   <div className="header__userDropdown__picture">
-                    <img src={userAvatarSrc} alt={user?.name ?? 'Dear User!'} />
+                    <img src={userAvatarSrc} alt={currentUser?.name ?? 'Dear User!'} />
                   </div>
                 ) : (
                   <div className="header__userDropdown__userAvatarPlaceholder">
@@ -103,7 +105,7 @@ export const Header = () => {
         </div>
       </div>
       {isModalManageAccountFormOpen &&
-        createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUserHcp={currentUserHcp} user={user} />, document.body)}
+        createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUserHcp={currentUserHcp} user={currentUser} />, document.body)}
     </>
   )
 }

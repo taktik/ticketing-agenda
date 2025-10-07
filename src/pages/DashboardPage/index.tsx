@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const skip = !user
   const { t } = useTranslation()
 
-  const { isAdminLevel } = usePermissions()
+  const { isAdminLevel, attachedService } = usePermissions()
   const { sites, isSitesLoading } = useSites()
 
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(sites?.[0])
@@ -100,7 +100,14 @@ export default function DashboardPage() {
           <div className="ant-calendar-wrapper">
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
-          <ItemSelector<Agenda> titleKey="content.services" items={filteredServices} isLoading={isServicesRelatedLoading} selectedItem={selectedService} setSelectedItem={setSelectedService} />
+          <ItemSelector<Agenda>
+            titleKey="content.services"
+            items={filteredServices}
+            isLoading={isServicesRelatedLoading}
+            selectedItem={selectedService}
+            setSelectedItem={setSelectedService}
+            filterPredicate={attachedService ? (item) => item.id === attachedService : undefined}
+          />
           <ItemSelector<CalendarItemType>
             titleKey="content.procedures"
             items={filteredProcedures}
