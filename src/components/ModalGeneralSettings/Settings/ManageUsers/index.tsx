@@ -75,23 +75,9 @@ export const ManagerUsers = (): ReactElement => {
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
   const { data: agendas, isLoading: isAgendasLoading } = useGetAllAgendaByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
 
-  const siteAndAgendaOptions = useMemo(() => {
-    if (!sites) return []
-
-    const siteNameMap = new Map(sites.map((site) => [site.id, site.name]))
-
-    return agendas.map((agenda) => {
-      const siteName = agenda.author ? siteNameMap.get(agenda.author) || 'Site Inconnu' : 'Site Inconnu'
-      const serviceLabel = agenda.name ?? 'Service Inconnu'
-
-      return {
-        label: `${siteName} - ${serviceLabel}`,
-        value: `${agenda.author}:${agenda.id}`,
-      }
-    })
-  }, [agendas, sites])
-
   const { data: users, isLoading: isUsersLoading } = useGetUsersQuery()
+
+  useEffect(() => console.log('users', users), [users])
 
   const usersHcpIds = useMemo(() => {
     if (!users) return []
@@ -99,6 +85,8 @@ export const ManagerUsers = (): ReactElement => {
   }, [users])
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds, { skip: usersHcpIds.length === 0 || !users })
+
+  useEffect(() => console.log('hcps', hcps), [hcps])
 
   const isFetching = useMemo(
     () => isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading || isSitesLoading || isAgendasLoading,
@@ -292,10 +280,11 @@ export const ManagerUsers = (): ReactElement => {
           try {
             // --- Step 3: Set User Roles ---
             if (createdUser && createdUser.id && rowValues.role) {
-              await setUserRoles({
+              const updatedUserRole = await setUserRoles({
                 userId: createdUser.id,
                 roleIds: rolesMap[rowValues.role],
               }).unwrap()
+              if (updatedUserRole) createdUser = updatedUserRole
             }
             showMessageFeedback('success', t('notification.user_saved'))
           } catch (rolesError) {
@@ -332,7 +321,7 @@ export const ManagerUsers = (): ReactElement => {
         const finalTags = [...nonRoleTags, ...newRoleTag]
 
         // --- Step 1: Update HealthcareParty ---
-        await createUpdateHcp(
+        const updatedHcp = await createUpdateHcp(
           new HealthcareParty({
             ...record.hcp,
             firstName: rowValues.firstName,
@@ -346,15 +335,16 @@ export const ManagerUsers = (): ReactElement => {
 
         try {
           // --- Step 2: Update User ---
-          await createUpdateUser(new User({ ...record.user, email: rowValues.email })).unwrap()
+          let updatedUser = await createUpdateUser(new User({ ...record.user, email: rowValues.email })).unwrap()
 
           try {
             // --- Step 3: Set User Roles ---
-            if (record.user.id && rowValues.role) {
-              await setUserRoles({
+            if (record.user.id && rowValues.role && record.role !== rowValues.role) {
+              const updatedUserRole = await setUserRoles({
                 userId: record.user.id,
                 roleIds: rolesMap[rowValues.role],
               }).unwrap()
+              if (updatedUserRole) updatedUser = updatedUserRole
             }
 
             showMessageFeedback('success', t('notification.user_saved'))
@@ -364,15 +354,21 @@ export const ManagerUsers = (): ReactElement => {
 
             // ROLES FAILED: Revert User and HCP
             console.warn('Attempting to roll back User and HCP updates...')
-            await createUpdateUser(record.user).unwrap()
-            await createUpdateHcp(record.hcp).unwrap()
+            if (updatedUser) {
+              await createUpdateUser(updatedUser).unwrap()
+            }
+            if (updatedHcp) {
+              await createUpdateHcp(updatedHcp).unwrap()
+            }
           }
         } catch (userError) {
           console.error('Failed to update user:', userError)
           openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
 
           console.warn('Attempting to roll back HCP update...')
-          await createUpdateHcp(record.hcp).unwrap()
+          if (updatedHcp) {
+            await createUpdateHcp(updatedHcp).unwrap()
+          }
         }
       } catch (hcpError) {
         console.error('Failed to update HealthcareParty:', hcpError)
@@ -389,14 +385,16 @@ export const ManagerUsers = (): ReactElement => {
 
       if (isNew) {
         createUser(record)
+        setEditingKey('')
       } else if (isExisting) {
         updateUser(record)
+        setEditingKey('')
       } else {
         console.error('Failed to save user due to inconsistent or missing data', { record })
         openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))
       }
     },
-    [createUser, updateUser, openNotification, t],
+    [setEditingKey, createUser, updateUser, openNotification, t],
   )
 
   const tableRowCancel = useCallback(() => {

@@ -15,8 +15,8 @@ export const roleTypeMap: { [key: string]: UserRole } = {
 }
 
 export const cityWorkerRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
-export const headOfServiceRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
-export const adminRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] })
+export const headOfServiceRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:HEAD_OF_SERVICE'] })
+export const adminRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'] })
 
 export const rolesMap = {
   [UserRole.ADMINISTRATOR]: adminRoles,
