@@ -49,7 +49,9 @@ async function addAdministratorToGroupId() {
     const createdAdministratorUser = await sdk.user.createUserInGroup(concernedGroupId, administratorUser)
 
     const apiEndpoint = `${ICURE_API}/rest/v2/user/${userId}/inGroup/${concernedGroupId}/roles/set`
-    const requestBody = { ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'] }
+    const requestBody = {
+      ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR', 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:HEAD_OF_SERVICE', 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'],
+    }
     const requestHeaders = {
       Authorization: `Bearer ${JWT_TOKEN}`,
       'Content-Type': 'application/json',

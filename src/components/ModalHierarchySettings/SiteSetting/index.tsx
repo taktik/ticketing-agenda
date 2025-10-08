@@ -174,29 +174,3 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
     </div>
   )
 }
-
-/*
-{showDeleteSiteModal &&
-        createPortal(
-          <ModalConfirmAction
-            title={t('delete_modal.confirm_delete_site_prompt')}
-            description=""
-            content={
-              <>
-                <p>{t('delete_modal.delete_site_warning_details')}</p>
-                <p>{t('delete_modal.delete_permanent_warning')}</p>
-              </>
-            }
-            yesBtnTitle={t('content.delete')}
-            noBtnTitle={t('content.close')}
-            onYesClick={() => {
-              handleSiteDelete(site)
-              setShowDeleteSiteModal(false)
-            }}
-            onNoClick={() => setShowDeleteSiteModal(false)}
-            isVisible={showDeleteSiteModal}
-            mode="danger"
-          />,
-          document.body,
-        )}
-          */

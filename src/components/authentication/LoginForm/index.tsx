@@ -1,15 +1,11 @@
 import { Challenge, resolveChallenge, Solution } from '@icure/cardinal-sdk'
 import { Button, Form, Input } from 'antd'
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { MSG_GW_URL, SPEC_ID } from '../../../constants'
-
-import { routes } from '../../../navigation/Router'
-
-import '../index.css'
-import { SpinLoader } from '../../common/SpinLoader'
-import { KerberusWidget } from '../KerberusWidget'
 import { useTranslation } from 'react-i18next'
+import { SpinLoader } from '../../common/SpinLoader'
+import '../index.css'
+import { KerberusWidget } from '../KerberusWidget'
 
 interface LoginFormProps {
   state: 'initialised' | 'loading' | 'waitingForToken'

@@ -7,7 +7,7 @@ import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import emptyIcon from '../../assets/empty.svg'
 import { SettingContext } from '../../contexts/SettingContext'
-import { useDeleteAgendaMutation, useGetAllAgendaByAuthorIds } from '../../core/api/agendaApi'
+import { useDeleteAgendaMutation, useGetAgendasByAuthorIds } from '../../core/api/agendaApi'
 import { useDeleteCalendarItemTypesMutation, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
 import { useAppSelector } from '../../core/hooks'
 import { usePermissions } from '../../core/hooks/usePermissions'
@@ -37,15 +37,19 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const { sites, isSitesLoading } = useSites()
   const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
 
-  const { data: services, isLoading: isServicesLoading } = useGetAllAgendaByAuthorIds({ skip: skip || !sites, authorIds: sitesIds ?? [] })
+  const { data: services, isLoading: isServicesLoading } = useGetAgendasByAuthorIds({ skip: skip || !sites, authorIds: sitesIds ?? [] })
 
   const sortedServices = useMemo(() => {
-    return [...(services ?? [])].sort((a, b) => {
+    const baseServices = services ?? []
+
+    const filteredServices = attachedService ? baseServices.filter((service) => service.id === attachedService) : baseServices
+
+    return [...filteredServices].sort((a, b) => {
       const nameA = a.name ?? ''
       const nameB = b.name ?? ''
       return nameA.localeCompare(nameB)
     })
-  }, [services])
+  }, [services, attachedService])
 
   const [getCalendarItemTypesForAgenda] = useLazyGetCalendarItemTypesQuery()
   const [deleteAgenda, { isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
@@ -81,14 +85,8 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const menuItems: MenuItem[] = useMemo(
     () =>
       (sites ?? []).map((site) => {
-        const matchingServices =
-          sortedServices?.filter((service) => {
-            const matchesSite = service.author === site.id
+        const matchingServices = sortedServices?.filter((service) => service.author === site.id) ?? []
 
-            const matchesAttached = !attachedService || service.id === attachedService
-
-            return matchesSite && matchesAttached
-          }) ?? []
         const children: MenuItem[] = (matchingServices ?? []).map((service) => ({
           key: `service-${service.id}`,
           label: service.name,
@@ -218,12 +216,3 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     </CustomModal>
   )
 }
-
-/*
-Must add site from cockpit
-<div className="sider-footer">
-              <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleAddSite} loading={mutationIsLoading} disabled={fetchIsLoading || mutationIsLoading}>
-                {t('content.add_site')}
-              </StyledButton>
-            </div>
-            */

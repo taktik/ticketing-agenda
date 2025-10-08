@@ -9,6 +9,7 @@ import { CustomModal } from '../common/CustomModal'
 import './index.css'
 import { AccountSetting } from './Settings/AccountSetting'
 import { ManagerUsers } from './Settings/ManageUsers'
+import { usePermissions } from '../../core/hooks/usePermissions'
 
 interface ModalSettingsProps {
   isVisible: boolean
@@ -24,12 +25,13 @@ export const ModalSettings = ({ isVisible, onClose, currentUserHcp, user }: Moda
 
   const { t } = useTranslation()
 
+  const { isAdministrator } = usePermissions()
+
   const items: MenuItem[] = useMemo(() => {
-    return [
-      { key: 'profil', icon: <ProfileOutlined />, label: t('content.your_profile') },
-      { key: 'manageUsers', icon: <UsergroupAddOutlined />, label: t('content.manage_users') },
-    ]
-  }, [t])
+    return [{ key: 'profil', icon: <ProfileOutlined />, label: t('content.your_profile') }, isAdministrator && { key: 'manageUsers', icon: <UsergroupAddOutlined />, label: t('content.manage_users') }].filter(
+      Boolean,
+    ) as MenuItem[]
+  }, [t, isAdministrator])
 
   const onClick: MenuProps['onClick'] = ({ key }) => {
     setSelectedKey(key)

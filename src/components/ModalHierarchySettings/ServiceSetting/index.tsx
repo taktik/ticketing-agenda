@@ -12,6 +12,7 @@ import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMuta
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 import './index.css'
+import { usePermissions } from '../../../core/hooks/usePermissions'
 
 const SubjectEdit = React.memo(() => {
   const languages = ['FR', 'NL', 'EN', 'DE']
@@ -116,6 +117,12 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const [showEditServiceTitle, setShowEditServiceTitle] = useState<boolean>(false)
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
+
+  const { attachedService } = usePermissions()
+
+  if (attachedService && attachedService !== service.id) {
+    return <div></div>
+  }
 
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(service?.id ?? '', { skip: !service })
 

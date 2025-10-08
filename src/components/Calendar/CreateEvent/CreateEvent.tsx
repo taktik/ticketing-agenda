@@ -5,7 +5,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useGetAllAgendaByAuthorIds } from '../../../core/api/agendaApi'
+import { useGetAgendasByAuthorIds } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
@@ -19,6 +19,7 @@ import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
+import { useSites } from '../../../core/hooks/useSites'
 
 const { Step } = Steps
 
@@ -147,7 +148,6 @@ export interface AppointmentForm {
 interface CreateEventProps {
   isVisible: boolean
   onClose: () => void
-  sites: HealthcareParty[] | undefined
 }
 
 enum AppointmentStep {
@@ -160,12 +160,14 @@ enum AppointmentStep {
 
 const orderedSteps = [AppointmentStep.PROCEDURE, AppointmentStep.TIMESLOT, AppointmentStep.PERSONAL_INFO, AppointmentStep.REVIEW, AppointmentStep.RESULT]
 
-export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => {
+export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const { t, i18n } = useTranslation()
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
   const [form] = Form.useForm<AppointmentForm>()
 
   const formValues: AppointmentForm = form.getFieldsValue(true)
+
+  const { sites } = useSites()
 
   const watchedProcedures = Form.useWatch('procedures', form)
   const watchedSelectedTime = Form.useWatch(['timeslot', 'time'], form)
@@ -179,7 +181,7 @@ export const CreateEvent = ({ isVisible, onClose, sites }: CreateEventProps) => 
 
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
 
-  const { data: allAgendas, isLoading: isAgendasLoading } = useGetAllAgendaByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
+  const { data: allAgendas, isLoading: isAgendasLoading } = useGetAgendasByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
 
   const filteredAgenda = useMemo(() => (allAgendas ?? []).filter((agenda) => siteIds.includes(agenda.author ?? '')), [allAgendas, siteIds])
   const agendaIds = useMemo(() => (filteredAgenda ?? []).map((agenda) => agenda.id), [filteredAgenda])

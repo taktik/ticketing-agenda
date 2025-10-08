@@ -3,9 +3,9 @@ import { useGetCurrentDataOwnerRoleQuery } from '../api/dataOwnerApi'
 import { UserRole } from '../api/roleApi'
 import { useAppSelector } from '../hooks'
 
-export const usePermissions = () => {
+export const usePermissions = (skipProp: boolean = false) => {
   const user = useAppSelector((state) => state.cardinalApi.user)
-  const skip = !user
+  const skip = !user || skipProp
   const { data: dataOwnerInfo, isLoading: isRoleLoading } = useGetCurrentDataOwnerRoleQuery(undefined, { skip: skip })
 
   const isAdministrator = useMemo(() => dataOwnerInfo?.role === UserRole.ADMINISTRATOR, [dataOwnerInfo])
@@ -24,6 +24,16 @@ export const usePermissions = () => {
     return undefined
   }, [dataOwnerInfo])
 
+  const attachedSite = useMemo(() => {
+    const dataOwner = dataOwnerInfo?.dataOwner
+
+    if (dataOwner && 'parentId' in dataOwner && (isHeadOfService || isCityWorker)) {
+      return dataOwner.parentId
+    }
+
+    return undefined
+  }, [dataOwnerInfo, isHeadOfService, isCityWorker])
+
   return {
     isRoleLoading,
     isAdministrator,
@@ -31,5 +41,6 @@ export const usePermissions = () => {
     isCityWorker,
     isAdminLevel,
     attachedService,
+    attachedSite,
   }
 }

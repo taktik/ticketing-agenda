@@ -3,6 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { GetAgendasByStringPropertyParameters } from './fetchType'
 import { loadFromIterator } from './utils'
+import { usePermissions } from '../hooks/usePermissions'
 
 enum AgendaTags {
   Agenda = 'Agenda',
@@ -104,12 +105,12 @@ export const agendaApiRtk = createApi({
 
 export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutation, useUpdateAgendaMutation, useDeleteAgendasMutation, useDeleteAgendaMutation, useGetAgendasByStringPropertyQuery } = agendaApiRtk
 
-export const useGetAllAgendaByAuthorIds = (params: { skip: boolean; authorIds: string[] }) => {
+export const useGetAgendasByAuthorIds = (params: { skip: boolean; authorIds: string[] }) => {
   const { data, ...rest } = useGetAgendasQuery(undefined, {
     skip: params.skip,
   })
 
-  const result = data?.filter((item) => item.author && params.authorIds.includes(item.author)) ?? []
+  const result = data?.filter((agenda) => agenda.author && params.authorIds.includes(agenda.author)) ?? []
 
   return {
     data: result,
@@ -117,7 +118,7 @@ export const useGetAllAgendaByAuthorIds = (params: { skip: boolean; authorIds: s
   }
 }
 
-export const useGetAgendaByAuthorId = (params: { skip: boolean; authorId: string }) => {
+export const useGetAgendasByAuthorId = (params: { skip: boolean; authorId: string }) => {
   const { data, ...rest } = useGetAgendasQuery(undefined, {
     skip: params.skip,
   })

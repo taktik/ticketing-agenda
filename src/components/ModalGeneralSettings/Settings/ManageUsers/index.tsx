@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { RESERVED_WORDS } from '../../../../constants'
-import { useGetAllAgendaByAuthorIds } from '../../../../core/api/agendaApi'
+import { useGetAgendasByAuthorIds } from '../../../../core/api/agendaApi'
 import {
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
@@ -21,6 +21,7 @@ import { useRoot } from '../../../../core/hooks/useRoot'
 import { useSites } from '../../../../core/hooks/useSites'
 import { AssignmentSelector } from '../../../AssignmentSelector/AssignmentSelector'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+import { usePermissions } from '../../../../core/hooks/usePermissions'
 
 export interface Assignment {
   siteId: string | undefined
@@ -55,6 +56,12 @@ export const ManagerUsers = (): ReactElement => {
   const isEditing = useMemo(() => (record: UserRow) => record.rowId === editingKey, [editingKey])
   const [form] = Form.useForm<FormValues>()
 
+  const { isAdministrator } = usePermissions()
+
+  if (!isAdministrator) {
+    return <div></div>
+  }
+
   const watchedRole = Form.useWatch('role', form)
 
   const [createUpdateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
@@ -69,15 +76,13 @@ export const ManagerUsers = (): ReactElement => {
 
   const [setUserRoles, { isLoading: isSetUserRolesLoading }] = useSetUserRolesMutation()
 
-  const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
+  const { adminRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
   const { sites, isSitesLoading } = useSites()
 
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
-  const { data: agendas, isLoading: isAgendasLoading } = useGetAllAgendaByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
+  const { data: agendas, isLoading: isAgendasLoading } = useGetAgendasByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
 
   const { data: users, isLoading: isUsersLoading } = useGetUsersQuery()
-
-  useEffect(() => console.log('users', users), [users])
 
   const usersHcpIds = useMemo(() => {
     if (!users) return []
@@ -85,8 +90,6 @@ export const ManagerUsers = (): ReactElement => {
   }, [users])
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds, { skip: usersHcpIds.length === 0 || !users })
-
-  useEffect(() => console.log('hcps', hcps), [hcps])
 
   const isFetching = useMemo(
     () => isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading || isSitesLoading || isAgendasLoading,
@@ -169,14 +172,6 @@ export const ManagerUsers = (): ReactElement => {
     })
     setTimeout(messageApi.destroy, 2500)
   }
-
-  const parentIdMap = useMemo(() => {
-    return {
-      [UserRole.ADMINISTRATOR]: adminRoot?.id,
-      [UserRole.HEAD_OF_SERVICE]: siteRoot?.id,
-      [UserRole.CITY_WORKER]: siteRoot?.id,
-    }
-  }, [adminRoot, siteRoot])
 
   const roleConfig = useMemo(() => {
     return {
@@ -266,7 +261,7 @@ export const ManagerUsers = (): ReactElement => {
             firstName: rowValues.firstName,
             lastName: rowValues.lastName,
             name: `${rowValues.firstName} ${rowValues.lastName}`,
-            parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+            parentId: rowValues.role === UserRole.ADMINISTRATOR ? adminRoot?.id : rowValues.role === UserRole.HEAD_OF_SERVICE || rowValues.role === UserRole.CITY_WORKER ? rowValues.assignment?.siteId : undefined,
             tags: rowValues.role ? tagMap[rowValues.role] : [],
             supervisorId: rowValues.assignment?.agendaId,
             public: false,
@@ -286,6 +281,7 @@ export const ManagerUsers = (): ReactElement => {
               }).unwrap()
               if (updatedUserRole) createdUser = updatedUserRole
             }
+            setEditingKey('')
             showMessageFeedback('success', t('notification.user_saved'))
           } catch (rolesError) {
             console.error('Failed to set user roles:', rolesError)
@@ -307,7 +303,7 @@ export const ManagerUsers = (): ReactElement => {
         openNotification('error', t('notification.user_save_failed'), t('notification.hcp_save_error'))
       }
     },
-    [form, createUpdateHcp, createUpdateUser, setUserRoles, deleteSilentHcp, deleteSilentUser, showMessageFeedback, openNotification, t, parentIdMap],
+    [form, createUpdateHcp, createUpdateUser, setUserRoles, deleteSilentHcp, deleteSilentUser, showMessageFeedback, openNotification, t],
   )
 
   const updateUser = useCallback(
@@ -327,7 +323,7 @@ export const ManagerUsers = (): ReactElement => {
             firstName: rowValues.firstName,
             lastName: rowValues.lastName,
             name: `${rowValues.firstName} ${rowValues.lastName}`,
-            parentId: rowValues.role ? parentIdMap[rowValues.role] : undefined,
+            parentId: rowValues.role === UserRole.ADMINISTRATOR ? adminRoot?.id : rowValues.role === UserRole.HEAD_OF_SERVICE || rowValues.role === UserRole.CITY_WORKER ? rowValues.assignment?.siteId : undefined,
             tags: finalTags,
             supervisorId: rowValues.assignment?.agendaId,
           }),
@@ -347,6 +343,7 @@ export const ManagerUsers = (): ReactElement => {
               if (updatedUserRole) updatedUser = updatedUserRole
             }
 
+            setEditingKey('')
             showMessageFeedback('success', t('notification.user_saved'))
           } catch (rolesError) {
             console.error('Failed to set user roles:', rolesError)
@@ -375,7 +372,7 @@ export const ManagerUsers = (): ReactElement => {
         openNotification('error', t('notification.user_modify_failed'), t('notification.hcp_modify_error'))
       }
     },
-    [form, createUpdateHcp, createUpdateUser, setUserRoles, showMessageFeedback, openNotification, t, parentIdMap],
+    [form, createUpdateHcp, createUpdateUser, setUserRoles, showMessageFeedback, openNotification, t],
   )
 
   const tableRowUpdate = useCallback(
@@ -385,10 +382,8 @@ export const ManagerUsers = (): ReactElement => {
 
       if (isNew) {
         createUser(record)
-        setEditingKey('')
       } else if (isExisting) {
         updateUser(record)
-        setEditingKey('')
       } else {
         console.error('Failed to save user due to inconsistent or missing data', { record })
         openNotification('error', t('notification.user_save_failed'), t('notification.user_save_error'))

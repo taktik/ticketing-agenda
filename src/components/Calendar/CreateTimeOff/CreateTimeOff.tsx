@@ -2,11 +2,12 @@ import { InfoCircleOutlined } from '@ant-design/icons'
 import { CodeStub, DecryptedCalendarItem, HealthcareParty } from '@icure/cardinal-sdk'
 import { Alert, Button, DatePicker, Form, Select, Space } from 'antd'
 import { Dayjs } from 'dayjs'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useGetAgendaByAuthorId } from '../../../core/api/agendaApi'
+import { useGetAgendasByAuthorId } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
+import { usePermissions } from '../../../core/hooks/usePermissions'
 import { useRoot } from '../../../core/hooks/useRoot'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss } from '../../common/helpers'
@@ -57,8 +58,22 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
   const watchedSite = Form.useWatch('site', form)
   const watchedService = Form.useWatch('service', form)
 
-  const { data: allAgendas, isLoading: isAgendasLoading } = useGetAgendaByAuthorId({ skip: !watchedSite, authorId: watchedSite ?? '' })
+  const { attachedService } = usePermissions()
   const { adminRoot } = useRoot()
+
+  const { data: services, isLoading: isAgendasLoading } = useGetAgendasByAuthorId({ skip: !watchedSite, authorId: watchedSite ?? '' })
+
+  const sortedServices = useMemo(() => {
+    const baseServices = services ?? []
+
+    const filteredServices = attachedService ? baseServices.filter((service) => service.id === attachedService) : baseServices
+
+    return [...filteredServices].sort((a, b) => {
+      const nameA = a.name ?? ''
+      const nameB = b.name ?? ''
+      return nameA.localeCompare(nameB)
+    })
+  }, [services, attachedService])
 
   const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
 
@@ -161,7 +176,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
               loading={isAgendasLoading}
               filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}
               disabled={!watchedSite}
-              options={(allAgendas ?? []).map((agenda) => ({
+              options={(sortedServices ?? []).map((agenda) => ({
                 label: agenda.name,
                 value: agenda.id,
               }))}

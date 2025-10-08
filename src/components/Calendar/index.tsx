@@ -311,7 +311,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       />
       {eventModalOpen &&
         createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
-      {createApptModalOpen && createPortal(<CreateEvent isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} sites={sites} />, document.body)}
+      {createApptModalOpen && createPortal(<CreateEvent isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} />, document.body)}
       {apptSelectorModalOpen &&
         createPortal(
           <AppointmentSelector isVisible={apptSelectorModalOpen} onClose={() => setApptSelectorModalOpen(false)} setCreateApptModalOpen={setCreateApptModalOpen} setTimeOffModalOpen={setTimeOffModalOpen} />,
