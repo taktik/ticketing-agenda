@@ -33,14 +33,14 @@ export default function DashboardPage() {
   const { t } = useTranslation()
 
   const { isAdminLevel, attachedService, attachedSite } = usePermissions(skip)
-  const { sites, isSitesLoading } = useSites()
+  const { sites, isSitesLoading } = useSites(skip)
 
   const dispayableSites = useMemo(() => (attachedSite ? (sites?.filter((site) => site.id === attachedSite) ?? []) : (sites ?? [])), [sites, attachedSite])
 
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(dispayableSites[0])
 
   const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'parentSite', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
-  const filteredServices = useMemo(() => (services && selectedSite ? (attachedService ? services.filter((service) => service.id === attachedService) : services) : []), [services, selectedSite])
+  const filteredServices = useMemo(() => (services && selectedSite ? (attachedService ? services.filter((service) => service.id === attachedService) : services) : []), [services, selectedSite, attachedService])
   const [selectedService, setSelectedService] = useState<Agenda | undefined>(undefined)
 
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(selectedService?.id ?? '', { skip: skip || !selectedService })

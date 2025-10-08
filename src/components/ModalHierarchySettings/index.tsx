@@ -32,12 +32,14 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
   const skip = !user
   const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
 
-  const { attachedService } = usePermissions()
+  const { attachedService, attachedSite } = usePermissions(skip)
 
   const { sites, isSitesLoading } = useSites()
-  const sitesIds = useMemo(() => sites?.map((site) => site.id), [sites])
+  const dispayableSites = useMemo(() => (attachedSite ? (sites?.filter((site) => site.id === attachedSite) ?? []) : (sites ?? [])), [sites, attachedSite])
 
-  const { data: services, isLoading: isServicesLoading } = useGetAgendasByAuthorIds({ skip: skip || !sites, authorIds: sitesIds ?? [] })
+  const sitesIds = useMemo(() => dispayableSites?.map((site) => site.id), [dispayableSites])
+
+  const { data: services, isLoading: isServicesLoading } = useGetAgendasByAuthorIds({ skip: skip || !dispayableSites, authorIds: sitesIds ?? [] })
 
   const sortedServices = useMemo(() => {
     const baseServices = services ?? []
@@ -84,7 +86,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
   const menuItems: MenuItem[] = useMemo(
     () =>
-      (sites ?? []).map((site) => {
+      dispayableSites.map((site) => {
         const matchingServices = sortedServices?.filter((service) => service.author === site.id) ?? []
 
         const children: MenuItem[] = (matchingServices ?? []).map((service) => ({
@@ -122,7 +124,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
           children,
         }
       }),
-    [sites, sortedServices, selectedKey, openKeys],
+    [dispayableSites, sortedServices, selectedKey, openKeys],
   )
 
   const onServiceClick: MenuProps['onClick'] = useCallback(
@@ -181,7 +183,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     }
 
     if (type === 'site') {
-      const matchingSite = sites?.find((site) => site.id === id)
+      const matchingSite = dispayableSites.find((site) => site.id === id)
       if (!matchingSite) return <div>{t('content.site_not_found')}</div>
 
       const servicesOfThisSite = sortedServices?.filter((service) => service.author === matchingSite.id) ?? []
@@ -197,7 +199,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     }
 
     return <div>{t('content.select_site_or_service')}</div>
-  }, [selectedKey, sites, sortedServices, t, handleDeleteService, isSitesLoading, isServicesLoading])
+  }, [selectedKey, dispayableSites, sortedServices, t, handleDeleteService, isSitesLoading, isServicesLoading])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>

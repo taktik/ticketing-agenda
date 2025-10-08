@@ -1,6 +1,6 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 
-export const languages = ['FR', 'EN', 'NDLS', 'DE']
+export const languages = ['FR', 'EN', 'NL', 'DE']
 
 export interface ProcedureVariant {
   id: string
@@ -121,7 +121,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     //8. Get the translations for service - procedure
     const displayTextByLanguage = Object.fromEntries(
       languages.map((lang) => {
-        const servicePart = serviceTag && serviceTag.label ? serviceTag.label[lang] : serviceName
+        const servicePart = serviceTag?.label?.[lang] || serviceName
         const procedurePart = firstProcedureInGroup.subjectByLanguage?.[lang] || procedureName
         return [lang, `${servicePart} - ${procedurePart}`]
       }),
