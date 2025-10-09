@@ -12,7 +12,7 @@ export interface DataOwnerWithRole {
   role: UserRole | undefined
 }
 
-export const dataOwnerTypeApiRtk = createApi({
+export const dataOwnerApiRtk = createApi({
   reducerPath: 'dataOwnerTypeApi',
   tagTypes: [dataOwnerTypeTag.DataOwnerType],
   baseQuery: fetchBaseQuery({
@@ -46,4 +46,4 @@ export const dataOwnerTypeApiRtk = createApi({
   }),
 })
 
-export const { useGetCurrentDataOwnerQuery, useGetCurrentDataOwnerRoleQuery } = dataOwnerTypeApiRtk
+export const { useGetCurrentDataOwnerQuery, useGetCurrentDataOwnerRoleQuery } = dataOwnerApiRtk

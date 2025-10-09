@@ -8,13 +8,13 @@ import { useTranslation } from 'react-i18next'
 import { arrowDownIcn, logOutIcn, manageUserIcn, userIcn } from '../../../assets/CustomIcons'
 import mouscronLogo from '../../../assets/mouscronLogo.png'
 import { useGetHealthcarePartyQuery } from '../../../core/api/healthcarePartyApi'
+import { useGetCurrentUserQuery } from '../../../core/api/userApi'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, logout } from '../../../core/services/auth.api'
 import { getImgSRC } from '../../../helpers/fileToBase64'
 import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
 import './index.css'
-import { useGetCurrentUserQuery } from '../../../core/api/userApi'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,

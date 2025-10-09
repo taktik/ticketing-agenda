@@ -7,7 +7,6 @@ import {
   CardinalSdk,
   CryptoStrategies,
   DataOwnerWithType,
-  HealthcareParty,
   KeyPairRecoverer,
   RecoveryDataKey,
   RecoveryKeyOptions,
@@ -21,8 +20,19 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
-import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID } from '../../constants'
+import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID, TAKTIK_API } from '../../constants'
 import { revertAll, setSavedCredentials } from '../app'
+import { agendaApiRtk } from '../api/agendaApi'
+import { anonymousApiRtk } from '../api/anonymousApi'
+import { calendarItemApiRtk } from '../api/calendarItemApi'
+import { calendarItemTypeApiRtk } from '../api/calendarItemTypeApi'
+import { dataOwnerApiRtk } from '../api/dataOwnerApi'
+import { keyApiRtk } from '../api/keyApi'
+import { patientApiRtk } from '../api/patientApi'
+import { practitionerApiRtk } from '../api/practitionerApi'
+import { roleApiRtk } from '../api/roleApi'
+import { timeTableApiRtk } from '../api/timeTableApi'
+import { userApiRtk } from '../api/userApi'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
 const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
@@ -38,7 +48,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
     if (!!formattedKey && !!hcp) {
       try {
-        const response = await fetch('http://localhost:8080/api/keys', {
+        const response = await fetch(`${TAKTIK_API}/api/keys`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -61,7 +71,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
   async fetchRecoveryKey(hcpId: string): Promise<string | undefined> {
     try {
-      const response = await fetch(`http://localhost:8080/api/keys/${hcpId}`)
+      const response = await fetch(`${TAKTIK_API}/api/keys/${hcpId}`)
 
       if (response.status === 404) {
         return undefined
@@ -330,6 +340,17 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
 })
 
 export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { dispatch }) => {
+  dispatch(userApiRtk.util.resetApiState())
+  dispatch(agendaApiRtk.util.resetApiState())
+  dispatch(anonymousApiRtk.util.resetApiState())
+  dispatch(calendarItemApiRtk.util.resetApiState())
+  dispatch(calendarItemTypeApiRtk.util.resetApiState())
+  dispatch(dataOwnerApiRtk.util.resetApiState())
+  dispatch(keyApiRtk.util.resetApiState())
+  dispatch(patientApiRtk.util.resetApiState())
+  dispatch(practitionerApiRtk.util.resetApiState())
+  dispatch(roleApiRtk.util.resetApiState())
+  dispatch(timeTableApiRtk.util.resetApiState())
   dispatch(revertAll())
   dispatch(resetCredentials())
 })
