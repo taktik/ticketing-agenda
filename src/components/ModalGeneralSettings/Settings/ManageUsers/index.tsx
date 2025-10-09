@@ -405,6 +405,7 @@ export const ManagerUsers = (): ReactElement => {
           lastName: record.lastName,
           email: record.email,
           role: record.role,
+          assignment: { siteId: record.hcp?.parentId, agendaId: record.hcp?.supervisorId },
         })
         setEditingKey(record.rowId)
       } catch (error) {
