@@ -28,6 +28,7 @@ async function addSiteRootToGroupId() {
     parentId: adminRoot_ID,
     userId: userId,
     tags: [new CodeStub({ id: 'site-root|1', code: 'site-root', type: 'site-root', version: '1' })],
+    specialityCodes: [new CodeStub({ id: 'site-root|2', code: 'site-root', type: 'site-root', version: '1' })],
   })
   const siteRootUser = new User({ id: userId, email: siteRootEmail, name: 'site-root', healthcarePartyId: hcpId })
 

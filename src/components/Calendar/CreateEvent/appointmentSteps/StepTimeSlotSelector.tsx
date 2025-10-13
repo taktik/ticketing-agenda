@@ -64,10 +64,10 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
       return []
     }
 
-    // --- Étape 1 : Pour chaque procédure, "décomposer" ses disponibilités en blocs de 5 minutes ---
+    // --- Étape 1 : Pour chaque procédure, "décomposer" ses disponibilités en blocs de 5 minutes---
     const allProcedureIntervals = processedAvailabilities.map((proc) => {
       const duration = proc.procedureDuration
-      const slotsNeeded = duration / 5 // En supposant que chaque créneau dure 5 minutes
+      const slotsNeeded = duration / 5 // blocs de 5 minutes
       const intervals = new Set<number>()
 
       proc.availabilityList.forEach((startSlot) => {

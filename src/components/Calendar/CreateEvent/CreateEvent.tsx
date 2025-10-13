@@ -173,10 +173,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const watchedSelectedTime = Form.useWatch(['timeslot', 'time'], form)
   const watchedPersonalInfo = Form.useWatch('personalInfo', form)
 
-  const langCode = useMemo(() => {
-    return languageMapping[i18n.language] || 'FR'
-  }, [i18n.language])
-
   const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
 
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
@@ -409,11 +405,9 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           tags: [eventTag],
         })
 
-        const test = createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()
-
-        return test
+        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()
       })
-      await Promise.all(eventsCreationPromises)
+      await Promise.allSettled(eventsCreationPromises)
     } catch (error: unknown) {
       console.error('An error occurred during appointment creation:', error)
       openNotification('error', t('validation.unexpected_error'), error instanceof Error ? error.message : 'An unknown error occurred.')
@@ -473,7 +467,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   }
 
   const disabledRules = [!watchedProcedures || watchedProcedures.length === 0 || !watchedProcedures.every((p) => p && p.procedureSelectionId), !watchedSelectedTime]
-
   const isNextButtonDisabled = disabledRules[currentStep] ?? false
 
   return (

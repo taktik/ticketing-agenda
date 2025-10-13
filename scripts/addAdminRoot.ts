@@ -23,6 +23,7 @@ async function addAdminRootToGroupId() {
     public: true,
     userId: userId,
     tags: [new CodeStub({ id: 'admin-root|1', code: 'admin-root', type: 'admin-root', version: '1' })],
+    specialityCodes: [new CodeStub({ id: 'admin-root|2', code: 'admin-root', type: 'admin-root', version: '1' })],
   })
   const adminRootUser = new User({ id: userId, email: adminRootEmail, name: 'admin-root', healthcarePartyId: hcpId })
 

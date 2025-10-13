@@ -7,13 +7,6 @@ import { AppointmentForm, FormProcedure } from '../CreateEvent'
 import './index.css'
 const { Title, Paragraph } = Typography
 
-const languageMapping: { [key: string]: string } = {
-  fr: 'FR',
-  nl: 'NL',
-  en: 'EN',
-  de: 'DE',
-}
-
 function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T>()
   useEffect(() => {
