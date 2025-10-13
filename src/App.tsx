@@ -1,29 +1,29 @@
-import React, { useMemo, useEffect, Suspense } from 'react'
-import { PersistGate } from 'redux-persist/integration/react'
+import { ConfigProvider } from 'antd'
+import React, { Suspense, useEffect, useMemo } from 'react'
 import { Provider } from 'react-redux'
-import { ConfigProvider, theme } from 'antd'
+import { PersistGate } from 'redux-persist/integration/react'
 
-import { Router } from './navigation/Router'
 import { persistor, store } from './core/store'
+import { Router } from './navigation/Router'
 import { ANTD_NEW_THEME } from './style/antd/antdTheme'
 
 import { useTranslation } from 'react-i18next'
 
 // Import Ant Design locales
+import deDE from 'antd/locale/de_DE'
+import enGB from 'antd/locale/en_GB'
 import frFR from 'antd/locale/fr_FR'
 import nlNL from 'antd/locale/nl_NL'
-import enGB from 'antd/locale/en_GB'
-import deDE from 'antd/locale/de_DE'
 
 // Import dayjs and its locale data
 import dayjs from 'dayjs'
+import 'dayjs/locale/de'
+import 'dayjs/locale/en'
 import 'dayjs/locale/fr'
 import 'dayjs/locale/nl'
-import 'dayjs/locale/en'
-import 'dayjs/locale/de'
 
-import localizedFormat from 'dayjs/plugin/localizedFormat'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
 dayjs.extend(localizedFormat)
 dayjs.extend(isSameOrAfter)
 
@@ -63,7 +63,6 @@ const AppContent: React.FC = () => {
       dayjs.locale('en')
     }
   }, [currentLangCode])
-  //    <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm, token: { colorPrimary: '#dc2626' } }} locale={antdLocale}>
 
   return (
     <ConfigProvider theme={ANTD_NEW_THEME} locale={antdLocale}>

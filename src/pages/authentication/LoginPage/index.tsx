@@ -6,7 +6,6 @@ import { createPortal } from 'react-dom'
 import logo from '../../../assets/mouscronLogo.png'
 import '../index.css'
 import LoginForm from '../../../components/authentication/LoginForm'
-import { ModalRecoveryKeyRequest } from '../../../components/authentication/ModalRecoveryKeyRequest'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, completeAuthentication, setEmail, setToken, setWaitingForToken, startAuthentication } from '../../../core/services/auth.api'
 
@@ -51,7 +50,6 @@ export default function LoginPage() {
         submitEmailForTokenRequest={(email: string, captchaToken: Solution) => startAuthenticationProcessWithEmailAndCaptchaToken(email, captchaToken)}
         submitEmailAndValidationTokenForAuthentication={(email: string, validationCode: string) => completeAuthenticationProcessWithEmailAndValidationCode(email, validationCode)}
       />
-      {recoveryKeyRequest && createPortal(<ModalRecoveryKeyRequest />, document.body)}
     </div>
   )
 }
