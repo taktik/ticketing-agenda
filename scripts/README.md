@@ -62,7 +62,8 @@ PUT https://api.icure.cloud/rest/v2/role/{roleID} with body being a json array o
 DELETE https://api.icure.cloud/rest/v2/role/{roleID} to delete a role
 POST https://api.icure.cloud/rest/v2/user/{userId}/inGroup/{groupId}/roles/set to set the roles of a user (cockpit won’t work with custom roles) - the body must be { "ids": [role1, role2, …] }
 
-Existing roles : 
+Existing roles :
+
 - Administrator
 - Chief of service
 - CityWorker

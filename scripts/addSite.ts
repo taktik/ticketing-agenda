@@ -31,7 +31,7 @@ async function addSiteToGroupId() {
     userId: userId,
     tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })],
   })
-  
+
   const siteUser = new User({ id: userId, email: siteEmail, name: siteName, healthcarePartyId: hcpId })
 
   try {
