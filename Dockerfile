@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package.json /app/package.json
 RUN yarn install
 COPY . /app
+RUN corepack enable
+RUN yarn set version stable
 RUN NODE_OPTIONS="--max_old_space_size=4096" yarn run build
 
 FROM nginx:1.29.2-alpine
