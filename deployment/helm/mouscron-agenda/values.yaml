@@ -1,0 +1,24 @@
+jwtSecret: ""
+pullPolicy: "IfNotPresent"
+ingressClassName: "haproxy"
+#tls:
+#    -   secretName: tls-example-com
+#        hosts:
+#            - one.example.com
+#            - two.example.com
+
+images:
+    frontend:
+        repository: "docker.taktik.be/mouscron/ticketing-agenda"
+        tag: ""
+        replicaCount: 1
+        memoryRequest: "32Mi"
+        memoryLimit: "64Mi"
+        cpuRequest: 5m
+        cpuLimit: 200m
+        rollingUpdate:
+            maxUnavailable: 50%
+            maxSurge: 25%
+        env: { }
+        ingresses:
+            -   path: /

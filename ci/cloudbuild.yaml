@@ -1,30 +1,37 @@
 steps:
-  - name: 'gcr.io/cloud-builders/git'
-    entrypoint: 'bash'
-    args: ['-c', 'git fetch --unshallow --tags && git checkout ${BRANCH_NAME} && git submodule init && git submodule update']
+  -   name: 'gcr.io/cloud-builders/git'
+      entrypoint: 'bash'
+      args: [ '-c', 'git fetch --unshallow --tags && git checkout $BRANCH_NAME' ]
 
-  - name: 'docker'
-    args:
-      [
-        'build',
-        '--build-arg',
-        'REACT_APP_EXTERNAL_SERVICES_SPEC_ID=${_REACT_APP_EXTERNAL_SERVICES_SPEC_ID}',
-        '--build-arg',
-        'REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID=${_REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID}',
-        '--build-arg',
-        'REACT_APP_PARENT_ORGANISATION_ID=${_REACT_APP_PARENT_ORGANISATION_ID}',
-        '--build-arg',
-        'REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY=${_REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY}',
-        '-t',
-        'docker.taktik.be/icure-ehr-lite-doctor-app',
-        '.',
-      ]
+  -   name: 'taktik/git-version:2.0.21-g2f3751c36c'
+      args: [ '-f', 'git.version' ]
 
-  - name: 'docker.taktik.be/ticketing-agenda'
-    entrypoint: sh
-    args: ['-c', 'cp -af /app/build /workspace']
+  -   id: 'login'
+      name: 'docker:27'
+      entrypoint: 'sh'
+      args: [ '-c', 'echo $$REPO_PASSWORD | docker login docker.taktik.be --username=$$REPO_USERNAME --password-stdin' ]
+      secretEnv: [ 'REPO_USERNAME', 'REPO_PASSWORD' ]
 
-  - name: 'gcr.io/cloud-builders/gsutil'
-    args: ['-m', 'rsync', '-r', '-c', '-d', './build', '${_DEPLOY}']
+  -   id: 'frontend'
+      waitFor: [ 'login' ]
+      name: 'docker:27'
+      dir: 'ticketing-agenda'
+      entrypoint: 'sh'
+      args: [ '-c', 'cp ../git.version ./ && docker build --progress=plain --push -t docker.taktik.be/mouscron/ticketing-agenda:$(cat git.version) --build-arg "version=$(cat git.version)" .' ]
 
-timeout: 1800s
+  -   name: 'alpine/helm'
+      entrypoint: 'sh'
+      args: [ '-c', 'v=$(cat git.version) && helm package ./deployment/helm/mouscron-agenda --version $v --app-version $v -d . && apk --no-cache add curl && curl -F file=@./mouscron-agenda-${v}.tgz -u $$REPO_USERNAME:$$REPO_PASSWORD "https://helm.taktik.be/service/rest/v1/components?repository=helm"' ]
+      secretEnv: [ 'REPO_USERNAME', 'REPO_PASSWORD' ]
+
+availableSecrets:
+  secretManager:
+    -   versionName: projects/taktik-dev/secrets/ci-repo-username/versions/1
+        env: 'REPO_USERNAME'
+    -   versionName: projects/taktik-dev/secrets/ci-repo-password/versions/1
+        env: 'REPO_PASSWORD'
+
+logsBucket: 'gs://taktik-build-logs'
+options:
+  logging: GCS_ONLY
+timeout: 900s
