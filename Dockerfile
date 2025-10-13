@@ -1,30 +1,16 @@
-# build environment
-FROM node:22-alpine
-RUN apk add --update \
-    bash \
-    git \
-    python3 \
-    python3-dev \
-    py3-pip \
-    build-base \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
-  && rm -rf /var/cache/apk/*
+FROM node:24-alpine3.21 as build
 WORKDIR /app
-ARG REACT_APP_EXTERNAL_SERVICES_SPEC_ID=""
-ARG REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID=""
-ARG REACT_APP_PARENT_ORGANISATION_ID=""
-ARG REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY=""
-ENV PATH=/app/node_modules/.bin:$PATH
-ENV REACT_APP_EXTERNAL_SERVICES_SPEC_ID=$REACT_APP_EXTERNAL_SERVICES_SPEC_ID
-ENV REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID=$REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID
-ENV REACT_APP_PARENT_ORGANISATION_ID=$REACT_APP_PARENT_ORGANISATION_ID
-ENV REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY=$REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY
-RUN echo "$REACT_APP_EXTERNAL_SERVICES_SPEC_ID,$REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID,$REACT_APP_PARENT_ORGANISATION_ID,$REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY"
+
 COPY package.json /app/package.json
-COPY . /app
 RUN yarn install
+COPY . /app
+RUN corepack enable
+RUN yarn set version stable
 RUN NODE_OPTIONS="--max_old_space_size=4096" yarn run build
+
+FROM nginx:1.29.2-alpine
+COPY /docker/nginx*.conf /etc/nginx/
+COPY --from=build /app/build /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

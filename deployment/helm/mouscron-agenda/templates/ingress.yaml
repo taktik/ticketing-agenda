@@ -1,0 +1,75 @@
+{{- $root := .Values }}
+{{- range $serviceName, $serviceValues := .Values.images }}
+{{- if eq (tpl ($serviceValues.ingressEnabled | default "true") $) "true" }}
+{{- if $serviceValues.ingresses }}
+{{- range $idx, $ingress := $serviceValues.ingresses }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: "{{ template "fullname" $ }}-ingress-{{ $serviceName | lower }}-{{ $idx }}"
+    annotations:
+        {{- if $ingress.annotations }}
+{{ toYaml $ingress.annotations | indent 8 }}
+        {{- end }}
+spec:
+    ingressClassName: {{ $root.ingressClassName }}
+    {{- if $root.tls }}
+    tls:
+        {{- range $root.tls }}
+        -   secretName: {{ .secretName | default .refName }}
+            {{- if .hosts }}
+            hosts:
+                {{- range .hosts }}
+                -   {{ . }}
+                {{- end }}
+            {{- end }}
+        {{- end }}
+    {{- end }}
+    rules:
+        {{- if not $ingress.virtualHosts }}
+        {{- include "rules" (list $ $serviceName $ingress "") | nindent 8 }}
+        {{- else }}
+        {{- range $ingress.virtualHosts }}
+        {{- include "rules" (list $ $serviceName $ingress .) | nindent 8 }}
+        {{- end }}
+        {{- end }}
+---
+{{- if $ingress.namespace }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: "{{ tpl $ingress.serviceName $ }}-from-{{ tpl $ingress.namespace $ }}"
+spec:
+    type: ExternalName
+    externalName: "{{ tpl $ingress.serviceName $ }}.{{ tpl $ingress.namespace $ }}.svc.cluster.local"
+    ports:
+        -   port: {{ $ingress.servicePort | default 80 }}
+---
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "rules" -}}
+{{- $ := index . 0 }}
+{{- $serviceName := index . 1 }}
+{{- $ingress := index . 2 }}
+{{- $virtualHost := index . 3 }}
+-   http:
+        paths:
+            -   path: {{ $ingress.path | default "/" }}
+                pathType: {{ $ingress.pathType | default "Prefix" }}
+                backend:
+                    service:
+                        {{- if $ingress.namespace }}
+                        name: "{{ tpl $ingress.serviceName $ }}-from-{{ tpl $ingress.namespace $ }}"
+                        {{- else }}
+                        name: {{ if $ingress.serviceName }}"{{ tpl $ingress.serviceName $ }}"{{else}}"{{ template "fullname" $ }}-{{ $serviceName }}"{{end}}
+                        {{- end }}
+                        port:
+                            number: {{ $ingress.servicePort | default 80 }}
+    {{- if $virtualHost }}
+    host: {{ $virtualHost }}
+    {{- end }}
+{{- end }}
