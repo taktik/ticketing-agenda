@@ -15,9 +15,8 @@ steps:
   -   id: 'frontend'
       waitFor: [ 'login' ]
       name: 'docker:27'
-      dir: 'ticketing-agenda'
       entrypoint: 'sh'
-      args: [ '-c', 'cp ../git.version ./ && docker build --progress=plain --push -t docker.taktik.be/mouscron/ticketing-agenda:$(cat git.version) --build-arg "version=$(cat git.version)" .' ]
+      args: [ '-c', 'docker build --progress=plain --push -t docker.taktik.be/mouscron/ticketing-agenda:$(cat git.version) --build-arg "version=$(cat git.version)" .' ]
 
   -   name: 'alpine/helm'
       entrypoint: 'sh'
