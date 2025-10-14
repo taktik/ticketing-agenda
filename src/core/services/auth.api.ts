@@ -29,7 +29,6 @@ import { calendarItemTypeApiRtk } from '../api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from '../api/dataOwnerApi'
 import { keyApiRtk } from '../api/keyApi'
 import { patientApiRtk } from '../api/patientApi'
-import { practitionerApiRtk } from '../api/practitionerApi'
 import { roleApiRtk } from '../api/roleApi'
 import { timeTableApiRtk } from '../api/timeTableApi'
 import { userApiRtk } from '../api/userApi'
@@ -348,7 +347,6 @@ export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { 
   dispatch(dataOwnerApiRtk.util.resetApiState())
   dispatch(keyApiRtk.util.resetApiState())
   dispatch(patientApiRtk.util.resetApiState())
-  dispatch(practitionerApiRtk.util.resetApiState())
   dispatch(roleApiRtk.util.resetApiState())
   dispatch(timeTableApiRtk.util.resetApiState())
   dispatch(revertAll())
