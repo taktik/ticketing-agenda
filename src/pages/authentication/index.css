@@ -125,9 +125,7 @@ body * {
 .auth-page .auth-page__logo {
   display: flex;
   justify-content: center;
-}
-.auth-page .auth-page__logo img {
-  width: 20%;
+  width: 20em;
 }
 @media screen and (max-width: calc(576px - 1px)) {
   .auth-page {
