@@ -16,7 +16,7 @@ steps:
       waitFor: [ 'login' ]
       name: 'docker:27'
       entrypoint: 'sh'
-      args: [ '-c', 'docker build --progress=plain --push -t docker.taktik.be/mouscron/ticketing-agenda:$(cat git.version) --build-arg "version=$(cat git.version)" .' ]
+      args: [ '-c', 'docker build --progress=plain --push -t docker.taktik.be/mouscron/ticketing-agenda:$(cat git.version) --build-arg "version=$(cat git.version)" --build-arg "REACT_APP_EXTERNAL_SERVICES_SPEC_ID=${_REACT_APP_EXTERNAL_SERVICES_SPEC_ID}" --build-arg "REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID=${_REACT_APP_EMAIL_AUTHENTICATION_PROCESS_ID}" --build-arg "REACT_APP_PARENT_ORGANISATION_ID=${_REACT_APP_PARENT_ORGANISATION_ID}" --build-arg "REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY=${_REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY}" --build-arg "REACT_APP_DATABASE_ID=${_REACT_APP_DATABASE_ID}" --build-arg "REACT_APP_ADMIN_SOLUTION_AUTH_TOKEN=${_REACT_APP_ADMIN_SOLUTION_AUTH_TOKEN}" --build-arg "REACT_APP_ROLE_ADMINISTRATOR=${_REACT_APP_ROLE_ADMINISTRATOR}" --build-arg "REACT_APP_ROLE_CHIEF_OF_SERVICE=${_REACT_APP_ROLE_CHIEF_OF_SERVICE}" --build-arg "REACT_APP_ROLE_CITY_WORKER=${_REACT_APP_ROLE_CITY_WORKER}" --build-arg "REACT_APP_TAKTIK_API=${_REACT_APP_TAKTIK_API}" .' ]
 
   -   name: 'alpine/helm'
       entrypoint: 'sh'
