@@ -2064,6 +2064,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@icure/kerberus@npm:1.1.4":
+  version: 1.1.4
+  resolution: "@icure/kerberus@npm:1.1.4"
+  dependencies:
+    format-util: "npm:^1.0.5"
+  checksum: 07efa024966dab07635bd1093ec80712652c83a0abf50ad0f5434acf6ffb805159b1d57c214c1d2752bcafb1a888138977007453e701dfb00dd8716777e29ce6
+  languageName: node
+  linkType: hard
+
 "@icure/motss-app-datepicker@npm:^6.0.0-rc.39":
   version: 6.0.0-rc.39
   resolution: "@icure/motss-app-datepicker@npm:6.0.0-rc.39"
@@ -16067,6 +16076,7 @@ __metadata:
     "@fullcalendar/react": "npm:^6.1.17"
     "@icure/cardinal-sdk": "npm:2.0.0-PREVIEW-13"
     "@icure/form": "npm:^3.0.1"
+    "@icure/kerberus": "npm:1.1.4"
     "@reduxjs/toolkit": "npm:^1.9.7"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"

@@ -281,7 +281,6 @@ export const ManagerUsers = (): ReactElement => {
               }).unwrap()
               if (updatedUserRole) createdUser = updatedUserRole
             }
-            setEditingKey('')
             showMessageFeedback('success', t('notification.user_saved'))
           } catch (rolesError) {
             console.error('Failed to set user roles:', rolesError)
@@ -301,9 +300,11 @@ export const ManagerUsers = (): ReactElement => {
       } catch (hcpError) {
         console.error('Failed to create HealthcareParty:', hcpError)
         openNotification('error', t('notification.user_save_failed'), t('notification.hcp_save_error'))
+      } finally {
+        setEditingKey('')
       }
     },
-    [form, createUpdateHcp, createUpdateUser, setUserRoles, deleteSilentHcp, deleteSilentUser, showMessageFeedback, openNotification, t],
+    [form, createUpdateHcp, createUpdateUser, setUserRoles, deleteSilentHcp, deleteSilentUser, showMessageFeedback, openNotification, setEditingKey, t],
   )
 
   const updateUser = useCallback(
