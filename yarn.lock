@@ -2016,13 +2016,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@icure/cardinal-sdk@npm:2.0.0-PREVIEW-13":
-  version: 2.0.0-PREVIEW-13
-  resolution: "@icure/cardinal-sdk@npm:2.0.0-PREVIEW-13"
+"@icure/cardinal-sdk@npm:2.0.0-PREVIEW-15":
+  version: 2.0.0-PREVIEW-15
+  resolution: "@icure/cardinal-sdk@npm:2.0.0-PREVIEW-15"
   dependencies:
     "@js-joda/core": "npm:3.2.0"
     ws: "npm:8.18.0"
-  checksum: 854ae3a5465908009ab01d697109a888bec345fdefba2019ab38639fd1ea4503af22fb8679bb91d972cc634ade3d90c27472f756416c1c9822b02e9c71f03ba5
+  checksum: 29946dabb85f0acdb8676d395e9d6c5c815e4f95023b212d28277f0a63cd890147f640eedc37a93b3d9a773cf702e906fe99460ee24364014f6792b84a2ff70b
   languageName: node
   linkType: hard
 
@@ -2061,15 +2061,6 @@ __metadata:
     prosemirror-view: "npm:^1.38.1"
     uuid: "npm:^9.0.1"
   checksum: 3aa2ac030d5eddeb18aa26b91abe84a73fb191fba6b289036b9da3402116651e357fc1d6cf6e149821da2e6fe3988f3309ca2468f0262192e44388333a549d1e
-  languageName: node
-  linkType: hard
-
-"@icure/kerberus@npm:1.1.4":
-  version: 1.1.4
-  resolution: "@icure/kerberus@npm:1.1.4"
-  dependencies:
-    format-util: "npm:^1.0.5"
-  checksum: 07efa024966dab07635bd1093ec80712652c83a0abf50ad0f5434acf6ffb805159b1d57c214c1d2752bcafb1a888138977007453e701dfb00dd8716777e29ce6
   languageName: node
   linkType: hard
 
@@ -16074,9 +16065,8 @@ __metadata:
     "@fullcalendar/core": "npm:6.1.17"
     "@fullcalendar/daygrid": "npm:^6.1.17"
     "@fullcalendar/react": "npm:^6.1.17"
-    "@icure/cardinal-sdk": "npm:2.0.0-PREVIEW-13"
+    "@icure/cardinal-sdk": "npm:2.0.0-PREVIEW-15"
     "@icure/form": "npm:^3.0.1"
-    "@icure/kerberus": "npm:1.1.4"
     "@reduxjs/toolkit": "npm:^1.9.7"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"

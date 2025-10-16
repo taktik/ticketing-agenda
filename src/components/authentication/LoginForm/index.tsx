@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons'
-import { Challenge, resolveChallenge, Solution } from '@icure/kerberus'
+import { Challenge, Solution, resolveChallenge } from '@icure/cardinal-sdk'
 import { Button, Form, Input, Spin } from 'antd'
 import React, { useCallback, useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -109,3 +109,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
 }
 
 export default LoginForm
+
+// {!!progress && <KerberusWidget progress={progress} />}
+// Not working on chrome
+// Possibly because of state batching
