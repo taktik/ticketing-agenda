@@ -158,8 +158,6 @@ enum AppointmentStep {
   RESULT = 4,
 }
 
-const orderedSteps = [AppointmentStep.PROCEDURE, AppointmentStep.TIMESLOT, AppointmentStep.PERSONAL_INFO, AppointmentStep.REVIEW, AppointmentStep.RESULT]
-
 export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const { t, i18n } = useTranslation()
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)

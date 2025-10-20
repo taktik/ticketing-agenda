@@ -1,4 +1,3 @@
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -8,6 +7,8 @@ import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 import { dayjsToYYYYMMDDHHmmss } from '../../../common/helpers'
 import { SpinLoader } from '../../../common/SpinLoader'
 import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
+import { CustomCalendarHeader } from '../CustomCalendarHeader'
+import { CustomCellRender } from '../CustomCellRender'
 import './index.css'
 
 const { Title, Paragraph } = Typography
@@ -205,77 +206,28 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
     form.resetFields([['timeslot', 'time']])
   }, [dateValue])
 
-  const handleHourSelect = (hour: dayjs.Dayjs) => {
-    setSelectedHour(hour)
-    setSelectedTime(undefined)
-    form.resetFields([['timeslot', 'time']])
-  }
+  const handleHourSelect = useCallback(
+    (hour: dayjs.Dayjs) => {
+      setSelectedHour(hour)
+      setSelectedTime(undefined)
+      form.resetFields([['timeslot', 'time']])
+    },
+    [setSelectedHour, setSelectedTime, form],
+  )
 
-  const cellRender = (current: Dayjs, info: { originNode: React.ReactElement }) => {
-    const formattedDate = current.format('YYYY-MM-DD')
-    const highlightedDates = useMemo(() => availabilities.map((d) => d.format('YYYY-MM-DD')), [availabilities])
-    const defaultCellProps = info.originNode.props
+  const cellRender = useCallback(
+    (current: Dayjs, info: { originNode: React.ReactElement }) => {
+      return <CustomCellRender current={current} info={info} availabilities={availabilities} />
+    },
+    [availabilities],
+  )
 
-    if (highlightedDates.includes(formattedDate)) {
-      return (
-        <div
-          className={defaultCellProps.className}
-          style={{
-            backgroundColor: '#f6ffed',
-            border: '1px solid #b7eb8f',
-            borderRadius: '6px',
-            height: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          {defaultCellProps.children}
-        </div>
-      )
-    } else {
-      return info.originNode
-    }
-  }
-
-  const renderCalendarHeader: CalendarProps<Dayjs>['headerRender'] = ({ value, onChange }) => {
-    const isPrevDisabled = useMemo(() => currentMonth.isSame(dayjs(), 'month'), [currentMonth])
-
-    const handleMonthChange = useCallback(
-      (proposedDate: Dayjs) => {
-        if (proposedDate.isBefore(minDate)) {
-          onChange(minDate)
-          setCurrentMonth(minDate)
-        } else {
-          onChange(proposedDate)
-          setCurrentMonth(proposedDate)
-        }
-      },
-      [minDate, onChange, setCurrentMonth],
-    )
-
-    return (
-      <div style={{ padding: '8px' }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Title level={4} style={{ margin: 0 }}>
-              {value.format('MMMM YYYY')}
-            </Title>
-          </Col>
-          <Col>
-            <Space>
-              <Button onClick={() => handleMonthChange(value.clone().subtract(1, 'month'))} disabled={isPrevDisabled}>
-                {<LeftOutlined />} {t('content.previous')}
-              </Button>
-              <Button onClick={() => handleMonthChange(value.clone().add(1, 'month'))}>
-                {t('content.next')} {<RightOutlined />}
-              </Button>
-            </Space>
-          </Col>
-        </Row>
-      </div>
-    )
-  }
+  const renderCalendarHeader: CalendarProps<Dayjs>['headerRender'] = useCallback(
+    ({ value, onChange }: { value: dayjs.Dayjs; onChange: (date: Dayjs) => void }) => {
+      return <CustomCalendarHeader value={value} onChange={onChange} currentMonth={currentMonth} minDate={minDate} setCurrentMonth={setCurrentMonth} />
+    },
+    [currentMonth, minDate, setCurrentMonth],
+  )
 
   return (
     <Row gutter={[32, 32]}>

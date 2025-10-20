@@ -39,7 +39,7 @@ export default function DashboardPage() {
 
   const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(dispayableSites[0])
 
-  const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'parentSite', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
+  const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'SERVICE|PARENTID', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
   const filteredServices = useMemo(() => (services && selectedSite ? (attachedService ? services.filter((service) => service.id === attachedService) : services) : []), [services, selectedSite, attachedService])
   const [selectedService, setSelectedService] = useState<Agenda | undefined>(undefined)
 

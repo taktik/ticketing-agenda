@@ -101,7 +101,7 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
   const handleCreateNewService = useCallback(async () => {
     try {
       const parentProperty = new DecryptedPropertyStub({
-        id: 'parentSite',
+        id: 'SERVICE|PARENTID',
         typedValue: new DecryptedTypedValue({
           type: TypedValuesType.String,
           stringValue: site.id,

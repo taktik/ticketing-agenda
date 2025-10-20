@@ -1,6 +1,3 @@
-import { BorderHorizontalOutlined } from '@ant-design/icons'
-import { Calendar, DatePicker } from 'antd'
-
 export const ANTD_NEW_THEME = {
   token: {
     colorPrimary: '#e30613',
