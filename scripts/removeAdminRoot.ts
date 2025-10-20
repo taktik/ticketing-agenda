@@ -13,7 +13,7 @@ async function removeAdminRootToGroupId() {
   // Fetch the adminroots to delete
   // We fetch and delete an array of hcp/adminRoots. There should only be one, but if we added several by mistake we can remove them all at once.
   const healthcareParties = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
-  const adminRoots = healthcareParties.filter((hcp) => hcp.tags.some((tag) => tag.type === RootHcpType.ADMIN_ROOT))
+  const adminRoots = healthcareParties.filter((hcp) => hcp.publicProperties?.some((prop) => prop.id === RootHcpType.ADMIN_ROOT))
 
   try {
     console.log(`Deleting adminRoot in group ${concernedGroupId}...`)

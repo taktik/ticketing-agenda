@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { Agenda, CalendarItemType, CodeStub } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, DecryptedPropertyStub, DecryptedTypedValue, TypedValuesType } from '@icure/cardinal-sdk'
 import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
 import type { Color } from 'antd/es/color-picker'
 import Column from 'antd/es/table/Column'
@@ -9,13 +9,13 @@ import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
+import { usePermissions } from '../../../core/hooks/usePermissions'
+import { getBooleanProperty, getStringProperty, getTranslationForEntity, languages } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 import './index.css'
-import { usePermissions } from '../../../core/hooks/usePermissions'
 
 const SubjectEdit = React.memo(() => {
-  const languages = ['FR', 'NL', 'EN', 'DE']
   const [selectedLang, setSelectedLang] = useState('FR')
 
   return (
@@ -191,9 +191,9 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       procedureId: procedure.id,
       procedureName: procedure.name,
       appointmentDurations: procedure.name ? durationsMap.get(procedure.name) || [] : [],
-      isPublic: String(procedure.otherInfos.isPublic === 'true'),
-      procedureDetails: procedure.otherInfos.procedureDetails,
-      subjectByLanguage: procedure.subjectByLanguage,
+      isPublic: getBooleanProperty(procedure.publicProperties, 'CALENDARITEMTYPES|ISPUBLIC'),
+      procedureDetails: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
+      subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, 'SERVICE', locale)])),
       color: procedure.color ?? '',
     }))
   }, [procedures, proceduresList])
@@ -206,7 +206,9 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   useEffect(() => {
     if (service) {
       form.setFieldsValue({
-        descr: service.tags[0].label,
+        descr: {
+          FR: getTranslationForEntity(service.properties, 'SERVICE', 'FR'),
+        },
       })
     }
   }, [service, form])
@@ -214,22 +216,70 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const addProcedure = useCallback(async () => {
     try {
       if (!service) throw new Error()
+
+      const translationPropertyFR = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|TRANSLATION|FR',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: t('content.new_procedure'),
+        }),
+      })
+      const translationPropertyNL = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|TRANSLATION|NL',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const translationPropertyEN = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|TRANSLATION|EN',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const translationPropertyDE = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|TRANSLATION|DE',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const isPublicProp = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|ISPUBLIC',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.Boolean,
+          booleanValue: true,
+        }),
+      })
+      const orderProp = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|ORDER',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.Integer,
+          integerValue: 0,
+        }),
+      })
+      const procedureDetailsProp = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|PROCEDUREDETAILS',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const agendaIdProp = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|AGENDAID',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: service.id,
+        }),
+      })
+      const calendarItemTypeProperties = [isPublicProp, orderProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
         defaultCalendarItemType: true,
         duration: 15,
         agendaId: service.id,
-        otherInfos: {
-          order: '0',
-          isPublic: 'true',
-          procedureDetails: '',
-        },
-        subjectByLanguage: {
-          FR: t('content.new_procedure'),
-          NL: '',
-          EN: '',
-          DE: '',
-        },
+        publicProperties: calendarItemTypeProperties,
         color: '#0000ff',
         id: v4(),
       })
@@ -410,15 +460,30 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     async (newTitles: LanguageDescription) => {
       try {
         if (!service || !newTitles || !newTitles['FR']) throw new Error()
-        const newTags = service.tags.map((tag) =>
-          tag.type === 'SERVICE'
-            ? new CodeStub({
-                ...tag,
-                label: newTitles,
-              })
-            : tag,
-        )
-        await createUpdateService(new Agenda({ ...service, tags: newTags, name: newTitles['FR'] })).unwrap()
+        const updatedProperties = [...(service.properties || [])]
+
+        Object.entries(newTitles).forEach(([locale, title]) => {
+          const id = `SERVICE|TRANSLATION|${locale.toUpperCase()}`
+          const existingProp = updatedProperties.find((p) => p.id === id)
+
+          if (existingProp) {
+            existingProp.typedValue = new DecryptedTypedValue({
+              type: TypedValuesType.String,
+              stringValue: title,
+            })
+          } else {
+            updatedProperties.push(
+              new DecryptedPropertyStub({
+                id,
+                typedValue: new DecryptedTypedValue({
+                  type: TypedValuesType.String,
+                  stringValue: title,
+                }),
+              }),
+            )
+          }
+        })
+        await createUpdateService(new Agenda({ ...service, name: newTitles['FR'], properties: updatedProperties })).unwrap()
         showMessageFeedback('success', t('notification.service_saved'))
       } catch (error) {
         openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
@@ -448,9 +513,17 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   ]
 
   const serviceTitles = useMemo(() => {
-    const serviceTag = service.tags?.find((tag) => tag.type === 'SERVICE')
-    return serviceTag?.label || { FR: '', NL: '', EN: '', DE: '' }
-  }, [service.tags])
+    if (!service?.properties) {
+      return { FR: '', NL: '', EN: '', DE: '' }
+    }
+
+    return {
+      FR: getTranslationForEntity(service.properties, 'SERVICE', 'FR'),
+      NL: getTranslationForEntity(service.properties, 'SERVICE', 'NL'),
+      EN: getTranslationForEntity(service.properties, 'SERVICE', 'EN'),
+      DE: getTranslationForEntity(service.properties, 'SERVICE', 'DE'),
+    }
+  }, [service?.properties])
 
   return (
     <div className="root">

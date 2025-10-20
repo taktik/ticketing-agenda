@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, HealthcareParty, User } from '@icure/cardinal-sdk'
+import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, NIGHTLY_ICURE_CLOUD_URL } from './consts'
 
@@ -15,6 +15,14 @@ async function addAdminRootToGroupId() {
   const userId = v4()
   const adminRootEmail = ''
 
+  const adminRootProperty = new DecryptedPropertyStub({
+    id: 'admin-root',
+    typedValue: new DecryptedTypedValue({
+      type: TypedValuesType.String,
+      stringValue: 'admin-root',
+    }),
+  })
+
   const adminRootHcp = new HealthcareParty({
     id: hcpId,
     name: 'admin-root',
@@ -23,7 +31,7 @@ async function addAdminRootToGroupId() {
     public: true,
     userId: userId,
     tags: [new CodeStub({ id: 'admin-root|1', code: 'admin-root', type: 'admin-root', version: '1' })],
-    specialityCodes: [new CodeStub({ id: 'admin-root|2', code: 'admin-root', type: 'admin-root', version: '1' })],
+    publicProperties: [adminRootProperty],
   })
   const adminRootUser = new User({ id: userId, email: adminRootEmail, name: 'admin-root', healthcarePartyId: hcpId })
 

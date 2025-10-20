@@ -1,7 +1,7 @@
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import { Button, Form, FormInstance, Input, notification, Segmented, Space, Typography } from 'antd'
 import type { Dispatch, SetStateAction } from 'react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormValuesService, LanguageDescription } from '../ModalHierarchySettings/ServiceSetting'
 
@@ -38,13 +38,12 @@ export const EditableServiceTitle = ({ form, initialTitles, onSave, showEditServ
     }
   }, [showEditServiceTitle, initialTitles, form])
 
-  const handleCancel = () => {
-    // Reset any changes and exit edit mode
+  const handleCancel = useCallback(() => {
     form.resetFields()
     setShowEditServiceTitle(false)
-  }
+  }, [setShowEditServiceTitle, form])
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       const values = await form.validateFields()
       onSave(values.descr)
@@ -52,7 +51,7 @@ export const EditableServiceTitle = ({ form, initialTitles, onSave, showEditServ
     } catch (error) {
       openNotification('error', t('validation.validation_failed'), t('validation.check_highlighted_fields_correct_errors'))
     }
-  }
+  }, [form, onSave])
 
   if (!showEditServiceTitle) {
     // --- DISPLAY MODE ---

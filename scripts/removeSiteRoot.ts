@@ -13,7 +13,7 @@ async function removeSiteRootToGroupId() {
   // Fetch the siteRoots to delete
   // We fetch and delete an array of hcp/siteRoots. There should only be one, but if we added several by mistake we can remove them all at once.
   const healthcareParties = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
-  const siteRoots = healthcareParties.filter((hcp) => hcp.tags.some((tag) => tag.type === RootHcpType.SITE_ROOT))
+  const siteRoots = healthcareParties.filter((hcp) => hcp.publicProperties?.some((prop) => prop.id === RootHcpType.SITE_ROOT))
 
   try {
     console.log(`Deleting siteRoot in group ${concernedGroupId}...`)

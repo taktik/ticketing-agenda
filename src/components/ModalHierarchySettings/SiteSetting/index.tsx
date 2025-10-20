@@ -1,5 +1,5 @@
 import { EditOutlined, EllipsisOutlined } from '@ant-design/icons'
-import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, CodeStub, DecryptedAddress, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType } from '@icure/cardinal-sdk'
+import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, DecryptedAddress, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType } from '@icure/cardinal-sdk'
 import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
 import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -107,12 +107,38 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
           stringValue: site.id,
         }),
       })
+      const translationPropertyFR = new DecryptedPropertyStub({
+        id: 'SERVICE|TRANSLATION|FR',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: t('content.new_service'),
+        }),
+      })
+      const translationPropertyNL = new DecryptedPropertyStub({
+        id: 'SERVICE|TRANSLATION|NL',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const translationPropertyEN = new DecryptedPropertyStub({
+        id: 'SERVICE|TRANSLATION|EN',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const translationPropertyDE = new DecryptedPropertyStub({
+        id: 'SERVICE|TRANSLATION|DE',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const agendaProperties = [parentProperty, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({
         intervalMinutes: 5,
       })
-
-      const tagType = 'SERVICE'
-      const tagVersion = '1'
 
       await createUpdateAgendaMutation(
         new Agenda({
@@ -120,21 +146,7 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
           zoneId: 'Europe/Brussels',
           slottingAlgorithm: algorithm,
           name: t('content.new_service'),
-          tags: [
-            new CodeStub({
-              id: `${tagType}|${tagVersion}`,
-              code: tagType,
-              type: tagType,
-              version: tagVersion,
-              label: {
-                FR: t('content.new_service'),
-                NL: '',
-                EN: '',
-                DE: '',
-              },
-            }),
-          ],
-          properties: [parentProperty],
+          properties: agendaProperties,
         }),
       ).unwrap()
       showMessageFeedback('success', t('notification.service_saved'))

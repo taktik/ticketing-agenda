@@ -1,7 +1,10 @@
+import { DecryptedPropertyStub, TypedValuesType } from '@icure/cardinal-sdk'
 import { format, isSameDay, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs, { Dayjs } from 'dayjs'
 import { EventApi } from 'fullcalendar'
+
+export const languages = ['FR', 'NL', 'EN', 'DE']
 
 export const minutesToDayjs = (totalMinutes: number): dayjs.Dayjs => {
   return dayjs().startOf('day').add(totalMinutes, 'minute')
@@ -325,4 +328,33 @@ export const isAllDayEvent = (start: Date | undefined, end: Date | undefined): b
   const endsAtMidnight = end.getHours() === 0 && end.getMinutes() === 0 && end.getSeconds() === 0
 
   return startsAtMidnight && endsAtMidnight
+}
+
+export const getTranslationForEntity = (properties: DecryptedPropertyStub[] | undefined, entityType: string, locale: string) => {
+  if (!properties) return ''
+
+  const id = `${entityType.toUpperCase()}|TRANSLATION|${locale.toUpperCase()}`
+  const prop = properties.find((p) => p.id === id)
+  return prop?.typedValue?.stringValue || ''
+}
+
+export const getBooleanProperty = (properties: DecryptedPropertyStub[] | undefined, id: string) => {
+  if (!properties) return false
+
+  const prop = properties.find((p) => p.id === id)
+  return prop?.typedValue?.type === TypedValuesType.Boolean ? Boolean(prop.typedValue.booleanValue) : false
+}
+
+export const getStringProperty = (properties: DecryptedPropertyStub[] | undefined, id: string) => {
+  if (!properties) return ''
+
+  const prop = properties.find((p) => p.id === id)
+  return prop?.typedValue?.type === TypedValuesType.String ? prop.typedValue.stringValue || '' : ''
+}
+
+export const getIntegerProperty = (properties: DecryptedPropertyStub[] | undefined, id: string) => {
+  if (!properties) return false
+
+  const prop = properties.find((p) => p.id === id)
+  return prop?.typedValue?.type === TypedValuesType.Integer ? prop.typedValue.integerValue : 0
 }

@@ -18,7 +18,7 @@ async function getSiteRootFromGroupId() {
     }
 
     const healthcareParties = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
-    const siteRoots = healthcareParties.filter((hcp) => hcp.tags.some((tag) => tag.type === RootHcpType.SITE_ROOT))
+    const siteRoots = healthcareParties.filter((hcp) => hcp.publicProperties?.some((prop) => prop.id === RootHcpType.SITE_ROOT))
     if (siteRoots.length !== 1) throw Error(`Error, expected unique result but found ${siteRoots.length}`)
     const result = siteRoots[0]
 

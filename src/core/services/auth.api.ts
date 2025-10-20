@@ -20,8 +20,7 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
-import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID, TAKTIK_API } from '../../constants'
-import { revertAll, setSavedCredentials } from '../app'
+import { MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, PROCESS_ID, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
@@ -32,6 +31,7 @@ import { patientApiRtk } from '../api/patientApi'
 import { roleApiRtk } from '../api/roleApi'
 import { timeTableApiRtk } from '../api/timeTableApi'
 import { userApiRtk } from '../api/userApi'
+import { revertAll, setSavedCredentials } from '../app'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
 const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
@@ -47,10 +47,12 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
     if (!!formattedKey && !!hcp) {
       try {
-        const response = await fetch(`${TAKTIK_API}/api/keys`, {
+        //fetch(`${TAKTIK_API}/api/keys`
+        const response = await fetch(`https://mouscron.taktik.dev/backend/api/keys`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0aWNrZXRpbmctc2VydmljZSIsInJvbGVzIjpbIkFETUlOIiwiQUNUVUFUT1IiXX0.Mwz6CJ-DdB0V13CA2GS84w8jt_JbY2BJilO98k2oTGs_mkgHqqjP6EQIA4l6hza2noKgoY9ZIfU6dQ8lBddaX',
           },
           body: JSON.stringify({ userId: hcp.id, key: formattedKey }),
         })
@@ -70,8 +72,12 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
   async fetchRecoveryKey(hcpId: string): Promise<string | undefined> {
     try {
-      const response = await fetch(`${TAKTIK_API}/api/keys/${hcpId}`)
-
+      //const response = await fetch(`${TAKTIK_API}/api/keys/${hcpId}`)
+      const response = await fetch(`https://mouscron.taktik.dev/backend/api/keys/${hcpId}`, {
+        headers: {
+          Authorization: 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0aWNrZXRpbmctc2VydmljZSIsInJvbGVzIjpbIkFETUlOIiwiQUNUVUFUT1IiXX0.Mwz6CJ-DdB0V13CA2GS84w8jt_JbY2BJilO98k2oTGs_mkgHqqjP6EQIA4l6hza2noKgoY9ZIfU6dQ8lBddaX',
+        },
+      })
       if (response.status === 404) {
         return undefined
       }
