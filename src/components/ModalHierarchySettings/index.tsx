@@ -188,14 +188,14 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
 
       const servicesOfThisSite = sortedServices?.filter((service) => service.author === matchingSite.id) ?? []
 
-      return <SiteSetting site={matchingSite} services={servicesOfThisSite} isSitesLoading={isSitesLoading} />
+      return <SiteSetting key={matchingSite.id} site={matchingSite} services={servicesOfThisSite} isSitesLoading={isSitesLoading} />
     }
 
     if (type === 'service') {
       const matchingService = sortedServices?.find((service) => service.id === id)
       if (!matchingService) return <div>{t('content.service_not_found')}</div>
 
-      return <ServiceSetting service={matchingService} handleDeleteService={handleDeleteService} isServicesLoading={isServicesLoading} />
+      return <ServiceSetting key={matchingService.id} service={matchingService} handleDeleteService={handleDeleteService} isServicesLoading={isServicesLoading} />
     }
 
     return <div>{t('content.select_site_or_service')}</div>

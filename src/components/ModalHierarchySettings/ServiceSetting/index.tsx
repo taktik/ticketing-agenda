@@ -10,20 +10,24 @@ import { v4 } from 'uuid'
 import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { usePermissions } from '../../../core/hooks/usePermissions'
-import { getBooleanProperty, getStringProperty, getTranslationForEntity, languages } from '../../common/helpers'
+import { getBooleanProperty, getIntegerProperty, getStringProperty, getTranslationForEntity, languages, setProperty } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 import './index.css'
 
-const SubjectEdit = React.memo(() => {
-  const [selectedLang, setSelectedLang] = useState('FR')
+interface SubjectEditProps {
+  activeLang: string
+  onLangChange: (lang: string) => void
+}
 
+const SubjectEdit = React.memo(({ activeLang, onLangChange }: SubjectEditProps): ReactElement => {
+  const options = useMemo(() => languages.map((lang) => ({ label: lang, value: lang })), [languages.join(',')])
   return (
     <div style={{ minWidth: 350 }}>
-      <Segmented options={languages} value={selectedLang} onChange={(lang) => setSelectedLang(String(lang))} style={{ marginBottom: 16 }} />
+      <Segmented options={options} value={activeLang} onChange={(lang) => onLangChange(String(lang))} style={{ marginBottom: 16 }} />
 
       {languages.map((lang) => (
-        <div key={lang} style={{ display: selectedLang === lang ? 'block' : 'none' }}>
+        <div key={lang} style={{ display: activeLang === lang ? 'block' : 'none' }}>
           <Form.Item name={['subjectByLanguage', lang]} rules={[{ required: lang === 'FR', message: 'French subject is mandatory.' }]}>
             <Input autoFocus />
           </Form.Item>
@@ -33,20 +37,18 @@ const SubjectEdit = React.memo(() => {
   )
 })
 
-const SubjectDisplay = React.memo(({ subjects }: { subjects: { [key: string]: string } }): ReactElement => {
+interface SubjectDisplayProps {
+  subjects: { [key: string]: string }
+  viewedLang: string | undefined
+  onChange: (lang: string) => void
+}
+
+const SubjectDisplay = React.memo(({ subjects, viewedLang, onChange }: SubjectDisplayProps): ReactElement => {
   const { t } = useTranslation()
-  const availableLangs = useMemo(() => Object.keys(subjects || {}), [subjects])
-  const [viewedLang, setViewedLang] = useState<string | undefined>(availableLangs[0])
 
-  useEffect(() => {
-    if (availableLangs.length > 0 && !availableLangs.includes(viewedLang || '')) {
-      setViewedLang(availableLangs[0])
-    } else if (availableLangs.length === 0) {
-      setViewedLang(undefined)
-    }
-  }, [availableLangs, viewedLang])
+  const options = useMemo(() => languages.map((lang) => ({ label: lang, value: lang })), [languages.join(',')])
 
-  if (availableLangs.length === 0) {
+  if (languages.length === 0) {
     return (
       <Tag icon={<ExclamationCircleOutlined />} color="warning">
         {t('content.not_set')}
@@ -56,7 +58,7 @@ const SubjectDisplay = React.memo(({ subjects }: { subjects: { [key: string]: st
 
   return (
     <div style={{ minWidth: 350, maxHeight: 130, overflow: 'auto' }}>
-      <Segmented size="small" options={availableLangs.map((lang) => ({ label: lang, value: lang }))} value={viewedLang} onChange={(lang) => setViewedLang(lang as string)} style={{ marginBottom: 8 }} />
+      <Segmented size="small" options={options} value={viewedLang} onChange={(lang) => onChange(lang as string)} style={{ marginBottom: 8 }} />
       <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '6px', minHeight: '60px' }}>{subjects[viewedLang || '']} </div>
     </div>
   )
@@ -64,16 +66,17 @@ const SubjectDisplay = React.memo(({ subjects }: { subjects: { [key: string]: st
 
 const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
   const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
-  const sortedMatchingProcedures = sortByOtherInfosOrder(matchingProcedures)
+  const sortedMatchingProcedures = sortByOrder(matchingProcedures)
   const allDurations = sortedMatchingProcedures.map((item) => item.duration)
 
   return allDurations
 }
 
-const sortByOtherInfosOrder = (items: CalendarItemType[]): CalendarItemType[] => {
+const sortByOrder = (items: CalendarItemType[]): CalendarItemType[] => {
   return [...items].sort((a, b) => {
-    const aOrder = parseInt(a.otherInfos?.order ?? '9999', 10)
-    const bOrder = parseInt(b.otherInfos?.order ?? '9999', 10)
+    const aOrder = getIntegerProperty(a.publicProperties, 'CALENDARITEMTYPE|ORDER')
+    const bOrder = getIntegerProperty(b.publicProperties, 'CALENDARITEMTYPE|ORDER')
+
     return aOrder - bOrder
   })
 }
@@ -86,7 +89,7 @@ interface ProcedureRow {
   rowId: string
   procedureId: string
   appointmentDurations: number[]
-  isPublic: string
+  isPublic: boolean
   subjectByLanguage: LanguageDescription
   procedureDetails: string
   color: string
@@ -95,7 +98,7 @@ interface ProcedureRow {
 export interface FormValuesService {
   descr: LanguageDescription
   appointmentDurations: number[]
-  isPublic: string
+  isPublic: boolean
   emailTemplate: string
   subjectByLanguage: LanguageDescription
   procedureDetails: string
@@ -117,6 +120,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const [showEditServiceTitle, setShowEditServiceTitle] = useState<boolean>(false)
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
+  const [rowViewedLangs, setRowViewedLangs] = useState<{ [rowKey: string]: string }>({})
 
   const { attachedService } = usePermissions()
 
@@ -186,14 +190,14 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       durationsMap.set(name, sortedDurations)
     })
 
-    return (proceduresList ?? []).map((procedure) => ({
+    return proceduresList.map((procedure) => ({
       rowId: procedure.id,
       procedureId: procedure.id,
       procedureName: procedure.name,
       appointmentDurations: procedure.name ? durationsMap.get(procedure.name) || [] : [],
-      isPublic: getBooleanProperty(procedure.publicProperties, 'CALENDARITEMTYPES|ISPUBLIC'),
+      isPublic: getBooleanProperty(procedure.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC'),
       procedureDetails: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
-      subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, 'SERVICE', locale)])),
+      subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, 'CALENDARITEMTYPE', locale)])),
       color: procedure.color ?? '',
     }))
   }, [procedures, proceduresList])
@@ -324,26 +328,70 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
       // Step 2 : We get our current procedures and sort them by their order
       const matchingProcedures = (procedures ?? []).filter((item) => item.name === procedureRow.subjectByLanguage['FR'])
-      const sortedMatchingProcedures = sortByOtherInfosOrder(matchingProcedures)
+      const sortedMatchingProcedures = sortByOrder(matchingProcedures)
 
       // Step 3 : We make our desired Array with the values the user has chosen
-      const desiredArray = rowValues.appointmentDurations.map(
-        (duration, index) =>
-          new CalendarItemType({
-            name: rowValues.subjectByLanguage['FR'],
-            duration: duration,
-            defaultCalendarItemType: index === 0,
-            agendaId: service.id,
-            otherInfos: {
-              order: String(index),
-              isPublic: rowValues.isPublic,
-              procedureDetails: rowValues.procedureDetails,
-            },
-            subjectByLanguage: rowValues.subjectByLanguage,
-            color: typeof rowValues.color !== 'string' ? (rowValues.color as Color).toHexString() : rowValues.color,
-            id: v4(),
+      const desiredArray = rowValues.appointmentDurations.map((duration, index) => {
+        const properties: DecryptedPropertyStub[] = []
+
+        Object.entries(rowValues.subjectByLanguage).forEach(([locale, value]) => {
+          setProperty(
+            properties,
+            `CALENDARITEMTYPE|TRANSLATION|${locale.toUpperCase()}`,
+            new DecryptedTypedValue({
+              type: TypedValuesType.String,
+              stringValue: value,
+            }),
+          )
+        })
+
+        setProperty(
+          properties,
+          'CALENDARITEMTYPE|ISPUBLIC',
+          new DecryptedTypedValue({
+            type: TypedValuesType.Boolean,
+            booleanValue: rowValues.isPublic,
           }),
-      )
+        )
+
+        setProperty(
+          properties,
+          'CALENDARITEMTYPE|ORDER',
+          new DecryptedTypedValue({
+            type: TypedValuesType.Integer,
+            integerValue: index,
+          }),
+        )
+
+        setProperty(
+          properties,
+          'CALENDARITEMTYPE|PROCEDUREDETAILS',
+          new DecryptedTypedValue({
+            type: TypedValuesType.String,
+            stringValue: rowValues.procedureDetails,
+          }),
+        )
+
+        setProperty(
+          properties,
+          'CALENDARITEMTYPE|AGENDAID',
+          new DecryptedTypedValue({
+            type: TypedValuesType.String,
+            stringValue: service.id,
+          }),
+        )
+
+        const updatedCalendarItemType = new CalendarItemType({
+          name: rowValues.subjectByLanguage['FR'],
+          duration: duration,
+          defaultCalendarItemType: index === 0,
+          agendaId: service.id,
+          publicProperties: properties,
+          color: typeof rowValues.color !== 'string' ? (rowValues.color as Color).toHexString() : rowValues.color,
+          id: v4(),
+        })
+        return updatedCalendarItemType
+      })
 
       // Step 4 : We will compare both our current array and our desired array and UPDATE, CREATE or DELETE as needed.
       const mutationPromises: Promise<unknown>[] = []
@@ -362,20 +410,21 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             existingItem.duration !== desiredProps.duration ||
             existingItem.defaultCalendarItemType !== desiredProps.defaultCalendarItemType ||
             existingItem.name !== desiredProps.name ||
-            JSON.stringify(existingItem.otherInfos) !== JSON.stringify(desiredProps.otherInfos) ||
-            JSON.stringify(existingItem.subjectByLanguage) !== JSON.stringify(desiredProps.subjectByLanguage) ||
-            existingItem.color !== desiredProps.color
+            existingItem.color !== desiredProps.color ||
+            languages.some((locale) => getTranslationForEntity(existingItem.publicProperties, 'CALENDARITEMTYPE', locale) !== getTranslationForEntity(desiredProps.publicProperties, 'CALENDARITEMTYPE', locale)) ||
+            getBooleanProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') !== getBooleanProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') ||
+            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ORDER') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ORDER') ||
+            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS')
           ) {
             const procedure = new CalendarItemType({
               name: desiredProps.name,
               duration: desiredProps.duration,
               defaultCalendarItemType: desiredProps.defaultCalendarItemType,
-              otherInfos: desiredProps.otherInfos,
               healthcarePartyId: desiredProps.healthcarePartyId,
               agendaId: desiredProps.agendaId,
               id: existingItem.id,
               rev: existingItem.rev,
-              subjectByLanguage: desiredProps.subjectByLanguage,
+              publicProperties: desiredProps.publicProperties,
               color: desiredProps.color,
             })
             mutationPromises.push(createUpdateProcedure(procedure).unwrap())
@@ -604,10 +653,19 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                 minWidth={350}
                 render={(subjectsByLanguage: { [key: string]: string }, record: ProcedureRow) => {
                   const editable = isEditing(record)
+                  const currentLang = rowViewedLangs[record.rowId] || languages[0]
+
+                  const handleLangChange = (newLang: string) => {
+                    setRowViewedLangs((prev) => ({
+                      ...prev,
+                      [record.rowId]: newLang,
+                    }))
+                  }
+
                   if (editable) {
-                    return <SubjectEdit />
+                    return <SubjectEdit activeLang={currentLang} onLangChange={handleLangChange} />
                   } else {
-                    return <SubjectDisplay subjects={subjectsByLanguage} />
+                    return <SubjectDisplay subjects={subjectsByLanguage} viewedLang={currentLang} onChange={handleLangChange} />
                   }
                 }}
               />
@@ -716,22 +774,22 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                 dataIndex="isPublic"
                 key="isPublic"
                 minWidth={120}
-                render={(currentValue: string | undefined, record: ProcedureRow) => {
+                render={(currentValue: boolean | undefined, record: ProcedureRow) => {
                   const editable = isEditing(record)
 
                   if (editable) {
                     return (
                       <Form.Item name="isPublic" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.visibility_required') }]}>
                         <Radio.Group className="radio-group">
-                          <Radio value={'true'}>{t('content.public')}</Radio>
-                          <Radio value={'false'}>{t('content.private')}</Radio>
+                          <Radio value={true}>{t('content.public')}</Radio>
+                          <Radio value={false}>{t('content.private')}</Radio>
                         </Radio.Group>
                       </Form.Item>
                     )
                   } else {
-                    if (currentValue === 'true') {
+                    if (currentValue) {
                       return <Tag color="green">{t('content.public')}</Tag>
-                    } else if (currentValue === 'false') {
+                    } else if (currentValue === false) {
                       return <Tag color="red">{t('content.private')}</Tag>
                     }
                     return <Tag color="orange">{t('content.unknown')}</Tag>

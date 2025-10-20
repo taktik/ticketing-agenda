@@ -1,4 +1,4 @@
-import { DecryptedPropertyStub, TypedValuesType } from '@icure/cardinal-sdk'
+import { DecryptedPropertyStub, DecryptedTypedValue, TypedValuesType } from '@icure/cardinal-sdk'
 import { format, isSameDay, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs, { Dayjs } from 'dayjs'
@@ -353,8 +353,23 @@ export const getStringProperty = (properties: DecryptedPropertyStub[] | undefine
 }
 
 export const getIntegerProperty = (properties: DecryptedPropertyStub[] | undefined, id: string) => {
-  if (!properties) return false
+  if (!properties) return 0
 
   const prop = properties.find((p) => p.id === id)
-  return prop?.typedValue?.type === TypedValuesType.Integer ? prop.typedValue.integerValue : 0
+
+  if (prop?.typedValue?.type === TypedValuesType.Integer) {
+    return prop.typedValue.integerValue ?? 0
+  }
+
+  return 0
+}
+
+export const setProperty = (properties: DecryptedPropertyStub[], id: string, typedValue: DecryptedTypedValue) => {
+  const existingProp = properties.find((p) => p.id === id)
+
+  if (existingProp) {
+    existingProp.typedValue = typedValue
+  } else {
+    properties.push(new DecryptedPropertyStub({ id, typedValue }))
+  }
 }

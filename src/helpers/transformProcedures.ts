@@ -1,5 +1,5 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { getTranslationForEntity, languages } from '../components/common/helpers'
+import { getIntegerProperty, getStringProperty, getTranslationForEntity, languages } from '../components/common/helpers'
 
 export interface ProcedureVariant {
   id: string
@@ -40,9 +40,6 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
   // 1. Create lookup maps for efficient access (your setup was perfect)
   const agendaMap = new Map(allAgendas.map((agenda) => [agenda.id, agenda]))
   const siteMap = new Map(allSites.map((site) => [site.id, site]))
-
-  // 2. Filter for only the procedures marked as public ONLY FOR CITIZENS
-  //const publicProcedures = allProcedures.filter((procedure) => (procedure.otherInfos?.['isPublic'] ?? 'false').toLowerCase() === 'true')
 
   // 3. Group all procedures by their name (e.g., group all "Demande de passeport")
   const proceduresGroupedByName = new Map<string, CalendarItemType[]>()
@@ -87,7 +84,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
         // This logic correctly creates the list of variants (1 person, 2 people...)
         const procedureVariants: ProcedureVariant[] = proceduresInOneService
           .map((p) => {
-            const order = parseInt(p.otherInfos?.['order'] || '0', 10)
+            const order = getIntegerProperty(p.publicProperties, 'CALENDARITEMTYPE|ORDER')
             const attendees = isNaN(order) ? 1 : order + 1
             return {
               id: `proc-variant-${p.id}-${attendees}`,
@@ -105,7 +102,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           siteId: site.id,
           agendaId: agenda?.id,
           siteName: site.name,
-          procedureDetails: firstProcInService.otherInfos?.['procedureDetails'] || '',
+          procedureDetails: getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
           variants: procedureVariants,
         }
       })
@@ -120,7 +117,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     const displayTextByLanguage = Object.fromEntries(
       languages.map((lang) => {
         const servicePart = getTranslationForEntity(representativeService?.properties, 'SERVICE', lang) || serviceName
-        const procedurePart = firstProcedureInGroup.subjectByLanguage?.[lang] || procedureName
+        const procedurePart = getTranslationForEntity(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE', lang)
         return [lang, `${servicePart} - ${procedurePart}`]
       }),
     )
