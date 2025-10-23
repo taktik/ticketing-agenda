@@ -7,7 +7,7 @@ import { EventApi } from 'fullcalendar'
 import { useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { useGetPatientByIdQuery } from '../../../core/api/patientApi'
+import { useGetEncryptedPatientByIdQuery } from '../../../core/api/patientApi'
 import { CustomModal } from '../../common/CustomModal'
 import { formatEventDate, localeMap } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
@@ -40,7 +40,7 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
   const [isEditing, setIsEditing] = useState(false)
   const [form] = Form.useForm<CalendarEventUpdateForm>()
 
-  const { data: patient } = useGetPatientByIdQuery(event?.extendedProps.patientId ?? '', { skip: !event || !event.extendedProps.patientId })
+  const { data: patient } = useGetEncryptedPatientByIdQuery(event?.extendedProps.patientId ?? '', { skip: !event || !event.extendedProps.patientId })
 
   const isTimeOff = useMemo(() => !!event?.extendedProps.isTimeOff, [event])
 

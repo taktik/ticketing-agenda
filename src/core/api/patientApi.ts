@@ -114,7 +114,20 @@ export const patientApiRtk = createApi({
       },
       providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
-    getPatientById: builder.query<DecryptedPatient | undefined, string>({
+    getEncryptedPatientById: builder.query<EncryptedPatient | undefined, string>({
+      async queryFn(patientId, { getState }) {
+        const patientApi = (await cardinalApi(getState))?.patient
+        return guard([patientApi], async (): Promise<EncryptedPatient> => {
+          const patient = await patientApi!.encrypted.getPatient(patientId)
+          if (!patient) {
+            throw new Error('Patients do not found')
+          }
+          return patient
+        })
+      },
+      providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
+    }),
+    getDecryptedPatientById: builder.query<DecryptedPatient | undefined, string>({
       async queryFn(patientId, { getState }) {
         const patientApi = (await cardinalApi(getState))?.patient
         return guard([patientApi], async (): Promise<DecryptedPatient> => {
@@ -221,8 +234,9 @@ export const {
   useDeletePatientsMutation,
   useSharePatientWithMutation,
   useCreatePatientsMutation,
-  useLazyGetPatientByIdQuery,
   useUpdatePatientMutation,
   useSharePatientWithManyMutation,
-  useGetPatientByIdQuery,
+  useGetDecryptedPatientByIdQuery,
+  useLazyGetDecryptedPatientByIdQuery,
+  useGetEncryptedPatientByIdQuery,
 } = patientApiRtk

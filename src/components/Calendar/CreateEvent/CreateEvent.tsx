@@ -8,7 +8,7 @@ import { v4 } from 'uuid'
 import { useGetAgendasByAuthorIds } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-import { useCreateOrUpdatePatientMutation, useLazyGetPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
+import { useCreateOrUpdatePatientMutation, useLazyGetDecryptedPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { useRoot } from '../../../core/hooks/useRoot'
 import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
@@ -187,7 +187,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading || isSiteRootLoading || isAdminRootLoading, [isAgendasLoading, isProceduresLoading, isSiteRootLoading, isAdminRootLoading])
 
   const [getUserByMailLazy, { isLoading: isGetUserLoading }] = useLazyGetUserByEmailQuery()
-  const [getPatientByIdLazy, { isLoading: isGetPatientLoading }] = useLazyGetPatientByIdQuery()
+  const [getPatientByIdLazy, { isLoading: isGetPatientLoading }] = useLazyGetDecryptedPatientByIdQuery()
   const [createUpdateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
   const [createUpdatePatient, { isLoading: isCreateUpdatePatientLoading }] = useCreateOrUpdatePatientMutation()
   const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
@@ -329,7 +329,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       }
 
       // 2. Create the new User and link it to the new Patient
-      const newUserPayload = new User({ id: v4(), patientId, mobilePhone: newPhoneNumber, email, login: email, name: `${firstName} ${lastName}` })
+      const newUserPayload = new User({ id: v4(), patientId, mobilePhone: newPhoneNumber, email, login: email, name: `${firstName.trim()} ${lastName.trim()}` })
       const citizenUser = await createUpdateUser(newUserPayload).unwrap()
       if (!citizenUser) {
         // This is where an orphaned patient record could be left
@@ -403,7 +403,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           tags: [eventTag],
         })
 
-        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteVariant.siteId] }).unwrap()
+        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteRoot.id] }).unwrap()
       })
       await Promise.allSettled(eventsCreationPromises)
     } catch (error: unknown) {
