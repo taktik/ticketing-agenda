@@ -66,7 +66,7 @@ Existing roles :
 
 - Administrator
 - Chief of service
-- CityWorker
+- City Worker
 
 # Emails
 
@@ -84,22 +84,26 @@ Existing roles :
 "url",
 "date",
 "time",
-"location"
+"location",
+"service",
+"procedure"
 ]
 
 ## Create an Email process
 
-Use this to make a email process. The hmtl body goes in the body, and don't forget to use the variables. It returns a processID that we need to stock in order to use them later in the frontend to send the actual email.
+Use this to make a email process. The html body goes in the body, and don't forget to use the variables. It returns a processID that we need to stock in order to use them later in the frontend to send the actual email.
 The JWT token needed can be found when making a request on the cockpit. It needs to be the jwt of the global admin
 
 curl --request POST \
- --url 'https://msg-gw.icure.cloud/ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000/process/template/ec7d9b00-948c-11f0-a83d-fffe07e305e2/%257BDB_ID%257D?language=fr' \
+ --url 'https://msg-gw.icure.cloud/ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000/process/template/ec7d9b00-948c-11f0-a83d-fffe07e305e2/ic-taktikticketingagendamouscron-f7627de4-d674-4443-9987-2cc5c0d793b1?language=fr' \
  --header 'Authorization: Bearer $JWT' \
  --header 'content-type: application/json' \
  --data '{
 "subject": "your subject {{ name }}",
 "body": "body {{ firstName }}"
 }'
+
+In the url we have the msg-gw.icure.cloud/{process_id}/process/template/{template_id}/{db_id}?language={language}
 
 ## Send an email
 
@@ -112,7 +116,7 @@ curl --request POST \
  --header 'Authorization: Bearer $JWT' \
  --header 'content-type: application/json' \
  --data '{
-"from": "test@taktik.com",
+"from": "no-reply@mouscron.be",
 "processId": "ID",
 "variables": {
 "lastName": "Pierro"
