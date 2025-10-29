@@ -235,7 +235,7 @@ export const startAuthentication = createAsyncThunk(
         NIGHTLY_ICURE_CLOUD_URL,
         MSG_GW_URL,
         SPEC_ID!,
-        "d62f3711-a6cc-4085-a175-40b6bee57145",
+        'd62f3711-a6cc-4085-a175-40b6bee57145',
         AuthenticationProcessTelecomType.Email,
         email,
         new CaptchaOptions.Kerberus.Computed({ solution: _payload.captchaToken }),
