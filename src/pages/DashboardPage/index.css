@@ -119,6 +119,9 @@ body * {
   height: 100%;
   background: #ffffff;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 .Panel {
   position: relative;
@@ -129,18 +132,24 @@ body * {
   padding: 1.5rem;
   gap: 1.5rem;
   background-color: #f0f2f5;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  flex-grow: 1;
 }
 .left-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
   gap: 1rem;
+  height: auto;
+  overflow: hidden;
+  width: 400px;
+  flex-shrink: 0;
 }
 .right-panel {
   display: flex;
   flex-direction: column;
-  height: 95%;
   width: 100%;
+  flex-grow: 1;
 }
 .card {
   width: 400px;
@@ -232,5 +241,6 @@ body * {
   flex-direction: column;
   flex: 1;
   gap: 1rem;
+  overflow: hidden;
 }
 /*# sourceMappingURL=index.css.map */
