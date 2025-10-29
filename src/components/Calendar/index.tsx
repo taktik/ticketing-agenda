@@ -287,28 +287,29 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           />
         </Space>
       </div>
-
-      <FullCalendar
-        ref={calendarRef}
-        locale={i18n.language}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-        firstDay={1}
-        headerToolbar={false}
-        initialView="timeGridWeek"
-        editable={true}
-        selectable={false}
-        selectMirror={true}
-        dayMaxEvents={true}
-        weekends={false}
-        height="90%"
-        datesSet={handleDatesSet}
-        events={filteredEvents}
-        eventClick={handleEventClick}
-        eventContent={getEventContent}
-        noEventsContent={noEventsContent}
-        allDaySlot={isAdminLevel}
-        allDayText={t('content.all_day')}
-      />
+      <div className="fullcalendar-wrapper">
+        <FullCalendar
+          ref={calendarRef}
+          locale={i18n.language}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+          firstDay={1}
+          headerToolbar={false}
+          initialView="timeGridWeek"
+          editable={true}
+          selectable={false}
+          selectMirror={true}
+          dayMaxEvents={true}
+          weekends={false}
+          height="90%"
+          datesSet={handleDatesSet}
+          events={filteredEvents}
+          eventClick={handleEventClick}
+          eventContent={getEventContent}
+          noEventsContent={noEventsContent}
+          allDaySlot={isAdminLevel}
+          allDayText={t('content.all_day')}
+        />
+      </div>
       {eventModalOpen &&
         createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
       {createApptModalOpen && createPortal(<CreateEvent isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} />, document.body)}
