@@ -47,7 +47,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
     if (!!formattedKey && !!hcp) {
       try {
-        const response = await fetch(`${BACKEND_API}/api/keys`, {
+        const response = await fetch(`https://mouscron.taktik.dev/backend/api/keys`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
   async fetchRecoveryKey(hcpId: string): Promise<string | undefined> {
     try {
-      const response = await fetch(`${BACKEND_API}/api/keys/${hcpId}`)
+      const response = await fetch(`https://mouscron.taktik.dev/backend/api/keys/${hcpId}`)
       if (response.status === 404) {
         return undefined
       }
@@ -235,7 +235,7 @@ export const startAuthentication = createAsyncThunk(
         NIGHTLY_ICURE_CLOUD_URL,
         MSG_GW_URL,
         SPEC_ID!,
-        EMAIL_AUTH_CODE_ADMIN_FR!,
+        "d62f3711-a6cc-4085-a175-40b6bee57145",
         AuthenticationProcessTelecomType.Email,
         email,
         new CaptchaOptions.Kerberus.Computed({ solution: _payload.captchaToken }),
