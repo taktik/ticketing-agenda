@@ -142,17 +142,15 @@ body * {
   gap: 1rem;
   height: auto;
   overflow: hidden;
-  width: 400px;
   flex-shrink: 0;
+  width: 20%;
 }
 .right-panel {
   display: flex;
   flex-direction: column;
-  width: 100%;
   flex-grow: 1;
 }
 .card {
-  width: 400px;
   border: 1px solid #d9d9d9;
   border-radius: 0;
 }
@@ -224,7 +222,6 @@ body * {
   border-radius: 0;
 }
 .ant-calendar-wrapper {
-  width: 400px;
   border: 1px solid #d9d9d9;
 }
 .ant-calendar-wrapper > :first-child {
