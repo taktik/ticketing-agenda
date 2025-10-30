@@ -100,21 +100,24 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     const result: { [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData } = {}
     for (const key of keysData) {
       const hcp = key.dataOwnerDetails.dataOwner
-      //let recovered: RecoveryResult<{ [dataOwnerId: string]: { [pub: SpkiHexString]: XRsaKeypair } }> | undefined = undefined
-      const rk = hcp ? await this.fetchRecoveryKey(hcp.id) : undefined
-      if (!rk) {
-        throw new Error(`Can't retrieve key for dataowner ${hcp.id}`)
-      }
-      const decodedRecoveryKey = RecoveryDataKey.fromBase32(rk)
-      const recovered = await keyPairRecoverer.recoverWithRecoveryKey(decodedRecoveryKey, false)
+      if (!key.unavailableKeys || key.unavailableKeys.length === 0 || !key.unknownKeys || key.unknownKeys.length === 0) {
+        result[hcp.id] = { recoveredKeys: {}, keyAuthenticity: {} }
+      } else {
+        const rk = hcp ? await this.fetchRecoveryKey(hcp.id) : undefined
+        if (!rk) {
+          throw new Error(`Can't retrieve key for dataowner ${hcp.id}`)
+        }
+        const decodedRecoveryKey = RecoveryDataKey.fromBase32(rk)
+        const recovered = await keyPairRecoverer.recoverWithRecoveryKey(decodedRecoveryKey, false)
 
-      if (!(recovered instanceof RecoveryResult.Success)) {
-        throw new Error('Recovery of key failed')
-      }
+        if (!(recovered instanceof RecoveryResult.Success)) {
+          throw new Error('Recovery of key failed')
+        }
 
-      result[hcp.id] = {
-        recoveredKeys: recovered.data[hcp.id],
-        keyAuthenticity: Object.fromEntries(Object.entries(recovered.data[hcp.id]).map(([a, _]) => [a, true])),
+        result[hcp.id] = {
+          recoveredKeys: recovered.data[hcp.id],
+          keyAuthenticity: Object.fromEntries(Object.entries(recovered.data[hcp.id]).map(([a, _]) => [a, true])),
+        }
       }
     }
     return result

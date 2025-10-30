@@ -286,7 +286,7 @@ export const ManagerUsers = (): ReactElement => {
             console.error('Failed to set user roles:', rolesError)
             openNotification('error', t('notification.user_save_failed'), t('notification.role_save_error'))
 
-            // ROLES FAILED: Roll back Userand HCP
+            // ROLES FAILED: Roll back User and HCP
             if (createdUser) await deleteSilentUser(createdUser).unwrap()
             if (createdHcp) await deleteSilentHcp(createdHcp).unwrap()
           }
