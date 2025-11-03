@@ -16,7 +16,8 @@
   &__form {
     display: flex;
     flex-direction: column;
-    flex: 1 0 0;
+    width: 100%;
+    justify-content: space-between;
 
     .media-breakpoint-down(@md,
       {
@@ -26,8 +27,8 @@
     &__inputs {
       display: flex;
       flex-direction: column;
-      flex: 1 0 0;
       gap: 12px;
+      width: 100%;
 
       .media-breakpoint-down(@md,
         {

@@ -128,7 +128,8 @@ body * {
 .manage-account-root__form {
   display: flex;
   flex-direction: column;
-  flex: 1 0 0;
+  width: 100%;
+  justify-content: space-between;
 }
 @media screen and (max-width: calc(768px - 1px)) {
   .manage-account-root__form {
@@ -138,8 +139,8 @@ body * {
 .manage-account-root__form__inputs {
   display: flex;
   flex-direction: column;
-  flex: 1 0 0;
   gap: 12px;
+  width: 100%;
 }
 @media screen and (max-width: calc(768px - 1px)) {
   .manage-account-root__form__inputs {

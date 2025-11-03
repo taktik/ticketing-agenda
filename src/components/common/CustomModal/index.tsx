@@ -76,6 +76,7 @@ export const CustomModal = ({
       background: mode === 'danger' ? '#FDF3F3' : '#F4F4F4',
       borderRadius: '8px 8px 0px 0px',
       margin: 0,
+      height: '75px',
     },
     mask: {
       background: 'rgba(8, 75, 131, 0.5)',

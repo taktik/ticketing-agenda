@@ -11,17 +11,17 @@ import { useGetAgendasByAuthorIds } from '../../../../core/api/agendaApi'
 import {
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
-  useGetHealthcarePartiesByIdsQuery,
+  useGetHealthcarePartyUsers,
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
 import { administratorTag, cityWorkerTag, headOfServiceTag, rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
-import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersByIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
+import { usePermissions } from '../../../../core/hooks/usePermissions'
 import { useRoot } from '../../../../core/hooks/useRoot'
 import { useSites } from '../../../../core/hooks/useSites'
 import { AssignmentSelector } from '../../../AssignmentSelector/AssignmentSelector'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
-import { usePermissions } from '../../../../core/hooks/usePermissions'
 
 export interface Assignment {
   siteId: string | undefined
@@ -77,48 +77,45 @@ export const ManagerUsers = (): ReactElement => {
   const [setUserRoles, { isLoading: isSetUserRolesLoading }] = useSetUserRolesMutation()
 
   const { adminRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
-  const { sites, isSitesLoading } = useSites()
+  const { sites = [], isSitesLoading } = useSites()
 
-  const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
-  const { data: agendas, isLoading: isAgendasLoading } = useGetAgendasByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
+  const siteIds = useMemo(() => sites.map((site) => site.id), [sites])
 
-  const { data: users, isLoading: isUsersLoading } = useGetUsersQuery()
+  const { data: agendas, isLoading: isAgendasLoading } = useGetAgendasByAuthorIds({
+    skip: siteIds.length === 0,
+    authorIds: siteIds,
+  })
 
-  const usersHcpIds = useMemo(() => {
-    if (!users) return []
-    return users.map((user) => user.healthcarePartyId).filter((id): id is string => id !== undefined)
-  }, [users])
+  const { data: hcps = [], isLoading: isHcpsLoading } = useGetHealthcarePartyUsers()
 
-  const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartiesByIdsQuery(usersHcpIds, { skip: usersHcpIds.length === 0 || !users })
+  const userIds = useMemo(() => hcps.map((hcp) => hcp.userId).filter((id): id is string => !!id), [hcps])
 
-  const isFetching = useMemo(
-    () => isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading || isSitesLoading || isAgendasLoading,
-    [isUsersLoading, isHcpsLoading, isAdminRootLoading, isSiteRootLoading, isSitesLoading, isAgendasLoading],
-  )
-  const isMutating = useMemo(
-    () =>
-      isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLoading || isSilentUndeleteHcpLoading || isSetUserRolesLoading || isSilentDeleteUserLoading,
-    [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLoading, isSilentUndeleteHcpLoading, isSetUserRolesLoading, isSilentDeleteUserLoading],
-  )
-  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
+  const { data: users, isLoading: isUsersLoading } = useGetUsersByIdsQuery(userIds, {
+    skip: userIds.length === 0,
+  })
+
+  const isFetching = isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading || isSitesLoading || isAgendasLoading
+
+  const isMutating =
+    isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLoading || isSilentUndeleteHcpLoading || isSetUserRolesLoading || isSilentDeleteUserLoading
+
+  const isLoading = isFetching || isMutating
 
   const allowedRoleIds = useMemo(() => new Set([administratorTag[0].id, headOfServiceTag[0].id, cityWorkerTag[0].id]), [administratorTag, headOfServiceTag, cityWorkerTag])
 
   const hcpMap = useMemo(() => {
-    const filteredHcps = (hcps ?? []).filter((hcp) => hcp.tags?.some((tag) => allowedRoleIds.has(tag.id)))
-    return new Map(filteredHcps.map((hcp) => [hcp.id, hcp]))
+    const filtered = hcps.filter((hcp) => hcp.tags?.some((tag) => allowedRoleIds.has(tag.id)))
+    return new Map(filtered.map((hcp) => [hcp.id, hcp]))
   }, [hcps, allowedRoleIds])
 
-  const mergedList = useMemo(() => {
-    if (!users || !hcps) return []
+  const mergedList: [User, HealthcareParty][] = useMemo(() => {
+    if (!users?.length) return []
 
-    const mergedPairs: Array<[User, HealthcareParty]> = users.flatMap((user) => {
+    return users.flatMap<[User, HealthcareParty]>((user) => {
       if (!user.healthcarePartyId) return []
       const hcp = hcpMap.get(user.healthcarePartyId)
       return hcp ? [[user, hcp]] : []
     })
-
-    return mergedPairs
   }, [users, hcpMap])
 
   const allRoleTypes = useMemo(() => new Set(Object.keys(tagMap)), [tagMap])

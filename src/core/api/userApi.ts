@@ -36,6 +36,15 @@ export const userApiRtk = createApi({
       },
       providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
+    getUsersByIds: builder.query<User[] | undefined, string[]>({
+      async queryFn(ids, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async (): Promise<User[]> => {
+          return await loadFromIterator(await userApi!.filterUsersBy(UserFilters.byIds(ids)), 1000)
+        })
+      },
+      providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
+    }),
     getUserByEmail: builder.query<User | undefined, string>({
       async queryFn(email, { getState }) {
         const userApi = (await cardinalApi(getState))?.user
@@ -140,6 +149,7 @@ export const userApiRtk = createApi({
 export const {
   useGetCurrentUserQuery,
   useGetUsersQuery,
+  useGetUsersByIdsQuery,
   useLazyGetUsersQuery,
   useGetUserByEmailQuery,
   useCreateUserMutation,

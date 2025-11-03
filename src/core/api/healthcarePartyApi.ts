@@ -2,6 +2,7 @@ import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { cardinalApi, guard } from '../services/auth.api'
 import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, UndeleteHcpByIdParameters } from './fetchType'
+import { allRoleTags } from './roleApi'
 import { loadFromIterator } from './utils'
 
 enum HealthcarePartyTags {
@@ -199,4 +200,14 @@ export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParamete
     data: root,
     ...rest,
   }
+}
+
+export const useGetHealthcarePartyUsers = () => {
+  const data1 = useGetHealthcarePartyByTagQuery(allRoleTags[0]?.type ?? '', { skip: !allRoleTags[0]?.type })
+  const data2 = useGetHealthcarePartyByTagQuery(allRoleTags[1]?.type ?? '', { skip: !allRoleTags[1]?.type })
+  const data3 = useGetHealthcarePartyByTagQuery(allRoleTags[2]?.type ?? '', { skip: !allRoleTags[2]?.type })
+
+  const combinedData: HealthcareParty[] = [...(data1.data ?? []), ...(data2.data ?? []), ...(data3.data ?? [])]
+
+  return { data: combinedData, isLoading: data1.isLoading || data2.isLoading || data3.isLoading }
 }
