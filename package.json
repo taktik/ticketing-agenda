@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
+    "@azure/msal-browser": "4.26.0",
+    "@azure/msal-react": "3.0.21",
     "@date-io/date-fns": "3.2.1",
     "@fullcalendar/core": "6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",

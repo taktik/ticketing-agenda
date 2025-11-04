@@ -130,6 +130,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@azure/msal-browser@npm:4.26.0":
+  version: 4.26.0
+  resolution: "@azure/msal-browser@npm:4.26.0"
+  dependencies:
+    "@azure/msal-common": "npm:15.13.1"
+  checksum: 995291b0fe04b0209afbf4adfe1a8171e94b439d2a593c5c15e4c4307cc8f069c7f32b88b26596c49b7dddea57eca4371933f30d3286d25d000405d50ba3ab31
+  languageName: node
+  linkType: hard
+
+"@azure/msal-common@npm:15.13.1":
+  version: 15.13.1
+  resolution: "@azure/msal-common@npm:15.13.1"
+  checksum: e411c482ab8e329ceaa0bd5ccaedb0d1c70a6ee428bb01bc0d617624939babb8655e98fad287db9bad48fbd350427a1d743138699696964745bcfd1f84d42307
+  languageName: node
+  linkType: hard
+
+"@azure/msal-react@npm:3.0.21":
+  version: 3.0.21
+  resolution: "@azure/msal-react@npm:3.0.21"
+  peerDependencies:
+    "@azure/msal-browser": ^4.26.0
+    react: ^16.8.0 || ^17 || ^18 || ^19
+  checksum: 01b394536374ecc6cd77ea8decd235db6ef521beddd12bca13b6a4053a37870c3ce41987d8654b3c68a50c1fc56362ee553de11b90859d3fdc6294c0265a5d9c
+  languageName: node
+  linkType: hard
+
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.10.4, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.16.0, @babel/code-frame@npm:^7.26.2, @babel/code-frame@npm:^7.8.3":
   version: 7.26.2
   resolution: "@babel/code-frame@npm:7.26.2"
@@ -16061,6 +16087,8 @@ __metadata:
   resolution: "ticketing-agenda@workspace:."
   dependencies:
     "@ant-design/icons": "npm:^5.6.1"
+    "@azure/msal-browser": "npm:4.26.0"
+    "@azure/msal-react": "npm:3.0.21"
     "@date-io/date-fns": "npm:3.2.1"
     "@fullcalendar/core": "npm:6.1.17"
     "@fullcalendar/daygrid": "npm:^6.1.17"

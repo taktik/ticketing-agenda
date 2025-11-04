@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AuthenticatedLayout from '../layout/AuthenticatedLayout'
 import LoginLayout from '../layout/LoginLayout'
 import DashboardPage from '../pages/DashboardPage'
-import LoginPage from '../pages/authentication/LoginPage'
+import LoginPage from '../pages/authentication/EmailLogin'
 import { PageNotFound } from '../pages/NotFoundPage'
 
 export const routes = {
