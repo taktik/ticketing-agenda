@@ -1,10 +1,10 @@
 import { AccessLevel, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { endOfWeek, startOfWeek } from 'date-fns'
-import { dateToYYYYMMDD, timestampToDate } from '../../components/common/helpers'
+import { dateToYYYYMMDD } from '../../components/common/helpers'
 import { cardinalApi, guard } from '../services/auth.api'
-import { GetCalendarItemsByAgendaAndPeriods } from './fetchType'
+import { GetCalendarItemsByAgendaAndPeriods, SendEmailRequest, SendEmailResponse } from './fetchType'
 import { loadFromIterator } from './utils'
+import { MSG_GW_URL, SPEC_ID } from '../../constants'
 
 enum CalendarItemTags {
   CalendarItem = 'CalendarItem',
@@ -113,6 +113,29 @@ export const calendarItemApiRtk = createApi({
         })
       },
       invalidatesTags: () => [{ type: CalendarItemTags.CalendarItem, id: 'all' }],
+    }),
+    sendEmail: builder.mutation<SendEmailResponse, SendEmailRequest>({
+      async queryFn({ receiver, from, processId, variables }, { getState }, _extraOptions, fetchWithBQ) {
+        const authApi = (await cardinalApi(getState))?.auth
+        if (!authApi) {
+          return { error: { status: 500, data: 'Could not initialize AuthApi' } }
+        }
+        const token = await authApi.getBearerToken()
+        if (!token) {
+          return { error: { status: 401, data: 'No bearer token found via AuthApi' } }
+        }
+        const result = await fetchWithBQ({
+          url: `${MSG_GW_URL}/${SPEC_ID}/email/to/${receiver}`,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: { from, processId, variables },
+        })
+        if (result.error) return { error: result.error }
+        return { data: result.data as SendEmailResponse }
+      },
     }),
   }),
 })

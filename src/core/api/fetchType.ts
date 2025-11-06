@@ -54,3 +54,15 @@ export type GetAgendasByStringPropertyParameters = {
   propertyId: string
   propertyValue: string
 }
+
+export interface SendEmailRequest {
+  receiver: string;
+  from: string;
+  processId: string;
+  variables: Record<string, any>;
+}
+
+export interface SendEmailResponse {
+  success: boolean;
+  message?: string;
+}
