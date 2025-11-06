@@ -20,7 +20,7 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
-import { BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, MSG_GW_URL, NIGHTLY_ICURE_CLOUD_URL, SPEC_ID } from '../../constants'
+import { BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, MSG_GW_URL, ICURE_NIGHTLY_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
@@ -235,7 +235,7 @@ export const startAuthentication = createAsyncThunk(
     try {
       const authenticationStep = await CardinalSdk.initializeWithProcess(
         undefined,
-        NIGHTLY_ICURE_CLOUD_URL,
+        ICURE_NIGHTLY_URL,
         MSG_GW_URL,
         SPEC_ID!,
         EMAIL_AUTH_CODE_ADMIN_FR!,
@@ -284,7 +284,7 @@ export const completeAuthentication = createAsyncThunk('cardinalApi/completeAuth
 
     apiCache[`${user.groupId}/${user.id}`] = api
 
-    const anonymousApi = await CardinalAnonymousSdk.initialize(NIGHTLY_ICURE_CLOUD_URL)
+    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
     anonymousApiCache['anonymous'] = anonymousApi
 
     dispatch(
@@ -320,14 +320,14 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
   }
 
   try {
-    const api = await CardinalSdk.initialize(undefined, NIGHTLY_ICURE_CLOUD_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
+    const api = await CardinalSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
       useHierarchicalDataOwners: true,
       encryptedFields: { patient: [], calendarItem: [] },
     })
     const user = await api.user.getCurrentUser()
     apiCache[`${user.groupId}/${user.id}`] = api
 
-    const anonymousApi = await CardinalAnonymousSdk.initialize(NIGHTLY_ICURE_CLOUD_URL)
+    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
     anonymousApiCache['anonymous'] = anonymousApi
 
     return new User(user)

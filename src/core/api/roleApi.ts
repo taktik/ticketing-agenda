@@ -1,5 +1,6 @@
 import { CodeStub, ListOfIds, Role } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER } from '../../constants'
 import { cardinalApi, guard } from '../services/auth.api'
 
 export enum UserRole {
@@ -14,10 +15,10 @@ export const roleTypeMap: { [key: string]: UserRole } = {
   CITY_WORKER: UserRole.CITY_WORKER,
 }
 
-export const cityWorkerRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'] })
-export const headOfServiceRoles = new ListOfIds({ ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:HEAD_OF_SERVICE'] })
+export const cityWorkerRoles = new ListOfIds({ ids: [ROLE_CITY_WORKER] })
+export const headOfServiceRoles = new ListOfIds({ ids: [ROLE_CHIEF_OF_SERVICE] })
 export const adminRoles = new ListOfIds({
-  ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR', 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:HEAD_OF_SERVICE', 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'],
+  ids: [ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER],
 })
 
 export const rolesMap = {

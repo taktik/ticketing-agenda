@@ -2,8 +2,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 import axios from 'axios'
-import { DATABASE_ID, EMAIL_TEMPLATE, SPEC_ID } from './consts'
-
+import { DATABASE_ID, EMAIL_TEMPLATE, SPEC_ID } from '../constants/index'
 async function addEmailProcess() {
   const JWT_TOKEN = ''
   const emailLanguage = ''
@@ -37,13 +36,7 @@ async function addEmailProcess() {
     console.log(`➡️  Process ID: ${processId}`)
     console.log('You can now store this ID to use in your frontend.')
   } catch (error) {
-    console.error('❌ An error occurred while creating the email process.')
-    if (error.response) {
-      console.error('Error Status:', error.response.status)
-      console.error('Error Data:', error.response.data)
-    } else {
-      console.error('Error Message:', error.message)
-    }
+    console.error('❌ An error occurred while creating the email process:', error)
   }
 }
 
