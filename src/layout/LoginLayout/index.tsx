@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from '../../core/hooks'
-import { routes } from '../../navigation/Router'
-import { CardinalApiState, login, setEmail, setToken } from '../../core/services/auth.api'
 import { createSelector } from '@reduxjs/toolkit'
+import { useEffect } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { AppState } from '../../core/app'
+import { useAppDispatch, useAppSelector } from '../../core/hooks'
+import { CardinalApiState, login, setEmail, setToken } from '../../core/services/auth.api'
+import { routes } from '../../navigation/Router'
 
 const selectRestApiData = (state: { cardinalApi: CardinalApiState }) => state.cardinalApi
 const selectAppData = (state: { app: AppState }) => state.app
@@ -22,18 +22,14 @@ function LoginLayout() {
   const { online, lsUsername, lsToken } = useAppSelector(combinedSelector)
 
   useEffect(() => {
-    if (!!lsUsername && !!lsToken && !!dispatch) {
+    if (online) {
+      navigate(routes.dashboard)
+    } else if (!!lsUsername && !!lsToken && !!dispatch) {
       dispatch(setEmail({ email: lsUsername }))
       dispatch(setToken({ token: lsToken }))
       dispatch(login())
     }
-  }, [navigate, lsUsername, lsToken, dispatch])
-
-  useEffect(() => {
-    if (online) {
-      navigate(routes.dashboard)
-    }
-  }, [online])
+  }, [online, navigate, lsUsername, lsToken, dispatch])
 
   return (
     <div>
