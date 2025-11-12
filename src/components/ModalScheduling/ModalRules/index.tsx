@@ -473,10 +473,14 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       try {
         const rowValues = await form.validateFields()
 
-        const hoursToSave = (rowValues.hours || []).map((h) => ({
-          startHour: dayjsToHhmmss(h.startHour),
-          endHour: dayjsToHhmmss(h.endHour),
-        }))
+        const hoursToSave = (rowValues.hours || []).map(
+          (h) =>
+            new EmbeddedTimeTableHour({
+              startHour: dayjsToHhmmss(h.startHour),
+              endHour: dayjsToHhmmss(h.endHour),
+            }),
+        )
+
         const sortedHoursToSave = sortEmbeddedTimeTableHours(hoursToSave)
 
         setTableRows((prevRows: TableRow[]) =>
@@ -560,13 +564,13 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       })
 
       const { rowId, ...resourceGroup } = schedulingTableRow
-      const newResourceGroup: ResourceGroupAllocationSchedule = {
+      const newResourceGroup = new ResourceGroupAllocationSchedule({
         ...resourceGroup,
         name: name,
         startDateTime: dayjsToYYYYMMDDHHmmss(start),
         endDateTime: dayjsToYYYYMMDDHHmmss(end),
         items: newEmbeddedTimeTableItems,
-      }
+      })
       const scheduleFiltered = schedulingTableRows.filter((sched) => sched.rowId !== schedulingTableRow.rowId).map(({ rowId, ...rest }) => new ResourceGroupAllocationSchedule(rest))
       const newSchedule = [...scheduleFiltered, newResourceGroup]
       await updateAgenda(new Agenda({ ...agenda, schedules: [...newSchedule] })).unwrap()

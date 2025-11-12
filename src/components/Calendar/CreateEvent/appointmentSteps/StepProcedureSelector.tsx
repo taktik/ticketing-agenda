@@ -143,6 +143,7 @@ export const ProcedureRow = ({ field, remove, isFirst, canRemove, procedureOptio
           id: `locked-${lockedSiteId}`,
           siteId: lockedSiteId,
           siteName: lockedSiteName,
+          siteLocation: '',
           agendaId: undefined,
           procedureDetails: '',
           variants: [],

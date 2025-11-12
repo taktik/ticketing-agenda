@@ -1,5 +1,6 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { getIntegerProperty, getStringProperty, getTranslationForEntity, languages } from '../components/common/helpers'
+import { FormProcedure } from '../components/Calendar/CreateEvent/CreateEvent'
 
 export interface ProcedureVariant {
   id: string
@@ -12,6 +13,7 @@ export interface SiteVariants {
   id: string
   siteId: string
   siteName: string
+  siteLocation: string
   agendaId: string | undefined
   procedureDetails: string
   variants: ProcedureVariant[]
@@ -24,6 +26,14 @@ export interface ProcedureSelection {
   serviceName: string
   procedureName: string
   displayTextByLanguage: { [key: string]: string }
+}
+
+export type ProcedureWithTimeAndSelections = {
+  procedure: FormProcedure
+  specificTimeslot: { startTime: number; endTime: number }
+  masterProcedure: ProcedureSelection
+  siteVariant: SiteVariants
+  procedureVariant: ProcedureVariant
 }
 
 const slugify = (text: string) =>
@@ -102,6 +112,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           siteId: site.id,
           agendaId: agenda?.id,
           siteName: site.name,
+          siteLocation: getStringProperty(site.publicProperties, 'SITE|LOCATION'),
           procedureDetails: getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
           variants: procedureVariants,
         }

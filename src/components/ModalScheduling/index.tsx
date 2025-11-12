@@ -37,10 +37,10 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   useEffect(() => {
     const sortedResourceGroups = [...(selectedService?.schedules ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
     const tableRows = sortedResourceGroups.map((resourceGroup) => {
-      const newRow: SchedulingTableRow = {
+      const scheduleInstance = new ResourceGroupAllocationSchedule(resourceGroup)
+      const newRow: SchedulingTableRow = Object.assign(scheduleInstance, {
         rowId: v4(),
-        ...resourceGroup,
-      }
+      })
       return newRow
     })
     setSchedulingTableRow(tableRows)
@@ -94,7 +94,19 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       const today = new Date()
       const start = dateToYYYYMMDDHHmmss(today)
       const end = dateToYYYYMMDDHHmmss(addMonths(endOfToday(), 1))
-      const newRow: SchedulingTableRow = { rowId: v4(), name: t('content.new_schedule'), startDateTime: start, endDateTime: end, items: [], tags: [], codes: [], resourceGroup: undefined }
+      const newScheduleInstance = new ResourceGroupAllocationSchedule({
+        name: t('content.new_schedule'),
+        startDateTime: start,
+        endDateTime: end,
+        items: [],
+        tags: [],
+        codes: [],
+        resourceGroup: undefined,
+      })
+
+      const newRow: SchedulingTableRow = Object.assign(newScheduleInstance, {
+        rowId: v4(),
+      })
       setSchedulingTableRow((prev) => [...prev, newRow])
       handleEditClick(newRow)
     } catch (error) {

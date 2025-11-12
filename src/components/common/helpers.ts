@@ -1,4 +1,4 @@
-import { DecryptedPropertyStub, DecryptedTypedValue, TypedValuesType } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedPropertyStub, DecryptedTypedValue, TypedValuesType } from '@icure/cardinal-sdk'
 import { format, isSameDay, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs, { Dayjs } from 'dayjs'
@@ -372,4 +372,11 @@ export const setProperty = (properties: DecryptedPropertyStub[], id: string, typ
   } else {
     properties.push(new DecryptedPropertyStub({ id, typedValue }))
   }
+}
+
+export const getTagById = (tags: CodeStub[] | undefined, id: string) => {
+  if (!tags) return ''
+
+  const prop = tags.find((p) => p.id === id)
+  return prop?.code ?? ''
 }

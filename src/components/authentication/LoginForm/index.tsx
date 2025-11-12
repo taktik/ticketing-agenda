@@ -1,5 +1,5 @@
 import { Challenge, Solution, resolveChallenge } from '@icure/cardinal-sdk'
-import { Button, Form, Input } from 'antd'
+import { Button, Form, Input, notification } from 'antd'
 import React, { useCallback, useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -20,10 +20,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
   const [progress, setProgress] = useState<number | undefined>(undefined)
   const [challenge, setChallenge] = useState<Challenge | undefined>(undefined)
 
+  const [api, notificationContextHolder] = notification.useNotification()
+
+  const openNotification = useCallback(
+    (type: 'error', message: string, description: string) => {
+      api.open({ type, message, description, duration: 4 })
+    },
+    [api],
+  )
+
   useEffect(() => {
     fetch(`${MSG_GW_URL}/${SPEC_ID}/challenge`)
       .then((x) => x.json())
       .then((challenge) => setChallenge(challenge))
+      .catch(() => openNotification('error', 'No internet connection', ''))
   }, [])
 
   const updateProgress = useCallback(
@@ -76,6 +86,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
 
   return (
     <>
+      {notificationContextHolder}
       {state === 'loading' && <SpinLoader />}
       <Form onFinish={(values) => handleSubmit(values)} className="auth-form" layout="vertical">
         <div className="auth-form__title">

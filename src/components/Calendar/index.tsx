@@ -123,7 +123,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             calendarItemTypeId: calendarItem.calendarItemTypeId,
             agendaId: calendarItem.agendaId,
             patientId: calendarItem.patientId,
-            patientIdentifier: calendarItem.addressText ?? '',
             isTimeOff: isTimeOff,
             rev: calendarItem.rev,
           },
@@ -193,7 +192,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   }, [setApptSelectorModalOpen, setCreateApptModalOpen, isAdminLevel])
 
   const getEventContent = useCallback((arg: EventContentArg) => {
-    const { view, event, timeText } = arg
+    const { view, event } = arg
 
     if (view.type.startsWith('list')) {
       return <ListEventContent event={event} view={view.type} />

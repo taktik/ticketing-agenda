@@ -11,7 +11,6 @@ export const ListEventContent = ({ event }: EventContentProps) => {
     <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Space direction="vertical" align="start" style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
         <Typography.Text strong>{event.title}</Typography.Text>
-        <Typography.Text strong>{event.extendedProps.patientIdentifier ?? ''}</Typography.Text>
       </Space>
     </div>
   )

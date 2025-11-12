@@ -87,7 +87,29 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
     async (formValues: SiteInfoFormValues) => {
       try {
         if (!site) throw new Error()
-        await createUpdateSite(new HealthcareParty({ ...site, name: formValues.name, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] })).unwrap()
+        const currentProperties = [...(site.publicProperties || [])]
+        const currentLocation = currentProperties.find((p) => p.id === 'SITE|LOCATION')
+
+        if (currentLocation) {
+          currentLocation.typedValue = new DecryptedTypedValue({
+            type: TypedValuesType.String,
+            stringValue: formValues.location,
+          })
+        } else {
+          currentProperties.push(
+            new DecryptedPropertyStub({
+              id: 'SITE|LOCATION',
+              typedValue: new DecryptedTypedValue({
+                type: TypedValuesType.String,
+                stringValue: formValues.location,
+              }),
+            }),
+          )
+        }
+
+        await createUpdateSite(
+          new HealthcareParty({ ...site, name: formValues.name, publicProperties: currentProperties, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] }),
+        ).unwrap()
         showMessageFeedback('success', t('notification.site_saved'))
       } catch (error) {
         openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))

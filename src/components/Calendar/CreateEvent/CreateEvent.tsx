@@ -1,5 +1,5 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { CodeStub, DecryptedCalendarItem, DecryptedPatient, HealthcareParty, User } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedCalendarItem, DecryptedPatient, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
@@ -11,7 +11,8 @@ import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/ap
 import { useCreateOrUpdatePatientMutation, useLazyGetDecryptedPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { useRoot } from '../../../core/hooks/useRoot'
-import { ProcedureSelection, transformProceduresForSelection } from '../../../helpers/transformProcedures'
+import { useSites } from '../../../core/hooks/useSites'
+import { ProcedureSelection, ProcedureWithTimeAndSelections, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
 import { calculateNumericEventTimes } from '../../common/helpers'
 import { StepAppointmentReview } from './appointmentSteps/StepAppointmentReview'
@@ -19,7 +20,6 @@ import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
-import { useSites } from '../../../core/hooks/useSites'
 
 const { Step } = Steps
 
@@ -307,20 +307,19 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       // 1. Create a new Patient record first
       const patientId = v4()
 
-      const tagVersion = '1'
       const emailStub = new CodeStub({
-        id: `EMAIL|${tagVersion}`,
+        id: `EMAIL|1`,
         context: 'contact',
         type: 'EMAIL',
         code: email,
-        version: tagVersion,
+        version: '1',
       })
       const phoneStub = new CodeStub({
-        id: `PHONE|${tagVersion}`,
+        id: `PHONE|1`,
         context: 'contact',
         type: 'PHONE',
         code: newPhoneNumber,
-        version: tagVersion,
+        version: '1',
       })
       const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, codes: [emailStub, phoneStub] })
       let citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
@@ -365,29 +364,50 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
         throw new Error('Required root or site information missing. Cannot proceed.')
       }
 
-      const eventsCreationPromises = procedures.map(async (item) => {
-        const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
+      let currentStartTime = combineDateAndTime(timeslot)
+
+      if (!currentStartTime) {
+        throw new Error('Timeslot information is missing and required to create an appointment.')
+      }
+
+      const proceduresWithTime: ProcedureWithTimeAndSelections[] = []
+
+      for (const item of procedures) {
+        const { procedureVariant, masterProcedure, siteVariant } = findProcedureData(selections, {
           procedureSelectionId: item.procedureSelectionId,
           site: item.site,
           quantity: item.quantity,
         })
 
+        if (!procedureVariant) {
+          throw new Error(`Procedure data for ${item.procedureSelectionId} is incomplete. Cannot calculate times.`)
+        }
+
+        const durationInMinutes = procedureVariant.duration
+
+        const numericTimes = calculateNumericEventTimes(currentStartTime, durationInMinutes)
+
+        if (!numericTimes) {
+          throw new Error(`Failed to calculate numeric time for procedure ${item.procedureSelectionId}`)
+        }
+
+        proceduresWithTime.push({
+          procedure: item,
+          specificTimeslot: numericTimes,
+          masterProcedure: masterProcedure,
+          siteVariant: siteVariant,
+          procedureVariant: procedureVariant,
+        })
+
+        currentStartTime = currentStartTime.add(durationInMinutes, 'minute')
+      }
+
+      const eventsCreationPromises = proceduresWithTime.map(async (procWithTime) => {
+        const { procedure: item, specificTimeslot: eventTimes, masterProcedure, siteVariant, procedureVariant } = procWithTime
+
         if (!masterProcedure || !siteVariant || !procedureVariant) {
           throw new Error(`Procedure data for selection ID ${item.procedureSelectionId} is incomplete.`)
         }
-
-        const eventStart = combineDateAndTime(timeslot)
-        const eventTimes = calculateNumericEventTimes(eventStart, procedureVariant.duration)
-
-        const tagType = 'APPOINTMENT'
-        const tagVersion = '1'
-
-        const eventTag = new CodeStub({
-          id: `${tagType}|${tagVersion}`,
-          code: tagType,
-          type: tagType,
-          version: tagVersion,
-        })
 
         const newEvent = new DecryptedCalendarItem({
           id: v4(),
@@ -399,8 +419,8 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           phoneNumber: personalInfo.countryCode && personalInfo.phoneNumber ? `${personalInfo.countryCode}${personalInfo.phoneNumber}` : undefined,
           startTime: eventTimes?.startTime,
           endTime: eventTimes?.endTime,
-          addressText: `${citizenPatient.firstName} ${citizenPatient.lastName} - ${citizenUser.email}`,
-          tags: [eventTag],
+          addressText: siteVariant.siteLocation,
+          tags: [new CodeStub({ id: 'APPOINTMENT|1', code: 'APPOINTMENT', type: 'APPOINTMENT', version: '1' })],
         })
 
         return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteRoot.id] }).unwrap()
@@ -442,7 +462,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       setCreationStatus('failure')
       openNotification('error', t('content.complete_required_fields'), '')
     }
-  }, [form, createAppointments, openNotification, t])
+  }, [form, createAppointments, openNotification, getOrCreateCitizenProfile, t])
 
   const stepContent = [
     <StepProcedureSelector selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,

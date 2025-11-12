@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import { Agenda, CalendarItemType, DecryptedPropertyStub, DecryptedTypedValue, TypedValuesType } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, DecryptedPropertyStub, DecryptedTypedValue, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule, TypedValuesType } from '@icure/cardinal-sdk'
 import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
 import type { Color } from 'antd/es/color-picker'
 import Column from 'antd/es/table/Column'
@@ -301,18 +301,19 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
           if (item.calendarItemTypesIds?.includes(defaultCalendarItemTypeId)) {
             const filteredIds = item.calendarItemTypesIds.filter((calendarItemTypeId) => !removedCalendarItemTypesIds.includes(calendarItemTypeId))
             const newIds = [...filteredIds, ...addedCalendarItemTypesIds]
-            return {
+
+            return new EmbeddedTimeTableItem({
               ...item,
               calendarItemTypesIds: newIds,
-            }
+            })
           }
           return item
         })
 
-        return {
+        return new ResourceGroupAllocationSchedule({
           ...schedule,
           items: newItems,
-        }
+        })
       })
 
       await createUpdateService(new Agenda({ ...service, schedules: newSchedules })).unwrap()

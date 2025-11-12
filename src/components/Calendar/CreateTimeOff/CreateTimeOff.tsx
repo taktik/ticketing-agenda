@@ -90,14 +90,11 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
         // We do that because we can't fetc properly events spanning several weeks.
         const weeklyChunks = splitDateRangeIntoWeeks(startTime, endTime)
 
-        const tagType = 'TIMEOFF'
-        const tagVersion = '1'
-
         const timeOffTag = new CodeStub({
-          id: `${tagType}|${tagVersion}`,
-          code: tagType,
-          type: tagType,
-          version: tagVersion,
+          id: `TIMEOFF|1`,
+          code: 'TIMEOFF',
+          type: 'TIMEOFF',
+          version: '1',
         })
 
         // 2. Create an array of creation promises, one for each chunk

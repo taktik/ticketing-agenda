@@ -1,5 +1,4 @@
 import {
-  AuthenticationMethod,
   AuthenticationProcessTelecomType,
   CaptchaOptions,
   CardinalAnonymousSdk,
@@ -20,7 +19,7 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
-import { BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, MSG_GW_URL, ICURE_NIGHTLY_URL, SPEC_ID } from '../../constants'
+import { BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, ICURE_NIGHTLY_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
@@ -303,43 +302,6 @@ export const completeAuthentication = createAsyncThunk('cardinalApi/completeAuth
   }
 })
 
-export const login = createAsyncThunk('cardinalApi/login', async (_, { getState, dispatch }) => {
-  const {
-    cardinalApi: { email, token },
-  } = getState() as { cardinalApi: CardinalApiState }
-  dispatch(setLoginProcessStarted(true))
-
-  if (!email) {
-    dispatch(setLoginProcessStarted(false))
-    throw new Error('No email provided')
-  }
-
-  if (!token) {
-    dispatch(setLoginProcessStarted(false))
-    throw new Error('No token provided')
-  }
-
-  try {
-    const api = await CardinalSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
-      useHierarchicalDataOwners: true,
-      encryptedFields: { patient: [], calendarItem: [] },
-    })
-    const user = await api.user.getCurrentUser()
-    apiCache[`${user.groupId}/${user.id}`] = api
-
-    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
-    anonymousApiCache['anonymous'] = anonymousApi
-
-    return new User(user)
-  } catch (e) {
-    console.error(`Couldn't login: ${e}`)
-    dispatch(revertAll())
-    dispatch(resetCredentials())
-  } finally {
-    dispatch(setLoginProcessStarted(false))
-  }
-})
-
 export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { dispatch }) => {
   dispatch(userApiRtk.util.resetApiState())
   dispatch(agendaApiRtk.util.resetApiState())
@@ -425,14 +387,6 @@ export const cardinalApiRtk = createSlice({
     })
     builder.addCase(completeAuthentication.rejected, (state, {}) => {
       state.invalidToken = true
-    })
-    builder.addCase(login.fulfilled, (state, { payload: user }) => {
-      state.user = user as User
-      state.online = !!user
-    })
-    builder.addCase(login.rejected, (state, {}) => {
-      state.invalidToken = true
-      state.online = false
     })
   },
 })

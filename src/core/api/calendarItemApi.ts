@@ -1,10 +1,10 @@
 import { AccessLevel, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { dateToYYYYMMDD } from '../../components/common/helpers'
+import { MSG_GW_URL, SPEC_ID } from '../../constants'
 import { cardinalApi, guard } from '../services/auth.api'
 import { GetCalendarItemsByAgendaAndPeriods, SendEmailRequest, SendEmailResponse } from './fetchType'
 import { loadFromIterator } from './utils'
-import { MSG_GW_URL, SPEC_ID } from '../../constants'
 
 enum CalendarItemTags {
   CalendarItem = 'CalendarItem',
@@ -147,4 +147,5 @@ export const {
   useShareCalendarItemWithMutation,
   useDeleteCalendarItemByIdMutation,
   useUpdateCalendarItemMutation,
+  useSendEmailMutation,
 } = calendarItemApiRtk

@@ -56,13 +56,14 @@ export type GetAgendasByStringPropertyParameters = {
 }
 
 export interface SendEmailRequest {
-  receiver: string;
-  from: string;
-  processId: string;
-  variables: Record<string, any>;
+  receiver: string
+  from: string
+  processId: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  variables: Record<string, any>
 }
 
 export interface SendEmailResponse {
-  success: boolean;
-  message?: string;
+  success: boolean
+  message?: string
 }
