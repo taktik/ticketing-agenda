@@ -1,13 +1,11 @@
 import { Solution } from '@icure/cardinal-sdk'
 import { createSelector } from '@reduxjs/toolkit'
-import React, { useEffect } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect } from 'react'
 
-import logo from '../../../assets/mouscronLogo.png'
-import '../index.css'
 import LoginForm from '../../../components/authentication/LoginForm'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, completeAuthentication, setEmail, setToken, setWaitingForToken, startAuthentication } from '../../../core/services/auth.api'
+import '../index.css'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,
@@ -18,7 +16,7 @@ const reduxSelector = createSelector(
   }),
 )
 
-export default function LoginPage() {
+export default function EmailLogin() {
   const dispatch = useAppDispatch()
   const { waitingForToken, loginProcessStarted } = useAppSelector(reduxSelector)
 
@@ -40,16 +38,12 @@ export default function LoginPage() {
   }, [])
 
   return (
-    <div className="auth-page">
-      <div className="auth-page__logo">
-        <img src={logo} alt="Mouscron logo" />
-      </div>
-
+    <>
       <LoginForm
         state={loginProcessStarted ? 'loading' : waitingForToken ? 'waitingForToken' : 'initialised'}
         submitEmailForTokenRequest={(email: string, captchaToken: Solution) => startAuthenticationProcessWithEmailAndCaptchaToken(email, captchaToken)}
         submitEmailAndValidationTokenForAuthentication={(email: string, validationCode: string) => completeAuthenticationProcessWithEmailAndValidationCode(email, validationCode)}
       />
-    </div>
+    </>
   )
 }

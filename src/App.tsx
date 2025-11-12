@@ -1,13 +1,12 @@
+import { MsalProvider } from '@azure/msal-react'
 import { ConfigProvider } from 'antd'
 import React, { Suspense, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
-
 import { persistor, store } from './core/store'
 import { Router } from './navigation/Router'
 import { ANTD_NEW_THEME } from './style/antd/antdTheme'
-
-import { useTranslation } from 'react-i18next'
 
 // Import Ant Design locales
 import deDE from 'antd/locale/de_DE'
@@ -22,8 +21,11 @@ import 'dayjs/locale/en'
 import 'dayjs/locale/fr'
 import 'dayjs/locale/nl'
 
+import { PublicClientApplication } from '@azure/msal-browser'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
+import { msalConfig } from './config/config.azure'
+
 dayjs.extend(localizedFormat)
 dayjs.extend(isSameOrAfter)
 
@@ -64,14 +66,18 @@ const AppContent: React.FC = () => {
     }
   }, [currentLangCode])
 
+  const msalInstance = new PublicClientApplication(msalConfig)
+
   return (
-    <ConfigProvider theme={ANTD_NEW_THEME} locale={antdLocale}>
-      <Provider store={store}>
-        <PersistGate persistor={persistor} loading={<p>Loading Persisted State...</p>}>
-          <Router />
-        </PersistGate>
-      </Provider>
-    </ConfigProvider>
+    <MsalProvider instance={msalInstance}>
+      <ConfigProvider theme={ANTD_NEW_THEME} locale={antdLocale}>
+        <Provider store={store}>
+          <PersistGate persistor={persistor} loading={<p>Loading Persisted State...</p>}>
+            <Router />
+          </PersistGate>
+        </Provider>
+      </ConfigProvider>
+    </MsalProvider>
   )
 }
 

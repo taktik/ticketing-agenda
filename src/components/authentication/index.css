@@ -113,7 +113,7 @@ body * {
   font-family: Lato400, sans-serif;
 }
 .auth-form {
-  width: 420px;
+  width: auto;
   display: flex;
   padding: 32px 24px;
   flex-direction: column;
