@@ -7,7 +7,7 @@ export class Config {
     REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY = 'FCMV2J24L3M7Q5NA'
     REACT_APP_DATABASE_ID = 'ic-taktikticketingagendamouscron-f7627de4-d674-4443-9987-2cc5c0d793b1'
     REACT_APP_BACKEND_API = 'https://mouscron.taktik.dev/backend'
-    REACT_APP_EMAIL_SENDER = 'no-reply@mouscron.be'
+    REACT_APP_EMAIL_SENDER = 'noreply@mouscron.be'
     REACT_APP_EMAIL_AUTH_CODE_CITIZEN_FR = '817bdf51-86aa-4946-bc9f-9c3a177ee6ca'
     REACT_APP_EMAIL_AUTH_CODE_CITIZEN_NL = 'cfdcfe8a-871d-4698-a347-a095d7b3cd59'
     REACT_APP_EMAIL_AUTH_CODE_ADMIN_FR = 'd62f3711-a6cc-4085-a175-40b6bee57145'
