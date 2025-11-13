@@ -9,5 +9,6 @@ export const msalConfig = {
 }
 
 export const loginRequest = {
-  scopes: ['openid', 'profile'],
+  scopes: ['api://aa6047dc-336f-4090-bbdc-e00c7fddd34c/access_as_user'], //['openid', 'profile'],
+  prompt: 'select_account',
 }

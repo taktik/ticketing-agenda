@@ -3,6 +3,7 @@ import {
   AuthenticationClass,
   AuthenticationMethod,
   AuthenticationProcessTelecomType,
+  AuthSecretDetails,
   AuthSecretProvider,
   CaptchaOptions,
   CardinalAnonymousSdk,
@@ -15,6 +16,7 @@ import {
   RecoveryKeyOptions,
   RecoveryKeySize,
   RecoveryResult,
+  SecretProviderAuthenticationOptions,
   Solution,
   StorageFacade,
   User,
@@ -222,28 +224,45 @@ export const anonymousCardinalApi = () => {
 export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ account }: { account: AccountInfo }, { getState, dispatch }) => {
   try {
     const oid = account.idTokenClaims?.oid
-    const msalResult = await msalInstance.acquireTokenSilent({
-      scopes: ['User.Read'],
+    console.log('account', account)
+
+    const initialMsalResult = await msalInstance.acquireTokenSilent({
+      scopes: ['api://aa6047dc-336f-4090-bbdc-e00c7fddd34c/access_as_user'],
       account,
     })
-    const accessToken = msalResult.accessToken
+    const initialAccessToken = initialMsalResult.accessToken
 
     const secretProvider: AuthSecretProvider = {
-      getSecret: async (acceptedSecrets) => {
+      getSecret: async (acceptedSecrets, previousAttempts) => {
+        console.log('CardinalSDK requesting a new secret...')
         if (acceptedSecrets.includes(AuthenticationClass.LongLivedToken)) {
-          return {
-            secret: accessToken,
-            secretType: AuthenticationClass.LongLivedToken,
+          try {
+            if (previousAttempts.length >= 3) {
+              console.error(`Authentication failed ${previousAttempts.length} times. Aborting.`)
+              throw new Error('Authentication failed after 3 attempts. The backend is continuously rejecting the token.')
+            }
+            const freshMsalResult = await msalInstance.acquireTokenSilent({
+              scopes: ['api://aa6047dc-336f-4090-bbdc-e00c7fddd34c/access_as_user'],
+              account,
+            })
+            return new AuthSecretDetails.LongLivedTokenDetails(freshMsalResult.accessToken)
+          } catch (error) {
+            console.error('Failed to acquire fresh token in getSecret:', error)
+            throw new Error(`MSAL silent token acquisition failed: ${error}`)
           }
         }
+        console.error('No acceptable secret type available for the SDK.')
         throw new Error('No acceptable secret available')
       },
     }
 
     const api = await CardinalSdk.initialize(
-      undefined,
+      'org.taktik.ticketing-agenda', //todo add to configs
       ICURE_NIGHTLY_URL,
-      new AuthenticationMethod.UsingSecretProvider(secretProvider, { loginUsername: oid, existingJwt: accessToken }),
+      new AuthenticationMethod.UsingSecretProvider(secretProvider, {
+        loginUsername: oid,
+        initialSecret: new SecretProviderAuthenticationOptions.InitialSecret.LongLivedToken(initialAccessToken),
+      }),
       StorageFacade.usingBrowserLocalStorage(),
       {
         useHierarchicalDataOwners: true,
@@ -281,7 +300,7 @@ export const startAuthentication = createAsyncThunk(
 
     try {
       const authenticationStep = await CardinalSdk.initializeWithProcess(
-        undefined,
+        'org.taktik.ticketing-agenda', //todo add to configs
         ICURE_NIGHTLY_URL,
         MSG_GW_URL,
         SPEC_ID!,
