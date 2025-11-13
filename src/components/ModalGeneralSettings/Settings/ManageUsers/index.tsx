@@ -128,7 +128,7 @@ export const ManagerUsers = (): ReactElement => {
       const hcp = pair[1]
       const hcpTag = getHcpTag(hcp)
       return {
-        rowId: v4(),
+        rowId: `${user.id}-${hcp.id}`,
         user: user,
         hcp: hcp,
         firstName: hcp.firstName,
@@ -194,7 +194,7 @@ export const ManagerUsers = (): ReactElement => {
     const newUser = new User({ id: userId, email: undefined, name: undefined, healthcarePartyId: hcpId })
 
     const newUserRow: UserRow = {
-      rowId: v4(),
+      rowId: `${newUser.id}-${newHcp.id}`,
       user: newUser,
       hcp: newHcp,
       firstName: undefined,
