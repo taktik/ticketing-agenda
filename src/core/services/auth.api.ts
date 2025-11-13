@@ -1,4 +1,4 @@
-import { useMsal } from '@azure/msal-react'
+import { AccountInfo } from '@azure/msal-browser'
 import {
   AuthenticationClass,
   AuthenticationMethod,
@@ -23,6 +23,7 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
+import { msalInstance } from '../../App'
 import { BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, ICURE_NIGHTLY_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
@@ -218,19 +219,20 @@ export const anonymousCardinalApi = () => {
   return anonymousApiCache['anonymous'] as CardinalAnonymousSdk
 }
 
-export const startAzureAuthentication = createAsyncThunk('cardinalApi/startAuthentication', async (_, { getState, dispatch }) => {
+export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ account }: { account: AccountInfo }, { getState, dispatch }) => {
   try {
-    const { instance } = useMsal()
-
-    const account = instance.getActiveAccount() || undefined
-    const oid = account?.idTokenClaims?.oid
-    const msalToken = await instance.acquireTokenSilent({ scopes: ['User.Read'], account })
+    const oid = account.idTokenClaims?.oid
+    const msalResult = await msalInstance.acquireTokenSilent({
+      scopes: ['User.Read'],
+      account,
+    })
+    const accessToken = msalResult.accessToken
 
     const secretProvider: AuthSecretProvider = {
-      getSecret: async (acceptedSecrets, previousAttempts, authProcessApi) => {
+      getSecret: async (acceptedSecrets) => {
         if (acceptedSecrets.includes(AuthenticationClass.LongLivedToken)) {
           return {
-            secret: msalToken.accessToken,
+            secret: accessToken,
             secretType: AuthenticationClass.LongLivedToken,
           }
         }
@@ -241,7 +243,7 @@ export const startAzureAuthentication = createAsyncThunk('cardinalApi/startAuthe
     const api = await CardinalSdk.initialize(
       undefined,
       ICURE_NIGHTLY_URL,
-      new AuthenticationMethod.UsingSecretProvider(secretProvider, { loginUsername: oid, existingJwt: msalToken.accessToken }),
+      new AuthenticationMethod.UsingSecretProvider(secretProvider, { loginUsername: oid, existingJwt: accessToken }),
       StorageFacade.usingBrowserLocalStorage(),
       {
         useHierarchicalDataOwners: true,
@@ -250,6 +252,7 @@ export const startAzureAuthentication = createAsyncThunk('cardinalApi/startAuthe
       },
     )
     const user = await api.user.getCurrentUser()
+    console.log('currentUser', user)
     apiCache[`${user.groupId}/${user.id}`] = api
     return new User(user)
   } catch (e) {
@@ -348,6 +351,13 @@ export const completeAuthentication = createAsyncThunk('cardinalApi/completeAuth
 })
 
 export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { dispatch }) => {
+  const account = msalInstance.getActiveAccount()
+  if (account) {
+    await msalInstance.logoutRedirect({
+      postLogoutRedirectUri: '/',
+      account,
+    })
+  }
   dispatch(userApiRtk.util.resetApiState())
   dispatch(agendaApiRtk.util.resetApiState())
   dispatch(anonymousApiRtk.util.resetApiState())

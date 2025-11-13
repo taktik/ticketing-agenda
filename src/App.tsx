@@ -45,6 +45,8 @@ const dayjsLocales: { [key: string]: string } = {
   de: 'de',
 }
 
+export const msalInstance = new PublicClientApplication(msalConfig)
+
 // Inner component to access hooks after i18n is ready
 const AppContent: React.FC = () => {
   const { i18n } = useTranslation()
@@ -65,8 +67,6 @@ const AppContent: React.FC = () => {
       dayjs.locale('en')
     }
   }, [currentLangCode])
-
-  const msalInstance = new PublicClientApplication(msalConfig)
 
   return (
     <MsalProvider instance={msalInstance}>

@@ -1,12 +1,14 @@
 import { WindowsOutlined } from '@ant-design/icons'
 import { useMsal } from '@azure/msal-react'
 import { Button } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { loginRequest } from '../../../config/config.azure'
+import { useAppDispatch } from '../../../core/hooks'
+import { azureLogin } from '../../../core/services/auth.api'
 import '../index.css'
 
 export default function AzureLogin() {
-  const [userOid, setUserOid] = useState<string | undefined>(undefined)
+  const dispatch = useAppDispatch()
   const { instance } = useMsal()
   const handleAzureLogin = () => {
     instance.loginRedirect(loginRequest).catch((error) => console.error(error))
@@ -19,13 +21,11 @@ export default function AzureLogin() {
         const account = response?.account || instance.getActiveAccount()
         if (account) {
           instance.setActiveAccount(account)
-          const oid = account.idTokenClaims?.oid
-          setUserOid(oid)
-          console.log('User OID:', oid)
+          dispatch(azureLogin({ account }))
         }
       })
       .catch(console.error)
-  }, [instance])
+  }, [instance, dispatch])
 
   return (
     <>
