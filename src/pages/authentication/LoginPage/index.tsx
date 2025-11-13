@@ -2,10 +2,8 @@ import { Card } from 'antd'
 import logo from '../../../assets/mouscronLogo.png'
 import AzureLogin from '../AzureLogin'
 import EmailLogin from '../EmailLogin'
-import { useIsAuthenticated } from '@azure/msal-react'
 
 export default function LoginPage() {
-  const isAuthenticated = useIsAuthenticated()
   return (
     <>
       <div className="auth-page">
@@ -16,7 +14,6 @@ export default function LoginPage() {
           <EmailLogin />
           <AzureLogin />
         </Card>
-        {isAuthenticated && 'AUTHENTICATED THORUG AZURE'}
       </div>
     </>
   )

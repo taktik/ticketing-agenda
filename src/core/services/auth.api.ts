@@ -1,5 +1,9 @@
+import { useMsal } from '@azure/msal-react'
 import {
+  AuthenticationClass,
+  AuthenticationMethod,
   AuthenticationProcessTelecomType,
+  AuthSecretProvider,
   CaptchaOptions,
   CardinalAnonymousSdk,
   CardinalApis,
@@ -213,6 +217,47 @@ export const cardinalApi = async (getState: () => unknown) => {
 export const anonymousCardinalApi = () => {
   return anonymousApiCache['anonymous'] as CardinalAnonymousSdk
 }
+
+export const startAzureAuthentication = createAsyncThunk('cardinalApi/startAuthentication', async (_, { getState, dispatch }) => {
+  try {
+    const { instance } = useMsal()
+
+    const account = instance.getActiveAccount() || undefined
+    const oid = account?.idTokenClaims?.oid
+    const msalToken = await instance.acquireTokenSilent({ scopes: ['User.Read'], account })
+
+    const secretProvider: AuthSecretProvider = {
+      getSecret: async (acceptedSecrets, previousAttempts, authProcessApi) => {
+        if (acceptedSecrets.includes(AuthenticationClass.LongLivedToken)) {
+          return {
+            secret: msalToken.accessToken,
+            secretType: AuthenticationClass.LongLivedToken,
+          }
+        }
+        throw new Error('No acceptable secret available')
+      },
+    }
+
+    const api = await CardinalSdk.initialize(
+      undefined,
+      ICURE_NIGHTLY_URL,
+      new AuthenticationMethod.UsingSecretProvider(secretProvider, { loginUsername: oid, existingJwt: msalToken.accessToken }),
+      StorageFacade.usingBrowserLocalStorage(),
+      {
+        useHierarchicalDataOwners: true,
+        encryptedFields: { patient: [], calendarItem: [] },
+        cryptoStrategies: new PetraCareCryptoStrategies(),
+      },
+    )
+    const user = await api.user.getCurrentUser()
+    apiCache[`${user.groupId}/${user.id}`] = api
+    return new User(user)
+  } catch (e) {
+    console.error(`Couldn't start authentication: ${e}`)
+  } finally {
+    dispatch(setLoginProcessStarted(false))
+  }
+})
 
 export const startAuthentication = createAsyncThunk(
   'cardinalApi/startAuthentication',
