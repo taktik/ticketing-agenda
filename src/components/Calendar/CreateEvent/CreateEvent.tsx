@@ -196,6 +196,14 @@ interface CreateEventProps {
   isVisible: boolean
   onClose: () => void
 }
+interface CitizenInputData {
+  email: string
+  firstName: string
+  lastName: string
+  language: string
+  mobilePhone?: string
+  dateOfBirth?: number
+}
 
 enum AppointmentStep {
   PROCEDURE = 0,
@@ -229,7 +237,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const agendaIds = useMemo(() => (filteredAgenda ?? []).map((agenda) => agenda.id), [filteredAgenda])
 
   const { data: allProcedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: !agendaIds || agendaIds.length === 0 })
-
+  // TODO use anonyme api to get procedures with schedules only.
   const selections = useMemo(() => transformProceduresForSelection(allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allProcedures, allAgendas, sites])
 
   const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading || isSiteRootLoading || isAdminRootLoading, [isAgendasLoading, isProceduresLoading, isSiteRootLoading, isAdminRootLoading])
@@ -276,7 +284,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   ]
 
   const handleNewCitizenFlow = useCallback(
-    async (userData: any) => {
+    async (userData: CitizenInputData) => {
       const patientId = v4()
       const { patientAddress } = buildDecryptedContactPayload(userData.email, userData.mobilePhone)
 
@@ -310,7 +318,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   )
 
   const handleExistingCitizenFlow = useCallback(
-    async (currentUser: User, userData: any) => {
+    async (currentUser: User, userData: CitizenInputData) => {
       let citizenUser = currentUser
 
       if (userData.mobilePhone && userData.mobilePhone !== citizenUser.mobilePhone) {
@@ -398,7 +406,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     if (!email) throw new Error('User email is required.')
     if (!adminRoot?.id || !siteRoot?.id) throw new Error('Root info missing.')
 
-    const normalizedData = {
+    const normalizedData: CitizenInputData = {
       email,
       firstName,
       lastName,

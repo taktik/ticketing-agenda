@@ -65,7 +65,7 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
 
   const handleUpdate = useCallback(async () => {
     const values = await form.validateFields()
-    await updateEvent(event, values)
+    await updateEvent(event, values) //TODO shouldnt be able to modify calendarItemType. And Must be limited to availabilities.
     onClose()
   }, [form, event, updateEvent])
 
@@ -74,8 +74,6 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
     setShowDeleteAppointmentModal(false)
     onClose()
   }, [event, deleteEvent, setShowDeleteAppointmentModal])
-
-  // --- Render Logic ---
 
   const renderDisplayMode = () => (
     <div className="modal-event-display">
