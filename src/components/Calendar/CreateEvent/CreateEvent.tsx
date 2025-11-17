@@ -1,5 +1,5 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { CodeStub, DecryptedAddress, DecryptedCalendarItem, DecryptedPatient, DecryptedTelecom, RecoveryDataKey, TelecomType, User } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedCalendarItem, EncryptedAddress, EncryptedPatient, EncryptedTelecom, RecoveryDataKey, TelecomType, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
@@ -10,7 +10,7 @@ import { useGetAgendasByAuthorIds } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
-import { useCreateOrUpdatePatientMutation, useInitializeExchangeDataMutation, useLazyGetDecryptedPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
+import { useCreateOrUpdatePatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery } from '../../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { useRoot } from '../../../core/hooks/useRoot'
@@ -191,13 +191,12 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading || isSiteRootLoading || isAdminRootLoading, [isAgendasLoading, isProceduresLoading, isSiteRootLoading, isAdminRootLoading])
 
   const [getUserByMailLazy] = useLazyGetUserByEmailQuery()
-  const [getPatientByIdLazy] = useLazyGetDecryptedPatientByIdQuery()
+  const [getPatientByIdLazy] = useLazyGetEncryptedPatientByIdQuery()
   const [createUpdateUser] = useCreateUpdateUserMutation()
   const [createUpdatePatient] = useCreateOrUpdatePatientMutation()
   const [createUpdateEvent] = useCreateUpdateCalendarItemMutation()
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
-  const [sharePatient] = useSharePatientWithManyMutation()
   const [sendConfirmationEmail] = useSendEmailMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
@@ -265,18 +264,18 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       }
 
       // 2. Find or initialize the associated patient
-      let citizenPatient: DecryptedPatient
+      let citizenPatient: EncryptedPatient
       if (citizenUser.patientId) {
         const { data: foundPatient } = await getPatientByIdLazy(citizenUser.patientId)
         if (foundPatient) {
-          citizenPatient = new DecryptedPatient({ ...foundPatient })
+          citizenPatient = new EncryptedPatient({ ...foundPatient })
         } else {
           // Found user but patient was deleted/missing, create a new one
-          citizenPatient = new DecryptedPatient({ id: v4(), firstName, lastName })
+          citizenPatient = new EncryptedPatient({ id: v4(), firstName, lastName })
         }
       } else {
         // User exists but has no patientId, create a new one
-        citizenPatient = new DecryptedPatient({ id: v4(), firstName, lastName })
+        citizenPatient = new EncryptedPatient({ id: v4(), firstName, lastName })
       }
 
       // 3. Check if patient record needs updates
@@ -285,22 +284,22 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       const needsNameUpdate = !citizenPatient.firstName
       const hasPhoneOrEmailChanged = (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) || email !== citizenUser.email
 
-      const patientEmail = new DecryptedTelecom({
+      const patientEmail = new EncryptedTelecom({
         telecomType: TelecomType.Email,
         telecomNumber: email,
       })
 
-      const patientPhone = new DecryptedTelecom({
+      const patientPhone = new EncryptedTelecom({
         telecomType: TelecomType.Mobile,
         telecomNumber: newPhoneNumber,
       })
 
-      const patientAddress = new DecryptedAddress({
+      const patientAddress = new EncryptedAddress({
         telecoms: [patientEmail, patientPhone],
       })
 
       if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate || hasPhoneOrEmailChanged) {
-        const patientPayload = new DecryptedPatient({
+        const patientPayload = new EncryptedPatient({
           ...citizenPatient,
           languages: hasLanguageChanged ? [language!] : citizenPatient.languages,
           dateOfBirth: hasBirthDateChanged ? newBirthDate : citizenPatient.dateOfBirth,
@@ -313,11 +312,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           citizenPatient = updatedPatient
         }
       }
-      const sharedPatient = await sharePatient({
-        patient: citizenPatient,
-        delegates: [siteRoot.id, adminRoot.id],
-      }).unwrap()
-      if (sharedPatient) citizenPatient = sharedPatient
 
       return { citizenUser, citizenPatient }
     } else {
@@ -325,20 +319,20 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       // 1. Create a new Patient record first
       const patientId = v4()
 
-      const patientEmail = new DecryptedTelecom({
+      const patientEmail = new EncryptedTelecom({
         telecomType: TelecomType.Email,
         telecomNumber: email,
       })
 
-      const patientPhone = new DecryptedTelecom({
+      const patientPhone = new EncryptedTelecom({
         telecomType: TelecomType.Mobile,
         telecomNumber: newPhoneNumber,
       })
 
-      const patientAddress = new DecryptedAddress({
+      const patientAddress = new EncryptedAddress({
         telecoms: [patientEmail, patientPhone],
       })
-      const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, addresses: [patientAddress] })
+      const newPatientPayload = new EncryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, addresses: [patientAddress] })
       let citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
       if (!citizenPatient) {
         throw new Error('Failed to create a new patient record.')
@@ -352,17 +346,11 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
         throw new Error('Failed to create a new user record after creating patient.')
       }
 
-      const sharedPatient = await sharePatient({
-        patient: citizenPatient,
-        delegates: [siteRoot.id, adminRoot.id],
-      }).unwrap()
-      if (sharedPatient) citizenPatient = sharedPatient
-
       return { citizenUser, citizenPatient }
     }
   }
 
-  const createAppointments = async (citizenUser: User, citizenPatient: DecryptedPatient) => {
+  const createAppointments = async (citizenUser: User, citizenPatient: EncryptedPatient) => {
     try {
       const { personalInfo, procedures, timeslot } = formValues
 
@@ -456,7 +444,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     (
       recoveryDataKey: RecoveryDataKey,
       citizenUser: User,
-      citizenPatient: DecryptedPatient,
+      citizenPatient: EncryptedPatient,
       serviceName: string,
       procedureName: string,
       specificTimeslot: {
@@ -494,7 +482,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   )
 
   const sendEmails = useCallback(
-    async (recoveryDataKey: RecoveryDataKey | undefined, citizenUser: User, citizenPatient: DecryptedPatient) => {
+    async (recoveryDataKey: RecoveryDataKey | undefined, citizenUser: User, citizenPatient: EncryptedPatient) => {
       try {
         if (!recoveryDataKey) throw new Error('No valid recoveryDataKey')
         if (!citizenUser.email) throw new Error('No valid email')
@@ -541,7 +529,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     [formValues, selections, computeEmailPayload, sendConfirmationEmail, allAgendas, allProcedures],
   )
 
-  const handleRecoveryDataKey = useCallback(async (citizenPatient: DecryptedPatient) => {
+  const handleRecoveryDataKey = useCallback(async (citizenPatient: EncryptedPatient) => {
     try {
       await initializePatientExchangeDatas(citizenPatient.id).unwrap()
       return await createRecoveryDataKey(citizenPatient.id).unwrap()
