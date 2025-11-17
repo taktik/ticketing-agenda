@@ -13,13 +13,26 @@ export const patientApiRtk = createApi({
     baseUrl: '',
   }),
   endpoints: (builder) => ({
-    createOrUpdatePatient: builder.mutation<EncryptedPatient | undefined, EncryptedPatient>({
+    createDecryptedPatient: builder.mutation<DecryptedPatient | undefined, DecryptedPatient>({
+      async queryFn(patient, { getState }) {
+        const patientApi = (await cardinalApi(getState))?.patient
+        return guard([patientApi], async (): Promise<DecryptedPatient> => {
+          const createdPatient = await patientApi?.createPatient(await patientApi?.withEncryptionMetadata(patient))
+          if (!createdPatient) {
+            throw new Error('Couldnt create the citizen')
+          }
+          return new DecryptedPatient(createdPatient)
+        })
+      },
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
+    }),
+    updateEncryptedPatient: builder.mutation<EncryptedPatient | undefined, EncryptedPatient>({
       async queryFn(patient, { getState }) {
         const patientApi = (await cardinalApi(getState))?.patient
         return guard([patientApi], async (): Promise<EncryptedPatient> => {
-          const updatedPatient = !!patient.rev ? await patientApi?.encrypted.modifyPatient(patient) : await patientApi?.encrypted.createPatient(patient)
+          const updatedPatient = await patientApi?.encrypted.modifyPatient(patient)
           if (!updatedPatient) {
-            throw new Error('Patient does not exist')
+            throw new Error('Couldnt update the citizen')
           }
           return new EncryptedPatient(updatedPatient)
         })
@@ -32,7 +45,7 @@ export const patientApiRtk = createApi({
         return guard([patientApi], async (): Promise<EncryptedPatient> => {
           const patient = await patientApi!.encrypted.getPatient(patientId)
           if (!patient) {
-            throw new Error('Patients do not found')
+            throw new Error('Citizens do not found')
           }
           return patient
         })
@@ -45,7 +58,7 @@ export const patientApiRtk = createApi({
         return guard([patientApi], async (): Promise<boolean> => {
           const isInitialized = await patientApi?.forceInitializeExchangeDataToNewlyInvitedPatient(patientId)
           if (!isInitialized) {
-            throw new Error('Couldnt initialize the patient exchange datas')
+            throw new Error('Couldnt initialize the citizen exchange datas')
           }
           return isInitialized
         })
@@ -55,4 +68,4 @@ export const patientApiRtk = createApi({
   }),
 })
 
-export const { useCreateOrUpdatePatientMutation, useGetEncryptedPatientByIdQuery, useLazyGetEncryptedPatientByIdQuery, useInitializeExchangeDataMutation } = patientApiRtk
+export const { useCreateDecryptedPatientMutation, useUpdateEncryptedPatientMutation, useGetEncryptedPatientByIdQuery, useLazyGetEncryptedPatientByIdQuery, useInitializeExchangeDataMutation } = patientApiRtk
