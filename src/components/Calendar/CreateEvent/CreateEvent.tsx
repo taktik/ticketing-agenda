@@ -574,8 +574,8 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       setCurrentStep((prevStep) => prevStep + 1)
       await form.validateFields()
       const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile()
-      await createAppointments(citizenUser, citizenPatient)
       const recoveryDataKey = await handleRecoveryDataKey(citizenPatient)
+      await createAppointments(citizenUser, citizenPatient)
       await sendEmails(recoveryDataKey, citizenUser, citizenPatient)
       setCreationStatus('success')
     } catch (err) {
