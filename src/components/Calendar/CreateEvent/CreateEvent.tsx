@@ -333,7 +333,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
         telecoms: [patientEmail, patientPhone],
       })
       const newPatientPayload = new EncryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, addresses: [patientAddress] })
-      let citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
+      const citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
       if (!citizenPatient) {
         throw new Error('Failed to create a new patient record.')
       }
