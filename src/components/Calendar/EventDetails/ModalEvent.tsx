@@ -1,4 +1,4 @@
-import { CalendarItemType } from '@icure/cardinal-sdk'
+import { CalendarItemType, TelecomType } from '@icure/cardinal-sdk'
 import { Button, Card, DatePicker, Descriptions, Divider, Form, Input, Select, Typography } from 'antd'
 import { format, parse } from 'date-fns'
 import { enUS } from 'date-fns/locale'
@@ -45,9 +45,15 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
   const isTimeOff = useMemo(() => !!event?.extendedProps.isTimeOff, [event])
 
   const patientName = useMemo(() => (patient ? patient.firstName + ' ' + patient.lastName : undefined), [patient])
-  const patientEmail = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'EMAIL')?.code : undefined), [patient])
-  const patientPhoneNumber = useMemo(() => (patient && patient.codes ? patient.codes.find((stub) => stub.type === 'PHONE')?.code : undefined), [patient])
   const patientBirthDate = useMemo(() => (patient && patient.dateOfBirth ? format(parse(String(patient.dateOfBirth), 'yyyyMMdd', new Date()), 'dd MMMM yyyy', { locale: dateFnsLocale }) : undefined), [patient])
+
+  const allTelecoms = useMemo(() => patient?.addresses.flatMap((addr) => addr.telecoms || []), [patient])
+
+  const emailObj = useMemo(() => allTelecoms?.find((t) => t.telecomType === TelecomType.Email), [allTelecoms])
+  const phoneObj = useMemo(() => allTelecoms?.find((t) => t.telecomType === TelecomType.Mobile), [allTelecoms])
+
+  const patientEmail = useMemo(() => emailObj?.telecomNumber, [emailObj])
+  const patientPhoneNumber = useMemo(() => phoneObj?.telecomNumber, [phoneObj])
 
   const handleModify = useCallback(() => {
     setIsEditing(true)

@@ -1,20 +1,23 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { CodeStub, DecryptedCalendarItem, DecryptedPatient, User } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedAddress, DecryptedCalendarItem, DecryptedPatient, DecryptedTelecom, RecoveryDataKey, TelecomType, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
+import { EMAIL_APPOINTMENT_CONFIRMATION_FR, EMAIL_APPOINTMENT_CONFIRMATION_NL, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
 import { useGetAgendasByAuthorIds } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
-import { useCreateOrUpdatePatientMutation, useLazyGetDecryptedPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
+import { useSendEmailMutation } from '../../../core/api/emailApi'
+import { useCreateOrUpdatePatientMutation, useInitializeExchangeDataMutation, useLazyGetDecryptedPatientByIdQuery, useSharePatientWithManyMutation } from '../../../core/api/patientApi'
+import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { useRoot } from '../../../core/hooks/useRoot'
 import { useSites } from '../../../core/hooks/useSites'
 import { ProcedureSelection, ProcedureWithTimeAndSelections, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
-import { calculateNumericEventTimes } from '../../common/helpers'
+import { calculateNumericEventTimes, getTranslationForEntity } from '../../common/helpers'
 import { StepAppointmentReview } from './appointmentSteps/StepAppointmentReview'
 import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
@@ -160,6 +163,7 @@ enum AppointmentStep {
 
 export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const { t, i18n } = useTranslation()
+  const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
   const [form] = Form.useForm<AppointmentForm>()
 
@@ -186,15 +190,15 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
 
   const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading || isSiteRootLoading || isAdminRootLoading, [isAgendasLoading, isProceduresLoading, isSiteRootLoading, isAdminRootLoading])
 
-  const [getUserByMailLazy, { isLoading: isGetUserLoading }] = useLazyGetUserByEmailQuery()
-  const [getPatientByIdLazy, { isLoading: isGetPatientLoading }] = useLazyGetDecryptedPatientByIdQuery()
-  const [createUpdateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
-  const [createUpdatePatient, { isLoading: isCreateUpdatePatientLoading }] = useCreateOrUpdatePatientMutation()
-  const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
-
-  const [sharePatient, { isLoading: isSharePatientLoading }] = useSharePatientWithManyMutation()
-
-  const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
+  const [getUserByMailLazy] = useLazyGetUserByEmailQuery()
+  const [getPatientByIdLazy] = useLazyGetDecryptedPatientByIdQuery()
+  const [createUpdateUser] = useCreateUpdateUserMutation()
+  const [createUpdatePatient] = useCreateOrUpdatePatientMutation()
+  const [createUpdateEvent] = useCreateUpdateCalendarItemMutation()
+  const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
+  const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
+  const [sharePatient] = useSharePatientWithManyMutation()
+  const [sendConfirmationEmail] = useSendEmailMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -279,16 +283,30 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       const hasLanguageChanged = language && language !== (citizenPatient.languages?.[0] || '')
       const hasBirthDateChanged = newBirthDate && newBirthDate !== citizenPatient.dateOfBirth
       const needsNameUpdate = !citizenPatient.firstName
-      const hasPhoneNumberChanged = newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone
+      const hasPhoneOrEmailChanged = (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) || email !== citizenUser.email
 
-      if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate || hasPhoneNumberChanged) {
+      const patientEmail = new DecryptedTelecom({
+        telecomType: TelecomType.Email,
+        telecomNumber: email,
+      })
+
+      const patientPhone = new DecryptedTelecom({
+        telecomType: TelecomType.Mobile,
+        telecomNumber: newPhoneNumber,
+      })
+
+      const patientAddress = new DecryptedAddress({
+        telecoms: [patientEmail, patientPhone],
+      })
+
+      if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate || hasPhoneOrEmailChanged) {
         const patientPayload = new DecryptedPatient({
           ...citizenPatient,
           languages: hasLanguageChanged ? [language!] : citizenPatient.languages,
           dateOfBirth: hasBirthDateChanged ? newBirthDate : citizenPatient.dateOfBirth,
           firstName: needsNameUpdate ? firstName : citizenPatient.firstName,
           lastName: needsNameUpdate ? lastName : citizenPatient.lastName,
-          codes: hasPhoneNumberChanged ? [...(citizenPatient.codes || []).filter((stub) => stub.type !== 'phone'), new CodeStub({ context: 'contact', type: 'phone', code: newPhoneNumber! })] : citizenPatient.codes,
+          addresses: hasPhoneOrEmailChanged ? [patientAddress] : citizenPatient.addresses,
         })
         const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
         if (updatedPatient) {
@@ -307,21 +325,20 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       // 1. Create a new Patient record first
       const patientId = v4()
 
-      const emailStub = new CodeStub({
-        id: `EMAIL|1`,
-        context: 'contact',
-        type: 'EMAIL',
-        code: email,
-        version: '1',
+      const patientEmail = new DecryptedTelecom({
+        telecomType: TelecomType.Email,
+        telecomNumber: email,
       })
-      const phoneStub = new CodeStub({
-        id: `PHONE|1`,
-        context: 'contact',
-        type: 'PHONE',
-        code: newPhoneNumber,
-        version: '1',
+
+      const patientPhone = new DecryptedTelecom({
+        telecomType: TelecomType.Mobile,
+        telecomNumber: newPhoneNumber,
       })
-      const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, codes: [emailStub, phoneStub] })
+
+      const patientAddress = new DecryptedAddress({
+        telecoms: [patientEmail, patientPhone],
+      })
+      const newPatientPayload = new DecryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, addresses: [patientAddress] })
       let citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
       if (!citizenPatient) {
         throw new Error('Failed to create a new patient record.')
@@ -355,11 +372,9 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       if (!timeslot) {
         throw new Error('Timeslot information is missing and required to create an appointment.')
       }
-
       if (!citizenUser || !citizenPatient?.id) {
         throw new Error('Could not retrieve or create a valid user/patient profile.')
       }
-
       if (!adminRoot?.id || !siteRoot?.id) {
         throw new Error('Required root or site information missing. Cannot proceed.')
       }
@@ -384,9 +399,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
         }
 
         const durationInMinutes = procedureVariant.duration
-
         const numericTimes = calculateNumericEventTimes(currentStartTime, durationInMinutes)
-
         if (!numericTimes) {
           throw new Error(`Failed to calculate numeric time for procedure ${item.procedureSelectionId}`)
         }
@@ -432,6 +445,111 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     }
   }
 
+  const computeUrl = useCallback((recoveryDataKey: RecoveryDataKey) => {
+    const path = MANAGE_APPOINTMENT_ROUTE
+    const params = new URLSearchParams()
+    params.append('recoveryData', recoveryDataKey.asHexString())
+    return `${path}?${params.toString()}`
+  }, [])
+
+  const computeEmailPayload = useCallback(
+    (
+      recoveryDataKey: RecoveryDataKey,
+      citizenUser: User,
+      citizenPatient: DecryptedPatient,
+      serviceName: string,
+      procedureName: string,
+      specificTimeslot: {
+        start: dayjs.Dayjs
+        end: dayjs.Dayjs
+      },
+      siteLocation: string,
+      lang: string,
+      procedureDetails: string,
+    ) => {
+      const dateFormat = specificTimeslot.start.format('DD/MM/YYYY')
+      const heureFormat = `${specificTimeslot.start.format('HH[h]mm')} - ${specificTimeslot.end.format('HH[h]mm')}`
+      const url = computeUrl(recoveryDataKey)
+
+      return {
+        receiver: citizenUser.email!,
+        from: EMAIL_SENDER,
+        processId: lang === 'nl' ? EMAIL_APPOINTMENT_CONFIRMATION_NL : EMAIL_APPOINTMENT_CONFIRMATION_FR,
+        variables: {
+          firstName: citizenPatient.firstName,
+          lastName: citizenPatient.lastName,
+          email: citizenUser.email,
+          mobilePhone: citizenUser.mobilePhone,
+          service: serviceName,
+          procedure: procedureName,
+          date: dateFormat,
+          time: heureFormat,
+          location: siteLocation,
+          url: url,
+          procedureDetails: procedureDetails,
+        },
+      }
+    },
+    [computeUrl],
+  )
+
+  const sendEmails = useCallback(
+    async (recoveryDataKey: RecoveryDataKey | undefined, citizenUser: User, citizenPatient: DecryptedPatient) => {
+      try {
+        if (!recoveryDataKey) throw new Error('No valid recoveryDataKey')
+        if (!citizenUser.email) throw new Error('No valid email')
+        const { procedures, timeslot } = formValues
+
+        let currentStartTime = combineDateAndTime(timeslot)
+
+        if (!currentStartTime) {
+          throw new Error('Timeslot information is missing and required to send an email.')
+        }
+
+        for (const procedure of procedures) {
+          const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
+            procedureSelectionId: procedure.procedureSelectionId,
+            site: procedure.site,
+            quantity: procedure.quantity,
+          })
+          if (!masterProcedure || !siteVariant || !procedureVariant) {
+            return Promise.reject(new Error(`Procedure data for ${procedure.procedureSelectionId} is incomplete.`))
+          }
+          const durationInMinutes = procedureVariant.duration
+          const endTime = currentStartTime.add(durationInMinutes, 'minute')
+          const specificTimeslot = {
+            start: currentStartTime,
+            end: endTime,
+          }
+          const appointmentService = allAgendas.find((agenda) => agenda.id === siteVariant.agendaId)
+          const appointmentProcedure = (allProcedures ?? []).flat().find((procedure) => procedure.id === procedureVariant.procedureId)
+
+          const lang = citizenPatient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+
+          const serviceName = getTranslationForEntity(appointmentService?.properties, 'SERVICE', lang) || masterProcedure.serviceName
+          const procedureName = getTranslationForEntity(appointmentProcedure?.publicProperties, 'CALENDARITEMTYPE', lang) || masterProcedure.procedureName
+          const siteLocation = siteVariant.siteLocation
+
+          const emailPayload = computeEmailPayload(recoveryDataKey, citizenUser, citizenPatient, serviceName, procedureName, specificTimeslot, siteLocation, lang, siteVariant.procedureDetails)
+          await sendConfirmationEmail(emailPayload)
+          currentStartTime = currentStartTime.add(durationInMinutes, 'minute')
+        }
+      } catch (emailError) {
+        console.error(console.error(`Failed to send confirmation email for appt: `, emailError))
+      }
+    },
+    [formValues, selections, computeEmailPayload, sendConfirmationEmail, allAgendas, allProcedures],
+  )
+
+  const handleRecoveryDataKey = useCallback(async (citizenPatient: DecryptedPatient) => {
+    try {
+      await initializePatientExchangeDatas(citizenPatient.id).unwrap()
+      return await createRecoveryDataKey(citizenPatient.id).unwrap()
+    } catch (error) {
+      throw new Error(`Error processing recovery data key: ${(error as Error).message}`)
+    }
+  }, [])
+
   const next = useCallback(async () => {
     try {
       await form.validateFields()
@@ -457,6 +575,8 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       await form.validateFields()
       const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile()
       await createAppointments(citizenUser, citizenPatient)
+      const recoveryDataKey = await handleRecoveryDataKey(citizenPatient)
+      await sendEmails(recoveryDataKey, citizenUser, citizenPatient)
       setCreationStatus('success')
     } catch (err) {
       setCreationStatus('failure')

@@ -25,12 +25,13 @@ import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
 import { calendarItemTypeApiRtk } from '../api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from '../api/dataOwnerApi'
-import { keyApiRtk } from '../api/keyApi'
 import { patientApiRtk } from '../api/patientApi'
 import { roleApiRtk } from '../api/roleApi'
 import { timeTableApiRtk } from '../api/timeTableApi'
 import { userApiRtk } from '../api/userApi'
 import { revertAll, setSavedCredentials } from '../app'
+import { recoveryApiRtk } from '../api/recoveryApi'
+import { emailApiRtk } from '../api/emailApi'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
 const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
@@ -303,13 +304,14 @@ export const completeAuthentication = createAsyncThunk('cardinalApi/completeAuth
 })
 
 export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { dispatch }) => {
+  dispatch(recoveryApiRtk.util.resetApiState())
+  dispatch(emailApiRtk.util.resetApiState())
   dispatch(userApiRtk.util.resetApiState())
   dispatch(agendaApiRtk.util.resetApiState())
   dispatch(anonymousApiRtk.util.resetApiState())
   dispatch(calendarItemApiRtk.util.resetApiState())
   dispatch(calendarItemTypeApiRtk.util.resetApiState())
   dispatch(dataOwnerApiRtk.util.resetApiState())
-  dispatch(keyApiRtk.util.resetApiState())
   dispatch(patientApiRtk.util.resetApiState())
   dispatch(roleApiRtk.util.resetApiState())
   dispatch(timeTableApiRtk.util.resetApiState())

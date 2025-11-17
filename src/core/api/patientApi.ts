@@ -222,6 +222,19 @@ export const patientApiRtk = createApi({
       },
       invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
+    initializeExchangeData: builder.mutation<boolean | undefined, string>({
+      async queryFn(patientId, { getState }) {
+        const patientApi = (await cardinalApi(getState))?.patient
+        return guard([patientApi], async (): Promise<boolean> => {
+          const isInitialized = await patientApi?.forceInitializeExchangeDataToNewlyInvitedPatient(patientId)
+          if (!isInitialized) {
+            throw new Error('Couldnt initialize the patient exchange datas')
+          }
+          return isInitialized
+        })
+      },
+      invalidatesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
+    }),
   }),
 })
 
@@ -239,4 +252,5 @@ export const {
   useGetDecryptedPatientByIdQuery,
   useLazyGetDecryptedPatientByIdQuery,
   useGetEncryptedPatientByIdQuery,
+  useInitializeExchangeDataMutation,
 } = patientApiRtk
