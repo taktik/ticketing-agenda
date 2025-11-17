@@ -1,5 +1,5 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { CodeStub, DecryptedCalendarItem, EncryptedAddress, EncryptedPatient, EncryptedTelecom, RecoveryDataKey, TelecomType, User } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedAddress, DecryptedCalendarItem, DecryptedPatient, DecryptedTelecom, EncryptedAddress, EncryptedPatient, EncryptedTelecom, RecoveryDataKey, TelecomType, User } from '@icure/cardinal-sdk'
 import { Button, Divider, Form, message, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
@@ -10,7 +10,7 @@ import { useGetAgendasByAuthorIds } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
-import { useCreateOrUpdatePatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery } from '../../../core/api/patientApi'
+import { useCreateDecryptedPatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery, useUpdateEncryptedPatientMutation } from '../../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
 import { useRoot } from '../../../core/hooks/useRoot'
@@ -121,6 +121,50 @@ export const combineDateAndTime = (timeslot: TimeSlot): Dayjs | null => {
   return combinedDateTime
 }
 
+const formatPhoneNumber = (countryCode?: string, phoneNumber?: string | number): string | undefined => {
+  return countryCode && phoneNumber ? `${countryCode}${phoneNumber}` : undefined
+}
+
+const formatBirthDate = (date?: Date): number | undefined => {
+  return date ? Number(dayjs(date).format('YYYYMMDD')) : undefined
+}
+
+const buildDecryptedContactPayload = (email: string, mobilePhone?: string) => {
+  const patientEmail = new DecryptedTelecom({
+    telecomType: TelecomType.Email,
+    telecomNumber: email,
+  })
+
+  const patientPhone = new DecryptedTelecom({
+    telecomType: TelecomType.Mobile,
+    telecomNumber: mobilePhone,
+  })
+
+  const patientAddress = new DecryptedAddress({
+    telecoms: [patientEmail, patientPhone],
+  })
+
+  return { patientAddress, patientEmail, patientPhone }
+}
+
+const buildEncryptedContactPayload = (email: string, mobilePhone?: string) => {
+  const patientEmail = new EncryptedTelecom({
+    telecomType: TelecomType.Email,
+    telecomNumber: email,
+  })
+
+  const patientPhone = new EncryptedTelecom({
+    telecomType: TelecomType.Mobile,
+    telecomNumber: mobilePhone,
+  })
+
+  const patientAddress = new EncryptedAddress({
+    telecoms: [patientEmail, patientPhone],
+  })
+
+  return { patientAddress, patientEmail, patientPhone }
+}
+
 export interface FormProcedure {
   procedureSelectionId: string
   site: string
@@ -162,7 +206,7 @@ enum AppointmentStep {
 }
 
 export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
   const [form] = Form.useForm<AppointmentForm>()
@@ -193,7 +237,8 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const [getUserByMailLazy] = useLazyGetUserByEmailQuery()
   const [getPatientByIdLazy] = useLazyGetEncryptedPatientByIdQuery()
   const [createUpdateUser] = useCreateUpdateUserMutation()
-  const [createUpdatePatient] = useCreateOrUpdatePatientMutation()
+  const [createDecryptedPatient] = useCreateDecryptedPatientMutation()
+  const [updateEncryptedPatient] = useUpdateEncryptedPatientMutation()
   const [createUpdateEvent] = useCreateUpdateCalendarItemMutation()
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
@@ -230,127 +275,148 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     { title: t('content.confirm'), icon: <CheckCircleOutlined /> },
   ]
 
-  const getOrCreateCitizenProfile = async () => {
-    const { personalInfo } = formValues
+  const handleNewCitizenFlow = useCallback(
+    async (userData: any) => {
+      const patientId = v4()
+      const { patientAddress } = buildDecryptedContactPayload(userData.email, userData.mobilePhone)
 
-    if (!personalInfo) {
-      throw new Error('Personal information is missing and required to create an appointment.')
-    }
+      const newPatientPayload = new DecryptedPatient({
+        id: patientId,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        languages: [userData.language],
+        dateOfBirth: userData.dateOfBirth,
+        addresses: [patientAddress],
+      })
 
-    const { email, countryCode, phoneNumber, language, birthDate, firstName, lastName } = personalInfo
-    if (!email) {
-      throw new Error('User email is required but was not provided.')
-    }
+      const citizenPatient = await createDecryptedPatient(newPatientPayload).unwrap()
+      if (!citizenPatient) throw new Error('Failed to create patient.')
 
-    if (!adminRoot?.id || !siteRoot?.id) {
-      throw new Error('Required root or site information missing. Cannot proceed.')
-    }
+      const newUserPayload = new User({
+        id: v4(),
+        patientId,
+        mobilePhone: userData.mobilePhone,
+        email: userData.email,
+        login: userData.email,
+        name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
+      })
 
-    const newPhoneNumber = countryCode && phoneNumber ? `${countryCode}${phoneNumber}` : undefined
-    const newBirthDate = birthDate ? Number(dayjs(birthDate).format('YYYYMMDD')) : undefined
+      const citizenUser = await createUpdateUser(newUserPayload).unwrap()
+      if (!citizenUser) throw new Error('Failed to create user.')
 
-    // Find user by email
-    const { data: existingUser } = await getUserByMailLazy(email)
+      return { citizenUser, citizenPatient }
+    },
+    [createDecryptedPatient, createUpdateUser],
+  )
 
-    if (existingUser) {
-      // --- USER EXISTS ---
-      let citizenUser = new User({ ...existingUser })
+  const handleExistingCitizenFlow = useCallback(
+    async (currentUser: User, userData: any) => {
+      let citizenUser = currentUser
 
-      // 1. Update user's phone if it changed
-      if (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) {
-        const updatedUser = await createUpdateUser(new User({ ...citizenUser, mobilePhone: newPhoneNumber })).unwrap()
-        if (!updatedUser) throw new Error("Failed to update user's phone number.")
+      if (userData.mobilePhone && userData.mobilePhone !== citizenUser.mobilePhone) {
+        const updatedUser = await createUpdateUser(new User({ ...citizenUser, mobilePhone: userData.mobilePhone })).unwrap()
+        if (!updatedUser) throw new Error('Failed to update phone.')
         citizenUser = updatedUser
       }
 
-      // 2. Find or initialize the associated patient
-      let citizenPatient: EncryptedPatient
+      let foundPatient: EncryptedPatient | undefined
       if (citizenUser.patientId) {
-        const { data: foundPatient } = await getPatientByIdLazy(citizenUser.patientId)
-        if (foundPatient) {
-          citizenPatient = new EncryptedPatient({ ...foundPatient })
-        } else {
-          // Found user but patient was deleted/missing, create a new one
-          citizenPatient = new EncryptedPatient({ id: v4(), firstName, lastName })
+        const result = await getPatientByIdLazy(citizenUser.patientId)
+        foundPatient = result.data
+      }
+
+      let citizenPatient: EncryptedPatient | DecryptedPatient
+
+      if (foundPatient) {
+        const existingPatient = new EncryptedPatient({ ...foundPatient })
+        citizenPatient = existingPatient
+
+        const { patientAddress } = buildEncryptedContactPayload(userData.email, userData.mobilePhone)
+
+        const hasLanguageChanged = userData.language && userData.language !== (existingPatient.languages?.[0] || '')
+        const hasBirthDateChanged = userData.dateOfBirth && userData.dateOfBirth !== existingPatient.dateOfBirth
+        const needsNameUpdate = !existingPatient.firstName
+        const hasContactChanged = (userData.mobilePhone && userData.mobilePhone !== citizenUser.mobilePhone) || userData.email !== citizenUser.email
+
+        if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate || hasContactChanged) {
+          const updatePayload = new EncryptedPatient({
+            ...existingPatient,
+            languages: hasLanguageChanged ? [userData.language] : existingPatient.languages,
+            dateOfBirth: hasBirthDateChanged ? userData.dateOfBirth : existingPatient.dateOfBirth,
+            firstName: needsNameUpdate ? userData.firstName : existingPatient.firstName,
+            lastName: needsNameUpdate ? userData.lastName : existingPatient.lastName,
+            addresses: hasContactChanged ? [patientAddress] : existingPatient.addresses,
+          })
+
+          const updated = await updateEncryptedPatient(updatePayload).unwrap()
+          if (updated) {
+            citizenPatient = updated
+          }
         }
       } else {
-        // User exists but has no patientId, create a new one
-        citizenPatient = new EncryptedPatient({ id: v4(), firstName, lastName })
-      }
+        const patientId = v4()
+        const { patientAddress } = buildDecryptedContactPayload(userData.email, userData.mobilePhone)
 
-      // 3. Check if patient record needs updates
-      const hasLanguageChanged = language && language !== (citizenPatient.languages?.[0] || '')
-      const hasBirthDateChanged = newBirthDate && newBirthDate !== citizenPatient.dateOfBirth
-      const needsNameUpdate = !citizenPatient.firstName
-      const hasPhoneOrEmailChanged = (newPhoneNumber && newPhoneNumber !== citizenUser.mobilePhone) || email !== citizenUser.email
-
-      const patientEmail = new EncryptedTelecom({
-        telecomType: TelecomType.Email,
-        telecomNumber: email,
-      })
-
-      const patientPhone = new EncryptedTelecom({
-        telecomType: TelecomType.Mobile,
-        telecomNumber: newPhoneNumber,
-      })
-
-      const patientAddress = new EncryptedAddress({
-        telecoms: [patientEmail, patientPhone],
-      })
-
-      if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate || hasPhoneOrEmailChanged) {
-        const patientPayload = new EncryptedPatient({
-          ...citizenPatient,
-          languages: hasLanguageChanged ? [language!] : citizenPatient.languages,
-          dateOfBirth: hasBirthDateChanged ? newBirthDate : citizenPatient.dateOfBirth,
-          firstName: needsNameUpdate ? firstName : citizenPatient.firstName,
-          lastName: needsNameUpdate ? lastName : citizenPatient.lastName,
-          addresses: hasPhoneOrEmailChanged ? [patientAddress] : citizenPatient.addresses,
+        const newPatientPayload = new DecryptedPatient({
+          id: patientId,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          languages: [userData.language],
+          dateOfBirth: userData.dateOfBirth,
+          addresses: [patientAddress],
         })
-        const updatedPatient = await createUpdatePatient(patientPayload).unwrap()
-        if (updatedPatient) {
-          citizenPatient = updatedPatient
+
+        const createdPatientResult = await createDecryptedPatient(newPatientPayload).unwrap()
+
+        if (!createdPatientResult) {
+          throw new Error('Failed to create recovery citizen record.')
+        }
+
+        citizenPatient = createdPatientResult
+
+        if (!citizenUser.patientId) {
+          const linkedUserResult = await createUpdateUser(new User({ ...citizenUser, patientId: citizenPatient.id })).unwrap()
+
+          if (!linkedUserResult) {
+            throw new Error('Failed to link User to new Citizen.')
+          }
+          citizenUser = linkedUserResult
         }
       }
 
       return { citizenUser, citizenPatient }
-    } else {
-      // --- USER DOES NOT EXIST ---
-      // 1. Create a new Patient record first
-      const patientId = v4()
+    },
+    [createUpdateUser, getPatientByIdLazy, updateEncryptedPatient, createDecryptedPatient],
+  )
 
-      const patientEmail = new EncryptedTelecom({
-        telecomType: TelecomType.Email,
-        telecomNumber: email,
-      })
+  const getOrCreateCitizenProfile = useCallback(async () => {
+    const { personalInfo } = formValues
 
-      const patientPhone = new EncryptedTelecom({
-        telecomType: TelecomType.Mobile,
-        telecomNumber: newPhoneNumber,
-      })
+    if (!personalInfo) throw new Error('Personal information is missing.')
+    const { email, countryCode, phoneNumber, language, birthDate, firstName, lastName } = personalInfo
 
-      const patientAddress = new EncryptedAddress({
-        telecoms: [patientEmail, patientPhone],
-      })
-      const newPatientPayload = new EncryptedPatient({ id: patientId, languages: [language], dateOfBirth: newBirthDate, firstName, lastName, addresses: [patientAddress] })
-      const citizenPatient = await createUpdatePatient(newPatientPayload).unwrap()
-      if (!citizenPatient) {
-        throw new Error('Failed to create a new patient record.')
-      }
+    if (!email) throw new Error('User email is required.')
+    if (!adminRoot?.id || !siteRoot?.id) throw new Error('Root info missing.')
 
-      // 2. Create the new User and link it to the new Patient
-      const newUserPayload = new User({ id: v4(), patientId, mobilePhone: newPhoneNumber, email, login: email, name: `${firstName.trim()} ${lastName.trim()}` })
-      const citizenUser = await createUpdateUser(newUserPayload).unwrap()
-      if (!citizenUser) {
-        // This is where an orphaned patient record could be left
-        throw new Error('Failed to create a new user record after creating patient.')
-      }
-
-      return { citizenUser, citizenPatient }
+    const normalizedData = {
+      email,
+      firstName,
+      lastName,
+      language,
+      mobilePhone: formatPhoneNumber(countryCode, phoneNumber),
+      dateOfBirth: formatBirthDate(birthDate),
     }
-  }
 
-  const createAppointments = async (citizenUser: User, citizenPatient: EncryptedPatient) => {
+    const { data: existingUser } = await getUserByMailLazy(email)
+
+    if (existingUser) {
+      return handleExistingCitizenFlow(new User({ ...existingUser }), normalizedData)
+    } else {
+      return handleNewCitizenFlow(normalizedData)
+    }
+  }, [formValues, adminRoot, siteRoot, getUserByMailLazy, handleExistingCitizenFlow, handleNewCitizenFlow])
+
+  const createAppointments = async (citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient) => {
     try {
       const { personalInfo, procedures, timeslot } = formValues
 
@@ -444,7 +510,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     (
       recoveryDataKey: RecoveryDataKey,
       citizenUser: User,
-      citizenPatient: EncryptedPatient,
+      citizenPatient: EncryptedPatient | DecryptedPatient,
       serviceName: string,
       procedureName: string,
       specificTimeslot: {
@@ -482,7 +548,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   )
 
   const sendEmails = useCallback(
-    async (recoveryDataKey: RecoveryDataKey | undefined, citizenUser: User, citizenPatient: EncryptedPatient) => {
+    async (recoveryDataKey: RecoveryDataKey | undefined, citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient) => {
       try {
         if (!recoveryDataKey) throw new Error('No valid recoveryDataKey')
         if (!citizenUser.email) throw new Error('No valid email')
@@ -529,10 +595,10 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     [formValues, selections, computeEmailPayload, sendConfirmationEmail, allAgendas, allProcedures],
   )
 
-  const handleRecoveryDataKey = useCallback(async (citizenPatient: EncryptedPatient) => {
+  const handleRecoveryDataKey = useCallback(async (citizenPatientId: string) => {
     try {
-      await initializePatientExchangeDatas(citizenPatient.id).unwrap()
-      return await createRecoveryDataKey(citizenPatient.id).unwrap()
+      await initializePatientExchangeDatas(citizenPatientId).unwrap()
+      return await createRecoveryDataKey(citizenPatientId).unwrap()
     } catch (error) {
       throw new Error(`Error processing recovery data key: ${(error as Error).message}`)
     }
@@ -562,7 +628,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       setCurrentStep((prevStep) => prevStep + 1)
       await form.validateFields()
       const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile()
-      const recoveryDataKey = await handleRecoveryDataKey(citizenPatient)
+      const recoveryDataKey = await handleRecoveryDataKey(citizenPatient.id)
       await createAppointments(citizenUser, citizenPatient)
       await sendEmails(recoveryDataKey, citizenUser, citizenPatient)
       setCreationStatus('success')
