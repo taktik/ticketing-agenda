@@ -34,10 +34,8 @@ export const languageMapping: { [key: string]: string } = {
 }
 
 export const appointmentDuration = (formValues: AppointmentForm, procedures: ProcedureSelection[]): number => {
-  // Get the array of procedures the user has selected in the form
   const formProcedures = formValues.procedures
 
-  // Use the .reduce() method to iterate over each selected procedure and sum up their durations
   const totalDuration = formProcedures.reduce((total, currentFormProcedure) => {
     // 1. Find the main procedure group (e.g., "Demande de passeport") from the master list
     // using the ID stored in the form.
