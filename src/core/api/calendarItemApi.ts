@@ -1,4 +1,4 @@
-import { AccessLevel, CalendarItemFilters, DecryptedCalendarItem, Patient } from '@icure/cardinal-sdk'
+import { AccessLevel, CalendarItemFilters, DecryptedCalendarItem, Patient, SecretIdUseOption } from '@icure/cardinal-sdk'
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { dateToYYYYMMDD } from '../../components/common/helpers'
 import { cardinalApi, guard } from '../services/auth.api'
@@ -48,21 +48,19 @@ export const calendarItemApiRtk = createApi({
         ]
       },
     }),
-    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient | undefined; delegates: string[] }>({
+    createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient | undefined; delegates: { adminRootId: string; siteRootId: string } }>({
       async queryFn({ calendarItem, patient, delegates }, { getState }) {
+        const { adminRootId, siteRootId } = delegates
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
-          const delegatesAcessLevel = delegates.reduce(
-            (acc, currentDelegateId) => {
-              acc[currentDelegateId] = AccessLevel.Write
-              return acc
-            },
-            {} as { [key: string]: AccessLevel },
-          )
-
+          const delegatesAcessLevel = {
+            [siteRootId]: AccessLevel.Write,
+          }
           const updatedCalendarItem = !!calendarItem.rev
             ? await calendarApi?.modifyCalendarItem(calendarItem)
-            : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient, { delegates: delegatesAcessLevel }))
+            : await calendarApi?.createCalendarItem(
+                await calendarApi.withEncryptionMetadata(calendarItem, patient, { delegates: delegatesAcessLevel, secretId: SecretIdUseOption.UseNone, alternateRootDelegateId: adminRootId }),
+              )
           if (!updatedCalendarItem) {
             throw new Error('CalendarItem update failed')
           }
@@ -100,27 +98,7 @@ export const calendarItemApiRtk = createApi({
       },
       invalidatesTags: [{ type: CalendarItemTags.CalendarItem }],
     }),
-    shareCalendarItemWith: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; delegateId: string }>({
-      async queryFn({ calendarItem, delegateId }, { getState }) {
-        const calendarItemApi = (await cardinalApi(getState))?.calendarItem
-        return guard([calendarItemApi], async (): Promise<DecryptedCalendarItem> => {
-          const updatedCalendarItem = await calendarItemApi?.shareWith(delegateId, calendarItem)
-          if (!updatedCalendarItem) {
-            throw new Error('CalendarItem does not exist')
-          }
-          return new DecryptedCalendarItem(updatedCalendarItem)
-        })
-      },
-      invalidatesTags: () => [{ type: CalendarItemTags.CalendarItem, id: 'all' }],
-    }),
   }),
 })
 
-export const {
-  useGetCalendarItemQuery,
-  useCreateUpdateCalendarItemMutation,
-  useGetCalendarItemByAgendaIdAndPeriodQuery,
-  useShareCalendarItemWithMutation,
-  useDeleteCalendarItemByIdMutation,
-  useUpdateCalendarItemMutation,
-} = calendarItemApiRtk
+export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useDeleteCalendarItemByIdMutation, useUpdateCalendarItemMutation } = calendarItemApiRtk

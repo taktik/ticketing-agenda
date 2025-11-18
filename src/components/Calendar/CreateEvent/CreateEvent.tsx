@@ -498,7 +498,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           tags: [new CodeStub({ id: 'APPOINTMENT|1', code: 'APPOINTMENT', type: 'APPOINTMENT', version: '1' })],
         })
 
-        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: [adminRoot.id, siteRoot.id] }).unwrap()
+        return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: { adminRootId: adminRoot.id, siteRootId: siteRoot.id } }).unwrap()
       })
       await Promise.allSettled(eventsCreationPromises)
     } catch (error: unknown) {

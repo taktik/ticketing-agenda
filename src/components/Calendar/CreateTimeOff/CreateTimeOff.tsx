@@ -112,7 +112,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
           return createUpdateEvent({
             calendarItem: newEvent,
             patient: undefined,
-            delegates: [adminRoot.id, values.site],
+            delegates: { adminRootId: adminRoot.id, siteRootId: values.site },
           }).unwrap()
         })
 
