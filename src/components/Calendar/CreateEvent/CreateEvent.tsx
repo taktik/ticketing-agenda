@@ -601,15 +601,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     [formValues, selections, computeEmailPayload, sendConfirmationEmail, allAgendas, allProcedures],
   )
 
-  const handleRecoveryDataKey = useCallback(async (citizenPatientId: string) => {
-    try {
-      await initializePatientExchangeDatas(citizenPatientId).unwrap()
-      return await createRecoveryDataKey(citizenPatientId).unwrap()
-    } catch (error) {
-      throw new Error(`Error processing recovery data key: ${(error as Error).message}`)
-    }
-  }, [])
-
   const next = useCallback(async () => {
     try {
       await form.validateFields()
@@ -634,8 +625,9 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       setCurrentStep((prevStep) => prevStep + 1)
       await form.validateFields()
       const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile()
-      const recoveryDataKey = await handleRecoveryDataKey(citizenPatient.id)
+      await initializePatientExchangeDatas(citizenPatient.id).unwrap()
       await createAppointments(citizenUser, citizenPatient)
+      const recoveryDataKey = await createRecoveryDataKey(citizenPatient.id).unwrap()
       await sendEmails(recoveryDataKey, citizenUser, citizenPatient)
       setCreationStatus('success')
     } catch (err) {
