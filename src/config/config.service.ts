@@ -24,4 +24,5 @@ export class Config {
   REACT_APP_ROLE_CHIEF_OF_SERVICE = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CHIEF_OF_SERVICE'
   REACT_APP_ROLE_CITY_WORKER = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'
   REACT_APP_MANAGE_APPOINTMENT_ROUTE = 'https://mouscron.taktik.dev/appointment/management/authentify'
+  REACT_APP_NEW_APPOINTMENT_ROUTE = 'https://mouscron.taktik.dev/appointment/new'
 }

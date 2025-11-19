@@ -7,16 +7,21 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Agenda, CalendarItemType, DecryptedCalendarItem, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItem, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
 import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalendar'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION_FR, EMAIL_APPOINTMENT_MODIFICATION_NL, EMAIL_SENDER, NEW_APPOINTMENT_ROUTE } from '../../constants'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
+import { useSendEmailMutation } from '../../core/api/emailApi'
+import { SendEmailRequest } from '../../core/api/fetchType'
+import { useLazyGetEncryptedPatientByIdQuery } from '../../core/api/patientApi'
+import { useCalendarItemDetails } from '../../core/hooks/useCalendarItemDetails'
 import { usePermissions } from '../../core/hooks/usePermissions'
-import { dayjsToYYYYMMDDHHmmss, isAllDayEvent, parseTimeRange } from '../common/helpers'
+import { dayjsToYYYYMMDDHHmmss, fuzzyDateTimeIntToDayjs, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { CreateEvent } from './CreateEvent/CreateEvent'
 import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
@@ -68,6 +73,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
   const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
   const [updateCalendarItem] = useUpdateCalendarItemMutation()
+  const [getPatientByid] = useLazyGetEncryptedPatientByIdQuery()
+  const [sendEmail] = useSendEmailMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -211,11 +218,87 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     return null
   }, [timeRange, t])
 
+  const computeDeleteEmailPayload = useCallback(
+    async (calendarItem: CalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
+      const lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+
+      const startDayjs = fuzzyDateTimeIntToDayjs(calendarItem.startTime)
+      const endDayjs = fuzzyDateTimeIntToDayjs(calendarItem.endTime)
+
+      const dateFormat = startDayjs.format('DD/MM/YYYY')
+      const heureFormat = `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`
+
+      return {
+        receiver: patientEmail!,
+        from: EMAIL_SENDER,
+        processId: lang === 'nl' ? EMAIL_APPOINTMENT_CANCELLATION_NL : EMAIL_APPOINTMENT_CANCELLATION_FR,
+        variables: {
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          email: patientEmail,
+          mobilePhone: patientPhoneNumber,
+          service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
+          procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
+          date: dateFormat,
+          time: heureFormat,
+          location: calendarItem.addressText,
+          url: NEW_APPOINTMENT_ROUTE, // todo: add this config in build manager config
+        },
+      }
+    },
+    [useCalendarItemDetails],
+  )
+
+  const computeUpdateEmailPayload = useCallback(
+    async (calendarItem: DecryptedCalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
+      const lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+
+      const startDayjs = fuzzyDateTimeIntToDayjs(calendarItem.startTime)
+      const endDayjs = fuzzyDateTimeIntToDayjs(calendarItem.endTime)
+
+      const dateFormat = startDayjs.format('DD/MM/YYYY')
+      const heureFormat = `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`
+
+      return {
+        receiver: patientEmail!,
+        from: EMAIL_SENDER,
+        processId: lang === 'nl' ? EMAIL_APPOINTMENT_MODIFICATION_NL : EMAIL_APPOINTMENT_MODIFICATION_FR,
+        variables: {
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          email: patientEmail,
+          mobilePhone: patientPhoneNumber,
+          service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
+          procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
+          date: dateFormat,
+          time: heureFormat,
+          location: calendarItem.addressText,
+          url: NEW_APPOINTMENT_ROUTE, // todo this has to be authentify route, with exchangedatas in url
+          procedureDetails: calendarItem.details,
+        },
+      }
+    },
+    [useCalendarItemDetails],
+  )
+
+  const handleSendEmail = useCallback(
+    async (emailPayload: SendEmailRequest) => {
+      try {
+        await sendEmail(emailPayload)
+      } catch (error) {
+        //ignore
+      }
+    },
+    [sendEmail],
+  )
+
   const deleteEvent = useCallback(
-    async (event: EventApi | undefined) => {
+    async (event: EventApi | undefined, calendarItem: CalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
         await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
+        const emailPayload = await computeDeleteEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+        await handleSendEmail(emailPayload)
         showMessageFeedback('success', t('notification.appointment_deleted'))
       } catch (error) {
         openNotification('error', t('notification.appointment_delete_failed'), t('notification.appointment_delete_error'))
@@ -225,11 +308,18 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   )
 
   const updateEvent = useCallback(
-    async (event: EventApi | undefined, updatedValues: CalendarEventUpdateForm) => {
+    async (
+      event: EventApi | undefined,
+      updatedValues: CalendarEventUpdateForm,
+      calendarItem: DecryptedCalendarItem,
+      patient: EncryptedPatient,
+      agenda: Agenda,
+      calendarItemType: CalendarItemType,
+      patientEmail: string,
+      patientPhoneNumber: string,
+    ) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
-        const calendarItem = calendarItems?.find((calendarItem) => calendarItem.id === event.id)
-        if (!calendarItem) throw new Error('No event to delete')
 
         const updatedCalendarItem = new DecryptedCalendarItem({
           ...calendarItem,
@@ -240,6 +330,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         })
 
         await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
+        const emailPayload = await computeUpdateEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+        await handleSendEmail(emailPayload)
         showMessageFeedback('success', t('notification.appointment_updated'))
       } catch (error) {
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))

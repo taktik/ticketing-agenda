@@ -1,4 +1,4 @@
-import { CalendarItemType, TelecomType } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, TelecomType } from '@icure/cardinal-sdk'
 import { Button, Card, DatePicker, Descriptions, Divider, Form, Input, Select, Typography } from 'antd'
 import { format, parse } from 'date-fns'
 import { enUS } from 'date-fns/locale'
@@ -7,7 +7,7 @@ import { EventApi } from 'fullcalendar'
 import { useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { useGetEncryptedPatientByIdQuery } from '../../../core/api/patientApi'
+import { useCalendarItemDetails } from '../../../core/hooks/useCalendarItemDetails'
 import { CustomModal } from '../../common/CustomModal'
 import { formatEventDate, localeMap } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
@@ -28,8 +28,25 @@ interface EventDetailsProps {
   onClose: () => void
   event: EventApi | undefined
   procedures: CalendarItemType[] | undefined
-  deleteEvent: (event: EventApi | undefined) => Promise<void>
-  updateEvent: (event: EventApi | undefined, updatedValues: CalendarEventUpdateForm) => Promise<void>
+  deleteEvent: (
+    event: EventApi | undefined,
+    calendarItem: DecryptedCalendarItem,
+    patient: EncryptedPatient,
+    agenda: Agenda,
+    calendarItemType: CalendarItemType,
+    patientEmail: string,
+    patientPhoneNumber: string,
+  ) => Promise<void>
+  updateEvent: (
+    event: EventApi | undefined,
+    updatedValues: CalendarEventUpdateForm,
+    calendarItem: DecryptedCalendarItem,
+    patient: EncryptedPatient,
+    agenda: Agenda,
+    calendarItemType: CalendarItemType,
+    patientEmail: string,
+    patientPhoneNumber: string,
+  ) => Promise<void>
 }
 
 export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEvent, updateEvent }: EventDetailsProps) => {
@@ -40,7 +57,7 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
   const [isEditing, setIsEditing] = useState(false)
   const [form] = Form.useForm<CalendarEventUpdateForm>()
 
-  const { data: patient } = useGetEncryptedPatientByIdQuery(event?.extendedProps.patientId ?? '', { skip: !event || !event.extendedProps.patientId })
+  const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
 
   const isTimeOff = useMemo(() => !!event?.extendedProps.isTimeOff, [event])
 
@@ -65,15 +82,19 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
 
   const handleUpdate = useCallback(async () => {
     const values = await form.validateFields()
-    await updateEvent(event, values) //TODO shouldnt be able to modify calendarItemType. And Must be limited to availabilities.
+    if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
+
+    await updateEvent(event, values, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber) //TODO shouldnt be able to modify calendarItemType. And Must be limited to availabilities.
     onClose()
-  }, [form, event, updateEvent])
+  }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber])
 
   const handleDelete = useCallback(async () => {
-    await deleteEvent(event)
+    if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
+
+    await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
     setShowDeleteAppointmentModal(false)
     onClose()
-  }, [event, deleteEvent, setShowDeleteAppointmentModal])
+  }, [event, deleteEvent, setShowDeleteAppointmentModal, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber])
 
   const renderDisplayMode = () => (
     <div className="modal-event-display">

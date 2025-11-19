@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import dayjs from 'dayjs'
 import { DATABASE_ID } from '../../constants'
 import { anonymousCardinalApi, guard } from '../services/auth.api'
+import { PublicAgendasAndCalendarItemTypes } from '@icure/cardinal-sdk'
 
 enum AnonymousTags {
   Anonymous = 'Anonymous',
@@ -12,6 +13,11 @@ interface listAnonymousAvailabilitiesParams {
   calendarItemTypeId: string
   startDate: number
   endDate: number
+}
+
+interface listAnonymousAgendaProceduresParams {
+  propertyId: string
+  propertyValue: string
 }
 
 export const anonymousApiRtk = createApi({
@@ -30,12 +36,23 @@ export const anonymousApiRtk = createApi({
             throw new Error('No availabilities')
           }
           const transformedData = availabilities.map((num) => dayjs(String(num), 'YYYYMMDDHHmmss'))
-
           return transformedData
+        })
+      },
+    }),
+    getAgendaAndProcedures: builder.query<PublicAgendasAndCalendarItemTypes | undefined, listAnonymousAgendaProceduresParams>({
+      async queryFn(params, { getState }) {
+        const anonymousAgendaApi = (await anonymousCardinalApi())?.agenda
+        return guard([anonymousAgendaApi], async (): Promise<PublicAgendasAndCalendarItemTypes> => {
+          const agendaAndProcedures = await anonymousAgendaApi?.listAnonymousAgendaAndAppointmentTypes(DATABASE_ID!, params.propertyId, params.propertyValue)
+          if (!agendaAndProcedures) {
+            throw new Error('No agenda and procedures')
+          }
+          return agendaAndProcedures
         })
       },
     }),
   }),
 })
 
-export const { useGetAvailabilitiesQuery, useLazyGetAvailabilitiesQuery } = anonymousApiRtk
+export const { useLazyGetAvailabilitiesQuery, useLazyGetAgendaAndProceduresQuery } = anonymousApiRtk

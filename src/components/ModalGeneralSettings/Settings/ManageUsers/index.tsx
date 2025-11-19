@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { HealthcareParty, User } from '@icure/cardinal-sdk'
 import { Button, Empty, Form, Input, message, notification, Select, Space, Table, Tag } from 'antd'
 import Column from 'antd/es/table/Column'
-import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
@@ -16,7 +16,7 @@ import {
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
 import { administratorTag, cityWorkerTag, headOfServiceTag, rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
-import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersByIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetCurrentUserQuery, useGetUsersByIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
 import { usePermissions } from '../../../../core/hooks/usePermissions'
 import { useRoot } from '../../../../core/hooks/useRoot'
 import { useSites } from '../../../../core/hooks/useSites'
@@ -49,19 +49,18 @@ interface FormValues {
 
 export const ManagerUsers = (): ReactElement => {
   const { t } = useTranslation()
-  const [tableRows, setTableRows] = useState<UserRow[]>([])
+  const [newUsers, setNewUsers] = useState<UserRow[]>([])
   const [showDeleteUserModal, setShowDeleteUserModal] = useState<boolean>(false)
   const [userRowToBeDeleted, setUserRowToBeDeleted] = useState<UserRow | undefined>(undefined)
   const [editingKey, setEditingKey] = useState<string>('')
   const isEditing = useMemo(() => (record: UserRow) => record.rowId === editingKey, [editingKey])
   const [form] = Form.useForm<FormValues>()
 
+  const { data: currentUser } = useGetCurrentUserQuery(undefined)
   const { isAdministrator } = usePermissions()
-
   if (!isAdministrator) {
     return <div></div>
   }
-
   const watchedRole = Form.useWatch('role', form)
 
   const [createUpdateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
@@ -86,7 +85,7 @@ export const ManagerUsers = (): ReactElement => {
     authorIds: siteIds,
   })
 
-  const { data: hcps = [], isLoading: isHcpsLoading } = useGetHealthcarePartyUsers()
+  const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartyUsers()
 
   const userIds = useMemo(() => hcps.map((hcp) => hcp.userId).filter((id): id is string => !!id), [hcps])
 
@@ -94,58 +93,65 @@ export const ManagerUsers = (): ReactElement => {
     skip: userIds.length === 0,
   })
 
-  const isFetching = isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading || isSitesLoading || isAgendasLoading
+  const isFetching = useMemo(
+    () => isUsersLoading || isHcpsLoading || isAdminRootLoading || isSiteRootLoading || isSitesLoading || isAgendasLoading,
+    [isUsersLoading, isHcpsLoading, isAdminRootLoading, isSiteRootLoading, isSitesLoading, isAgendasLoading],
+  )
 
-  const isMutating =
-    isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLoading || isSilentUndeleteHcpLoading || isSetUserRolesLoading || isSilentDeleteUserLoading
+  const isMutating = useMemo(
+    () =>
+      isCreateUpdateUserLoading || isCreateUpdateHcpLoading || isDeleteUserLoading || isDeleteHcpLoading || isSilentDeleteHcpLoading || isSilentUndeleteHcpLoading || isSetUserRolesLoading || isSilentDeleteUserLoading,
+    [isCreateUpdateUserLoading, isCreateUpdateHcpLoading, isDeleteUserLoading, isDeleteHcpLoading, isSilentDeleteHcpLoading, isSetUserRolesLoading, isSilentDeleteUserLoading],
+  )
 
-  const isLoading = isFetching || isMutating
+  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
 
   const allowedRoleIds = useMemo(() => new Set([administratorTag[0].id, headOfServiceTag[0].id, cityWorkerTag[0].id]), [administratorTag, headOfServiceTag, cityWorkerTag])
 
-  const hcpMap = useMemo(() => {
-    const filtered = hcps.filter((hcp) => hcp.tags?.some((tag) => allowedRoleIds.has(tag.id)))
-    return new Map(filtered.map((hcp) => [hcp.id, hcp]))
-  }, [hcps, allowedRoleIds])
-
-  const mergedList: [User, HealthcareParty][] = useMemo(() => {
-    if (!users?.length) return []
-
-    return users.flatMap<[User, HealthcareParty]>((user) => {
+  const serverRows = useMemo(() => {
+    if (!users || !hcps) return []
+    const hcpLookup = new Map(hcps.map((h) => [h.id, h]))
+    return users.flatMap((user) => {
       if (!user.healthcarePartyId) return []
-      const hcp = hcpMap.get(user.healthcarePartyId)
-      return hcp ? [[user, hcp]] : []
+
+      const hcp = hcpLookup.get(user.healthcarePartyId)
+      if (!hcp) return []
+
+      const hasAllowedRole = hcp.tags?.some((tag) => allowedRoleIds.has(tag.id))
+      if (!hasAllowedRole) return []
+
+      const hcpTag = hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type])
+
+      return [
+        {
+          rowId: `${user.id}-${hcp.id}`,
+          user: user,
+          hcp: hcp,
+          firstName: hcp.firstName,
+          lastName: hcp.lastName,
+          email: user.email,
+          role: hcpTag && hcpTag.type ? roleTypeMap[hcpTag.type] : undefined,
+          assignment: { agendaId: hcp.supervisorId, siteId: hcp.parentId },
+        } as UserRow,
+      ]
     })
-  }, [users, hcpMap])
+  }, [users, hcps, allowedRoleIds, roleTypeMap])
 
-  const allRoleTypes = useMemo(() => new Set(Object.keys(tagMap)), [tagMap])
+  const tableRows = useMemo(() => {
+    const uniqueNewUsers = newUsers.filter((n) => !serverRows.some((s) => s.hcp?.id === n.hcp?.id))
 
-  const getHcpTag = useCallback((hcp: HealthcareParty) => hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type]), [roleTypeMap])
+    const combined = [...uniqueNewUsers, ...serverRows]
 
-  useEffect(() => {
-    const tableRowsList: UserRow[] = mergedList.map((pair) => {
-      const user = pair[0]
-      const hcp = pair[1]
-      const hcpTag = getHcpTag(hcp)
-      return {
-        rowId: `${user.id}-${hcp.id}`,
-        user: user,
-        hcp: hcp,
-        firstName: hcp.firstName,
-        lastName: hcp.lastName,
-        email: user.email,
-        role: hcpTag && hcpTag.type ? roleTypeMap[hcpTag.type] : undefined,
-        assignment: { agendaId: hcp.supervisorId, siteId: hcp.parentId },
-      } as UserRow
-    })
-
-    tableRowsList.sort((a, b) => {
+    return combined.sort((a, b) => {
       const nameA = a.firstName ?? ''
       const nameB = b.firstName ?? ''
+      if (nameA === '' && nameB !== '') return -1
+      if (nameA !== '' && nameB === '') return 1
       return nameA.localeCompare(nameB)
     })
-    setTableRows(tableRowsList)
-  }, [mergedList])
+  }, [newUsers, serverRows])
+
+  const allRoleTypes = useMemo(() => new Set(Object.keys(tagMap)), [tagMap])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -204,8 +210,8 @@ export const ManagerUsers = (): ReactElement => {
       assignment: undefined,
     }
 
-    setTableRows((prev) => [...prev, newUserRow])
-  }, [setTableRows])
+    setNewUsers((prev) => [newUserRow, ...prev])
+  }, [setNewUsers])
 
   const tableRowDelete = useCallback(async () => {
     try {
@@ -234,13 +240,13 @@ export const ManagerUsers = (): ReactElement => {
         }
       } else {
         // This is a non-persisted user, just remove from local state
-        setTableRows((prev) => prev.filter((user) => user.rowId !== userRowToBeDeleted.rowId))
+        setNewUsers((prev) => prev.filter((user) => user.rowId !== userRowToBeDeleted.rowId))
       }
     } catch (hcpError) {
       console.error('Failed to delete HealthcareParty:', hcpError)
       openNotification('error', t('notification.user_delete_failed'), t('notification.user_delete_error'))
     }
-  }, [userRowToBeDeleted, deleteHcp, deleteUser, unDeleteHcp, setTableRows, showMessageFeedback, openNotification, t])
+  }, [userRowToBeDeleted, deleteHcp, deleteUser, unDeleteHcp, setNewUsers, showMessageFeedback, openNotification, t])
 
   const createUser = useCallback(
     async (record: UserRow) => {

@@ -173,6 +173,29 @@ export const fuzzyDateIntToDayjs = (fuzzyDate: number | undefined): dayjs.Dayjs 
 }
 
 /**
+ * Converts a "fuzzy date" integer in YYYYMMDDHHmmss format to a dayjs object.
+ * @param fuzzyDate The date represented as a number (e.g., 20250714).
+ * @returns A dayjs object representing that date.
+ */
+export const fuzzyDateTimeIntToDayjs = (fuzzyDate: number | undefined): dayjs.Dayjs => {
+  // Handle invalid or null inputs
+  if (fuzzyDate === null || fuzzyDate === undefined || isNaN(fuzzyDate)) {
+    console.error('Invalid number provided to fuzzyDateIntToDayjs')
+    // Return today's date as a sensible default
+    return dayjs()
+  }
+
+  // 1. Convert the number to a string.
+  const dateString = String(fuzzyDate)
+
+  // 2. Use dayjs to parse the string, providing the exact format.
+  //    This is robust and handles all cases correctly.
+  const dateObject = dayjs(dateString, 'YYYYMMDDHHmmss')
+
+  return dateObject
+}
+
+/**
  * Converts a dayjs object to a "fuzzy date" integer in YYYYMMDD format.
  * @param date The dayjs object to convert.
  * @returns A number representing the date (e.g., 20250714).

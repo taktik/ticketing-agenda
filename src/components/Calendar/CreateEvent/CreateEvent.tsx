@@ -1,14 +1,28 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
-import { CodeStub, DecryptedAddress, DecryptedCalendarItem, DecryptedPatient, DecryptedTelecom, EncryptedAddress, EncryptedPatient, EncryptedTelecom, RecoveryDataKey, TelecomType, User } from '@icure/cardinal-sdk'
-import { Button, Divider, Form, message, notification, Steps } from 'antd'
+import {
+  Agenda,
+  CalendarItemType,
+  CodeStub,
+  DecryptedAddress,
+  DecryptedCalendarItem,
+  DecryptedPatient,
+  DecryptedTelecom,
+  EncryptedAddress,
+  EncryptedPatient,
+  EncryptedTelecom,
+  PublicAgendasAndCalendarItemTypes,
+  RecoveryDataKey,
+  TelecomType,
+  User,
+} from '@icure/cardinal-sdk'
+import { Button, Divider, Form, notification, Steps } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { EMAIL_APPOINTMENT_CONFIRMATION_FR, EMAIL_APPOINTMENT_CONFIRMATION_NL, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
-import { useGetAgendasByAuthorIds } from '../../../core/api/agendaApi'
+import { useLazyGetAgendaAndProceduresQuery } from '../../../core/api/anonymousApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
-import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../../../core/api/calendarItemTypeApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
 import { useCreateDecryptedPatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery, useUpdateEncryptedPatientMutation } from '../../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
@@ -215,30 +229,11 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const { t } = useTranslation()
   const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
+  const [allAgendas, setAllAgendas] = useState<Agenda[]>([])
+  const [allProcedures, setAllProcedures] = useState<CalendarItemType[]>([])
+  const [isLoadingAgendasAndProcedures, setIsLoadingAgendasAndProcedures] = useState(false)
   const [form] = Form.useForm<AppointmentForm>()
-
   const formValues: AppointmentForm = form.getFieldsValue(true)
-
-  const { sites } = useSites()
-
-  const watchedProcedures = Form.useWatch('procedures', form)
-  const watchedSelectedTime = Form.useWatch(['timeslot', 'time'], form)
-  const watchedPersonalInfo = Form.useWatch('personalInfo', form)
-
-  const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
-
-  const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
-
-  const { data: allAgendas, isLoading: isAgendasLoading } = useGetAgendasByAuthorIds({ skip: !siteIds, authorIds: siteIds ?? [] })
-
-  const filteredAgenda = useMemo(() => (allAgendas ?? []).filter((agenda) => siteIds.includes(agenda.author ?? '')), [allAgendas, siteIds])
-  const agendaIds = useMemo(() => (filteredAgenda ?? []).map((agenda) => agenda.id), [filteredAgenda])
-
-  const { data: allProcedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: !agendaIds || agendaIds.length === 0 })
-  // TODO use anonyme api to get procedures with schedules only.
-  const selections = useMemo(() => transformProceduresForSelection(allProcedures?.flat() ?? [], allAgendas ?? [], sites ?? []), [allProcedures, allAgendas, sites])
-
-  const isLoading = useMemo(() => isAgendasLoading || isProceduresLoading || isSiteRootLoading || isAdminRootLoading, [isAgendasLoading, isProceduresLoading, isSiteRootLoading, isAdminRootLoading])
 
   const [getUserByMailLazy] = useLazyGetUserByEmailQuery()
   const [getPatientByIdLazy] = useLazyGetEncryptedPatientByIdQuery()
@@ -249,6 +244,48 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
   const [sendConfirmationEmail] = useSendEmailMutation()
+  const [getAgendasAndProcedures] = useLazyGetAgendaAndProceduresQuery()
+
+  const watchedProcedures = Form.useWatch('procedures', form)
+  const watchedSelectedTime = Form.useWatch(['timeslot', 'time'], form)
+  const watchedPersonalInfo = Form.useWatch('personalInfo', form)
+
+  const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
+
+  const { sites } = useSites()
+  const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
+  const stableIdsFingerprint = siteIds.sort().join(',')
+
+  useEffect(() => {
+    const fetchAllAgendas = async () => {
+      setIsLoadingAgendasAndProcedures(true)
+
+      const promises = siteIds.map(async (siteId) => {
+        const res = await getAgendasAndProcedures({
+          propertyId: 'SERVICE|PARENTID',
+          propertyValue: siteId,
+        })
+          .unwrap()
+          .catch(() => null)
+        return res
+      })
+
+      const results = await Promise.all(promises)
+      const successfulFetches = results.filter((result): result is PublicAgendasAndCalendarItemTypes => result !== null)
+
+      const flattenedAgendas = successfulFetches.flatMap((fetch) => fetch.agendas ?? [])
+      const flattenedProcedures = successfulFetches.flatMap((fetch) => fetch.calendarItemTypes ?? [])
+
+      setAllAgendas(flattenedAgendas)
+      setAllProcedures(flattenedProcedures)
+      setIsLoadingAgendasAndProcedures(false)
+    }
+
+    fetchAllAgendas()
+  }, [stableIdsFingerprint, getAgendasAndProcedures])
+
+  const selections = useMemo(() => transformProceduresForSelection(allProcedures, allAgendas, sites ?? []), [allProcedures, allAgendas, sites])
+  const isLoading = useMemo(() => isLoadingAgendasAndProcedures || isSiteRootLoading || isAdminRootLoading, [isLoadingAgendasAndProcedures, isSiteRootLoading, isAdminRootLoading])
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -260,18 +297,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       duration: 0,
     })
     setTimeout(api.destroy, 2500)
-  }
-
-  const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
   }
 
   const steps = [
@@ -663,7 +688,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={1100}>
       <div style={{ width: '100%', padding: '1.5rem' }}>
         {notificationContextHolder}
-        {messageContextHolder}
         <Steps current={currentStep} style={{ marginBottom: 32 }}>
           {steps.map((item) => (
             <Step key={item.title} title={item.title} icon={item.icon} />

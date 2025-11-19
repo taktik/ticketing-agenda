@@ -1,6 +1,6 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { getIntegerProperty, getStringProperty, getTranslationForEntity, languages } from '../components/common/helpers'
 import { FormProcedure } from '../components/Calendar/CreateEvent/CreateEvent'
+import { getIntegerProperty, getStringProperty, getTranslationForEntity, languages } from '../components/common/helpers'
 
 export interface ProcedureVariant {
   id: string
@@ -47,14 +47,14 @@ const slugify = (text: string) =>
  * of unique "Procedure Selections" grouped by service and procedure name.
  */
 export function transformProceduresForSelection(allProcedures: CalendarItemType[], allAgendas: Agenda[], allSites: HealthcareParty[]): ProcedureSelection[] {
-  // 1. Create lookup maps for efficient access (your setup was perfect)
+  // 1. Create lookup maps for efficient access
   const agendaMap = new Map(allAgendas.map((agenda) => [agenda.id, agenda]))
   const siteMap = new Map(allSites.map((site) => [site.id, site]))
 
   // 3. Group all procedures by their name (e.g., group all "Demande de passeport")
   const proceduresGroupedByName = new Map<string, CalendarItemType[]>()
   for (const procedure of allProcedures) {
-    const nameKey = procedure.name || 'Unnamed Procedure'
+    const nameKey = procedure.name || 'Procédure inconnue'
     if (!proceduresGroupedByName.has(nameKey)) {
       proceduresGroupedByName.set(nameKey, [])
     }
@@ -81,9 +81,9 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
         // These are the variants (e.g., for 1 person, 2 people, etc.)
         const firstProcInService = proceduresInOneService[0]
 
-        const agendaId = firstProcInService.agendaId
+        const agendaId = getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
         const agenda = agendaId ? agendaMap.get(agendaId) : undefined
-        const siteId = agenda?.author
+        const siteId = agenda ? getStringProperty(agenda.properties, 'SERVICE|PARENTID') : undefined
         const site = siteId ? siteMap.get(siteId) : undefined
 
         // If we can't link this service back to a valid site, we skip it.
@@ -121,14 +121,15 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
 
     // 7. Construct the final `ProcedureSelection` object for this procedure name
     const firstProcedureInGroup = proceduresWithSameName[0]
-    const representativeService = firstProcedureInGroup.agendaId ? agendaMap.get(firstProcedureInGroup.agendaId) : undefined
-    const serviceName = representativeService?.name || 'Unknown Service'
+    const agendaId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
+    const representativeService = agendaId ? agendaMap.get(agendaId) : undefined
+    const serviceName = representativeService?.name || 'Service Inconnu'
 
     //8. Get the translations for service - procedure
     const displayTextByLanguage = Object.fromEntries(
       languages.map((lang) => {
         const servicePart = getTranslationForEntity(representativeService?.properties, 'SERVICE', lang) || serviceName
-        const procedurePart = getTranslationForEntity(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE', lang)
+        const procedurePart = getTranslationForEntity(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE', lang) || procedureName
         return [lang, `${servicePart} - ${procedurePart}`]
       }),
     )
