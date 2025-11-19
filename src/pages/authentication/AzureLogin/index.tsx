@@ -4,7 +4,7 @@ import { Button } from 'antd'
 import { useEffect } from 'react'
 import { loginRequest } from '../../../config/config.azure'
 import { useAppDispatch } from '../../../core/hooks'
-import { azureLogin } from '../../../core/services/auth.api'
+import { azureLogin, azureLogin2 } from '../../../core/services/auth.api'
 import '../index.css'
 
 export default function AzureLogin() {

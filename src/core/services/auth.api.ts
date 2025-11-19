@@ -221,10 +221,49 @@ export const anonymousCardinalApi = () => {
   return anonymousApiCache['anonymous'] as CardinalAnonymousSdk
 }
 
+export const azureLogin2 = createAsyncThunk('cardinalApi/azureLogin2', async ({ account }: { account: AccountInfo }, { getState, dispatch }) => {
+  try {
+    console.log('account 2', account)
+
+    if (!account.idTokenClaims?.preferred_username) {
+      throw new Error('No valid prefered username')
+    }
+
+    const initialMsalResult = await msalInstance.acquireTokenSilent({
+      scopes: ['api://aa6047dc-336f-4090-bbdc-e00c7fddd34c/access_as_user'],
+      account,
+    })
+    const initialAccessToken = initialMsalResult.accessToken
+    const api = await CardinalSdk.initialize(
+      'org.taktik.ticketing-agenda', //todo add to configs
+      ICURE_NIGHTLY_URL,
+      new AuthenticationMethod.UsingCredentials.UsernameLongToken(account.idTokenClaims?.preferred_username, initialAccessToken),
+      StorageFacade.usingBrowserLocalStorage(),
+      {
+        useHierarchicalDataOwners: true,
+        encryptedFields: { patient: [], calendarItem: [] },
+        cryptoStrategies: new PetraCareCryptoStrategies(),
+      },
+    )
+    const user = await api.user.getCurrentUser()
+    console.log('currentUser', user)
+    apiCache[`${user.groupId}/${user.id}`] = api
+    return new User(user)
+  } catch (e) {
+    console.error(`Couldn't start authentication: ${e}`)
+  } finally {
+    dispatch(setLoginProcessStarted(false))
+  }
+})
+
 export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ account }: { account: AccountInfo }, { getState, dispatch }) => {
   try {
     const oid = account.idTokenClaims?.oid
-    console.log('account', account)
+    console.log('account 1', account)
+
+    if (!account.idTokenClaims?.preferred_username) {
+      throw new Error('No valid prefered username')
+    }
 
     const initialMsalResult = await msalInstance.acquireTokenSilent({
       scopes: ['api://aa6047dc-336f-4090-bbdc-e00c7fddd34c/access_as_user'],
@@ -260,7 +299,7 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
       'org.taktik.ticketing-agenda', //todo add to configs
       ICURE_NIGHTLY_URL,
       new AuthenticationMethod.UsingSecretProvider(secretProvider, {
-        loginUsername: oid,
+        loginUsername: account.idTokenClaims.preferred_username,
         initialSecret: new SecretProviderAuthenticationOptions.InitialSecret.LongLivedToken(initialAccessToken),
       }),
       StorageFacade.usingBrowserLocalStorage(),
