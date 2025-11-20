@@ -1,25 +1,24 @@
 import { Agenda, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, TelecomType } from '@icure/cardinal-sdk'
-import { Button, Card, DatePicker, Descriptions, Divider, Form, Input, Select, Typography } from 'antd'
+import { Button, Card, Descriptions, Divider, Form, Input, notification, Typography } from 'antd'
 import { format, parse } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import dayjs from 'dayjs'
 import { EventApi } from 'fullcalendar'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { useLazyGetAvailabilitiesQuery } from '../../../core/api/anonymousApi'
 import { useCalendarItemDetails } from '../../../core/hooks/useCalendarItemDetails'
 import { CustomModal } from '../../common/CustomModal'
-import { formatEventDate, localeMap } from '../../common/helpers'
+import { dayjsToYYYYMMDDHHmmss, formatEventDate, localeMap } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
+import { TimeSlotPickerUI } from '../TimeSlotPickerUI/TimeSlotPickerUI'
 import './index.css'
 
 const { TextArea } = Input
 const { Text } = Typography
 
 export interface CalendarEventUpdateForm {
-  start: dayjs.Dayjs
-  end: dayjs.Dayjs
-  calendarItemTypeId?: string
   details: string
 }
 
@@ -27,7 +26,6 @@ interface EventDetailsProps {
   isVisible: boolean
   onClose: () => void
   event: EventApi | undefined
-  procedures: CalendarItemType[] | undefined
   deleteEvent: (
     event: EventApi | undefined,
     calendarItem: DecryptedCalendarItem,
@@ -39,7 +37,9 @@ interface EventDetailsProps {
   ) => Promise<void>
   updateEvent: (
     event: EventApi | undefined,
-    updatedValues: CalendarEventUpdateForm,
+    details: string,
+    selectedDate: dayjs.Dayjs | undefined,
+    selectedTime: dayjs.Dayjs | undefined,
     calendarItem: DecryptedCalendarItem,
     patient: EncryptedPatient,
     agenda: Agenda,
@@ -49,28 +49,77 @@ interface EventDetailsProps {
   ) => Promise<void>
 }
 
-export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEvent, updateEvent }: EventDetailsProps) => {
+export const EventDetails = ({ isVisible, onClose, event, deleteEvent, updateEvent }: EventDetailsProps) => {
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState<boolean>(false)
-  const { t, i18n } = useTranslation()
-  const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
-
   const [isEditing, setIsEditing] = useState(false)
   const [form] = Form.useForm<CalendarEventUpdateForm>()
-
+  const { t, i18n } = useTranslation()
   const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
-
+  const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
   const isTimeOff = useMemo(() => !!event?.extendedProps.isTimeOff, [event])
-
   const patientName = useMemo(() => (patient ? patient.firstName + ' ' + patient.lastName : undefined), [patient])
   const patientBirthDate = useMemo(() => (patient && patient.dateOfBirth ? format(parse(String(patient.dateOfBirth), 'yyyyMMdd', new Date()), 'dd MMMM yyyy', { locale: dateFnsLocale }) : undefined), [patient])
-
   const allTelecoms = useMemo(() => patient?.addresses.flatMap((addr) => addr.telecoms || []), [patient])
-
   const emailObj = useMemo(() => allTelecoms?.find((t) => t.telecomType === TelecomType.Email), [allTelecoms])
   const phoneObj = useMemo(() => allTelecoms?.find((t) => t.telecomType === TelecomType.Mobile), [allTelecoms])
-
   const patientEmail = useMemo(() => emailObj?.telecomNumber, [emailObj])
   const patientPhoneNumber = useMemo(() => phoneObj?.telecomNumber, [phoneObj])
+
+  const [availabilities, setAvailabilities] = useState<dayjs.Dayjs[]>([])
+  const [currentMonth, setCurrentMonth] = useState(dayjs())
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | undefined>(undefined)
+  const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
+  const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
+
+  const [api, notificationContextHolder] = notification.useNotification()
+  const openNotification = useCallback(
+    (type: 'error', message: string, description: string) => {
+      api.open({ type, message, description, duration: 4 })
+    },
+    [api],
+  )
+
+  useEffect(() => {
+    const fetchRescheduleAvailabilities = async () => {
+      if (!agenda?.id || !calendarItemType?.id) return
+
+      try {
+        const startDate = currentMonth.startOf('month')
+        const endDate = currentMonth.endOf('month')
+
+        const results = await getAvailabilities(
+          {
+            agendaId: agenda.id,
+            calendarItemTypeId: calendarItemType.id.toString(),
+            startDate: dayjsToYYYYMMDDHHmmss(startDate),
+            endDate: dayjsToYYYYMMDDHHmmss(endDate),
+          },
+          true,
+        ).unwrap()
+
+        setAvailabilities(results ?? [])
+
+        if (!selectedDate) {
+          const firstAvailable = (results ?? []).find((d: dayjs.Dayjs) => d >= dayjs().startOf('day'))
+          if (firstAvailable) {
+            setSelectedDate(firstAvailable)
+          }
+        }
+      } catch (error: unknown) {
+        openNotification('error', t('validation.unexpected_error'), '')
+      }
+    }
+    fetchRescheduleAvailabilities()
+  }, [agenda, calendarItemType, currentMonth, getAvailabilities, openNotification, t, selectedDate])
+
+  const handleDateSelect = useCallback((date: dayjs.Dayjs) => {
+    setSelectedDate(date)
+    setSelectedTime(undefined)
+  }, [])
+
+  const handleTimeSelect = useCallback((time: dayjs.Dayjs) => {
+    setSelectedTime(time)
+  }, [])
 
   const handleModify = useCallback(() => {
     setIsEditing(true)
@@ -81,19 +130,25 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
   }, [setIsEditing])
 
   const handleUpdate = useCallback(async () => {
-    const values = await form.validateFields()
-    if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
-
-    await updateEvent(event, values, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber) //TODO shouldnt be able to modify calendarItemType. And Must be limited to availabilities.
-    onClose()
+    try {
+      const { details } = await form.validateFields()
+      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
+      await updateEvent(event, details, selectedDate, selectedTime, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+      onClose()
+    } catch (error) {
+      console.error(error)
+    }
   }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber])
 
   const handleDelete = useCallback(async () => {
-    if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
-
-    await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
-    setShowDeleteAppointmentModal(false)
-    onClose()
+    try {
+      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
+      await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+      setShowDeleteAppointmentModal(false)
+      onClose()
+    } catch (error) {
+      console.error(error)
+    }
   }, [event, deleteEvent, setShowDeleteAppointmentModal, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber])
 
   const renderDisplayMode = () => (
@@ -150,34 +205,30 @@ export const EventDetails = ({ isVisible, onClose, event, procedures, deleteEven
   )
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={isEditing ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={800}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={isEditing ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={1000}>
       <div className="modal-event">
+        {notificationContextHolder}
         <Form
           form={form}
           onFinish={handleUpdate}
-          initialValues={{ start: dayjs(event?.start), end: dayjs(event?.end), details: event?.extendedProps.details ?? '', calendarItemTypeId: event?.extendedProps.calendarItemTypeId ?? '' }}
+          initialValues={{ start: dayjs(event?.start), end: dayjs(event?.end), details: event?.extendedProps.details ?? '' }}
           layout="vertical"
           style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}
         >
           {isEditing ? (
             <>
-              <Form.Item name="start" label={t('content.start_hour')} rules={[{ required: true }]}>
-                <DatePicker showTime format="MMM D, YYYY HH:mm" style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item name="end" label={t('content.end_hour')} rules={[{ required: true }]}>
-                <DatePicker showTime format="MMM D, YYYY HH:mm" style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item name="calendarItemTypeId" label={t('content.procedure')}>
-                <Select disabled={isTimeOff}>
-                  {(procedures ?? [])
-                    .filter((proc) => proc.defaultCalendarItemType)
-                    .map((type) => (
-                      <Select.Option key={type.id} value={type.id}>
-                        {type.name}
-                      </Select.Option>
-                    ))}
-                </Select>
-              </Form.Item>
+              <div style={{ padding: '1rem' }}>
+                <TimeSlotPickerUI
+                  availabilities={availabilities}
+                  isLoading={availabilitiesLoading}
+                  currentMonth={currentMonth}
+                  onMonthChange={setCurrentMonth}
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                  onDateSelect={handleDateSelect}
+                  onTimeSelect={handleTimeSelect}
+                />
+              </div>
               <Form.Item name="details" label={t('content.details')}>
                 <TextArea rows={4} />
               </Form.Item>

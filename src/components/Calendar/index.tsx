@@ -10,6 +10,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItem, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
+import dayjs from 'dayjs'
 import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalendar'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -21,13 +22,13 @@ import { SendEmailRequest } from '../../core/api/fetchType'
 import { useLazyGetEncryptedPatientByIdQuery } from '../../core/api/patientApi'
 import { useCalendarItemDetails } from '../../core/hooks/useCalendarItemDetails'
 import { usePermissions } from '../../core/hooks/usePermissions'
-import { dayjsToYYYYMMDDHHmmss, fuzzyDateTimeIntToDayjs, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
+import { calculateNumericEventTimes, fuzzyDateTimeIntToDayjs, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
-import { CreateEvent } from './CreateEvent/CreateEvent'
+import { combineDateAndTime, CreateEvent } from './CreateEvent/CreateEvent'
 import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
-import { CalendarEventUpdateForm, EventDetails } from './EventDetails/ModalEvent'
+import { EventDetails } from './EventDetails/ModalEvent'
 import './index.css'
 
 interface CalendarProps {
@@ -310,7 +311,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const updateEvent = useCallback(
     async (
       event: EventApi | undefined,
-      updatedValues: CalendarEventUpdateForm,
+      details: string,
+      selectedDate: dayjs.Dayjs | undefined,
+      selectedTime: dayjs.Dayjs | undefined,
       calendarItem: DecryptedCalendarItem,
       patient: EncryptedPatient,
       agenda: Agenda,
@@ -320,14 +323,21 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     ) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
-
-        const updatedCalendarItem = new DecryptedCalendarItem({
+        let updatedCalendarItem = new DecryptedCalendarItem({
           ...calendarItem,
-          calendarItemTypeId: updatedValues.calendarItemTypeId,
-          details: updatedValues.details,
-          startTime: dayjsToYYYYMMDDHHmmss(updatedValues.start),
-          endTime: dayjsToYYYYMMDDHHmmss(updatedValues.end),
+          details,
         })
+        if (selectedDate && selectedTime && calendarItem?.duration) {
+          const currentStartTime = combineDateAndTime({ date: selectedDate, time: selectedTime })
+          const numericTimes = calculateNumericEventTimes(currentStartTime, calendarItem.duration)
+
+          updatedCalendarItem = new DecryptedCalendarItem({
+            ...calendarItem,
+            details: details,
+            startTime: numericTimes?.startTime,
+            endTime: numericTimes?.endTime,
+          })
+        }
 
         await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
         const emailPayload = await computeUpdateEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
@@ -401,8 +411,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           allDayText={t('content.all_day')}
         />
       </div>
-      {eventModalOpen &&
-        createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} procedures={procedures} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
+      {eventModalOpen && createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
       {createApptModalOpen && createPortal(<CreateEvent isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} />, document.body)}
       {apptSelectorModalOpen &&
         createPortal(

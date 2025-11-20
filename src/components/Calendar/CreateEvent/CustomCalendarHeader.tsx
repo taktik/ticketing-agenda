@@ -9,7 +9,7 @@ interface CustomHeaderProps {
   value: Dayjs
   onChange: (date: Dayjs) => void
   currentMonth: Dayjs
-  setCurrentMonth: Dispatch<SetStateAction<dayjs.Dayjs>>
+  setCurrentMonth: (newMonth: Dayjs) => void
   minDate: dayjs.Dayjs
 }
 

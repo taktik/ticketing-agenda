@@ -1,17 +1,12 @@
-import { Button, Calendar, CalendarProps, Col, Divider, Empty, Form, FormInstance, notification, Row, Space, Typography } from 'antd'
+import { Form, FormInstance, notification } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TimeSlotPickerUI } from '../../TimeSlotPickerUI/TimeSlotPickerUI'
 import { useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
-import { ProcedureSelection } from '../../../../helpers/transformProcedures'
-import { dayjsToYYYYMMDDHHmmss } from '../../../common/helpers'
-import { SpinLoader } from '../../../common/SpinLoader'
 import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
-import { CustomCalendarHeader } from '../CustomCalendarHeader'
-import { CustomCellRender } from '../CustomCellRender'
-import './index.css'
-
-const { Title, Paragraph } = Typography
+import { dayjsToYYYYMMDDHHmmss } from '../../../common/helpers'
+import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 
 interface ProcessedAvailabilities {
   availabilityList: dayjs.Dayjs[]
@@ -28,44 +23,29 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
   const { t } = useTranslation()
   const [availabilities, setAvailabilities] = useState<dayjs.Dayjs[]>([])
   const [currentMonth, setCurrentMonth] = useState(dayjs())
-  const [selectedHour, setSelectedHour] = useState<dayjs.Dayjs | undefined>(undefined)
-  const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
-  const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
-  const minDate = useMemo(() => dayjs(), [])
-
-  const availableDatesSet = useMemo(() => {
-    const dates = new Set()
-    availabilities.forEach((slot) => {
-      dates.add(slot.format('YYYY-MM-DD'))
-    })
-    return dates
-  }, [availabilities])
-
-  const disabledDate = (current: Dayjs) => {
-    return current < minDate || !availableDatesSet.has(current.format('YYYY-MM-DD'))
-  }
 
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
-
   const [api, notificationContextHolder] = notification.useNotification()
 
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
+  const openNotification = useCallback(
+    (type: 'error', message: string, description: string) => {
+      api.open({
+        type,
+        message,
+        description,
+        duration: 0,
+      })
+      setTimeout(api.destroy, 2500)
+    },
+    [api],
+  )
 
-  const findConsecutiveSlots = (processedAvailabilities: ProcessedAvailabilities[]): dayjs.Dayjs[] => {
-    // Si aucune disponibilité n'est fournie, on retourne un tableau vide.
+  const findConsecutiveSlots = useCallback((processedAvailabilities: ProcessedAvailabilities[]): dayjs.Dayjs[] => {
     if (!processedAvailabilities || processedAvailabilities.length === 0) {
       return []
     }
 
-    // --- Étape 1 : Pour chaque procédure, "décomposer" ses disponibilités en blocs de 5 minutes---
+    // --- Étape 1 : Pour chaque procédure, "décomposer" ses disponibilités en blocs de 5 minutes ---
     const allProcedureIntervals = processedAvailabilities.map((proc) => {
       const duration = proc.procedureDuration
       const slotsNeeded = duration / 5 // blocs de 5 minutes
@@ -79,7 +59,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
       return intervals
     })
 
-    // --- Étape 2 : Trouver l'intersection de tous les blocs de 5 minutes disponibles ---
+    // --- Étape 2 : Trouver l'intersection de tous les blocs disponibles ---
     if (allProcedureIntervals.length === 0) return []
 
     let commonIntervals = new Set(allProcedureIntervals[0])
@@ -112,9 +92,8 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
         validStartSlots.push(dayjs(timestamp))
       }
     }
-
     return validStartSlots
-  }
+  }, [])
 
   useEffect(() => {
     if (!formProcedure || formProcedure.length === 0) {
@@ -144,7 +123,7 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
               startDate: dayjsToYYYYMMDDHHmmss(startDate),
               endDate: dayjsToYYYYMMDDHHmmss(endDate),
             },
-            true, // TODO: This is buggy
+            true,
           ).unwrap()
 
           return {
@@ -154,146 +133,62 @@ export const StepTimeSlotSelector = ({ form, selections, formProcedure }: StepTi
         })
 
         const results = await Promise.all(promises)
-
         const finalList = results.length === 1 ? results[0].availabilityList : findConsecutiveSlots(results)
-
         setAvailabilities(finalList)
       } catch (error: unknown) {
         openNotification('error', t('validation.unexpected_error'), '')
       }
     }
     fetchAllAvailabilities()
-  }, [formProcedure, selections, getAvailabilities, currentMonth])
+  }, [formProcedure, selections, getAvailabilities, currentMonth, openNotification, t, findConsecutiveSlots])
+
+  const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
+  const timeValue: Dayjs = Form.useWatch(['timeslot', 'time'], form)
 
   useEffect(() => {
-    const firstAvailable = availabilities.find((d) => !disabledDate(d))
-    if (firstAvailable) {
-      form.setFieldsValue({
-        timeslot: { date: firstAvailable },
-      })
+    if (!dateValue) {
+      const firstAvailable = availabilities.find((d) => d >= dayjs().startOf('day'))
+      if (firstAvailable) {
+        form.setFieldsValue({
+          timeslot: { date: firstAvailable },
+        })
+      }
     }
-  }, [availabilities, form])
+  }, [availabilities, form, dateValue])
 
-  const slotsForSelectedDay = useMemo(() => {
-    return availabilities.filter((slot) => slot.isSame(dateValue, 'day'))
-  }, [dateValue, availabilities])
-
-  const slotsByHour = useMemo(() => {
-    return slotsForSelectedDay.reduce(
-      (acc, slot) => {
-        const hour = slot.format('HH')
-        if (!acc[hour]) {
-          acc[hour] = []
-        }
-        acc[hour].push(slot)
-        return acc
-      },
-      {} as Record<string, dayjs.Dayjs[]>,
-    )
-  }, [slotsForSelectedDay])
-
-  const availableHours = useMemo(() => {
-    return Object.keys(slotsByHour)
-      .sort()
-      .map((hour) => {
-        return slotsByHour[hour][0].minute(0).second(0)
-      })
-  }, [slotsByHour])
-
-  useEffect(() => {
-    setSelectedHour(undefined)
-    setSelectedTime(undefined)
-    form.resetFields([['timeslot', 'time']])
-  }, [dateValue])
-
-  const handleHourSelect = useCallback(
-    (hour: dayjs.Dayjs) => {
-      setSelectedHour(hour)
-      setSelectedTime(undefined)
-      form.resetFields([['timeslot', 'time']])
+  const handleDateSelect = useCallback(
+    (date: Dayjs) => {
+      form.setFieldsValue({ timeslot: { date: date, time: undefined } })
+      form.validateFields([['timeslot', 'time']])
     },
-    [setSelectedHour, setSelectedTime, form],
+    [form],
   )
 
-  const cellRender = useCallback(
-    (current: Dayjs, info: { originNode: React.ReactElement }) => {
-      return <CustomCellRender current={current} info={info} availabilities={availabilities} />
+  const handleTimeSelect = useCallback(
+    (time: Dayjs) => {
+      form.setFieldsValue({ timeslot: { time: time } })
+      form.validateFields([['timeslot', 'time']])
     },
-    [availabilities],
-  )
-
-  const renderCalendarHeader: CalendarProps<Dayjs>['headerRender'] = useCallback(
-    ({ value, onChange }: { value: dayjs.Dayjs; onChange: (date: Dayjs) => void }) => {
-      return <CustomCalendarHeader value={value} onChange={onChange} currentMonth={currentMonth} minDate={minDate} setCurrentMonth={setCurrentMonth} />
-    },
-    [currentMonth, minDate, setCurrentMonth],
+    [form],
   )
 
   return (
-    <Row gutter={[32, 32]}>
+    <>
       {notificationContextHolder}
-      <Col xs={24} lg={12}>
-        <Title level={4}>{t('content.select_a_date')}</Title>
-        <Form.Item name={['timeslot', 'date']} rules={[{ required: true }]}>
-          <Calendar fullscreen={false} disabledDate={disabledDate} headerRender={renderCalendarHeader} fullCellRender={cellRender} />
-        </Form.Item>
-      </Col>
-      <Col xs={24} lg={12}>
-        <Title level={4}>{t('content.select_a_time')}</Title>
-        <Paragraph type="secondary">
-          {t('content.available_on')} {dateValue ? dateValue.format('MMMM D, YYYY') : '...'}
-        </Paragraph>
+      {/* Hidden Form.Items to register fields with the form */}
+      <Form.Item name={['timeslot', 'date']} rules={[{ required: true }]} noStyle />
+      <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]} noStyle />
 
-        <Divider />
-        <div style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto', padding: '0 16px 0 4px' }}>
-          {availabilitiesLoading ? (
-            <SpinLoader />
-          ) : availableHours.length > 0 ? (
-            <>
-              <div>
-                <Title level={5} style={{ marginBottom: 12 }}>
-                  {t('content.choose_time')}
-                </Title>
-                <Space size={[8, 12]} wrap>
-                  {availableHours.map((hour) => (
-                    <Button key={hour.format('HH')} type={selectedHour?.isSame(hour, 'hour') ? 'primary' : 'default'} onClick={() => handleHourSelect(hour)}>
-                      {hour.format('HH')}:00
-                    </Button>
-                  ))}
-                </Space>
-              </div>
-
-              <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]} noStyle>
-                {selectedHour && (
-                  <div style={{ marginTop: 24 }}>
-                    <Title level={5} style={{ marginBottom: 12 }}>
-                      {t('content.choose_slot')}
-                    </Title>
-                    <Space size={[8, 12]} wrap>
-                      {slotsByHour[selectedHour.format('HH')].map((time) => (
-                        <Button
-                          key={time.format('HH:mm')}
-                          type={selectedTime?.isSame(time) ? 'primary' : 'default'}
-                          onClick={() => {
-                            setSelectedTime(time)
-                            form.setFieldsValue({ timeslot: { time: time } })
-                          }}
-                        >
-                          {time.format('HH:mm')}
-                        </Button>
-                      ))}
-                    </Space>
-                  </div>
-                )}
-              </Form.Item>
-            </>
-          ) : (
-            <>
-              <Empty description={t('content.no_slots_available')} />
-            </>
-          )}
-        </div>
-      </Col>
-    </Row>
+      <TimeSlotPickerUI
+        availabilities={availabilities}
+        isLoading={availabilitiesLoading}
+        currentMonth={currentMonth}
+        onMonthChange={setCurrentMonth}
+        selectedDate={dateValue}
+        selectedTime={timeValue}
+        onDateSelect={handleDateSelect}
+        onTimeSelect={handleTimeSelect}
+      />
+    </>
   )
 }
