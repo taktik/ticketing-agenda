@@ -1,6 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs'
 import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 
 interface OriginNodeProps {
   className: string
@@ -14,7 +13,6 @@ interface CustomCellRenderProps {
 }
 
 export const CustomCellRender = ({ current, info, availabilities }: CustomCellRenderProps) => {
-  const { t } = useTranslation()
   const formattedDate = current.format('YYYY-MM-DD')
   const highlightedDates = useMemo(() => availabilities.map((d) => d.format('YYYY-MM-DD')), [availabilities])
   const defaultCellProps = info.originNode.props as OriginNodeProps
