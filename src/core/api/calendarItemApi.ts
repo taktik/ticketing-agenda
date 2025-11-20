@@ -1,9 +1,9 @@
 import { AccessLevel, CalendarItemFilters, DecryptedCalendarItem, Patient, SecretIdUseOption } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import { dateToYYYYMMDD } from '../../components/common/helpers'
-import { cardinalApi, guard } from '../services/auth.api'
+import { cardinalApi } from '../services/auth.api'
 import { GetCalendarItemsByAgendaAndPeriods } from './fetchType'
-import { loadFromIterator } from './utils'
+import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
 enum CalendarItemTags {
   CalendarItem = 'CalendarItem',
@@ -12,9 +12,7 @@ enum CalendarItemTags {
 export const calendarItemApiRtk = createApi({
   reducerPath: 'calendarItemApi',
   tagTypes: [CalendarItemTags.CalendarItem],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getCalendarItem: builder.query<DecryptedCalendarItem | undefined, string>({
       async queryFn(id, { getState }) {

@@ -1,6 +1,7 @@
 import { CalendarItemType, DocIdentifier, ListOfIds } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
+import { baseQueryWithRetry, guard } from './utils'
 
 enum calendarItemTypeTag {
   CalendarItemType = 'CalendarItemTypeTag',
@@ -9,9 +10,7 @@ enum calendarItemTypeTag {
 export const calendarItemTypeApiRtk = createApi({
   reducerPath: 'calendarItemTypeApi',
   tagTypes: [calendarItemTypeTag.CalendarItemType],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getCalendarItemTypes: builder.query<CalendarItemType[] | undefined, string>({
       async queryFn(agendaId, { getState }) {

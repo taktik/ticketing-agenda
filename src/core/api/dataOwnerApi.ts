@@ -1,7 +1,8 @@
 import { DataOwnerWithType, Device, EncryptedPatient, HealthcareParty } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
 import { roleTypeMap, UserRole } from './roleApi'
+import { baseQueryWithRetry, guard } from './utils'
 
 enum dataOwnerTypeTag {
   DataOwnerType = 'DataOwnerTypeTag',
@@ -15,9 +16,7 @@ export interface DataOwnerWithRole {
 export const dataOwnerApiRtk = createApi({
   reducerPath: 'dataOwnerTypeApi',
   tagTypes: [dataOwnerTypeTag.DataOwnerType],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getCurrentDataOwner: builder.query<DataOwnerWithType | undefined, void>({
       async queryFn(_, { getState }) {

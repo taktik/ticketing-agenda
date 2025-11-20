@@ -1,7 +1,8 @@
 import { CodeStub, ListOfIds, Role } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import { ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER } from '../../constants'
-import { cardinalApi, guard } from '../services/auth.api'
+import { cardinalApi } from '../services/auth.api'
+import { baseQueryWithRetry, guard } from './utils'
 
 export enum UserRole {
   ADMINISTRATOR = 'ADMINISTRATOR',
@@ -45,9 +46,7 @@ enum RoleTags {
 export const roleApiRtk = createApi({
   reducerPath: 'roleApi',
   tagTypes: [RoleTags.Role],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getAllRoles: builder.query<Role[] | undefined, void>({
       async queryFn(_, { getState }) {

@@ -1,9 +1,9 @@
 import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
 import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, UndeleteHcpByIdParameters } from './fetchType'
 import { allRoleTags } from './roleApi'
-import { loadFromIterator } from './utils'
+import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
 enum HealthcarePartyTags {
   HealthcareParty = 'HealthcareParty',
@@ -12,9 +12,7 @@ enum HealthcarePartyTags {
 export const healthcarePartyApiRtk = createApi({
   reducerPath: 'healthcarePartyApi',
   tagTypes: [HealthcarePartyTags.HealthcareParty],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getHealthcareParties: builder.query<HealthcareParty[] | undefined, undefined>({
       async queryFn(_, { getState }) {

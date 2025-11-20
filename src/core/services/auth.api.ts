@@ -168,28 +168,6 @@ function getError(e: Error): FetchBaseQueryError {
   return { status: 'CUSTOM_ERROR', error: e.message, data: e }
 }
 
-export const guard = async <T>(guardedInputs: unknown[], lambda: () => Promise<T>): Promise<{ error: FetchBaseQueryError } | { data: T | undefined }> => {
-  if (guardedInputs.some((x) => !x)) {
-    return { data: undefined }
-  }
-  try {
-    const res = await lambda()
-    const curate = (result: T): T => {
-      if (result === null || result === undefined) {
-        return null as T
-      } else if (Array.isArray(result)) {
-        return result.map(curate) as T
-      } else {
-        return result as T
-      }
-    }
-    return { data: curate(res) }
-  } catch (e) {
-    console.error(e)
-    return { error: getError(e as Error) }
-  }
-}
-
 export const getApiFromState = async (getState: () => CardinalApiState | { cardinalApi: CardinalApiState } | undefined): Promise<CardinalSdk | undefined> => {
   const state = getState()
   if (!state) {

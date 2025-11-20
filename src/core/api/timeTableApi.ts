@@ -1,8 +1,8 @@
 import { DocIdentifier, TimeTable, TimeTableFilters } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
 import { TimeTablesServiceParameters } from './fetchType'
-import { loadFromIterator } from './utils'
+import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
 enum TimeTableTags {
   TimeTable = 'TimeTable',
@@ -11,9 +11,7 @@ enum TimeTableTags {
 export const timeTableApiRtk = createApi({
   reducerPath: 'timeTableApi',
   tagTypes: [TimeTableTags.TimeTable],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getTimeTables: builder.query<TimeTable[] | undefined, TimeTablesServiceParameters>({
       async queryFn(params, { getState }) {

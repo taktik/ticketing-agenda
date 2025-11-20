@@ -1,8 +1,9 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { PublicAgendasAndCalendarItemTypes } from '@icure/cardinal-sdk'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import dayjs from 'dayjs'
 import { DATABASE_ID } from '../../constants'
-import { anonymousCardinalApi, guard } from '../services/auth.api'
-import { PublicAgendasAndCalendarItemTypes } from '@icure/cardinal-sdk'
+import { anonymousCardinalApi } from '../services/auth.api'
+import { baseQueryWithRetry, guard } from './utils'
 
 enum AnonymousTags {
   Anonymous = 'Anonymous',
@@ -23,9 +24,7 @@ interface listAnonymousAgendaProceduresParams {
 export const anonymousApiRtk = createApi({
   reducerPath: 'anonymousApi',
   tagTypes: [AnonymousTags.Anonymous],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getAvailabilities: builder.query<dayjs.Dayjs[] | undefined, listAnonymousAvailabilitiesParams>({
       async queryFn(params, { getState }) {

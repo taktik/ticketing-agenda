@@ -1,9 +1,8 @@
 import { Agenda, AgendaFilters } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
 import { GetAgendasByStringPropertyParameters } from './fetchType'
-import { loadFromIterator } from './utils'
-import { usePermissions } from '../hooks/usePermissions'
+import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
 enum AgendaTags {
   Agenda = 'Agenda',
@@ -12,9 +11,7 @@ enum AgendaTags {
 export const agendaApiRtk = createApi({
   reducerPath: 'agendaApi',
   tagTypes: [AgendaTags.Agenda],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getAgendas: builder.query<Agenda[] | undefined, void>({
       async queryFn(_, { getState }) {

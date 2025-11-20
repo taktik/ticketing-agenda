@@ -1,7 +1,7 @@
 import { ListOfIds, randomUuid, User, UserFilters } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
-import { loadFromIterator } from './utils'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
+import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
 enum UserTags {
   User = 'User',
@@ -10,9 +10,7 @@ enum UserTags {
 export const userApiRtk = createApi({
   reducerPath: 'userApi',
   tagTypes: [UserTags.User],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getCurrentUser: builder.query<User | undefined, void>({
       async queryFn(_, { getState }) {

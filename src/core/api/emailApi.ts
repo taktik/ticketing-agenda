@@ -1,14 +1,13 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import { MSG_GW_URL, SPEC_ID } from '../../constants'
-import { SendEmailResponse, SendEmailRequest } from './fetchType'
+import { cardinalApi } from '../services/auth.api'
+import { SendEmailRequest, SendEmailResponse } from './fetchType'
+import { baseQueryWithRetry } from './utils'
 
 export const emailApiRtk = createApi({
   reducerPath: 'emailApi',
   tagTypes: ['Email'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     sendEmail: builder.mutation<SendEmailResponse, SendEmailRequest>({
       async queryFn({ receiver, from, processId, variables }, { getState }, _extraOptions, fetchWithBQ) {

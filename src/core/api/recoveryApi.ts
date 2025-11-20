@@ -1,13 +1,12 @@
 import { RecoveryDataKey } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
+import { baseQueryWithRetry, guard } from './utils'
 
 export const recoveryApiRtk = createApi({
   reducerPath: 'recoveryApi',
   tagTypes: ['Recovery'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     createExchangeDataRecovery: builder.mutation<RecoveryDataKey | undefined, string>({
       async queryFn(delegateId, { getState }) {

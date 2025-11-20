@@ -1,6 +1,7 @@
 import { DecryptedPatient, EncryptedPatient } from '@icure/cardinal-sdk'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { cardinalApi, guard } from '../services/auth.api'
+import { createApi } from '@reduxjs/toolkit/query/react'
+import { cardinalApi } from '../services/auth.api'
+import { baseQueryWithRetry, guard } from './utils'
 
 enum PatientTags {
   Patient = 'Patient',
@@ -9,9 +10,7 @@ enum PatientTags {
 export const patientApiRtk = createApi({
   reducerPath: 'patientApi',
   tagTypes: [PatientTags.Patient],
-  baseQuery: fetchBaseQuery({
-    baseUrl: '',
-  }),
+  baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     createDecryptedPatient: builder.mutation<DecryptedPatient | undefined, DecryptedPatient>({
       async queryFn(patient, { getState }) {
