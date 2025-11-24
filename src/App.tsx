@@ -1,9 +1,6 @@
 import { ConfigProvider } from 'antd'
 import React, { Suspense, useEffect, useMemo } from 'react'
-import { Provider } from 'react-redux'
-import { PersistGate } from 'redux-persist/integration/react'
 
-import { persistor, store } from './core/store'
 import { Router } from './navigation/Router'
 import { ANTD_NEW_THEME } from './style/antd/antdTheme'
 
@@ -50,7 +47,7 @@ const AppContent: React.FC = () => {
 
   // Determine Ant Design locale
   const antdLocale = useMemo(() => {
-    return antdLocales[currentLangCode] || enGB // Fallback
+    return antdLocales[currentLangCode] || enGB
   }, [currentLangCode])
 
   // Configure dayjs locale
@@ -66,11 +63,7 @@ const AppContent: React.FC = () => {
 
   return (
     <ConfigProvider theme={ANTD_NEW_THEME} locale={antdLocale}>
-      <Provider store={store}>
-        <PersistGate persistor={persistor} loading={<p>Loading Persisted State...</p>}>
-          <Router />
-        </PersistGate>
-      </Provider>
+      <Router />
     </ConfigProvider>
   )
 }
