@@ -4,7 +4,7 @@ import { Button } from 'antd'
 import { useEffect } from 'react'
 import { loginRequest } from '../../../config/config.azure'
 import { useAppDispatch } from '../../../core/hooks'
-import { azureLogin, azureLogin2 } from '../../../core/services/auth.api'
+import { azureLogin } from '../../../core/services/auth.api'
 import '../index.css'
 
 export default function AzureLogin() {
@@ -21,7 +21,7 @@ export default function AzureLogin() {
         const account = response?.account || instance.getActiveAccount()
         if (account) {
           instance.setActiveAccount(account)
-          dispatch(azureLogin2({ account }))
+          dispatch(azureLogin({ account }))
         }
       })
       .catch(console.error)

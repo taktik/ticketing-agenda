@@ -1,4 +1,6 @@
+import { AccountInfo } from '@azure/msal-browser'
 import {
+  AuthenticationMethod,
   AuthenticationProcessTelecomType,
   CaptchaOptions,
   CardinalAnonymousSdk,
@@ -25,13 +27,13 @@ import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
 import { calendarItemTypeApiRtk } from '../api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from '../api/dataOwnerApi'
+import { emailApiRtk } from '../api/emailApi'
 import { patientApiRtk } from '../api/patientApi'
+import { recoveryApiRtk } from '../api/recoveryApi'
 import { roleApiRtk } from '../api/roleApi'
 import { timeTableApiRtk } from '../api/timeTableApi'
 import { userApiRtk } from '../api/userApi'
 import { revertAll, setSavedCredentials } from '../app'
-import { recoveryApiRtk } from '../api/recoveryApi'
-import { emailApiRtk } from '../api/emailApi'
 
 const apiCache: { [key: string]: CardinalSdk } = {}
 const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
@@ -193,8 +195,36 @@ export const anonymousCardinalApi = () => {
   return anonymousApiCache['anonymous'] as CardinalAnonymousSdk
 }
 
-export const emailStartAuthentication = createAsyncThunk(
-  'cardinalApi/emailStartAuthentication',
+export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ account }: { account: AccountInfo }, { dispatch }) => {
+  try {
+    dispatch(setLoginProcessStarted(true))
+
+    if (!account.idTokenClaims?.preferred_username) {
+      throw new Error('No valid prefered username')
+    }
+    if (!account.idToken) {
+      throw new Error('No valid prefered username')
+    }
+
+    const api = await CardinalSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', account.idToken), StorageFacade.usingBrowserLocalStorage(), {
+      useHierarchicalDataOwners: true,
+      encryptedFields: { patient: [], calendarItem: [] },
+      cryptoStrategies: new PetraCareCryptoStrategies(),
+    })
+    const user = await api.user.getCurrentUser()
+    dispatch(setUser({ user }))
+    if (user.email) dispatch(setEmail({ email: user.email }))
+    apiCache[`${user.groupId}/${user.id}`] = api
+    return new User(user)
+  } catch (e) {
+    console.error(`Couldn't start authentication: ${e}`)
+  } finally {
+    dispatch(setLoginProcessStarted(false))
+  }
+})
+
+export const startEmailAuthentication = createAsyncThunk(
+  'cardinalApi/startEmailAuthentication',
   async (
     _payload: {
       captchaToken: Solution
@@ -239,7 +269,7 @@ export const emailStartAuthentication = createAsyncThunk(
   },
 )
 
-export const completeAuthentication = createAsyncThunk('cardinalApi/completeAuthentication', async (_payload, { getState, dispatch }) => {
+export const completeEmailAuthentication = createAsyncThunk('cardinalApi/completeEmailAuthentication', async (_payload, { getState, dispatch }) => {
   const {
     cardinalApi: { authProcess, token },
   } = getState() as { cardinalApi: CardinalApiState }
@@ -353,23 +383,34 @@ export const cardinalApiRtk = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(emailStartAuthentication.fulfilled, (state, { payload: authProcess }) => {
+    builder.addCase(startEmailAuthentication.fulfilled, (state, { payload: authProcess }) => {
       state.authProcess = authProcess
       state.waitingForToken = true
     })
-    builder.addCase(emailStartAuthentication.rejected, (state, {}) => {
+    builder.addCase(startEmailAuthentication.rejected, (state, {}) => {
       state.invalidEmail = true
     })
-    builder.addCase(completeAuthentication.fulfilled, (state, { payload: user }) => {
+    builder.addCase(completeEmailAuthentication.fulfilled, (state, { payload: user }) => {
       state.user = user as User
       state.online = !!user
       state.waitingForToken = false
     })
-    builder.addCase(completeAuthentication.rejected, (state, {}) => {
+    builder.addCase(completeEmailAuthentication.rejected, (state, {}) => {
       state.invalidToken = true
     })
   },
 })
 
-export const { setNewlyCreatedRecoveryKey, askForRecoveryKey, provideRecoveryKey, markRecoveryKeyAsLost, setRegistrationInformation, setToken, setEmail, resetCredentials, setLoginProcessStarted, setWaitingForToken } =
-  cardinalApiRtk.actions
+export const {
+  setUser,
+  setNewlyCreatedRecoveryKey,
+  askForRecoveryKey,
+  provideRecoveryKey,
+  markRecoveryKeyAsLost,
+  setRegistrationInformation,
+  setToken,
+  setEmail,
+  resetCredentials,
+  setLoginProcessStarted,
+  setWaitingForToken,
+} = cardinalApiRtk.actions

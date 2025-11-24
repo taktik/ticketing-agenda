@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 
 import LoginForm from '../../../components/authentication/LoginForm'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
-import { CardinalApiState, completeAuthentication, setEmail, setToken, setWaitingForToken, emailStartAuthentication } from '../../../core/services/auth.api'
+import { CardinalApiState, completeEmailAuthentication, setEmail, setToken, setWaitingForToken, startEmailAuthentication } from '../../../core/services/auth.api'
 import '../index.css'
 
 const reduxSelector = createSelector(
@@ -22,13 +22,13 @@ export default function EmailLogin() {
 
   const startAuthenticationProcessWithEmailAndCaptchaToken = (email: string, captchaToken: Solution) => {
     dispatch(setEmail({ email: email }))
-    dispatch(emailStartAuthentication({ captchaToken: captchaToken }))
+    dispatch(startEmailAuthentication({ captchaToken: captchaToken }))
   }
 
   const completeAuthenticationProcessWithEmailAndValidationCode = (email: string, validationCode: string) => {
     dispatch(setEmail({ email: email }))
     dispatch(setToken({ token: validationCode }))
-    dispatch(completeAuthentication())
+    dispatch(completeEmailAuthentication())
   }
 
   useEffect(() => {
