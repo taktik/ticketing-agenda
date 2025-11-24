@@ -2,10 +2,10 @@ import { WindowsOutlined } from '@ant-design/icons'
 import { useMsal } from '@azure/msal-react'
 import { Button } from 'antd'
 import { useEffect } from 'react'
-import { loginRequest } from '../../../config/config.azure'
 import { useAppDispatch } from '../../../core/hooks'
 import { azureLogin } from '../../../core/services/auth.api'
 import '../index.css'
+import { loginRequest } from '../../../config/config.azure'
 
 export default function AzureLogin() {
   const dispatch = useAppDispatch()

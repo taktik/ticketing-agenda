@@ -27,10 +27,12 @@ export const MANAGE_APPOINTMENT_ROUTE = window.config.REACT_APP_MANAGE_APPOINTME
 export const NEW_APPOINTMENT_ROUTE = window.config.REACT_APP_NEW_APPOINTMENT_ROUTE
 export const ORIGIN = window.location.origin
 export const APPLICATION_ID = window.config.REACT_APP_APPLICATION_ID
+export const AZURE_CLIENTID = window.config.REACT_APP_AZURE_CLIENTID
+export const AZURE_TENANTID = window.config.REACT_APP_AZURE_TENANTID
 
-export const ADMIN_SOLUTIONS_AUTH_TOKEN = ''
-export const ADMIN_SOLUTIONS_EMAIL = ''
-export const EMAIL_TEMPLATE = 'ec7d9b00-948c-11f0-a83d-fffe07e305e2'
+export const ADMIN_SOLUTIONS_AUTH_TOKEN = '' // get the token through icure dashboard
+export const ADMIN_SOLUTIONS_EMAIL = '' // get the email through icure dashboard
+export const EMAIL_TEMPLATE = '' // request the template id of the solution to icure
 
 export enum RootHcpType {
   SITE_ROOT = 'site-root',

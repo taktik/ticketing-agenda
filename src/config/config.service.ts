@@ -26,4 +26,6 @@ export class Config {
   REACT_APP_MANAGE_APPOINTMENT_ROUTE = 'https://mouscron.taktik.dev/appointment/management/authentify'
   REACT_APP_NEW_APPOINTMENT_ROUTE = 'https://mouscron.taktik.dev/appointment/new'
   REACT_APP_APPLICATION_ID = 'org.taktik.ticketing-agenda'
+  REACT_APP_AZURE_CLIENTID = 'aa6047dc-336f-4090-bbdc-e00c7fddd34c'
+  REACT_APP_AZURE_TENANTID = '94914ab7-4f28-4562-9122-94c4f5afa69c'
 }
