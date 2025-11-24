@@ -8,6 +8,8 @@ export const usePermissions = (skipProp: boolean = false) => {
   const skip = !user || skipProp
   const { data: dataOwnerInfo, isLoading: isRoleLoading } = useGetCurrentDataOwnerRoleQuery(undefined, { skip: skip })
 
+  const dataOwnerId = useMemo(() => dataOwnerInfo?.dataOwner.id, [dataOwnerInfo])
+
   const isAdministrator = useMemo(() => dataOwnerInfo?.role === UserRole.ADMINISTRATOR, [dataOwnerInfo])
   const isHeadOfService = useMemo(() => dataOwnerInfo?.role === UserRole.HEAD_OF_SERVICE, [dataOwnerInfo])
   const isCityWorker = useMemo(() => dataOwnerInfo?.role === UserRole.CITY_WORKER, [dataOwnerInfo])
@@ -30,6 +32,7 @@ export const usePermissions = (skipProp: boolean = false) => {
   }, [dataOwnerInfo, isHeadOfService, isCityWorker])
 
   return {
+    dataOwnerId,
     isRoleLoading,
     isAdministrator,
     isHeadOfService,

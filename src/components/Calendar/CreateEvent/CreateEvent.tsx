@@ -31,12 +31,13 @@ import { useRoot } from '../../../core/hooks/useRoot'
 import { useSites } from '../../../core/hooks/useSites'
 import { ProcedureSelection, ProcedureWithTimeAndSelections, transformProceduresForSelection } from '../../../helpers/transformProcedures'
 import { CustomModal } from '../../common/CustomModal'
-import { calculateNumericEventTimes, getTranslationForEntity } from '../../common/helpers'
+import { calculateNumericEventTimes, getCodeTagById, getTranslationForEntity } from '../../common/helpers'
 import { StepAppointmentReview } from './appointmentSteps/StepAppointmentReview'
 import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
+import { usePermissions } from '../../../core/hooks/usePermissions'
 
 const { Step } = Steps
 
@@ -251,6 +252,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   const watchedPersonalInfo = Form.useWatch('personalInfo', form)
 
   const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
+  const { dataOwnerId } = usePermissions()
 
   const { sites } = useSites()
   const siteIds = useMemo(() => (sites ?? []).map((site) => site.id), [sites])
@@ -341,8 +343,8 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   )
 
   const handleExistingCitizenFlow = useCallback(
-    async (currentUser: User, userData: CitizenInputData) => {
-      let citizenUser = currentUser
+    async (patientUser: User, userData: CitizenInputData) => {
+      let citizenUser = patientUser
 
       if (userData.mobilePhone && userData.mobilePhone !== citizenUser.mobilePhone) {
         const updatedUser = await createUpdateUser(new User({ ...citizenUser, mobilePhone: userData.mobilePhone })).unwrap()
@@ -438,10 +440,10 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       dateOfBirth: formatBirthDate(birthDate),
     }
 
-    const { data: existingUser } = await getUserByMailLazy(email)
+    const { data: citizenUser } = await getUserByMailLazy(email)
 
-    if (existingUser) {
-      return handleExistingCitizenFlow(new User({ ...existingUser }), normalizedData)
+    if (citizenUser) {
+      return handleExistingCitizenFlow(new User({ ...citizenUser }), normalizedData)
     } else {
       return handleNewCitizenFlow(normalizedData)
     }
@@ -518,22 +520,32 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           startTime: eventTimes?.startTime,
           endTime: eventTimes?.endTime,
           addressText: siteVariant.siteLocation,
-          tags: [new CodeStub({ id: 'APPOINTMENT|1', code: 'APPOINTMENT', type: 'APPOINTMENT', version: '1' })],
+          tags: [new CodeStub({ id: 'APPOINTMENT', code: item.procedureSelectionId, type: 'APPOINTMENT', version: '1' })],
         })
 
         return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: { adminRootId: adminRoot.id, siteRootId: siteRoot.id } }).unwrap()
       })
-      await Promise.allSettled(eventsCreationPromises)
+      const results = await Promise.allSettled(eventsCreationPromises)
+
+      const successfulItems = results.filter((result): result is PromiseFulfilledResult<DecryptedCalendarItem> => result.status === 'fulfilled' && result.value !== undefined).map((result) => result.value)
+
+      return successfulItems
     } catch (error: unknown) {
       console.error('An error occurred during appointment creation:', error)
       openNotification('error', t('validation.unexpected_error'), error instanceof Error ? error.message : 'An unknown error occurred.')
+      return []
     }
   }
 
-  const computeUrl = useCallback((recoveryDataKey: RecoveryDataKey) => {
+  const computeUrl = useCallback((recoveryDataKey: RecoveryDataKey, delegateId: string, calendarItemId: string) => {
     const path = MANAGE_APPOINTMENT_ROUTE
     const params = new URLSearchParams()
-    params.append('recoveryData', recoveryDataKey.asHexString())
+    const recoveryPayload = {
+      delegateId: delegateId,
+      recoveryKey: recoveryDataKey.asHexString(),
+    }
+    params.append('recoveryData', JSON.stringify(recoveryPayload))
+    params.append('calendarItemId', calendarItemId)
     return `${path}?${params.toString()}`
   }, [])
 
@@ -551,10 +563,12 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       siteLocation: string,
       lang: string,
       procedureDetails: string,
+      currentHcpId: string,
+      calendarItemId: string,
     ) => {
       const dateFormat = specificTimeslot.start.format('DD/MM/YYYY')
       const heureFormat = `${specificTimeslot.start.format('HH[h]mm')} - ${specificTimeslot.end.format('HH[h]mm')}`
-      const url = computeUrl(recoveryDataKey)
+      const url = computeUrl(recoveryDataKey, currentHcpId, calendarItemId)
 
       return {
         receiver: citizenUser.email!,
@@ -579,7 +593,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
   )
 
   const sendEmails = useCallback(
-    async (recoveryDataKey: RecoveryDataKey | undefined, citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient) => {
+    async (recoveryDataKey: RecoveryDataKey | undefined, citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient, currentHcpId: string, calendarItems: DecryptedCalendarItem[]) => {
       try {
         if (!recoveryDataKey) throw new Error('No valid recoveryDataKey')
         if (!citizenUser.email) throw new Error('No valid email')
@@ -592,6 +606,14 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
         }
 
         for (const procedure of procedures) {
+          const calendarItem = calendarItems.find((ci) => {
+            const formProcedureSelectionId = procedure.procedureSelectionId
+            const calendarItemSelectionId = getCodeTagById(ci.tags, 'APPOINTMENT')
+            return formProcedureSelectionId === calendarItemSelectionId
+          })
+          if (!calendarItem) {
+            throw new Error('Couldnt find an associated calendar item')
+          }
           const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
             procedureSelectionId: procedure.procedureSelectionId,
             site: procedure.site,
@@ -615,7 +637,19 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           const procedureName = getTranslationForEntity(appointmentProcedure?.publicProperties, 'CALENDARITEMTYPE', lang) || masterProcedure.procedureName
           const siteLocation = siteVariant.siteLocation
 
-          const emailPayload = computeEmailPayload(recoveryDataKey, citizenUser, citizenPatient, serviceName, procedureName, specificTimeslot, siteLocation, lang, siteVariant.procedureDetails)
+          const emailPayload = computeEmailPayload(
+            recoveryDataKey,
+            citizenUser,
+            citizenPatient,
+            serviceName,
+            procedureName,
+            specificTimeslot,
+            siteLocation,
+            lang,
+            siteVariant.procedureDetails,
+            currentHcpId,
+            calendarItem.id,
+          )
           await sendConfirmationEmail(emailPayload)
           currentStartTime = currentStartTime.add(durationInMinutes, 'minute')
         }
@@ -648,18 +682,25 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     try {
       setCreationStatus('loading')
       setCurrentStep((prevStep) => prevStep + 1)
+      if (!dataOwnerId) throw new Error('No valid delegateId')
       await form.validateFields()
       const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile()
       await initializePatientExchangeDatas(citizenPatient.id).unwrap()
-      await createAppointments(citizenUser, citizenPatient)
+      const calendarItems = await createAppointments(citizenUser, citizenPatient)
+      if (!calendarItems || calendarItems.length === 0) {
+        throw new Error('No appointments were created.')
+      }
       const recoveryDataKey = await createRecoveryDataKey(citizenPatient.id).unwrap()
-      await sendEmails(recoveryDataKey, citizenUser, citizenPatient)
+      if (!recoveryDataKey) {
+        throw new Error('no valid exchange data.')
+      }
+      await sendEmails(recoveryDataKey, citizenUser, citizenPatient, dataOwnerId, calendarItems)
       setCreationStatus('success')
     } catch (err) {
       setCreationStatus('failure')
       openNotification('error', t('content.complete_required_fields'), '')
     }
-  }, [form, createAppointments, openNotification, getOrCreateCitizenProfile, t])
+  }, [form, createAppointments, openNotification, getOrCreateCitizenProfile, t, dataOwnerId])
 
   const stepContent = [
     <StepProcedureSelector selections={selections} isProcedureLoading={isLoading} form={form} key={'procedureStep'} />,

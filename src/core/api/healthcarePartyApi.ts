@@ -14,6 +14,19 @@ export const healthcarePartyApiRtk = createApi({
   tagTypes: [HealthcarePartyTags.HealthcareParty],
   baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
+    getCurrentHealthcareParty: builder.query<HealthcareParty | undefined, void>({
+      async queryFn(_, { getState }) {
+        const hcpApi = (await cardinalApi(getState))?.healthcareParty
+        return guard([hcpApi], async (): Promise<HealthcareParty> => {
+          const hcp = await hcpApi?.getCurrentHealthcareParty()
+          if (!hcp) {
+            throw new Error('HealthcareParty does not exist')
+          }
+          return hcp
+        })
+      },
+      providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+    }),
     getHealthcareParties: builder.query<HealthcareParty[] | undefined, undefined>({
       async queryFn(_, { getState }) {
         const hcpApi = (await cardinalApi(getState))?.healthcareParty
@@ -185,6 +198,7 @@ export const {
   useUnDeleteHealthcarePartyByIdMutation,
   useSilentUnDeleteHealthcarePartyMutation,
   useGetHealthcarePartyByNameQuery,
+  useGetCurrentHealthcarePartyQuery,
 } = healthcarePartyApiRtk
 
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {

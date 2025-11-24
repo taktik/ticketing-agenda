@@ -397,7 +397,7 @@ export const setProperty = (properties: DecryptedPropertyStub[], id: string, typ
   }
 }
 
-export const getTagById = (tags: CodeStub[] | undefined, id: string) => {
+export const getCodeTagById = (tags: CodeStub[] | undefined, id: string) => {
   if (!tags) return ''
 
   const prop = tags.find((p) => p.id === id)

@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Agenda, CalendarItem, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, HealthcareParty } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItem, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, HealthcareParty, RecoveryDataKey } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
 import dayjs from 'dayjs'
@@ -15,11 +15,21 @@ import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalend
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION_FR, EMAIL_APPOINTMENT_MODIFICATION_NL, EMAIL_SENDER, NEW_APPOINTMENT_ROUTE } from '../../constants'
+import {
+  EMAIL_APPOINTMENT_CANCELLATION_FR,
+  EMAIL_APPOINTMENT_CANCELLATION_NL,
+  EMAIL_APPOINTMENT_MODIFICATION_FR,
+  EMAIL_APPOINTMENT_MODIFICATION_NL,
+  EMAIL_SENDER,
+  MANAGE_APPOINTMENT_ROUTE,
+  NEW_APPOINTMENT_ROUTE,
+} from '../../constants'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
 import { SendEmailRequest } from '../../core/api/fetchType'
-import { useLazyGetEncryptedPatientByIdQuery } from '../../core/api/patientApi'
+import { useGetCurrentHealthcarePartyQuery } from '../../core/api/healthcarePartyApi'
+import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
+import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
 import { useCalendarItemDetails } from '../../core/hooks/useCalendarItemDetails'
 import { usePermissions } from '../../core/hooks/usePermissions'
 import { calculateNumericEventTimes, fuzzyDateTimeIntToDayjs, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
@@ -61,8 +71,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     to: endOfWeek(new Date()),
   })
 
-  const { isAdminLevel } = usePermissions()
-
+  const { dataOwnerId, isAdminLevel } = usePermissions()
   const { data: calendarItems } = useGetCalendarItemByAgendaIdAndPeriodQuery(
     {
       agendaId: selectedAgenda?.id ?? '',
@@ -74,8 +83,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
   const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
   const [updateCalendarItem] = useUpdateCalendarItemMutation()
-  const [getPatientByid] = useLazyGetEncryptedPatientByIdQuery()
   const [sendEmail] = useSendEmailMutation()
+  const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
+  const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -250,8 +260,30 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     [useCalendarItemDetails],
   )
 
+  const computeUrl = useCallback((recoveryDataKey: RecoveryDataKey, delegateId: string, calendarItemId: string) => {
+    const path = MANAGE_APPOINTMENT_ROUTE
+    const params = new URLSearchParams()
+    const recoveryPayload = {
+      delegateId: delegateId,
+      recoveryKey: recoveryDataKey.asHexString(),
+    }
+    params.append('recoveryData', JSON.stringify(recoveryPayload))
+    params.append('calendarItemId', calendarItemId)
+    return `${path}?${params.toString()}`
+  }, [])
+
   const computeUpdateEmailPayload = useCallback(
-    async (calendarItem: DecryptedCalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
+    async (
+      calendarItem: DecryptedCalendarItem,
+      patient: EncryptedPatient,
+      agenda: Agenda,
+      calendarItemType: CalendarItemType,
+      patientEmail: string,
+      patientPhoneNumber: string,
+      recoveryDataKey: RecoveryDataKey,
+      currentHcpId: string,
+      calendarItemId: string,
+    ) => {
       const lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
 
       const startDayjs = fuzzyDateTimeIntToDayjs(calendarItem.startTime)
@@ -259,6 +291,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
       const dateFormat = startDayjs.format('DD/MM/YYYY')
       const heureFormat = `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`
+      const url = computeUrl(recoveryDataKey, currentHcpId, calendarItemId)
 
       return {
         receiver: patientEmail!,
@@ -274,7 +307,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           date: dateFormat,
           time: heureFormat,
           location: calendarItem.addressText,
-          url: NEW_APPOINTMENT_ROUTE, // todo this has to be authentify route, with exchangedatas in url
+          url: url,
           procedureDetails: calendarItem.details,
         },
       }
@@ -323,6 +356,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     ) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
+        await initializePatientExchangeDatas(patient.id).unwrap()
         let updatedCalendarItem = new DecryptedCalendarItem({
           ...calendarItem,
           details,
@@ -340,7 +374,11 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         }
 
         await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
-        const emailPayload = await computeUpdateEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+        const recoveryDataKey = await createRecoveryDataKey(patient.id).unwrap()
+        if (!recoveryDataKey) {
+          throw new Error('no valid exchange data.')
+        }
+        const emailPayload = await computeUpdateEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, recoveryDataKey, undefined, updatedCalendarItem.id)
         await handleSendEmail(emailPayload)
         showMessageFeedback('success', t('notification.appointment_updated'))
       } catch (error) {
