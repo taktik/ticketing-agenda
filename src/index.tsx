@@ -14,12 +14,14 @@ const root = createRoot(container)
 
 export const msalInstance = new PublicClientApplication(msalConfig)
 
-root.render(
-  <Provider store={store}>
-    <PersistGate persistor={persistor} loading={<p>Loading Persisted State...</p>}>
-      <MsalProvider instance={msalInstance}>
-        <App />
-      </MsalProvider>
-    </PersistGate>
-  </Provider>,
-)
+msalInstance.initialize().then(() => {
+  root.render(
+    <Provider store={store}>
+      <PersistGate persistor={persistor} loading={<p>Loading Persisted State...</p>}>
+        <MsalProvider instance={msalInstance}>
+          <App />
+        </MsalProvider>
+      </PersistGate>
+    </Provider>,
+  )
+})

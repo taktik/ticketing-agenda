@@ -21,6 +21,7 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
+import { msalInstance } from '../..'
 import { APPLICATION_ID, BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, ICURE_NIGHTLY_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
@@ -28,6 +29,7 @@ import { calendarItemApiRtk } from '../api/calendarItemApi'
 import { calendarItemTypeApiRtk } from '../api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from '../api/dataOwnerApi'
 import { emailApiRtk } from '../api/emailApi'
+import { groupApiRtk } from '../api/groupApi'
 import { patientApiRtk } from '../api/patientApi'
 import { recoveryApiRtk } from '../api/recoveryApi'
 import { roleApiRtk } from '../api/roleApi'
@@ -140,7 +142,8 @@ export interface CardinalApiState {
   lastName?: string
   dateOfBirth?: number
   mobilePhone?: string
-  loginProcessStarted: boolean
+  emailLoginProcessStarted: boolean
+  azureLoginProcessStarted: boolean
   newlyCreatedRecoveryKey?: string
   recoveryKeyRequest?: { reason: string }
   recoveryKeys?: string[]
@@ -160,7 +163,8 @@ const cardinalApiInitialState: CardinalApiState = {
   lastName: undefined,
   dateOfBirth: undefined,
   mobilePhone: undefined,
-  loginProcessStarted: false,
+  emailLoginProcessStarted: false,
+  azureLoginProcessStarted: false,
   newlyCreatedRecoveryKey: undefined,
   recoveryKeyRequest: undefined,
   recoveryKeys: undefined,
@@ -197,7 +201,7 @@ export const anonymousCardinalApi = () => {
 
 export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ account }: { account: AccountInfo }, { dispatch }) => {
   try {
-    dispatch(setLoginProcessStarted(true))
+    dispatch(setAzureLoginProcessStarted(true))
 
     if (!account.idTokenClaims?.preferred_username) {
       throw new Error('No valid prefered username')
@@ -219,7 +223,7 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
   } catch (e) {
     console.error(`Couldn't start authentication: ${e}`)
   } finally {
-    dispatch(setLoginProcessStarted(false))
+    dispatch(setAzureLoginProcessStarted(false))
   }
 })
 
@@ -234,7 +238,7 @@ export const startEmailAuthentication = createAsyncThunk(
     const {
       cardinalApi: { email, firstName, lastName },
     } = getState() as { cardinalApi: CardinalApiState }
-    dispatch(setLoginProcessStarted(true))
+    dispatch(setEmailLoginProcessStarted(true))
 
     if (!email) {
       throw new Error('The email was not found')
@@ -259,12 +263,12 @@ export const startEmailAuthentication = createAsyncThunk(
         },
       )
 
-      dispatch(setLoginProcessStarted(false))
+      dispatch(setEmailLoginProcessStarted(false))
       return authenticationStep
     } catch (e) {
       console.error(`Couldn't start authentication: ${e}`)
     } finally {
-      dispatch(setLoginProcessStarted(false))
+      dispatch(setEmailLoginProcessStarted(false))
     }
   },
 )
@@ -273,15 +277,15 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
   const {
     cardinalApi: { authProcess, token },
   } = getState() as { cardinalApi: CardinalApiState }
-  dispatch(setLoginProcessStarted(true))
+  dispatch(setEmailLoginProcessStarted(true))
 
   if (!authProcess) {
-    dispatch(setLoginProcessStarted(false))
+    dispatch(setEmailLoginProcessStarted(false))
     throw new Error('No authProcess provided')
   }
 
   if (!token) {
-    dispatch(setLoginProcessStarted(false))
+    dispatch(setEmailLoginProcessStarted(false))
     throw new Error('No token provided')
   }
 
@@ -307,7 +311,7 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
     console.error(`Couldn't complete authentication: ${e}`)
     throw e
   } finally {
-    dispatch(setLoginProcessStarted(false))
+    dispatch(setEmailLoginProcessStarted(false))
   }
 })
 
@@ -323,8 +327,19 @@ export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { 
   dispatch(patientApiRtk.util.resetApiState())
   dispatch(roleApiRtk.util.resetApiState())
   dispatch(timeTableApiRtk.util.resetApiState())
+  dispatch(groupApiRtk.util.resetApiState())
   dispatch(revertAll())
   dispatch(resetCredentials())
+
+  const activeAccount = msalInstance.getActiveAccount()
+  const allAccounts = msalInstance.getAllAccounts()
+
+  if (activeAccount || allAccounts.length > 0) {
+    await msalInstance.logoutRedirect({
+      postLogoutRedirectUri: window.location.origin,
+      account: activeAccount || undefined,
+    })
+  }
 })
 
 export const cardinalApiRtk = createSlice({
@@ -375,8 +390,11 @@ export const cardinalApiRtk = createSlice({
     resetCredentials: (state) => {
       state.online = false
     },
-    setLoginProcessStarted(state, { payload: status }: PayloadAction<boolean>) {
-      state.loginProcessStarted = status
+    setEmailLoginProcessStarted(state, { payload: status }: PayloadAction<boolean>) {
+      state.emailLoginProcessStarted = status
+    },
+    setAzureLoginProcessStarted(state, { payload: status }: PayloadAction<boolean>) {
+      state.azureLoginProcessStarted = status
     },
     setWaitingForToken(state, { payload: status }: PayloadAction<boolean>) {
       state.waitingForToken = status
@@ -411,6 +429,7 @@ export const {
   setToken,
   setEmail,
   resetCredentials,
-  setLoginProcessStarted,
+  setEmailLoginProcessStarted,
+  setAzureLoginProcessStarted,
   setWaitingForToken,
 } = cardinalApiRtk.actions

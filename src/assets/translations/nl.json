@@ -221,7 +221,10 @@
     "select_an_assignment": "Selecteer een toewijzing",
     "select_a_role": "Selecteer een rol",
     "head_of_service": "Diensthoofd",
-    "all_day": "Hele dag"
+    "all_day": "Hele dag",
+    "logging_in": "Bezig met inloggen...",
+    "sign_in_with_email": "Inloggen met e-mail",
+    "sign_in_with_microsoft": "Inloggen met Microsoft"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

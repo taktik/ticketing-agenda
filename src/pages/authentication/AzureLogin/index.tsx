@@ -1,17 +1,22 @@
 import { WindowsOutlined } from '@ant-design/icons'
+import { InteractionStatus } from '@azure/msal-browser'
 import { useMsal } from '@azure/msal-react'
 import { Button } from 'antd'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { loginRequest } from '../../../config/config.azure'
 import { useAppDispatch } from '../../../core/hooks'
 import { azureLogin } from '../../../core/services/auth.api'
-import '../index.css'
-import { loginRequest } from '../../../config/config.azure'
 
 export default function AzureLogin() {
+  const { t } = useTranslation()
   const dispatch = useAppDispatch()
-  const { instance } = useMsal()
+  const { instance, inProgress } = useMsal()
+
   const handleAzureLogin = () => {
-    instance.loginRedirect(loginRequest).catch((error) => console.error(error))
+    if (inProgress === InteractionStatus.None) {
+      instance.loginRedirect(loginRequest).catch((error) => console.error(error))
+    }
   }
 
   useEffect(() => {
@@ -28,13 +33,11 @@ export default function AzureLogin() {
   }, [instance, dispatch])
 
   return (
-    <>
-      <Button onClick={handleAzureLogin}>
-        <span style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
-          <WindowsOutlined />
-          Sign in with Microsoft
-        </span>
-      </Button>
-    </>
+    <Button onClick={handleAzureLogin} disabled={inProgress !== InteractionStatus.None}>
+      <span style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+        <WindowsOutlined />
+        {t('content.sign_in_with_microsoft')}
+      </span>
+    </Button>
   )
 }

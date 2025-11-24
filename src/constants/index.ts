@@ -27,8 +27,8 @@ export const MANAGE_APPOINTMENT_ROUTE = window.config.REACT_APP_MANAGE_APPOINTME
 export const NEW_APPOINTMENT_ROUTE = window.config.REACT_APP_NEW_APPOINTMENT_ROUTE
 export const ORIGIN = window.location.origin
 export const APPLICATION_ID = window.config.REACT_APP_APPLICATION_ID
-export const AZURE_CLIENTID = window.config.REACT_APP_AZURE_CLIENTID
-export const AZURE_TENANTID = window.config.REACT_APP_AZURE_TENANTID
+export const AZURE_CLIENT_ID = window.config.REACT_APP_AZURE_CLIENT_ID
+export const AZURE_TENANT_ID = window.config.REACT_APP_AZURE_TENANT_ID
 
 export const ADMIN_SOLUTIONS_AUTH_TOKEN = '' // get the token through icure dashboard
 export const ADMIN_SOLUTIONS_EMAIL = '' // get the email through icure dashboard

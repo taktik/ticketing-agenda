@@ -1,15 +1,14 @@
-import { AZURE_CLIENTID, AZURE_TENANTID } from '../constants'
-import { routes } from '../navigation/Router'
+import { AZURE_CLIENT_ID, AZURE_TENANT_ID } from '../constants'
 
 export const msalConfig = {
   auth: {
-    clientId: AZURE_CLIENTID,
-    authority: `https://login.microsoftonline.com/${AZURE_TENANTID}`,
+    clientId: AZURE_CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
     redirectUri: window.location.origin,
   },
 }
 
 export const loginRequest = {
-  scopes: ['openid', 'profile'], //['api://aa6047dc-336f-4090-bbdc-e00c7fddd34c/access_as_user']
+  scopes: ['openid', 'profile'],
   prompt: 'select_account',
 }

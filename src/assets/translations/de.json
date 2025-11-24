@@ -222,7 +222,10 @@
     "select_an_assignment": "Wählen Sie eine Zuweisung",
     "select_a_role": "Wählen Sie eine Rolle",
     "head_of_service": "Abteilungsleiter",
-    "all_day": "Ganztägig"
+    "all_day": "Ganztägig",
+    "logging_in": "Anmeldung läuft...",
+    "sign_in_with_email": "Mit E-Mail anmelden",
+    "sign_in_with_microsoft": "Mit Microsoft anmelden"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

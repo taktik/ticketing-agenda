@@ -1,7 +1,9 @@
+import { MailOutlined } from '@ant-design/icons'
 import { Solution } from '@icure/cardinal-sdk'
 import { createSelector } from '@reduxjs/toolkit'
-import { useEffect } from 'react'
-
+import { Button } from 'antd'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import LoginForm from '../../../components/authentication/LoginForm'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, completeEmailAuthentication, setEmail, setToken, setWaitingForToken, startEmailAuthentication } from '../../../core/services/auth.api'
@@ -11,14 +13,16 @@ const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,
   (cardinalApi: CardinalApiState) => ({
     waitingForToken: cardinalApi.waitingForToken,
-    loginProcessStarted: cardinalApi.loginProcessStarted,
+    emailLoginProcessStarted: cardinalApi.emailLoginProcessStarted,
     recoveryKeyRequest: cardinalApi.recoveryKeyRequest,
   }),
 )
 
 export default function EmailLogin() {
+  const { t } = useTranslation()
   const dispatch = useAppDispatch()
-  const { waitingForToken, loginProcessStarted } = useAppSelector(reduxSelector)
+  const { waitingForToken, emailLoginProcessStarted } = useAppSelector(reduxSelector)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const startAuthenticationProcessWithEmailAndCaptchaToken = (email: string, captchaToken: Solution) => {
     dispatch(setEmail({ email: email }))
@@ -35,12 +39,29 @@ export default function EmailLogin() {
     return () => {
       dispatch(setWaitingForToken(false))
     }
-  }, [])
+  }, [dispatch])
+
+  useEffect(() => {
+    if (waitingForToken || emailLoginProcessStarted) {
+      setIsExpanded(true)
+    }
+  }, [waitingForToken, emailLoginProcessStarted])
+
+  if (!isExpanded) {
+    return (
+      <Button onClick={() => setIsExpanded(true)}>
+        <span style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+          <MailOutlined />
+          {t('content.sign_in_with_email')}
+        </span>
+      </Button>
+    )
+  }
 
   return (
     <>
       <LoginForm
-        state={loginProcessStarted ? 'loading' : waitingForToken ? 'waitingForToken' : 'initialised'}
+        state={emailLoginProcessStarted ? 'loading' : waitingForToken ? 'waitingForToken' : 'initialised'}
         submitEmailForTokenRequest={(email: string, captchaToken: Solution) => startAuthenticationProcessWithEmailAndCaptchaToken(email, captchaToken)}
         submitEmailAndValidationTokenForAuthentication={(email: string, validationCode: string) => completeAuthenticationProcessWithEmailAndValidationCode(email, validationCode)}
       />
