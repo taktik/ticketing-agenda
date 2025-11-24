@@ -46,13 +46,17 @@ export const userApiRtk = createApi({
     getUserByEmail: builder.query<User | undefined, string>({
       async queryFn(email, { getState }) {
         const userApi = (await cardinalApi(getState))?.user
-        return guard([userApi], async (): Promise<User> => {
-          const result = await userApi?.getUserByEmail(email)
-          if (!result) {
-            throw new Error('Cannot find user')
-          }
-          return result
-        })
+        return guard(
+          [userApi],
+          async (): Promise<User> => {
+            const result = await userApi?.getUserByEmail(email)
+            if (!result) {
+              throw new Error('Cannot find user')
+            }
+            return result
+          },
+          { maxRetries: 0, baseDelay: 1000 },
+        )
       },
       providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
