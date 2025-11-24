@@ -25,11 +25,25 @@ export const tagsByIds =
     return result ? result.map(({ id }: { id?: string }) => ({ type: tagType, id })).concat(listMarkerTag) : []
   }
 
-  function getError(e: Error): FetchBaseQueryError {
-    return { status: 'CUSTOM_ERROR', error: e.message, data: e }
+function getStatus(error: unknown): number | undefined {
+  if (typeof error === 'object' && error !== null) {
+    const e = error as { status?: number; statusCode?: number }
+    return e.status ?? e.statusCode
   }
-  
-  const pause = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration))
+  return undefined
+}
+
+function getError(e: unknown): FetchBaseQueryError {
+  const message = e instanceof Error ? e.message : typeof e === 'string' ? e : 'Unknown error'
+
+  return {
+    status: 'CUSTOM_ERROR',
+    error: message,
+    data: e,
+  }
+}
+
+const pause = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration))
 export const guard = async <T>(guardedInputs: unknown[], lambda: () => Promise<T>, options?: { maxRetries: number; baseDelay: number }): Promise<{ error: FetchBaseQueryError } | { data: T | undefined }> => {
   if (guardedInputs.some((x) => !x)) {
     return { data: undefined }
@@ -53,16 +67,15 @@ export const guard = async <T>(guardedInputs: unknown[], lambda: () => Promise<T
       }
 
       return { data: curate(res) }
-    } catch (e: any) {
+    } catch (error) {
       const isLastAttempt = attempt === maxRetries
 
-      const status = e?.status || e?.statusCode || 0
-
+      const status = getStatus(error)
       const isClientError = typeof status === 'number' && status >= 400 && status < 500
 
       if (isClientError || isLastAttempt) {
-        if (isLastAttempt) console.error(`Guard failed after ${attempt} retries:`, e)
-        return { error: getError(e) }
+        if (isLastAttempt) console.error(`Guard failed after ${attempt} retries:`, error)
+        return { error: getError(error) }
       }
 
       const delay = baseDelay * Math.pow(2, attempt)
@@ -72,12 +85,16 @@ export const guard = async <T>(guardedInputs: unknown[], lambda: () => Promise<T
   return { error: { status: 'TIMEOUT_ERROR', error: 'Operation timed out' } }
 }
 
-export function isRecoverySuccess(result: RecoveryResult<any>): result is RecoveryResult.Success<any> {
+export function isRecoverySuccess<T>(result: RecoveryResult<T>): result is RecoveryResult.Success<T> {
   return result.$ktClass === 'com.icure.cardinal.sdk.crypto.entities.RecoveryResult.Success'
 }
 
-export function isRecoveryFailure(result: RecoveryResult<any>): result is RecoveryResult.Failure {
+export function isRecoveryFailure<T>(result: RecoveryResult<T>): result is RecoveryResult.Failure {
   return result.$ktClass === 'com.icure.cardinal.sdk.crypto.entities.RecoveryResult.Failure'
+}
+
+interface RetryExtraOptions {
+  retryMutations?: boolean
 }
 
 const baseQuery = fetchBaseQuery({
@@ -101,7 +118,7 @@ export const baseQueryWithRetry = retry(
 
     const isMutation = method !== 'GET'
     const isNetworkError = status === 'FETCH_ERROR'
-    const forceRetry = (extraOptions as any)?.retryMutations
+    const forceRetry = (extraOptions as RetryExtraOptions)?.retryMutations
 
     if (isMutation && !isNetworkError && !forceRetry) {
       retry.fail(result.error, result.meta)

@@ -27,6 +27,7 @@ import { useSendEmailMutation } from '../../../core/api/emailApi'
 import { useCreateDecryptedPatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery, useUpdateEncryptedPatientMutation } from '../../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
+import { usePermissions } from '../../../core/hooks/usePermissions'
 import { useRoot } from '../../../core/hooks/useRoot'
 import { useSites } from '../../../core/hooks/useSites'
 import { ProcedureSelection, ProcedureWithTimeAndSelections, transformProceduresForSelection } from '../../../helpers/transformProcedures'
@@ -37,7 +38,6 @@ import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
-import { usePermissions } from '../../../core/hooks/usePermissions'
 
 const { Step } = Steps
 
@@ -537,7 +537,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
     }
   }
 
-  const computeUrl = useCallback((recoveryDataKey: RecoveryDataKey, delegateId: string, calendarItemId: string) => {
+  const computeUrl = useCallback((recoveryDataKey: RecoveryDataKey, delegateId: string, calendarItemId: string | undefined) => {
     const path = MANAGE_APPOINTMENT_ROUTE
     const params = new URLSearchParams()
     const recoveryPayload = {
@@ -545,7 +545,9 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       recoveryKey: recoveryDataKey.asHexString(),
     }
     params.append('recoveryData', JSON.stringify(recoveryPayload))
-    params.append('calendarItemId', calendarItemId)
+    if (calendarItemId) {
+      params.append('calendarItemId', calendarItemId)
+    }
     return `${path}?${params.toString()}`
   }, [])
 
@@ -564,7 +566,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       lang: string,
       procedureDetails: string,
       currentHcpId: string,
-      calendarItemId: string,
+      calendarItemId: string | undefined,
     ) => {
       const dateFormat = specificTimeslot.start.format('DD/MM/YYYY')
       const heureFormat = `${specificTimeslot.start.format('HH[h]mm')} - ${specificTimeslot.end.format('HH[h]mm')}`
@@ -611,9 +613,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
             const calendarItemSelectionId = getCodeTagById(ci.tags, 'APPOINTMENT')
             return formProcedureSelectionId === calendarItemSelectionId
           })
-          if (!calendarItem) {
-            throw new Error('Couldnt find an associated calendar item')
-          }
           const { masterProcedure, siteVariant, procedureVariant } = findProcedureData(selections, {
             procedureSelectionId: procedure.procedureSelectionId,
             site: procedure.site,
@@ -648,7 +647,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
             lang,
             siteVariant.procedureDetails,
             currentHcpId,
-            calendarItem.id,
+            calendarItem?.id,
           )
           await sendConfirmationEmail(emailPayload)
           currentStartTime = currentStartTime.add(durationInMinutes, 'minute')

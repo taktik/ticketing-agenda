@@ -27,7 +27,6 @@ import {
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
 import { SendEmailRequest } from '../../core/api/fetchType'
-import { useGetCurrentHealthcarePartyQuery } from '../../core/api/healthcarePartyApi'
 import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
 import { useCalendarItemDetails } from '../../core/hooks/useCalendarItemDetails'
@@ -253,7 +252,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           date: dateFormat,
           time: heureFormat,
           location: calendarItem.addressText,
-          url: NEW_APPOINTMENT_ROUTE, // todo: add this config in build manager config
+          url: NEW_APPOINTMENT_ROUTE,
         },
       }
     },
@@ -356,6 +355,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     ) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
+        if (!dataOwnerId) throw new Error('No valid delegateId')
         await initializePatientExchangeDatas(patient.id).unwrap()
         let updatedCalendarItem = new DecryptedCalendarItem({
           ...calendarItem,
@@ -378,14 +378,14 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         if (!recoveryDataKey) {
           throw new Error('no valid exchange data.')
         }
-        const emailPayload = await computeUpdateEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, recoveryDataKey, undefined, updatedCalendarItem.id)
+        const emailPayload = await computeUpdateEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, recoveryDataKey, dataOwnerId, updatedCalendarItem.id)
         await handleSendEmail(emailPayload)
         showMessageFeedback('success', t('notification.appointment_updated'))
       } catch (error) {
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
       }
     },
-    [updateCalendarItem, t, calendarItems],
+    [updateCalendarItem, t, calendarItems, dataOwnerId],
   )
 
   return (

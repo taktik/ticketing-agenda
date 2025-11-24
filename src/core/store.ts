@@ -1,20 +1,19 @@
 import { Action, configureStore, ThunkAction } from '@reduxjs/toolkit'
 import { persistStore } from 'redux-persist'
-import { persistedReducer } from './reducer'
-import thunk from 'redux-thunk'
-import { userApiRtk } from './api/userApi'
-import { patientApiRtk } from './api/patientApi'
 import { agendaApiRtk } from './api/agendaApi'
-import { timeTableApiRtk } from './api/timeTableApi'
+import { anonymousApiRtk } from './api/anonymousApi'
 import { calendarItemApiRtk } from './api/calendarItemApi'
-import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from './api/dataOwnerApi'
-import { groupApiRtk } from './api/groupApi'
-import { anonymousApiRtk } from './api/anonymousApi'
-import { roleApiRtk } from './api/roleApi'
-import { recoveryApiRtk } from './api/recoveryApi'
 import { emailApiRtk } from './api/emailApi'
+import { groupApiRtk } from './api/groupApi'
+import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
+import { patientApiRtk } from './api/patientApi'
+import { recoveryApiRtk } from './api/recoveryApi'
+import { roleApiRtk } from './api/roleApi'
+import { timeTableApiRtk } from './api/timeTableApi'
+import { userApiRtk } from './api/userApi'
+import { persistedReducer } from './reducer'
 
 export const store = configureStore({
   reducer: persistedReducer,
@@ -33,7 +32,6 @@ export const store = configureStore({
       roleApiRtk.middleware,
       recoveryApiRtk.middleware,
       emailApiRtk.middleware,
-      thunk,
     ),
 })
 
