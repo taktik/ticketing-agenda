@@ -17,6 +17,7 @@ function LoginLayout() {
   const { online } = useAppSelector(combinedSelector)
 
   useEffect(() => {
+    console.log('online', online)
     if (online) {
       navigate(routes.dashboard)
     }

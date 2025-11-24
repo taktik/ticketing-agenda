@@ -228,16 +228,14 @@ export const azureLogin2 = createAsyncThunk('cardinalApi/azureLogin2', async ({ 
     if (!account.idTokenClaims?.preferred_username) {
       throw new Error('No valid prefered username')
     }
+    if (!account.idToken) {
+      throw new Error('No valid prefered username')
+    }
 
-    const initialMsalResult = await msalInstance.acquireTokenSilent({
-      scopes: ['api://aa6047dc-336f-4090-bbdc-e00c7fddd34c/access_as_user'],
-      account,
-    })
-    const initialAccessToken = initialMsalResult.accessToken
     const api = await CardinalSdk.initialize(
       'org.taktik.ticketing-agenda', //todo add to configs
       ICURE_NIGHTLY_URL,
-      new AuthenticationMethod.UsingCredentials.UsernameLongToken(account.idTokenClaims?.preferred_username, initialAccessToken),
+      new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', account.idToken),
       StorageFacade.usingBrowserLocalStorage(),
       {
         useHierarchicalDataOwners: true,
@@ -246,6 +244,7 @@ export const azureLogin2 = createAsyncThunk('cardinalApi/azureLogin2', async ({ 
       },
     )
     const user = await api.user.getCurrentUser()
+    dispatch(setUser({ user }))
     console.log('currentUser', user)
     apiCache[`${user.groupId}/${user.id}`] = api
     return new User(user)
@@ -504,5 +503,16 @@ export const cardinalApiRtk = createSlice({
   },
 })
 
-export const { setNewlyCreatedRecoveryKey, askForRecoveryKey, provideRecoveryKey, markRecoveryKeyAsLost, setRegistrationInformation, setToken, setEmail, resetCredentials, setLoginProcessStarted, setWaitingForToken } =
-  cardinalApiRtk.actions
+export const {
+  setUser,
+  setNewlyCreatedRecoveryKey,
+  askForRecoveryKey,
+  provideRecoveryKey,
+  markRecoveryKeyAsLost,
+  setRegistrationInformation,
+  setToken,
+  setEmail,
+  resetCredentials,
+  setLoginProcessStarted,
+  setWaitingForToken,
+} = cardinalApiRtk.actions

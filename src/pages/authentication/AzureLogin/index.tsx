@@ -21,7 +21,7 @@ export default function AzureLogin() {
         const account = response?.account || instance.getActiveAccount()
         if (account) {
           instance.setActiveAccount(account)
-          dispatch(azureLogin({ account }))
+          dispatch(azureLogin2({ account }))
         }
       })
       .catch(console.error)

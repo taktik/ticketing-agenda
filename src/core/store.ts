@@ -1,7 +1,6 @@
 import { Action, configureStore, ThunkAction } from '@reduxjs/toolkit'
 import { persistStore } from 'redux-persist'
 import { persistedReducer } from './reducer'
-import thunk from 'redux-thunk'
 import { userApiRtk } from './api/userApi'
 import { patientApiRtk } from './api/patientApi'
 import { agendaApiRtk } from './api/agendaApi'
@@ -31,7 +30,6 @@ export const store = configureStore({
       keyApiRtk.middleware,
       anonymousApiRtk.middleware,
       roleApiRtk.middleware,
-      thunk,
       // Add your own middleware here. For example, you can add a logger:
     ),
 })
