@@ -193,8 +193,8 @@ export const anonymousCardinalApi = () => {
   return anonymousApiCache['anonymous'] as CardinalAnonymousSdk
 }
 
-export const startAuthentication = createAsyncThunk(
-  'cardinalApi/startAuthentication',
+export const emailStartAuthentication = createAsyncThunk(
+  'cardinalApi/emailStartAuthentication',
   async (
     _payload: {
       captchaToken: Solution
@@ -353,11 +353,11 @@ export const cardinalApiRtk = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(startAuthentication.fulfilled, (state, { payload: authProcess }) => {
+    builder.addCase(emailStartAuthentication.fulfilled, (state, { payload: authProcess }) => {
       state.authProcess = authProcess
       state.waitingForToken = true
     })
-    builder.addCase(startAuthentication.rejected, (state, {}) => {
+    builder.addCase(emailStartAuthentication.rejected, (state, {}) => {
       state.invalidEmail = true
     })
     builder.addCase(completeAuthentication.fulfilled, (state, { payload: user }) => {

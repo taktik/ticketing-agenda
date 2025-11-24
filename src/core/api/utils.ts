@@ -113,7 +113,7 @@ export const baseQueryWithRetry = retry(
     const method = typeof args === 'string' ? 'GET' : args.method || 'GET'
 
     if (typeof status === 'number' && status >= 400 && status < 500) {
-      retry.fail(result.error, result.meta)
+      retry.fail(result.error)
     }
 
     const isMutation = method !== 'GET'
@@ -121,7 +121,7 @@ export const baseQueryWithRetry = retry(
     const forceRetry = (extraOptions as RetryExtraOptions)?.retryMutations
 
     if (isMutation && !isNetworkError && !forceRetry) {
-      retry.fail(result.error, result.meta)
+      retry.fail(result.error)
     }
 
     return result
