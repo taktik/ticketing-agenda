@@ -70,7 +70,6 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
       content,
       duration: 0,
     })
-    // Dismiss manually and asynchronously
     setTimeout(messageApi.destroy, 2500)
   }
 
@@ -87,28 +86,26 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
     async (formValues: SiteInfoFormValues) => {
       try {
         if (!site) throw new Error()
-        const currentProperties = [...(site.publicProperties || [])]
-        const currentLocation = currentProperties.find((p) => p.id === 'SITE|LOCATION')
-
-        if (currentLocation) {
-          currentLocation.typedValue = new DecryptedTypedValue({
-            type: TypedValuesType.String,
-            stringValue: formValues.location,
-          })
-        } else {
-          currentProperties.push(
-            new DecryptedPropertyStub({
-              id: 'SITE|LOCATION',
-              typedValue: new DecryptedTypedValue({
-                type: TypedValuesType.String,
-                stringValue: formValues.location,
-              }),
+        const createStringProp = (id: string, value: string) =>
+          new DecryptedPropertyStub({
+            id,
+            typedValue: new DecryptedTypedValue({
+              type: TypedValuesType.String,
+              stringValue: value,
             }),
-          )
-        }
+          })
+
+        const updatedPublicProperties = [...(site.publicProperties || []).filter((p) => p.id !== 'SITE|LOCATION'), createStringProp('SITE|LOCATION', formValues.location)]
+        const updatedProperties = [...(site.properties || []).filter((p) => p.id !== 'SITE|QBETTER_LOCATION_ID'), createStringProp('SITE|QBETTER_LOCATION_ID', formValues.qBetterLocationId)]
 
         await createUpdateSite(
-          new HealthcareParty({ ...site, name: formValues.name, publicProperties: currentProperties, addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })] }),
+          new HealthcareParty({
+            ...site,
+            name: formValues.name,
+            publicProperties: updatedPublicProperties,
+            properties: updatedProperties,
+            addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })],
+          }),
         ).unwrap()
         showMessageFeedback('success', t('notification.site_saved'))
       } catch (error) {

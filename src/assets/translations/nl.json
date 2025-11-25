@@ -224,7 +224,9 @@
     "all_day": "Hele dag",
     "logging_in": "Bezig met inloggen...",
     "sign_in_with_email": "Inloggen met e-mail",
-    "sign_in_with_microsoft": "Inloggen met Microsoft"
+    "sign_in_with_microsoft": "Inloggen met Microsoft",
+    "address": "Adres",
+    "qBetterLocationId": "QBetter Localisation Id"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

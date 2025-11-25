@@ -1,13 +1,15 @@
-import { CheckOutlined, CloseOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import { CheckOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import { HealthcareParty } from '@icure/cardinal-sdk'
 import { Button, Card, Col, Form, Input, Row, Space, notification } from 'antd'
 import React, { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RESERVED_WORDS } from '../../../constants'
+import { getStringProperty } from '../helpers'
 
 export type SiteInfoFormValues = {
   name: string
   location: string
+  qBetterLocationId: string
 }
 
 interface EditableSiteInfoProps {
@@ -23,6 +25,7 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
   useEffect(() => {
     form.setFieldValue('name', hcp.name)
     form.setFieldValue('location', hcp.addresses[0]?.street ?? '')
+    form.setFieldValue('qBetterLocationId', getStringProperty(hcp.properties, 'SITE|QBETTER_LOCATION_ID'))
   }, [hcp, form])
 
   const handleSave = async () => {
@@ -52,15 +55,27 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
     setTimeout(api.destroy, 2500)
   }
 
+  const cardActions = (
+    <Space>
+      <Button size="middle" onClick={handleCancel}>
+        {t('content.cancel')}
+      </Button>
+      <Button type="primary" size="middle" icon={<CheckOutlined />} onClick={handleSave}>
+        {t('content.save')}
+      </Button>
+    </Space>
+  )
+
   return (
-    <Card title={t('content.edit_site_information')} style={{ maxWidth: 700, background: '#fafafa' }}>
+    <Card title={t('content.edit_site_information')} extra={cardActions} style={{ maxWidth: 800, background: '#fafafa' }} size="small">
       {notificationContextHolder}
       <Form form={form} layout="vertical" autoComplete="off">
-        <Row gutter={16}>
-          <Col span={12}>
+        <Row gutter={[16, 0]}>
+          <Col span={8}>
             <Form.Item
               name="name"
               label={t('content.site_name')}
+              style={{ marginBottom: 12 }}
               rules={[
                 { required: true },
                 {
@@ -74,26 +89,22 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
                 },
               ]}
             >
-              <Input size="large" autoFocus />
+              <Input autoFocus />
             </Form.Item>
           </Col>
-          <Col span={12}>
-            <Form.Item name="location" label={t('content.location')}>
-              <Input size="large" prefix={<EnvironmentOutlined />} />
+
+          <Col span={8}>
+            <Form.Item name="location" label={t('content.address')} style={{ marginBottom: 12 }}>
+              <Input prefix={<EnvironmentOutlined />} />
+            </Form.Item>
+          </Col>
+
+          <Col span={8}>
+            <Form.Item name="qBetterLocationId" label={t('content.qBetterLocationId')} style={{ marginBottom: 12 }}>
+              <Input />
             </Form.Item>
           </Col>
         </Row>
-
-        <Form.Item style={{ marginTop: '16px', marginBottom: 0, display: 'flex', justifyContent: 'center' }}>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button size="large" icon={<CloseOutlined />} onClick={handleCancel}>
-              {t('content.cancel')}
-            </Button>
-            <Button type="primary" size="large" icon={<CheckOutlined />} onClick={handleSave}>
-              {t('content.save')}
-            </Button>
-          </Space>
-        </Form.Item>
       </Form>
     </Card>
   )

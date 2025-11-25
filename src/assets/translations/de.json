@@ -225,7 +225,9 @@
     "all_day": "Ganztägig",
     "logging_in": "Anmeldung läuft...",
     "sign_in_with_email": "Mit E-Mail anmelden",
-    "sign_in_with_microsoft": "Mit Microsoft anmelden"
+    "sign_in_with_microsoft": "Mit Microsoft anmelden",
+    "address": "Adresse",
+    "qBetterLocationId": "QBetter Localisation Id"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

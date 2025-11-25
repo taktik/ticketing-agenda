@@ -224,7 +224,9 @@
     "all_day": "All day",
     "logging_in": "Logging in...",
     "sign_in_with_email": "Sign in with Email",
-    "sign_in_with_microsoft": "Sign in with Microsoft"
+    "sign_in_with_microsoft": "Sign in with Microsoft",
+    "address": "Address",
+    "qBetterLocationId": "QBetter Location Id"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
