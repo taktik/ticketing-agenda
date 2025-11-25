@@ -226,7 +226,8 @@
     "sign_in_with_email": "Inloggen met e-mail",
     "sign_in_with_microsoft": "Inloggen met Microsoft",
     "address": "Adres",
-    "qBetterLocationId": "QBetter Localisation Id"
+    "qBetterLocationId": "QBetter Localisation Id",
+    "qBetterProcedureId": "QBetter Service Id"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

@@ -226,7 +226,8 @@
     "sign_in_with_email": "Se connecter avec un e-mail",
     "sign_in_with_microsoft": "Se connecter avec Microsoft",
     "address": "Adresse",
-    "qBetterLocationId": "QBetter Localisation Id"
+    "qBetterLocationId": "QBetter Localisation Id",
+    "qBetterProcedureId": "QBetter Service Id"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

@@ -93,6 +93,7 @@ interface ProcedureRow {
   subjectByLanguage: LanguageDescription
   procedureDetails: string
   color: string
+  qBetterProcedureId: string
 }
 
 export interface FormValuesService {
@@ -103,6 +104,7 @@ export interface FormValuesService {
   subjectByLanguage: LanguageDescription
   procedureDetails: string
   color: string
+  qBetterProcedureId: string
 }
 
 interface ServiceSettingProps {
@@ -199,6 +201,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       procedureDetails: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
       subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, 'CALENDARITEMTYPE', locale)])),
       color: procedure.color ?? '',
+      qBetterProcedureId: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID'),
     }))
   }, [procedures, proceduresList])
 
@@ -277,7 +280,14 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
           stringValue: service.id,
         }),
       })
-      const calendarItemTypeProperties = [isPublicProp, orderProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
+      const qBetterProcedureIdProp = new DecryptedPropertyStub({
+        id: 'CALENDARITEMTYPE|QBETTERPROCEDUREID',
+        typedValue: new DecryptedTypedValue({
+          type: TypedValuesType.String,
+          stringValue: '',
+        }),
+      })
+      const calendarItemTypeProperties = [isPublicProp, orderProp, qBetterProcedureIdProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
         defaultCalendarItemType: true,
@@ -382,6 +392,15 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
           }),
         )
 
+        setProperty(
+          properties,
+          'CALENDARITEMTYPE|QBETTERPROCEDUREID',
+          new DecryptedTypedValue({
+            type: TypedValuesType.String,
+            stringValue: rowValues.qBetterProcedureId,
+          }),
+        )
+
         const updatedCalendarItemType = new CalendarItemType({
           name: rowValues.subjectByLanguage['FR'],
           duration: duration,
@@ -415,7 +434,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             languages.some((locale) => getTranslationForEntity(existingItem.publicProperties, 'CALENDARITEMTYPE', locale) !== getTranslationForEntity(desiredProps.publicProperties, 'CALENDARITEMTYPE', locale)) ||
             getBooleanProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') !== getBooleanProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') ||
             getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ORDER') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ORDER') ||
-            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS')
+            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') ||
+            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID')
           ) {
             const procedure = new CalendarItemType({
               name: desiredProps.name,
@@ -479,6 +499,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         procedureDetails: procedureRow.procedureDetails,
         subjectByLanguage: procedureRow.subjectByLanguage,
         color: procedureRow.color,
+        qBetterProcedureId: procedureRow.qBetterProcedureId,
       })
 
       setEditingKey(procedureRow.rowId)
@@ -804,7 +825,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                 minWidth={350}
                 render={(details: string | undefined, record: ProcedureRow) => {
                   const editable = isEditing(record)
-
                   if (editable) {
                     return (
                       <Form.Item name="procedureDetails" style={{ width: '100%' }}>
@@ -815,6 +835,28 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                     return (
                       <div className="details-box">
                         <Typography.Paragraph className="details-text">{details || ''}</Typography.Paragraph>
+                      </div>
+                    )
+                  }
+                }}
+              />
+              <Column
+                title={t('content.qBetterProcedureId')}
+                dataIndex="qBetterProcedureId"
+                key="qBetterProcedureId"
+                minWidth={150}
+                render={(qBetterId: string | undefined, record: ProcedureRow) => {
+                  const editable = isEditing(record)
+                  if (editable) {
+                    return (
+                      <Form.Item name="qBetterProcedureId" style={{ width: '100%' }}>
+                        <Input.TextArea autoSize={{ minRows: 3, maxRows: 6 }} placeholder="" />
+                      </Form.Item>
+                    )
+                  } else {
+                    return (
+                      <div className="details-box">
+                        <Typography.Paragraph className="details-text">{qBetterId || ''}</Typography.Paragraph>
                       </div>
                     )
                   }

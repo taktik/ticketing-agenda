@@ -96,7 +96,7 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
           })
 
         const updatedPublicProperties = [...(site.publicProperties || []).filter((p) => p.id !== 'SITE|LOCATION'), createStringProp('SITE|LOCATION', formValues.location)]
-        const updatedProperties = [...(site.properties || []).filter((p) => p.id !== 'SITE|QBETTER_LOCATION_ID'), createStringProp('SITE|QBETTER_LOCATION_ID', formValues.qBetterLocationId)]
+        const updatedProperties = [...(site.properties || []).filter((p) => p.id !== 'SITE|QBETTERLOCATIONID'), createStringProp('SITE|QBETTERLOCATIONID', formValues.qBetterLocationId)]
 
         await createUpdateSite(
           new HealthcareParty({
