@@ -15,14 +15,7 @@ import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalend
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import {
-  EMAIL_APPOINTMENT_CANCELLATION_FR,
-  EMAIL_APPOINTMENT_CANCELLATION_NL,
-  EMAIL_APPOINTMENT_MODIFICATION,
-  EMAIL_SENDER,
-  MANAGE_APPOINTMENT_ROUTE,
-  NEW_APPOINTMENT_ROUTE
-} from '../../constants'
+import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE, NEW_APPOINTMENT_ROUTE } from '../../constants'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
 import { SendEmailRequest } from '../../core/api/fetchType'
