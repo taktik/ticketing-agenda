@@ -5,6 +5,7 @@ import {
   CaptchaOptions,
   CardinalAnonymousSdk,
   CardinalApis,
+  CardinalBaseSdk,
   CardinalSdk,
   CryptoStrategies,
   DataOwnerWithType,
@@ -20,7 +21,6 @@ import {
   XRsaKeypair,
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query'
 import { msalInstance } from '../..'
 import { APPLICATION_ID, BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, ICURE_NIGHTLY_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
@@ -41,6 +41,13 @@ const apiCache: { [key: string]: CardinalSdk } = {}
 const anonymousApiCache: { [key: string]: CardinalAnonymousSdk } = {}
 
 export class PetraCareCryptoStrategies extends CryptoStrategies {
+  bearerTokenProvider: () => Promise<string>
+
+  constructor(bearerTokenProvider: () => Promise<string>) {
+    super()
+    this.bearerTokenProvider = bearerTokenProvider
+  }
+
   async notifyNewKeyCreated(sdk: CardinalApis): Promise<void> {
     const recoveryKey = await sdk.recovery.createRecoveryInfoForAvailableKeyPairs({
       includeParentsKeys: true,
@@ -55,6 +62,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${await this.bearerTokenProvider()}`,
           },
           body: JSON.stringify({ userId: hcp.id, key: formattedKey }),
         })
@@ -74,7 +82,12 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
   async fetchRecoveryKey(hcpId: string): Promise<string | undefined> {
     try {
-      const response = await fetch(`${BACKEND_API}/api/keys/${hcpId}`)
+      const response = await fetch(`${BACKEND_API}/api/keys/${hcpId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${await this.bearerTokenProvider()}`,
+        },
+      })
       if (response.status === 404) {
         return undefined
       }
@@ -133,7 +146,7 @@ export interface CardinalApiState {
   token?: string
   user?: User
   keyPair?: { publicKey: string; privateKey: string }
-  authProcess?: CardinalSdk.AuthenticationWithProcessStep
+  authProcess?: CardinalBaseSdk.BaseAuthenticationWithProcessStep
   online: boolean
   invalidEmail: boolean
   invalidToken: boolean
@@ -168,10 +181,6 @@ const cardinalApiInitialState: CardinalApiState = {
   newlyCreatedRecoveryKey: undefined,
   recoveryKeyRequest: undefined,
   recoveryKeys: undefined,
-}
-
-function getError(e: Error): FetchBaseQueryError {
-  return { status: 'CUSTOM_ERROR', error: e.message, data: e }
 }
 
 export const getApiFromState = async (getState: () => CardinalApiState | { cardinalApi: CardinalApiState } | undefined): Promise<CardinalSdk | undefined> => {
@@ -210,11 +219,15 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
       throw new Error('No valid prefered username')
     }
 
-    const api = await CardinalSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', account.idToken), StorageFacade.usingBrowserLocalStorage(), {
-      useHierarchicalDataOwners: true,
+    const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', account.idToken), {
       encryptedFields: { patient: [], calendarItem: [] },
-      cryptoStrategies: new PetraCareCryptoStrategies(),
     })
+
+    const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
+      useHierarchicalDataOwners: true,
+      cryptoStrategies: new PetraCareCryptoStrategies(() => baseSdk.auth.getBearerToken()),
+    })
+
     const user = await api.user.getCurrentUser()
     dispatch(setUser({ user }))
     if (user.email) dispatch(setEmail({ email: user.email }))
@@ -239,27 +252,23 @@ export const startEmailAuthentication = createAsyncThunk(
       cardinalApi: { email, firstName, lastName },
     } = getState() as { cardinalApi: CardinalApiState }
     dispatch(setEmailLoginProcessStarted(true))
-
-    if (!email) {
-      throw new Error('The email was not found')
-    }
-
     try {
-      const authenticationStep = await CardinalSdk.initializeWithProcess(
+      if (!email) {
+        throw new Error('The email was not found')
+      }
+
+      const authenticationStep = await CardinalBaseSdk.initializeWithProcess(
         APPLICATION_ID,
         ICURE_NIGHTLY_URL,
         MSG_GW_URL,
-        SPEC_ID!,
-        EMAIL_AUTH_CODE_ADMIN_FR!,
+        SPEC_ID,
+        EMAIL_AUTH_CODE_ADMIN_FR,
         AuthenticationProcessTelecomType.Email,
         email,
         new CaptchaOptions.Kerberus.Computed({ solution: _payload.captchaToken }),
-        StorageFacade.usingBrowserLocalStorage(),
         { firstName, lastName },
         {
-          useHierarchicalDataOwners: true,
           encryptedFields: { patient: [], calendarItem: [] },
-          cryptoStrategies: new PetraCareCryptoStrategies(),
         },
       )
 
@@ -278,19 +287,24 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
     cardinalApi: { authProcess, token },
   } = getState() as { cardinalApi: CardinalApiState }
   dispatch(setEmailLoginProcessStarted(true))
-
-  if (!authProcess) {
-    dispatch(setEmailLoginProcessStarted(false))
-    throw new Error('No authProcess provided')
-  }
-
-  if (!token) {
-    dispatch(setEmailLoginProcessStarted(false))
-    throw new Error('No token provided')
-  }
-
   try {
-    const api = await authProcess.completeAuthentication(token)
+    if (!authProcess) {
+      dispatch(setEmailLoginProcessStarted(false))
+      throw new Error('No authProcess provided')
+    }
+
+    if (!token) {
+      dispatch(setEmailLoginProcessStarted(false))
+      throw new Error('No token provided')
+    }
+
+    const baseSdk = await authProcess.completeAuthentication(token)
+
+    const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
+      useHierarchicalDataOwners: true,
+      cryptoStrategies: new PetraCareCryptoStrategies(() => baseSdk.auth.getBearerToken()),
+    })
+
     const user = await api.user.getCurrentUser()
     const newToken = await api.user.getToken(user.id, 'rememberMe')
 
