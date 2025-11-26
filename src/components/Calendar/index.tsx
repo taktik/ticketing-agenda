@@ -18,11 +18,10 @@ import { useTranslation } from 'react-i18next'
 import {
   EMAIL_APPOINTMENT_CANCELLATION_FR,
   EMAIL_APPOINTMENT_CANCELLATION_NL,
-  EMAIL_APPOINTMENT_MODIFICATION_FR,
-  EMAIL_APPOINTMENT_MODIFICATION_NL,
+  EMAIL_APPOINTMENT_MODIFICATION,
   EMAIL_SENDER,
   MANAGE_APPOINTMENT_ROUTE,
-  NEW_APPOINTMENT_ROUTE,
+  NEW_APPOINTMENT_ROUTE
 } from '../../constants'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
@@ -31,6 +30,7 @@ import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
 import { useCalendarItemDetails } from '../../core/hooks/useCalendarItemDetails'
 import { usePermissions } from '../../core/hooks/usePermissions'
+import { Lang } from '../../helpers/types'
 import { calculateNumericEventTimes, fuzzyDateTimeIntToDayjs, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { combineDateAndTime, CreateEvent } from './CreateEvent/CreateEvent'
@@ -292,10 +292,14 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       const heureFormat = `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`
       const url = computeUrl(recoveryDataKey, currentHcpId, calendarItemId)
 
+      const hasProcedure = !!calendarItem.details?.trim()
+      const safeLang: Lang = lang === 'nl' ? 'nl' : 'fr'
+      const processId = EMAIL_APPOINTMENT_MODIFICATION[safeLang][hasProcedure ? 'withProcedureDetails' : 'withoutProcedureDetails']
+
       return {
         receiver: patientEmail!,
         from: EMAIL_SENDER,
-        processId: lang === 'nl' ? EMAIL_APPOINTMENT_MODIFICATION_NL : EMAIL_APPOINTMENT_MODIFICATION_FR,
+        processId: processId,
         variables: {
           firstName: patient.firstName,
           lastName: patient.lastName,

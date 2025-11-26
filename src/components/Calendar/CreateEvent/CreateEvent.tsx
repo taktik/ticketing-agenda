@@ -20,7 +20,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { EMAIL_APPOINTMENT_CONFIRMATION_FR, EMAIL_APPOINTMENT_CONFIRMATION_NL, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
+import { EMAIL_APPOINTMENT_CONFIRMATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
 import { useLazyGetAgendaAndProceduresQuery } from '../../../core/api/anonymousApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
@@ -31,6 +31,7 @@ import { usePermissions } from '../../../core/hooks/usePermissions'
 import { useRoot } from '../../../core/hooks/useRoot'
 import { useSites } from '../../../core/hooks/useSites'
 import { ProcedureSelection, ProcedureWithTimeAndSelections, transformProceduresForSelection } from '../../../helpers/transformProcedures'
+import { Lang } from '../../../helpers/types'
 import { CustomModal } from '../../common/CustomModal'
 import { calculateNumericEventTimes, getCodeTagById, getTranslationForEntity } from '../../common/helpers'
 import { StepAppointmentReview } from './appointmentSteps/StepAppointmentReview'
@@ -572,10 +573,14 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
       const heureFormat = `${specificTimeslot.start.format('HH[h]mm')} - ${specificTimeslot.end.format('HH[h]mm')}`
       const url = computeUrl(recoveryDataKey, currentHcpId, calendarItemId)
 
+      const hasProcedure = !!procedureDetails?.trim()
+      const safeLang: Lang = lang === 'nl' ? 'nl' : 'fr'
+      const processId = EMAIL_APPOINTMENT_CONFIRMATION[safeLang][hasProcedure ? 'withProcedureDetails' : 'withoutProcedureDetails']
+
       return {
         receiver: citizenUser.email!,
         from: EMAIL_SENDER,
-        processId: lang === 'nl' ? EMAIL_APPOINTMENT_CONFIRMATION_NL : EMAIL_APPOINTMENT_CONFIRMATION_FR,
+        processId: processId,
         variables: {
           firstName: citizenPatient.firstName,
           lastName: citizenPatient.lastName,

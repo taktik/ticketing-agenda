@@ -72,21 +72,22 @@ Existing roles :
 
 ## All variables
 
-"variables": [
-"firstName",
-"lastName",
-"group",
-"from",
-"mobilePhone",
-"email",
-"validationCode",
-"hcpId",
-"url",
-"date",
-"time",
-"location",
-"service",
-"procedure"
+variables: [
+    "firstName",
+    "lastName",
+    "group",
+    "from",
+    "mobilePhone",
+    "email",
+    "validationCode",
+    "hcpId",
+    "url",
+    "date",
+    "time",
+    "location",
+    "service",
+    "procedure",
+    "procedureDetails"
 ]
 
 ## Create an Email process

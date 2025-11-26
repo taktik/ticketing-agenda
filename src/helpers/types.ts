@@ -21,3 +21,5 @@ export enum PatientsLanguagesEnum {
   FR = 'Français',
   EN = 'English',
 }
+
+export type Lang = 'fr' | 'nl'
