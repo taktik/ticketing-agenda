@@ -246,6 +246,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           time: heureFormat,
           location: calendarItem.addressText,
           url: NEW_APPOINTMENT_ROUTE,
+          cc: [],
+          bcc: [],
         },
       }
     },
@@ -305,6 +307,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           location: calendarItem.addressText,
           url: url,
           procedureDetails: calendarItem.details,
+          cc: [],
+          bcc: [],
         },
       }
     },

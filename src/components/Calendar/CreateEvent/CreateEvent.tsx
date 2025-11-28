@@ -593,6 +593,8 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           location: siteLocation,
           url: url,
           procedureDetails: procedureDetails,
+          cc: [],
+          bcc: [],
         },
       }
     },
