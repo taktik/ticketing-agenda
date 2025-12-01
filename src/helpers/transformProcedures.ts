@@ -14,6 +14,7 @@ export interface SiteVariants {
   siteId: string
   siteName: string
   siteLocation: string
+  siteQbetterLocationId: string
   agendaId: string | undefined
   procedureDetails: string
   variants: ProcedureVariant[]
@@ -25,6 +26,7 @@ export interface ProcedureSelection {
   displayText: string
   serviceName: string
   procedureName: string
+  procedureQbetterServiceId: string
   displayTextByLanguage: { [key: string]: string }
 }
 
@@ -113,6 +115,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           agendaId: agenda?.id,
           siteName: site.name,
           siteLocation: getStringProperty(site.publicProperties, 'SITE|LOCATION'),
+          siteQbetterLocationId: getStringProperty(site.publicProperties, 'SITE|QBETTERLOCATIONID'),
           procedureDetails: getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
           variants: procedureVariants,
         }
@@ -122,6 +125,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     // 7. Construct the final `ProcedureSelection` object for this procedure name
     const firstProcedureInGroup = proceduresWithSameName[0]
     const agendaId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
+    const procedureQbetterServiceId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID')
     const representativeService = agendaId ? agendaMap.get(agendaId) : undefined
     const serviceName = representativeService?.name || 'Service Inconnu'
 
@@ -140,6 +144,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
       displayText: `${serviceName} - ${procedureName}`,
       serviceName: serviceName,
       procedureName: procedureName,
+      procedureQbetterServiceId: procedureQbetterServiceId,
       displayTextByLanguage: displayTextByLanguage,
     }
   })

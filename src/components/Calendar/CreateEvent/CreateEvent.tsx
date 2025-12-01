@@ -521,7 +521,11 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           startTime: eventTimes?.startTime,
           endTime: eventTimes?.endTime,
           addressText: siteVariant.siteLocation,
-          tags: [new CodeStub({ id: 'APPOINTMENT', code: item.procedureSelectionId, type: 'APPOINTMENT', version: '1' })],
+          tags: [
+            new CodeStub({ id: 'APPOINTMENT', code: item.procedureSelectionId, type: 'APPOINTMENT', version: '1' }),
+            new CodeStub({ id: 'APPOINTMENT|QBETTERPROCEDUREID', code: masterProcedure.procedureQbetterServiceId, type: 'APPOINTMENT|QBETTERPROCEDUREID', version: '1' }),
+            new CodeStub({ id: 'APPOINTMENT|QBETTERLOCATIONID', code: siteVariant.siteQbetterLocationId, type: 'APPOINTMENT|QBETTERLOCATIONID', version: '1' }),
+          ],
         })
 
         return createUpdateEvent({ calendarItem: newEvent, patient: citizenPatient, delegates: { adminRootId: adminRoot.id, siteRootId: siteRoot.id } }).unwrap()
