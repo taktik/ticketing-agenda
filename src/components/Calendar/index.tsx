@@ -235,6 +235,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         receiver: patientEmail!,
         from: EMAIL_SENDER,
         processId: lang === 'nl' ? EMAIL_APPOINTMENT_CANCELLATION_NL : EMAIL_APPOINTMENT_CANCELLATION_FR,
+        cc: [],
+        bcc: [],
         variables: {
           firstName: patient.firstName,
           lastName: patient.lastName,
@@ -246,8 +248,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           time: heureFormat,
           location: calendarItem.addressText,
           url: NEW_APPOINTMENT_ROUTE,
-          cc: [],
-          bcc: [],
         },
       }
     },
@@ -295,6 +295,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         receiver: patientEmail!,
         from: EMAIL_SENDER,
         processId: processId,
+        cc: [],
+        bcc: [],
         variables: {
           firstName: patient.firstName,
           lastName: patient.lastName,
@@ -307,8 +309,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           location: calendarItem.addressText,
           url: url,
           procedureDetails: calendarItem.details,
-          cc: [],
-          bcc: [],
         },
       }
     },

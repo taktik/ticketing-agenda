@@ -581,6 +581,8 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
         receiver: citizenUser.email!,
         from: EMAIL_SENDER,
         processId: processId,
+        cc: [],
+        bcc: [],
         variables: {
           firstName: citizenPatient.firstName,
           lastName: citizenPatient.lastName,
@@ -593,8 +595,6 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           location: siteLocation,
           url: url,
           procedureDetails: procedureDetails,
-          cc: [],
-          bcc: [],
         },
       }
     },
