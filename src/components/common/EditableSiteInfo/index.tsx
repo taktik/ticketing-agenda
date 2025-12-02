@@ -25,7 +25,7 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
   useEffect(() => {
     form.setFieldValue('name', hcp.name)
     form.setFieldValue('location', hcp.addresses[0]?.street ?? '')
-    form.setFieldValue('qBetterLocationId', getStringProperty(hcp.properties, 'SITE|QBETTERLOCATIONID'))
+    form.setFieldValue('qBetterLocationId', getStringProperty(hcp.properties, 'SITE|QBETTER_LOCATION_ID'))
   }, [hcp, form])
 
   const handleSave = async () => {

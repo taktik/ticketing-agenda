@@ -115,7 +115,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           agendaId: agenda?.id,
           siteName: site.name,
           siteLocation: getStringProperty(site.publicProperties, 'SITE|LOCATION'),
-          siteQbetterLocationId: getStringProperty(site.publicProperties, 'SITE|QBETTERLOCATIONID'),
+          siteQbetterLocationId: getStringProperty(site.publicProperties, 'SITE|QBETTER_LOCATION_ID'),
           procedureDetails: getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
           variants: procedureVariants,
         }
@@ -125,7 +125,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     // 7. Construct the final `ProcedureSelection` object for this procedure name
     const firstProcedureInGroup = proceduresWithSameName[0]
     const agendaId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
-    const procedureQbetterServiceId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID')
+    const procedureQbetterServiceId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID')
     const representativeService = agendaId ? agendaMap.get(agendaId) : undefined
     const serviceName = representativeService?.name || 'Service Inconnu'
 

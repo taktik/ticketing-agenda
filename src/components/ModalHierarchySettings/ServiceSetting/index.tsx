@@ -201,7 +201,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       procedureDetails: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
       subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, 'CALENDARITEMTYPE', locale)])),
       color: procedure.color ?? '',
-      qBetterProcedureId: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID'),
+      qBetterProcedureId: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID'),
     }))
   }, [procedures, proceduresList])
 
@@ -281,7 +281,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         }),
       })
       const qBetterProcedureIdProp = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|QBETTERPROCEDUREID',
+        id: 'CALENDARITEMTYPE|QBETTER_SERVICE_ID',
         typedValue: new DecryptedTypedValue({
           type: TypedValuesType.String,
           stringValue: '',
@@ -394,7 +394,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
         setProperty(
           properties,
-          'CALENDARITEMTYPE|QBETTERPROCEDUREID',
+          'CALENDARITEMTYPE|QBETTER_SERVICE_ID',
           new DecryptedTypedValue({
             type: TypedValuesType.String,
             stringValue: rowValues.qBetterProcedureId,
@@ -435,7 +435,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             getBooleanProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') !== getBooleanProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') ||
             getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ORDER') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ORDER') ||
             getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') ||
-            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|QBETTERPROCEDUREID')
+            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID')
           ) {
             const procedure = new CalendarItemType({
               name: desiredProps.name,
