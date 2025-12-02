@@ -32,6 +32,7 @@ import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
 import { EventDetails } from './EventDetails/ModalEvent'
 import './index.css'
+import { useGetCurrentUserQuery } from '../../core/api/userApi'
 
 interface CalendarProps {
   handleFullCalendarDateChange: () => void
@@ -64,6 +65,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   })
 
   const { dataOwnerId, isAdminLevel } = usePermissions()
+  const { data: currentUser } = useGetCurrentUserQuery(undefined)
   const { data: calendarItems } = useGetCalendarItemByAgendaIdAndPeriodQuery(
     {
       agendaId: selectedAgenda?.id ?? '',
@@ -368,6 +370,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
           updatedCalendarItem = new DecryptedCalendarItem({
             ...calendarItem,
+            author: currentUser?.id,
             details: details,
             startTime: numericTimes?.startTime,
             endTime: numericTimes?.endTime,
@@ -386,7 +389,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
       }
     },
-    [updateCalendarItem, t, calendarItems, dataOwnerId],
+    [updateCalendarItem, t, calendarItems, dataOwnerId, currentUser],
   )
 
   return (
