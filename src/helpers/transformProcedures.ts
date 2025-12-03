@@ -115,7 +115,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           agendaId: agenda?.id,
           siteName: site.name,
           siteLocation: getStringProperty(site.publicProperties, 'SITE|LOCATION'),
-          siteQbetterLocationId: getStringProperty(site.properties, 'SITE|QBETTER_LOCATION_ID'),
+          siteQbetterLocationId: getStringProperty(site.publicProperties, 'SITE|QBETTER_LOCATION_ID'),
           procedureDetails: getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
           variants: procedureVariants,
         }
