@@ -523,6 +523,7 @@ export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
           addressText: siteVariant.siteLocation,
           tags: [
             new CodeStub({ id: 'APPOINTMENT', code: item.procedureSelectionId, type: 'APPOINTMENT', version: '1' }),
+            new CodeStub({ id: 'APPOINTMENT|LAST_AUTHOR', code: citizenUser.id, type: 'APPOINTMENT|LAST_AUTHOR', version: '1' }),
             new CodeStub({ id: 'APPOINTMENT|QBETTER_SERVICE_ID', code: masterProcedure.procedureQbetterServiceId, type: 'APPOINTMENT|QBETTER_SERVICE_ID', version: '1' }),
             new CodeStub({ id: 'APPOINTMENT|QBETTER_LOCATION_ID', code: siteVariant.siteQbetterLocationId, type: 'APPOINTMENT|QBETTER_LOCATION_ID', version: '1' }),
           ],

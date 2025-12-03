@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Agenda, CalendarItem, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, HealthcareParty, RecoveryDataKey } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItem, CalendarItemType, CodeStub, DecryptedCalendarItem, EncryptedPatient, HealthcareParty, RecoveryDataKey } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
 import dayjs from 'dayjs'
@@ -21,6 +21,7 @@ import { useSendEmailMutation } from '../../core/api/emailApi'
 import { SendEmailRequest } from '../../core/api/fetchType'
 import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
+import { useGetCurrentUserQuery } from '../../core/api/userApi'
 import { useCalendarItemDetails } from '../../core/hooks/useCalendarItemDetails'
 import { usePermissions } from '../../core/hooks/usePermissions'
 import { Lang } from '../../helpers/types'
@@ -32,7 +33,6 @@ import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
 import { EventDetails } from './EventDetails/ModalEvent'
 import './index.css'
-import { useGetCurrentUserQuery } from '../../core/api/userApi'
 
 interface CalendarProps {
   handleFullCalendarDateChange: () => void
@@ -370,10 +370,19 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
           updatedCalendarItem = new DecryptedCalendarItem({
             ...calendarItem,
-            author: currentUser?.id,
             details: details,
             startTime: numericTimes?.startTime,
             endTime: numericTimes?.endTime,
+            tags: calendarItem.tags.map((tag) =>
+              tag.type === 'APPOINTMENT|LAST_AUTHOR'
+                ? new CodeStub({
+                    id: 'APPOINTMENT|LAST_AUTHOR',
+                    code: currentUser?.id,
+                    type: 'APPOINTMENT|LAST_AUTHOR',
+                    version: '1',
+                  })
+                : tag,
+            ),
           })
         }
 
