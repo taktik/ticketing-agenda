@@ -59,6 +59,8 @@ export interface SendEmailRequest {
   receiver: string
   from: string
   processId: string
+  bcc: string[]
+  cc: string[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   variables: Record<string, any>
 }

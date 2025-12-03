@@ -10,7 +10,7 @@ export const emailApiRtk = createApi({
   baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     sendEmail: builder.mutation<SendEmailResponse, SendEmailRequest>({
-      async queryFn({ receiver, from, processId, variables }, { getState }, _extraOptions, fetchWithBQ) {
+      async queryFn({ receiver, from, processId, variables, bcc, cc }, { getState }, _extraOptions, fetchWithBQ) {
         const authApi = (await cardinalApi(getState))?.auth
         if (!authApi) {
           return { error: { status: 500, data: 'Could not initialize AuthApi' } }
@@ -26,7 +26,7 @@ export const emailApiRtk = createApi({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: { from, processId, variables },
+          body: { from, processId, bcc, cc, variables },
         })
         if (result.error) return { error: result.error }
         return { data: result.data as SendEmailResponse }
