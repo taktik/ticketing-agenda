@@ -1,5 +1,5 @@
 import { Agenda, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, TelecomType } from '@icure/cardinal-sdk'
-import { Button, Card, Descriptions, Divider, Form, Input, notification, Typography } from 'antd'
+import { Button, Card, Descriptions, Divider, Form, Input, notification, Spin, Typography } from 'antd'
 import { format, parse } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import dayjs from 'dayjs'
@@ -47,9 +47,10 @@ interface EventDetailsProps {
     patientEmail: string,
     patientPhoneNumber: string,
   ) => Promise<void>
+  isCalendarItemLoading: boolean
 }
 
-export const EventDetails = ({ isVisible, onClose, event, deleteEvent, updateEvent }: EventDetailsProps) => {
+export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event, deleteEvent, updateEvent }: EventDetailsProps) => {
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState<boolean>(false)
   const [isEditing, setIsEditing] = useState(false)
   const [form] = Form.useForm<CalendarEventUpdateForm>()
@@ -207,6 +208,7 @@ export const EventDetails = ({ isVisible, onClose, event, deleteEvent, updateEve
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={isEditing ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={1000}>
       <div className="modal-event">
+        <Spin spinning={isCalendarItemLoading} size="large"></Spin>
         {notificationContextHolder}
         <Form
           form={form}

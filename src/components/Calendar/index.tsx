@@ -75,8 +75,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     { skip: !selectedAgenda },
   )
 
-  const [deleteCalendarItem] = useDeleteCalendarItemByIdMutation()
-  const [updateCalendarItem] = useUpdateCalendarItemMutation()
+  const [deleteCalendarItem, { isLoading: isDeleteLoading }] = useDeleteCalendarItemByIdMutation()
+  const [updateCalendarItem, { isLoading: isUpdateLoading }] = useUpdateCalendarItemMutation()
   const [sendEmail] = useSendEmailMutation()
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
@@ -103,6 +103,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     })
     setTimeout(messageApi.destroy, 2500)
   }
+
+  const isCalendarItemLoading = useMemo(() => isDeleteLoading || isUpdateLoading, [isDeleteLoading, isUpdateLoading])
 
   const events: EventInput[] = useMemo(() => {
     if (!calendarItems) return []
@@ -340,7 +342,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         openNotification('error', t('notification.appointment_delete_failed'), t('notification.appointment_delete_error'))
       }
     },
-    [deleteCalendarItem, t],
+    [deleteCalendarItem, t, openNotification, showMessageFeedback],
   )
 
   const updateEvent = useCallback(
@@ -398,7 +400,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
       }
     },
-    [updateCalendarItem, t, calendarItems, dataOwnerId, currentUser],
+    [updateCalendarItem, t, calendarItems, dataOwnerId, currentUser, openNotification, showMessageFeedback],
   )
 
   return (
@@ -462,7 +464,11 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           allDayText={t('content.all_day')}
         />
       </div>
-      {eventModalOpen && createPortal(<EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} deleteEvent={deleteEvent} updateEvent={updateEvent} />, document.body)}
+      {eventModalOpen &&
+        createPortal(
+          <EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} deleteEvent={deleteEvent} updateEvent={updateEvent} isCalendarItemLoading={isCalendarItemLoading} />,
+          document.body,
+        )}
       {createApptModalOpen && createPortal(<CreateEvent isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} />, document.body)}
       {apptSelectorModalOpen &&
         createPortal(
