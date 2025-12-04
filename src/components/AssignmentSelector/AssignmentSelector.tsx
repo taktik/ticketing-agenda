@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { Assignment } from '../ModalGeneralSettings/Settings/ManageUsers'
 
 interface AssignmentSelectProps {
-  value?: Assignment
-  onChange?: (value: Assignment | undefined) => void
+  value?: Assignment[]
+  onChange?: (value: Assignment[]) => void
   sites: HealthcareParty[]
   agendas: Agenda[]
   isSitesLoading: boolean
@@ -32,22 +32,21 @@ export const AssignmentSelector: React.FC<AssignmentSelectProps> = ({ value, onC
     })
   }, [agendas, sites])
 
-  const handleSelectChange = (selectedValue: string | undefined) => {
+  const handleSelectChange = (selectedValues: string[]) => {
     if (onChange) {
-      if (selectedValue) {
-        const [siteId, agendaId] = selectedValue.split(':')
-        onChange({ siteId, agendaId })
-      } else {
-        onChange(undefined)
-      }
+      const newAssignments = selectedValues.map((val) => {
+        const [siteId, agendaId] = val.split(':')
+        return { siteId, agendaId }
+      })
+      onChange(newAssignments)
     }
   }
 
   const selectValue = useMemo(() => {
-    if (value && value.siteId && value.agendaId) {
-      return `${value.siteId}:${value.agendaId}`
+    if (Array.isArray(value) && value.length > 0) {
+      return value.filter((v) => v.siteId && v.agendaId).map((v) => `${v.siteId}:${v.agendaId}`)
     }
-    return undefined
+    return []
   }, [value])
 
   return (
@@ -61,6 +60,8 @@ export const AssignmentSelector: React.FC<AssignmentSelectProps> = ({ value, onC
       optionFilterProp="label"
       allowClear
       loading={isSitesLoading || isAgendasLoading}
+      mode="multiple"
+      maxTagCount="responsive"
     />
   )
 }

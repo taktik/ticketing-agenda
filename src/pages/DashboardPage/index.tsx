@@ -32,15 +32,22 @@ export default function DashboardPage() {
   const skip = !user
   const { t } = useTranslation()
 
-  const { isAdminLevel, attachedService, attachedSite } = usePermissions(skip)
+  const { isAdminLevel, attachedServices, attachedSites } = usePermissions(skip)
   const { sites, isSitesLoading } = useSites(skip)
 
-  const dispayableSites = useMemo(() => (attachedSite ? (sites?.filter((site) => site.id === attachedSite) ?? []) : (sites ?? [])), [sites, attachedSite])
+  const displayableSites = useMemo(() => {
+    return attachedSites?.length ? (sites?.filter((site) => attachedSites.includes(site.id)) ?? []) : (sites ?? [])
+  }, [sites, attachedSites])
 
-  const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(dispayableSites[0])
+  const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(displayableSites[0])
 
   const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'SERVICE|PARENTID', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
-  const filteredServices = useMemo(() => (services && selectedSite ? (attachedService ? services.filter((service) => service.id === attachedService) : services) : []), [services, selectedSite, attachedService])
+  const filteredServices = useMemo(() => {
+    if (services && selectedSite) {
+      return attachedServices?.length ? services.filter((service) => attachedServices.includes(service.id)) : services
+    }
+    return []
+  }, [services, selectedSite, attachedServices])
   const [selectedService, setSelectedService] = useState<Agenda | undefined>(undefined)
 
   const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(selectedService?.id ?? '', { skip: skip || !selectedService })
@@ -55,10 +62,10 @@ export default function DashboardPage() {
   useEffect(() => setSelectedProcedure(undefined), [procedures])
 
   useEffect(() => {
-    if (!selectedSite && dispayableSites) {
-      setSelectedSite(dispayableSites[0])
+    if (!selectedSite && displayableSites) {
+      setSelectedSite(displayableSites[0])
     }
-  }, [dispayableSites])
+  }, [displayableSites])
 
   const handleAntCalendarDateChange = useCallback(
     (value: Dayjs) => {
@@ -86,7 +93,7 @@ export default function DashboardPage() {
         <div className="left-panel">
           <Card className="card">
             <div className="SiteSelectorRow">
-              <SiteSelector sites={dispayableSites} isSitesLoading={isSitesRelatedLoading} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
+              <SiteSelector sites={displayableSites} isSitesLoading={isSitesRelatedLoading} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
               {isAdminLevel && (
                 <Space>
                   <Tooltip title={t('content.organize_hierarchy')}>
@@ -122,7 +129,7 @@ export default function DashboardPage() {
             procedures={filteredProcedures}
             selectedProcedure={selectedProcedure}
             calendarDate={calendarDate}
-            sites={dispayableSites}
+            sites={displayableSites}
           />
         </div>
       </div>

@@ -16,12 +16,13 @@ import {
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
 import { administratorTag, cityWorkerTag, headOfServiceTag, rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
-import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetCurrentUserQuery, useGetUsersByIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersByIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
 import { usePermissions } from '../../../../core/hooks/usePermissions'
 import { useRoot } from '../../../../core/hooks/useRoot'
 import { useSites } from '../../../../core/hooks/useSites'
 import { AssignmentSelector } from '../../../AssignmentSelector/AssignmentSelector'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
+import { createStringProperty } from '../../../common/helpers'
 
 export interface Assignment {
   siteId: string | undefined
@@ -36,7 +37,7 @@ interface UserRow {
   lastName: string | undefined
   email: string | undefined
   role: UserRole | undefined
-  assignment: Assignment | undefined
+  assignment: Assignment[] | undefined
 }
 
 interface FormValues {
@@ -44,7 +45,7 @@ interface FormValues {
   lastName: string
   email: string
   role: UserRole
-  assignment: Assignment | undefined
+  assignment: Assignment[] | undefined
 }
 
 export const ManagerUsers = (): ReactElement => {
@@ -56,7 +57,6 @@ export const ManagerUsers = (): ReactElement => {
   const isEditing = useMemo(() => (record: UserRow) => record.rowId === editingKey, [editingKey])
   const [form] = Form.useForm<FormValues>()
 
-  const { data: currentUser } = useGetCurrentUserQuery(undefined)
   const { isAdministrator } = usePermissions()
   if (!isAdministrator) {
     return <div></div>
@@ -75,7 +75,7 @@ export const ManagerUsers = (): ReactElement => {
 
   const [setUserRoles, { isLoading: isSetUserRolesLoading }] = useSetUserRolesMutation()
 
-  const { adminRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
+  const { adminRoot, siteRoot, isAdminRootLoading, isSiteRootLoading } = useRoot()
   const { sites = [], isSitesLoading } = useSites()
 
   const siteIds = useMemo(() => sites.map((site) => site.id), [sites])
@@ -84,6 +84,7 @@ export const ManagerUsers = (): ReactElement => {
     skip: siteIds.length === 0,
     authorIds: siteIds,
   })
+  const agendaMap = useMemo(() => new Map(agendas.map((a) => [a.id, a])), [agendas])
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartyUsers()
 
@@ -122,6 +123,21 @@ export const ManagerUsers = (): ReactElement => {
 
       const hcpTag = hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type])
 
+      const assignments = hcp.properties.reduce<Assignment[]>((acc, property) => {
+        if (!property?.id?.startsWith('ASSIGNMENT|')) {
+          return acc
+        }
+        const targetId = property.typedValue?.stringValue
+        if (!targetId) {
+          return acc
+        }
+        const agenda = agendaMap.get(targetId)
+        if (agenda?.author) {
+          acc.push({ agendaId: agenda.id, siteId: agenda.author })
+        }
+        return acc
+      }, [])
+
       return [
         {
           rowId: `${user.id}-${hcp.id}`,
@@ -131,7 +147,7 @@ export const ManagerUsers = (): ReactElement => {
           lastName: hcp.lastName,
           email: user.email,
           role: hcpTag && hcpTag.type ? roleTypeMap[hcpTag.type] : undefined,
-          assignment: { agendaId: hcp.supervisorId, siteId: hcp.parentId },
+          assignment: assignments,
         } as UserRow,
       ]
     })
@@ -257,6 +273,18 @@ export const ManagerUsers = (): ReactElement => {
         if (!record.hcp || !record.user) throw new Error('No user selected')
         const rowValues = await form.validateFields()
 
+        const assignmentProperties = rowValues.assignment?.filter((assignment) => assignment.agendaId !== undefined).map((assignment) => createStringProperty(`ASSIGNMENT|${assignment.agendaId}`, assignment.agendaId!))
+        const assignmentParentId =
+          rowValues.role === UserRole.ADMINISTRATOR
+            ? adminRoot?.id
+            : rowValues.role === UserRole.HEAD_OF_SERVICE || rowValues.role === UserRole.CITY_WORKER
+              ? rowValues.assignment && rowValues.assignment.length > 1
+                ? siteRoot?.id
+                : rowValues.assignment?.[0]?.siteId
+              : undefined
+
+        if (!assignmentParentId || !assignmentProperties) throw new Error('Missing critical information')
+
         // --- Step 1: Create HealthcareParty ---
         createdHcp = await createUpdateHcp(
           new HealthcareParty({
@@ -264,9 +292,9 @@ export const ManagerUsers = (): ReactElement => {
             firstName: rowValues.firstName,
             lastName: rowValues.lastName,
             name: `${rowValues.firstName} ${rowValues.lastName}`,
-            parentId: rowValues.role === UserRole.ADMINISTRATOR ? adminRoot?.id : rowValues.role === UserRole.HEAD_OF_SERVICE || rowValues.role === UserRole.CITY_WORKER ? rowValues.assignment?.siteId : undefined,
+            parentId: assignmentParentId,
             tags: rowValues.role ? tagMap[rowValues.role] : [],
-            supervisorId: rowValues.assignment?.agendaId,
+            properties: assignmentProperties,
             public: false,
           }),
         ).unwrap()
@@ -307,7 +335,7 @@ export const ManagerUsers = (): ReactElement => {
         setEditingKey('')
       }
     },
-    [form, createUpdateHcp, createUpdateUser, setUserRoles, deleteSilentHcp, deleteSilentUser, showMessageFeedback, openNotification, setEditingKey, t],
+    [form, createUpdateHcp, createUpdateUser, setUserRoles, deleteSilentHcp, deleteSilentUser, showMessageFeedback, openNotification, setEditingKey, t, adminRoot, siteRoot],
   )
 
   const updateUser = useCallback(
@@ -320,6 +348,19 @@ export const ManagerUsers = (): ReactElement => {
         const newRoleTag = rowValues.role ? tagMap[rowValues.role] : []
         const finalTags = [...nonRoleTags, ...newRoleTag]
 
+        const otherProperties = record.hcp.properties?.filter((prop) => !prop?.id?.startsWith('ASSIGNMENT|')) ?? []
+        const assignmentProperties = rowValues.assignment?.filter((assignment) => assignment.agendaId !== undefined).map((assignment) => createStringProperty(`ASSIGNMENT|${assignment.agendaId}`, assignment.agendaId!))
+        const assignmentParentId =
+          rowValues.role === UserRole.ADMINISTRATOR
+            ? adminRoot?.id
+            : rowValues.role === UserRole.HEAD_OF_SERVICE || rowValues.role === UserRole.CITY_WORKER
+              ? rowValues.assignment && rowValues.assignment.length > 1
+                ? siteRoot?.id
+                : rowValues.assignment?.[0]?.siteId
+              : undefined
+
+        if (!assignmentParentId || !assignmentProperties) throw new Error('Missing critical information')
+
         // --- Step 1: Update HealthcareParty ---
         const updatedHcp = await createUpdateHcp(
           new HealthcareParty({
@@ -327,9 +368,9 @@ export const ManagerUsers = (): ReactElement => {
             firstName: rowValues.firstName,
             lastName: rowValues.lastName,
             name: `${rowValues.firstName} ${rowValues.lastName}`,
-            parentId: rowValues.role === UserRole.ADMINISTRATOR ? adminRoot?.id : rowValues.role === UserRole.HEAD_OF_SERVICE || rowValues.role === UserRole.CITY_WORKER ? rowValues.assignment?.siteId : undefined,
+            parentId: assignmentParentId,
+            properties: [...otherProperties, ...assignmentProperties],
             tags: finalTags,
-            supervisorId: rowValues.assignment?.agendaId,
           }),
         ).unwrap()
 
@@ -376,7 +417,7 @@ export const ManagerUsers = (): ReactElement => {
         openNotification('error', t('notification.user_modify_failed'), t('notification.hcp_modify_error'))
       }
     },
-    [form, createUpdateHcp, createUpdateUser, setUserRoles, showMessageFeedback, openNotification, t],
+    [form, createUpdateHcp, createUpdateUser, setUserRoles, showMessageFeedback, openNotification, t, adminRoot, siteRoot],
   )
 
   const tableRowUpdate = useCallback(
@@ -409,7 +450,7 @@ export const ManagerUsers = (): ReactElement => {
           lastName: record.lastName,
           email: record.email,
           role: record.role,
-          assignment: { siteId: record.hcp?.parentId, agendaId: record.hcp?.supervisorId },
+          assignment: record.assignment,
         })
         setEditingKey(record.rowId)
       } catch (error) {
@@ -525,7 +566,7 @@ export const ManagerUsers = (): ReactElement => {
               title={t('content.email')}
               dataIndex="email"
               key="email"
-              width="20%"
+              width="25%"
               sorter={(a, b) => (a.email ?? '').localeCompare(b.email ?? '')}
               render={(currentValue: string | undefined, record: UserRow) => {
                 const editable = isEditing(record)
@@ -558,7 +599,7 @@ export const ManagerUsers = (): ReactElement => {
               title={t('content.roles')}
               dataIndex="role"
               key="role"
-              width="30%"
+              width="20%"
               render={(currentValue: string, record: UserRow) => {
                 const editable = isEditing(record)
                 if (editable) {

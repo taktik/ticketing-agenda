@@ -124,9 +124,9 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
   const [rowViewedLangs, setRowViewedLangs] = useState<{ [rowKey: string]: string }>({})
 
-  const { attachedService } = usePermissions()
+  const { attachedServices } = usePermissions()
 
-  if (attachedService && attachedService !== service.id) {
+  if (attachedServices?.length && !attachedServices.includes(service.id)) {
     return <div></div>
   }
 

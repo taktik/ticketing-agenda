@@ -387,6 +387,15 @@ export const getIntegerProperty = (properties: DecryptedPropertyStub[] | undefin
   return 0
 }
 
+export const createStringProperty = (id: string, value: string) =>
+  new DecryptedPropertyStub({
+    id,
+    typedValue: new DecryptedTypedValue({
+      type: TypedValuesType.String,
+      stringValue: value,
+    }),
+  })
+
 export const setProperty = (properties: DecryptedPropertyStub[], id: string, typedValue: DecryptedTypedValue) => {
   const existingProp = properties.find((p) => p.id === id)
 

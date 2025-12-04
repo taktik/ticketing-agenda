@@ -58,7 +58,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
   const watchedSite = Form.useWatch('site', form)
   const watchedService = Form.useWatch('service', form)
 
-  const { attachedService } = usePermissions()
+  const { attachedServices } = usePermissions()
   const { adminRoot } = useRoot()
 
   const { data: services, isLoading: isAgendasLoading } = useGetAgendasByAuthorId({ skip: !watchedSite, authorId: watchedSite ?? '' })
@@ -66,14 +66,14 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
   const sortedServices = useMemo(() => {
     const baseServices = services ?? []
 
-    const filteredServices = attachedService ? baseServices.filter((service) => service.id === attachedService) : baseServices
+    const filteredServices = attachedServices?.length ? baseServices.filter((service) => attachedServices.includes(service.id)) : baseServices
 
     return [...filteredServices].sort((a, b) => {
       const nameA = a.name ?? ''
       const nameB = b.name ?? ''
       return nameA.localeCompare(nameB)
     })
-  }, [services, attachedService])
+  }, [services, attachedServices])
 
   const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
 

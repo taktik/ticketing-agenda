@@ -10,6 +10,7 @@ import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/health
 import { EditableSiteInfo, SiteInfoFormValues } from '../../common/EditableSiteInfo'
 import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import './index.css'
+import { createStringProperty } from '../../common/helpers'
 
 interface SiteSettingProps {
   site: HealthcareParty
@@ -86,19 +87,11 @@ export const SiteSetting = ({ site, services, isSitesLoading }: SiteSettingProps
     async (formValues: SiteInfoFormValues) => {
       try {
         if (!site) throw new Error()
-        const createStringProp = (id: string, value: string) =>
-          new DecryptedPropertyStub({
-            id,
-            typedValue: new DecryptedTypedValue({
-              type: TypedValuesType.String,
-              stringValue: value,
-            }),
-          })
 
         const updatedPublicProperties = [
           ...(site.publicProperties || []).filter((p) => p.id !== 'SITE|LOCATION' && p.id !== 'SITE|QBETTER_LOCATION_ID'),
-          createStringProp('SITE|LOCATION', formValues.location),
-          createStringProp('SITE|QBETTER_LOCATION_ID', formValues.qBetterLocationId),
+          createStringProperty('SITE|LOCATION', formValues.location),
+          createStringProperty('SITE|QBETTER_LOCATION_ID', formValues.qBetterLocationId),
         ]
 
         await createUpdateSite(
