@@ -144,6 +144,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 export interface CardinalApiState {
   email?: string
   token?: string
+  azureToken?: string
   user?: User
   keyPair?: { publicKey: string; privateKey: string }
   authProcess?: CardinalBaseSdk.BaseAuthenticationWithProcessStep
@@ -157,6 +158,7 @@ export interface CardinalApiState {
   mobilePhone?: string
   emailLoginProcessStarted: boolean
   azureLoginProcessStarted: boolean
+  autoLoginProcessStarted: boolean
   newlyCreatedRecoveryKey?: string
   recoveryKeyRequest?: { reason: string }
   recoveryKeys?: string[]
@@ -165,6 +167,7 @@ export interface CardinalApiState {
 const cardinalApiInitialState: CardinalApiState = {
   email: undefined,
   token: undefined,
+  azureToken: undefined,
   user: undefined,
   keyPair: undefined,
   authProcess: undefined,
@@ -178,6 +181,7 @@ const cardinalApiInitialState: CardinalApiState = {
   mobilePhone: undefined,
   emailLoginProcessStarted: false,
   azureLoginProcessStarted: false,
+  autoLoginProcessStarted: false,
   newlyCreatedRecoveryKey: undefined,
   recoveryKeyRequest: undefined,
   recoveryKeys: undefined,
@@ -229,9 +233,22 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
     })
 
     const user = await api.user.getCurrentUser()
-    dispatch(setUser({ user }))
-    if (user.email) dispatch(setEmail({ email: user.email }))
+    const newToken = await api.user.getToken(user.id, 'rememberMe')
+
     apiCache[`${user.groupId}/${user.id}`] = api
+
+    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
+    anonymousApiCache['anonymous'] = anonymousApi
+
+    dispatch(
+      setSavedCredentials({
+        login: `${user.groupId}/${user.id}`,
+        token: newToken,
+        tokenTimestamp: +Date.now(),
+      }),
+    )
+    dispatch(setAzureToken({ azureToken: account.idToken }))
+    if (user.email) dispatch(setEmail({ email: user.email }))
     return new User(user)
   } catch (e) {
     console.error(`Couldn't start authentication: ${e}`)
@@ -329,6 +346,43 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
   }
 })
 
+export const login = createAsyncThunk('cardinalApi/login', async (_, { getState, dispatch }) => {
+  const {
+    cardinalApi: { email, token },
+  } = getState() as { cardinalApi: CardinalApiState }
+  dispatch(setAutoLoginProcessStarted(true))
+
+  if (!email) {
+    dispatch(setAutoLoginProcessStarted(false))
+    throw new Error('No email provided')
+  }
+
+  if (!token) {
+    dispatch(setAutoLoginProcessStarted(false))
+    throw new Error('No token provided')
+  }
+
+  try {
+    const api = await CardinalSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
+      useHierarchicalDataOwners: true,
+      encryptedFields: { patient: [], calendarItem: [] },
+    })
+    const user = await api.user.getCurrentUser()
+    apiCache[`${user.groupId}/${user.id}`] = api
+
+    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
+    anonymousApiCache['anonymous'] = anonymousApi
+
+    return new User(user)
+  } catch (e) {
+    console.error(`Couldn't login: ${e}`)
+    dispatch(revertAll())
+    dispatch(resetCredentials())
+  } finally {
+    dispatch(setAutoLoginProcessStarted(false))
+  }
+})
+
 export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { dispatch }) => {
   dispatch(recoveryApiRtk.util.resetApiState())
   dispatch(emailApiRtk.util.resetApiState())
@@ -393,6 +447,9 @@ export const cardinalApiRtk = createSlice({
       state.token = token
       state.invalidToken = false
     },
+    setAzureToken: (state, { payload: { azureToken } }: PayloadAction<{ azureToken: string }>) => {
+      state.azureToken = azureToken
+    },
     setEmail: (state, { payload: { email } }: PayloadAction<{ email: string }>) => {
       state.email = email
       state.invalidEmail = false
@@ -409,6 +466,9 @@ export const cardinalApiRtk = createSlice({
     },
     setAzureLoginProcessStarted(state, { payload: status }: PayloadAction<boolean>) {
       state.azureLoginProcessStarted = status
+    },
+    setAutoLoginProcessStarted(state, { payload: status }: PayloadAction<boolean>) {
+      state.autoLoginProcessStarted = status
     },
     setWaitingForToken(state, { payload: status }: PayloadAction<boolean>) {
       state.waitingForToken = status
@@ -430,6 +490,21 @@ export const cardinalApiRtk = createSlice({
     builder.addCase(completeEmailAuthentication.rejected, (state, {}) => {
       state.invalidToken = true
     })
+    builder.addCase(azureLogin.fulfilled, (state, { payload: user }) => {
+      state.user = user as User
+      state.online = !!user
+    })
+    builder.addCase(azureLogin.rejected, (state, {}) => {
+      state.invalidToken = true
+    })
+    builder.addCase(login.fulfilled, (state, { payload: user }) => {
+      state.user = user as User
+      state.online = !!user
+    })
+    builder.addCase(login.rejected, (state, {}) => {
+      state.invalidToken = true
+      state.online = false
+    })
   },
 })
 
@@ -441,9 +516,11 @@ export const {
   markRecoveryKeyAsLost,
   setRegistrationInformation,
   setToken,
+  setAzureToken,
   setEmail,
   resetCredentials,
   setEmailLoginProcessStarted,
   setAzureLoginProcessStarted,
+  setAutoLoginProcessStarted,
   setWaitingForToken,
 } = cardinalApiRtk.actions
