@@ -3,15 +3,13 @@ import { Agenda } from '@icure/cardinal-sdk'
 import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
-import { ReactElement, useCallback, useContext, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import emptyIcon from '../../assets/empty.svg'
-import { SettingContext } from '../../contexts/SettingContext'
-import { useDeleteAgendaMutation, useGetAgendasByAuthorIds } from '../../core/api/agendaApi'
-import { useDeleteCalendarItemTypesMutation, useLazyGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useAppSelector } from '../../core/hooks'
-import { usePermissions } from '../../core/hooks/usePermissions'
-import { useSites } from '../../core/hooks/useSites'
+import { useDeleteAgendaMutation } from '../../core/api/agendaApi'
+import { useDeleteCalendarItemTypesMutation } from '../../core/api/calendarItemTypeApi'
+import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
+import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
@@ -21,161 +19,115 @@ import { SiteSetting } from './SiteSetting'
 interface ModalHierarchySettingsProps {
   isVisible: boolean
   onClose: () => void
+  initialSiteId?: string
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
 
-export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySettingsProps): ReactElement => {
-  const { selectedSite, selectedKey, setSelectedKey } = useContext(SettingContext)
+export const ModalHierarchySettings = ({ isVisible, onClose, initialSiteId }: ModalHierarchySettingsProps): ReactElement => {
   const { t } = useTranslation()
-  const user = useAppSelector((state) => state.cardinalApi.user)
-  const skip = !user
-  const [openKeys, setOpenKeys] = useState<string[]>(selectedSite ? [`site-${selectedSite.id}`] : [])
+  const { allSites, agendasBySiteId, calendarItemTypesByAgendaId, agendaMap, isLoading: isDataLoading } = useHierarchyContext()
+  const { isAdminLevel, attachedSites, attachedServices } = usePermissionContext()
+  const [selectedKey, setSelectedKey] = useState<string>('default')
+  const [openKeys, setOpenKeys] = useState<string[]>([])
 
-  const { attachedServices, attachedSites } = usePermissions(skip)
-
-  const { sites, isSitesLoading } = useSites()
-  const displayableSites = useMemo(() => {
-    if (attachedSites?.length) {
-      return sites?.filter((site) => attachedSites.includes(site.id)) ?? []
-    }
-    return sites ?? []
-  }, [sites, attachedSites])
-
-  const sitesIds = useMemo(() => displayableSites?.map((site) => site.id), [displayableSites])
-
-  const { data: services, isLoading: isServicesLoading } = useGetAgendasByAuthorIds({ skip: skip || !displayableSites, authorIds: sitesIds ?? [] })
-
-  const sortedServices = useMemo(() => {
-    const baseServices = services ?? []
-
-    const filteredServices = attachedServices?.length ? baseServices.filter((service) => attachedServices.includes(service.id)) : baseServices
-
-    return [...filteredServices].sort((a, b) => {
-      const nameA = a.name ?? ''
-      const nameB = b.name ?? ''
-      return nameA.localeCompare(nameB)
-    })
-  }, [services, attachedServices])
-
-  const [getCalendarItemTypesForAgenda] = useLazyGetCalendarItemTypesQuery()
   const [deleteAgenda, { isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
   const [deleteCalendarItemTypes, { isLoading: isDeleteCalendarItemTypesLoading }] = useDeleteCalendarItemTypesMutation()
 
-  const fetchIsLoading = useMemo(() => isSitesLoading || isServicesLoading, [isSitesLoading, isServicesLoading])
-  const mutationIsLoading = useMemo(() => isDeleteAgendaLoading || isDeleteCalendarItemTypesLoading, [isDeleteAgendaLoading, isDeleteCalendarItemTypesLoading])
-
   const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
   const [messageApi, messageContextHolder] = message.useMessage()
 
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
+  const displayableSites = useMemo(() => {
+    if (!isAdminLevel && attachedSites?.length) {
+      return allSites.filter((site) => attachedSites.includes(site.id))
+    }
+    return allSites
+  }, [allSites, attachedSites, isAdminLevel])
+
+  useEffect(() => {
+    if (isVisible) {
+      if (initialSiteId) {
+        setSelectedKey(`site-${initialSiteId}`)
+        setOpenKeys([`site-${initialSiteId}`])
+      } else if (displayableSites.length > 0) {
+        setSelectedKey(`site-${displayableSites[0].id}`)
+        setOpenKeys([`site-${displayableSites[0].id}`])
+      }
+    }
+  }, [isVisible, initialSiteId, displayableSites])
+
+  const menuItems: MenuItem[] = useMemo(() => {
+    return displayableSites.map((site) => {
+      const siteAgendas = agendasBySiteId.get(site.id) || []
+      const visibleAgendas = !isAdminLevel && attachedServices?.length ? siteAgendas.filter((a) => attachedServices.includes(a.id)) : siteAgendas
+
+      const children: MenuItem[] = visibleAgendas.map((service) => ({
+        key: `service-${service.id}`,
+        label: service.name,
+        icon: <AppstoreOutlined />,
+      }))
+
+      const isSelected = selectedKey === `site-${site.id}`
+      const isOpen = openKeys.includes(`site-${site.id}`)
+
+      const label = (
+        <div className={isSelected ? 'site-label-white' : 'site-label-black'} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{site.name}</span>
+          {isOpen ? <DownOutlined style={{ color: isSelected ? '#fff' : 'black' }} /> : <RightOutlined style={{ color: isSelected ? '#fff' : 'black' }} />}
+        </div>
+      )
+
+      return {
+        key: `site-${site.id}`,
+        label,
+        style: isSelected ? { backgroundColor: '#e30613' } : { backgroundColor: 'white' },
+        icon: <BankOutlined className={isSelected ? 'site-label-white' : 'site-label-black'} />,
+        children,
+      }
     })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
+  }, [displayableSites, agendasBySiteId, attachedServices, isAdminLevel, selectedKey, openKeys])
 
-  const menuItems: MenuItem[] = useMemo(
-    () =>
-      displayableSites.map((site) => {
-        const matchingServices = sortedServices?.filter((service) => service.author === site.id) ?? []
-
-        const children: MenuItem[] = (matchingServices ?? []).map((service) => ({
-          key: `service-${service.id}`,
-          label: service.name,
-          icon: <AppstoreOutlined />,
-        }))
-
-        const isSelected = selectedKey === `site-${site.id}`
-        const isOpen = openKeys.includes(`site-${site.id}`)
-
-        return {
-          key: `site-${site.id}`,
-          label: (
-            <div
-              className={isSelected ? 'site-label-white' : 'site-label-black'}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span>{site.name}</span>
-              {isOpen ? <DownOutlined style={{ color: `${isSelected ? '#fff' : 'black'}` }} /> : <RightOutlined style={{ color: `${isSelected ? '#fff' : 'black'}` }} />}
-            </div>
-          ),
-          style: isSelected
-            ? {
-                backgroundColor: '#e30613',
-              }
-            : {
-                backgroundColor: 'white',
-              },
-          icon: <BankOutlined className={isSelected ? 'site-label-white' : 'site-label-black'} />,
-          children,
-        }
-      }),
-    [displayableSites, sortedServices, selectedKey, openKeys],
-  )
-
-  const onServiceClick: MenuProps['onClick'] = useCallback(
-    ({ key }: { key: string }) => {
-      setSelectedKey((prevSelectedKey) => (prevSelectedKey === key ? 'default' : key))
-    },
-    [setSelectedKey],
-  )
+  const onServiceClick: MenuProps['onClick'] = useCallback(({ key }: { key: string }) => {
+    setSelectedKey((prev) => (prev === key ? 'default' : key))
+  }, [])
 
   const onSiteClick = useCallback(
     (keys: string[]) => {
-      // If the new array of open keys is longer, it means we opened a submenu
       if (keys.length > openKeys.length) {
-        // Find the key that was just added
         const openedKey = keys.find((key) => !openKeys.includes(key))
-        if (openedKey) {
-          setSelectedKey(openedKey)
-        }
+        if (openedKey) setSelectedKey(openedKey)
       } else {
-        // Otherwise, a submenu was closed, so deselect the item
         setSelectedKey('default')
       }
-      // Finally, update the state with the new list of open keys
       setOpenKeys(keys)
     },
-    [openKeys, setSelectedKey, setOpenKeys],
+    [openKeys],
   )
 
   const handleDeleteService = useCallback(
     async (service: Agenda) => {
       try {
         if (!service) throw new Error('No service selected')
-        const calendarItemTypes = await getCalendarItemTypesForAgenda(service.id).unwrap()
-        const calendarItemTypesToDelete = (calendarItemTypes ?? []).map((CIT) => CIT.id)
-        if (calendarItemTypesToDelete.length > 0) {
-          await deleteCalendarItemTypes(calendarItemTypesToDelete).unwrap()
+
+        const existingTypes = calendarItemTypesByAgendaId.get(service.id) || []
+
+        if (existingTypes.length > 0) {
+          const ids = existingTypes.map((cit) => cit.id)
+          await deleteCalendarItemTypes(ids).unwrap()
         }
+
         await deleteAgenda(service).unwrap()
-        showMessageFeedback('success', t('notification.service_deleted'))
+
+        messageApi.success(t('notification.service_deleted'))
+        setSelectedKey(`site-${service.author}`)
       } catch (error) {
-        openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
-      } finally {
-        setSelectedKey('default')
+        api.error({
+          message: t('notification.service_delete_failed'),
+          description: t('notification.service_delete_error'),
+        })
       }
     },
-    [getCalendarItemTypesForAgenda, deleteCalendarItemTypes, deleteAgenda, showMessageFeedback, openNotification, setSelectedKey, t],
+    [calendarItemTypesByAgendaId, deleteCalendarItemTypes, deleteAgenda, messageApi, api, t],
   )
 
   const settingContent = useMemo(() => {
@@ -190,21 +142,19 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
     if (type === 'site') {
       const matchingSite = displayableSites.find((site) => site.id === id)
       if (!matchingSite) return <div>{t('content.site_not_found')}</div>
-
-      const servicesOfThisSite = sortedServices?.filter((service) => service.author === matchingSite.id) ?? []
-
-      return <SiteSetting key={matchingSite.id} site={matchingSite} services={servicesOfThisSite} isSitesLoading={isSitesLoading} />
+      const servicesOfThisSite = agendasBySiteId.get(id) || []
+      return <SiteSetting key={matchingSite.id} site={matchingSite} services={servicesOfThisSite} isSitesLoading={isDataLoading} onSelectService={(serviceId) => setSelectedKey(`service-${serviceId}`)} />
     }
 
     if (type === 'service') {
-      const matchingService = sortedServices?.find((service) => service.id === id)
+      const matchingService = agendaMap.get(id)
       if (!matchingService) return <div>{t('content.service_not_found')}</div>
 
-      return <ServiceSetting key={matchingService.id} service={matchingService} handleDeleteService={handleDeleteService} isServicesLoading={isServicesLoading} />
+      return <ServiceSetting key={matchingService.id} service={matchingService} handleDeleteService={handleDeleteService} isServicesLoading={isDataLoading || isDeleteAgendaLoading || isDeleteCalendarItemTypesLoading} />
     }
 
     return <div>{t('content.select_site_or_service')}</div>
-  }, [selectedKey, displayableSites, sortedServices, t, handleDeleteService, isSitesLoading, isServicesLoading])
+  }, [selectedKey, displayableSites, agendasBySiteId, agendaMap, handleDeleteService, isDataLoading, isDeleteAgendaLoading, isDeleteCalendarItemTypesLoading, t])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.hierarchical_organization')} blockAntModalBodyVerticalScroll noFooter width={1300}>
@@ -213,7 +163,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose }: ModalHierarchySet
         {messageContextHolder}
         <Sider width={250} className="menu-sites-root">
           <div className="menu-sites">
-            {fetchIsLoading ? <SpinLoader /> : <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />}
+            {isDataLoading ? <SpinLoader /> : <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />}
           </div>
         </Sider>
         <Layout>

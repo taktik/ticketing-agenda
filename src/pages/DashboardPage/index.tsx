@@ -15,57 +15,62 @@ import { ItemSelector } from '../../components/ItemSelector/ItemSelector'
 import { ModalHierarchySettings } from '../../components/ModalHierarchySettings'
 import { ModalScheduling } from '../../components/ModalScheduling'
 import { SiteSelector } from '../../components/SiteSelector'
-import { SettingContextProvider } from '../../contexts/SettingContext'
-import { useGetAgendasByStringPropertyQuery } from '../../core/api/agendaApi'
-import { useGetCalendarItemTypesQuery } from '../../core/api/calendarItemTypeApi'
-import { useAppSelector } from '../../core/hooks'
-import { usePermissions } from '../../core/hooks/usePermissions'
-import { useSites } from '../../core/hooks/useSites'
+import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
+import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import './index.css'
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
+
+  const { allSites, agendasBySiteId, calendarItemTypesByAgendaId, isLoading: isDataLoading } = useHierarchyContext()
+  const { isAdminLevel, attachedSites, attachedServices } = usePermissionContext()
+
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
   const [schedulingModalOpen, setSchedulingModalOpen] = useState<boolean>(false)
   const [hierarchyModalOpen, setHierarchyModalOpen] = useState<boolean>(false)
-  const calendarRef = useRef<FullCalendar | null>(null)
-  const user = useAppSelector((state) => state.cardinalApi.user)
-  const skip = !user
-  const { t } = useTranslation()
 
-  const { isAdminLevel, attachedServices, attachedSites } = usePermissions(skip)
-  const { sites, isSitesLoading } = useSites(skip)
+  const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>()
+  const [selectedService, setSelectedService] = useState<Agenda | undefined>()
+  const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>()
+
+  const calendarRef = useRef<FullCalendar | null>(null)
 
   const displayableSites = useMemo(() => {
-    return attachedSites?.length ? (sites?.filter((site) => attachedSites.includes(site.id)) ?? []) : (sites ?? [])
-  }, [sites, attachedSites])
-
-  const [selectedSite, setSelectedSite] = useState<HealthcareParty | undefined>(displayableSites[0])
-
-  const { data: services, isLoading: isServicesLoading } = useGetAgendasByStringPropertyQuery({ propertyId: 'SERVICE|PARENTID', propertyValue: selectedSite?.id ?? '' }, { skip: skip || !selectedSite })
-  const filteredServices = useMemo(() => {
-    if (services && selectedSite) {
-      return attachedServices?.length ? services.filter((service) => attachedServices.includes(service.id)) : services
+    if (attachedSites && attachedSites.length > 0) {
+      return allSites.filter((site) => attachedSites.includes(site.id))
     }
-    return []
-  }, [services, selectedSite, attachedServices])
-  const [selectedService, setSelectedService] = useState<Agenda | undefined>(undefined)
+    return allSites
+  }, [allSites, attachedSites])
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(selectedService?.id ?? '', { skip: skip || !selectedService })
-  const filteredProcedures = useMemo(() => (procedures && selectedService ? procedures : []), [procedures, selectedService])
-  const [selectedProcedure, setSelectedProcedure] = useState<CalendarItemType | undefined>(undefined)
+  const filteredServices = useMemo(() => {
+    if (!selectedSite) return []
 
-  const isSitesRelatedLoading = useMemo(() => isSitesLoading, [isSitesLoading])
-  const isServicesRelatedLoading = useMemo(() => isSitesRelatedLoading || isServicesLoading, [isSitesRelatedLoading, isServicesLoading])
-  const isProceduresRelatedLoading = useMemo(() => isServicesRelatedLoading || isProceduresLoading, [isServicesRelatedLoading, isProceduresLoading])
+    const siteAgendas = agendasBySiteId.get(selectedSite.id) || []
 
-  useEffect(() => setSelectedService(undefined), [services])
-  useEffect(() => setSelectedProcedure(undefined), [procedures])
+    if (attachedServices && attachedServices.length > 0) {
+      return siteAgendas.filter((service) => attachedServices.includes(service.id))
+    }
+    return siteAgendas
+  }, [selectedSite, agendasBySiteId, attachedServices])
+
+  const filteredProcedures = useMemo(() => {
+    if (!selectedService) return []
+    return calendarItemTypesByAgendaId.get(selectedService.id) || []
+  }, [selectedService, calendarItemTypesByAgendaId])
 
   useEffect(() => {
-    if (!selectedSite && displayableSites) {
+    if (!selectedSite && displayableSites.length > 0) {
       setSelectedSite(displayableSites[0])
     }
-  }, [displayableSites])
+  }, [displayableSites, selectedSite])
+
+  useEffect(() => {
+    setSelectedService(undefined)
+  }, [selectedSite?.id])
+
+  useEffect(() => {
+    setSelectedProcedure(undefined)
+  }, [selectedService?.id])
 
   const handleAntCalendarDateChange = useCallback(
     (value: Dayjs) => {
@@ -75,16 +80,15 @@ export default function DashboardPage() {
         calendarApi.gotoDate(value.toDate())
       }
     },
-    [calendarRef, setCalendarDate],
+    [calendarRef],
   )
 
   const handleFullCalendarDateChange = useCallback(() => {
     const calendarApi = calendarRef.current?.getApi()
     if (calendarApi) {
-      const currentDate = calendarApi.getDate()
-      setCalendarDate(currentDate)
+      setCalendarDate(calendarApi.getDate())
     }
-  }, [setCalendarDate])
+  }, [])
 
   return (
     <div className="Dashboard">
@@ -93,7 +97,7 @@ export default function DashboardPage() {
         <div className="left-panel">
           <Card className="card">
             <div className="SiteSelectorRow">
-              <SiteSelector sites={displayableSites} isSitesLoading={isSitesRelatedLoading} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
+              <SiteSelector sites={displayableSites} isSitesLoading={isDataLoading} setSelectedSite={setSelectedSite} selectedSite={selectedSite} />
               {isAdminLevel && (
                 <Space>
                   <Tooltip title={t('content.organize_hierarchy')}>
@@ -110,11 +114,11 @@ export default function DashboardPage() {
             <AntCalendar fullscreen={false} value={dayjs(calendarDate)} onChange={handleAntCalendarDateChange} />
           </div>
           <div className="itemselectors-wrapper">
-            <ItemSelector<Agenda> titleKey="content.services" items={filteredServices} isLoading={isServicesRelatedLoading} selectedItem={selectedService} setSelectedItem={setSelectedService} />
+            <ItemSelector<Agenda> titleKey="content.services" items={filteredServices} isLoading={isDataLoading} selectedItem={selectedService} setSelectedItem={setSelectedService} />
             <ItemSelector<CalendarItemType>
               titleKey="content.procedures"
               items={filteredProcedures}
-              isLoading={isProceduresRelatedLoading}
+              isLoading={isDataLoading}
               selectedItem={selectedProcedure}
               setSelectedItem={setSelectedProcedure}
               filterPredicate={(item) => item.defaultCalendarItemType === true}
@@ -133,13 +137,8 @@ export default function DashboardPage() {
           />
         </div>
       </div>
-      {hierarchyModalOpen &&
-        createPortal(
-          <SettingContextProvider selectedSite={selectedSite}>
-            <ModalHierarchySettings isVisible={hierarchyModalOpen} onClose={() => setHierarchyModalOpen(false)} />
-          </SettingContextProvider>,
-          document.body,
-        )}
+
+      {hierarchyModalOpen && createPortal(<ModalHierarchySettings isVisible={hierarchyModalOpen} onClose={() => setHierarchyModalOpen(false)} initialSiteId={selectedSite?.id} />, document.body)}
       {schedulingModalOpen && createPortal(<ModalScheduling isVisible={schedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} services={filteredServices} />, document.body)}
     </div>
   )

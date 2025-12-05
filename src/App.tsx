@@ -1,30 +1,25 @@
 import { ConfigProvider } from 'antd'
-import React, { Suspense, useEffect, useMemo } from 'react'
-
-import { Router } from './navigation/Router'
-import { ANTD_NEW_THEME } from './style/antd/antdTheme'
-
-import { useTranslation } from 'react-i18next'
-
-// Import Ant Design locales
 import deDE from 'antd/locale/de_DE'
 import enGB from 'antd/locale/en_GB'
 import frFR from 'antd/locale/fr_FR'
 import nlNL from 'antd/locale/nl_NL'
-
-// Import dayjs and its locale data
 import dayjs from 'dayjs'
 import 'dayjs/locale/de'
 import 'dayjs/locale/en'
 import 'dayjs/locale/fr'
 import 'dayjs/locale/nl'
-
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
+import React, { Suspense, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useAppSelector } from './core/hooks'
+import { Router } from './navigation/Router'
+import { ANTD_NEW_THEME } from './style/antd/antdTheme'
+import { HierarchyProvider } from './core/contexts/HierarchyContext'
+import { PermissionProvider } from './core/contexts/PermissionContext'
 dayjs.extend(localizedFormat)
 dayjs.extend(isSameOrAfter)
 
-// Mapping from i18n language codes to antd locale objects
 const antdLocales: { [key: string]: typeof enGB } = {
   fr: frFR,
   nl: nlNL,
@@ -32,7 +27,6 @@ const antdLocales: { [key: string]: typeof enGB } = {
   de: deDE,
 }
 
-// Mapping for dayjs locales
 const dayjsLocales: { [key: string]: string } = {
   fr: 'fr',
   nl: 'nl',
@@ -40,17 +34,16 @@ const dayjsLocales: { [key: string]: string } = {
   de: 'de',
 }
 
-// Inner component to access hooks after i18n is ready
 const AppContent: React.FC = () => {
   const { i18n } = useTranslation()
   const currentLangCode = i18n.language.split('-')[0]
+  const userId = useAppSelector((state) => state.cardinalApi.user?.id)
+  const sessionKey = userId || 'guest'
 
-  // Determine Ant Design locale
   const antdLocale = useMemo(() => {
     return antdLocales[currentLangCode] || enGB
   }, [currentLangCode])
 
-  // Configure dayjs locale
   useEffect(() => {
     const dayjsLocale = dayjsLocales[currentLangCode]
     if (dayjsLocale) {
@@ -63,16 +56,20 @@ const AppContent: React.FC = () => {
 
   return (
     <ConfigProvider theme={ANTD_NEW_THEME} locale={antdLocale}>
-      <Router />
+      <React.Fragment key={sessionKey}>
+        <HierarchyProvider>
+          <PermissionProvider>
+            <Router />
+          </PermissionProvider>
+        </HierarchyProvider>
+      </React.Fragment>
     </ConfigProvider>
   )
 }
 
-// Main App component wraps everything in Suspense for i18n
 function App() {
   return (
     <>
-      {/* Suspense is crucial for i18next loading */}
       <Suspense fallback={<p>Loading Application...</p>}>
         <AppContent />
       </Suspense>

@@ -1,7 +1,7 @@
 import { Agenda, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
-import { Select as AntSelect, Button, Empty, message, notification, Space, Table, Tooltip } from 'antd'
+import { Select as AntSelect, Button, Empty, message, Space, Table, Tooltip } from 'antd'
 import Column from 'antd/es/table/Column'
-import { addMonths, endOfToday, format } from 'date-fns'
+import { addMonths, endOfToday, format, startOfToday } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -26,138 +26,80 @@ interface ModalSchedulingProps {
 
 export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulingProps): ReactElement => {
   const { t, i18n } = useTranslation()
+  const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
+  const [selectedServiceId, setSelectedServiceId] = useState<string | undefined>(services?.[0]?.id)
+  const selectedService = useMemo(() => services.find((s) => s.id === selectedServiceId), [services, selectedServiceId])
+  const [schedulingTableRows, setSchedulingTableRow] = useState<SchedulingTableRow[]>([])
   const [showRulesModal, setShowRulesModal] = useState<boolean>(false)
   const [showDeleteResourceGroupModal, setShowDeleteResourceGroupModal] = useState<boolean>(false)
-  const [selectedResourcegroup, setSelectedResourcegroup] = useState<SchedulingTableRow | undefined>(undefined)
-  const [selectedService, setSelectedService] = useState<Agenda | undefined>(services?.[0])
-  const [resourceGroupToBeDelete, setResourceGroupToBeDelete] = useState<SchedulingTableRow | undefined>(undefined)
-  const [schedulingTableRows, setSchedulingTableRow] = useState<SchedulingTableRow[]>([])
-  const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
+  const [selectedResourceGroup, setSelectedResourceGroup] = useState<SchedulingTableRow | undefined>(undefined)
+  const [resourceGroupToBeDeleted, setResourceGroupToBeDeleted] = useState<SchedulingTableRow | undefined>(undefined)
 
   useEffect(() => {
     const sortedResourceGroups = [...(selectedService?.schedules ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
     const tableRows = sortedResourceGroups.map((resourceGroup) => {
-      const scheduleInstance = new ResourceGroupAllocationSchedule(resourceGroup)
-      const newRow: SchedulingTableRow = Object.assign(scheduleInstance, {
-        rowId: v4(),
-      })
-      return newRow
+      const instance = new ResourceGroupAllocationSchedule(resourceGroup)
+      return Object.assign(instance, { rowId: v4() })
     })
     setSchedulingTableRow(tableRows)
   }, [selectedService])
 
   const [updateAgenda, { isLoading: isUpdateAgendaLoading }] = useUpdateAgendaMutation()
-
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
   const [messageApi, messageContextHolder] = message.useMessage()
 
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
+  const handleEditClick = useCallback((resourceGroup: SchedulingTableRow) => {
+    setSelectedResourceGroup(resourceGroup)
+    setShowRulesModal(true)
+  }, [])
 
-  const handleEditClick = useCallback(
-    (resourceGroup: SchedulingTableRow) => {
-      setSelectedResourcegroup(resourceGroup)
-      setShowRulesModal(true)
-    },
-    [setSelectedResourcegroup, setShowRulesModal],
-  )
-
-  const handleDeleteClick = useCallback(
-    (resourceGroup: SchedulingTableRow) => {
-      setResourceGroupToBeDelete(resourceGroup)
-      setShowDeleteResourceGroupModal(true)
-    },
-    [setResourceGroupToBeDelete, setShowDeleteResourceGroupModal],
-  )
+  const handleDeleteClick = useCallback((resourceGroup: SchedulingTableRow) => {
+    setResourceGroupToBeDeleted(resourceGroup)
+    setShowDeleteResourceGroupModal(true)
+  }, [])
 
   const addSchedule = useCallback(() => {
-    try {
-      if (!selectedService) throw new Error()
-      const today = new Date()
-      const start = dateToYYYYMMDDHHmmss(today)
-      const end = dateToYYYYMMDDHHmmss(addMonths(endOfToday(), 1))
-      const newScheduleInstance = new ResourceGroupAllocationSchedule({
-        name: t('content.new_schedule'),
-        startDateTime: start,
-        endDateTime: end,
-        items: [],
-        tags: [],
-        codes: [],
-        resourceGroup: undefined,
-      })
+    if (!selectedService) return
 
-      const newRow: SchedulingTableRow = Object.assign(newScheduleInstance, {
-        rowId: v4(),
-      })
-      setSchedulingTableRow((prev) => [...prev, newRow])
-      handleEditClick(newRow)
-    } catch (error) {
-      openNotification('error', t('notification.schedule_save_failed'), t('notification.schedule_save_error'))
-    }
-  }, [selectedService, dateToYYYYMMDDHHmmss, setSchedulingTableRow, handleEditClick, openNotification, t])
+    const start = dateToYYYYMMDDHHmmss(startOfToday())
+    const end = dateToYYYYMMDDHHmmss(addMonths(endOfToday(), 1))
 
-  const showUpdateSuccessMessage = useCallback(
-    (message: string) => {
-      showMessageFeedback('success', message)
-    },
-    [showMessageFeedback],
-  )
+    const newScheduleInstance = new ResourceGroupAllocationSchedule({
+      name: t('content.new_schedule'),
+      startDateTime: start,
+      endDateTime: end,
+      items: [],
+      tags: [],
+      codes: [],
+      resourceGroup: undefined,
+    })
+    const newRow = Object.assign(newScheduleInstance, { rowId: v4() })
+    setSchedulingTableRow((prev) => [...prev, newRow])
+    handleEditClick(newRow)
+  }, [selectedService, t, handleEditClick])
 
   const handleDeleteResourceGroup = useCallback(async () => {
     try {
-      if (!selectedService || !resourceGroupToBeDelete) throw new Error('Missing service or resource group to delete')
-      const updatedSchedule = schedulingTableRows.filter((row) => row.rowId !== resourceGroupToBeDelete.rowId).map(({ rowId, ...resourceGroup }) => new ResourceGroupAllocationSchedule({ ...resourceGroup }))
-      await updateAgenda(new Agenda({ ...selectedService, schedules: updatedSchedule })).unwrap()
-      showMessageFeedback('success', t('notification.schedule_deleted'))
+      if (!selectedService || !resourceGroupToBeDeleted) return
+      const updatedSchedules = schedulingTableRows.filter((row) => row.rowId !== resourceGroupToBeDeleted.rowId).map(({ rowId, ...resourceGroup }) => new ResourceGroupAllocationSchedule(resourceGroup))
+      await updateAgenda(new Agenda({ ...selectedService, schedules: updatedSchedules })).unwrap()
+      messageApi.success(t('notification.schedule_deleted'))
     } catch (error) {
       console.error('Failed to delete resource group:', error)
-      openNotification('error', t('notification.schedule_delete_failed'), t('notification.schedule_delete_error'))
+      messageApi.error(t('notification.schedule_delete_failed'))
     } finally {
       setShowDeleteResourceGroupModal(false)
     }
-  }, [selectedService, resourceGroupToBeDelete, schedulingTableRows, updateAgenda, showMessageFeedback, t, openNotification, setShowDeleteResourceGroupModal])
+  }, [selectedService, resourceGroupToBeDeleted, schedulingTableRows, updateAgenda, messageApi, t])
 
-  const options = useMemo(
-    () =>
-      services.map((service) => ({
-        label: service.name,
-        value: service.id,
-      })),
-    [services],
-  )
+  const serviceOptions = useMemo(() => services.map((service) => ({ label: service.name, value: service.id })), [services])
 
-  useEffect(() => {
-    if (selectedService) {
-      const selected = services.find((service) => service.id === selectedService.id)
-      setSelectedService(selected)
-    }
-  }, [services])
-
-  const canAddSchedule = useMemo(() => selectedService?.schedules.length === schedulingTableRows.length, [selectedService, schedulingTableRows])
+  const hasUnsavedChanges = selectedService?.schedules.length !== schedulingTableRows.length
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.schedule_list')} blockAntModalBodyVerticalScroll noFooter width={1300}>
       <div className="modal-schedule">
-        {notificationContextHolder}
         {messageContextHolder}
+
         <div className="ant-select-schedule">
           {t('content.services')}
           <AntSelect
@@ -168,35 +110,32 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             optionFilterProp="label"
             labelInValue
             filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}
-            options={options}
+            options={serviceOptions}
             value={selectedService ? { label: selectedService.name, value: selectedService.id } : undefined}
-            onChange={(option) => {
-              if (option && option.value) {
-                const selected = services.find((service) => service.id === option.value)
-                setSelectedService(selected)
-              } else {
-                setSelectedService(undefined)
-              }
-            }}
+            onChange={(option) => setSelectedServiceId(option?.value)}
           />
         </div>
+
         <div className="table-add-entry margin-top">
-          <Tooltip title={selectedService ? (!canAddSchedule ? t('content.save_current_schedule_before_adding') : null) : t('content.select_service_for_schedule')}>
-            <Button style={{ width: '100%' }} disabled={!selectedService || !selectedService || !canAddSchedule} onClick={addSchedule}>
-              {t('content.add_schedule')}
-            </Button>
+          <Tooltip title={selectedService ? (hasUnsavedChanges ? t('content.save_current_schedule_before_adding') : null) : t('content.select_service_for_schedule')}>
+            <span>
+              <Button style={{ width: '100%' }} disabled={!selectedService || hasUnsavedChanges} onClick={addSchedule}>
+                {t('content.add_schedule')}
+              </Button>
+            </span>
           </Tooltip>
         </div>
+
         <div className="antTable">
           <Table<SchedulingTableRow>
             pagination={false}
             scroll={{ y: 'calc(800px - 350px)', x: 'max-content' }}
             dataSource={schedulingTableRows}
-            rowKey={(record) => `${record.startDateTime}-${record.endDateTime}`}
+            rowKey="rowId"
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
             loading={isUpdateAgendaLoading}
           >
-            <Column title={t('content.name')} dataIndex="name" key="name" width={'23%'} sorter={(a, b) => a.name.localeCompare(b.name)} />
+            <Column title={t('content.name')} dataIndex="name" key="name" width={'23%'} sorter={(a: SchedulingTableRow, b: SchedulingTableRow) => (a.name || '').localeCompare(b.name || '')} />
             <Column
               title={t('content.start')}
               dataIndex="startDateTime"
@@ -231,18 +170,20 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
             />
           </Table>
         </div>
+
         {showRulesModal &&
           createPortal(
             <ModalRules
               isVisible={showRulesModal}
               onClose={() => setShowRulesModal(false)}
-              schedulingTableRow={selectedResourcegroup}
+              schedulingTableRow={selectedResourceGroup}
               schedulingTableRows={schedulingTableRows}
               agenda={selectedService}
-              showUpdateSuccessMessage={showUpdateSuccessMessage}
+              showUpdateSuccessMessage={(msg) => messageApi.success(msg)}
             />,
             document.body,
           )}
+
         {showDeleteResourceGroupModal &&
           createPortal(
             <ModalConfirmAction

@@ -8,8 +8,9 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
-import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMutation, useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
-import { usePermissions } from '../../../core/hooks/usePermissions'
+import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMutation } from '../../../core/api/calendarItemTypeApi'
+import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
+import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { getBooleanProperty, getIntegerProperty, getStringProperty, getTranslationForEntity, languages, setProperty } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
@@ -21,7 +22,7 @@ interface SubjectEditProps {
 }
 
 const SubjectEdit = React.memo(({ activeLang, onLangChange }: SubjectEditProps): ReactElement => {
-  const options = useMemo(() => languages.map((lang) => ({ label: lang, value: lang })), [languages.join(',')])
+  const options = useMemo(() => languages.map((lang) => ({ label: lang, value: lang })), [languages])
   return (
     <div style={{ minWidth: 350 }}>
       <Segmented options={options} value={activeLang} onChange={(lang) => onLangChange(String(lang))} style={{ marginBottom: 16 }} />
@@ -46,7 +47,7 @@ interface SubjectDisplayProps {
 const SubjectDisplay = React.memo(({ subjects, viewedLang, onChange }: SubjectDisplayProps): ReactElement => {
   const { t } = useTranslation()
 
-  const options = useMemo(() => languages.map((lang) => ({ label: lang, value: lang })), [languages.join(',')])
+  const options = useMemo(() => languages.map((lang) => ({ label: lang, value: lang })), [languages])
 
   if (languages.length === 0) {
     return (
@@ -64,14 +65,6 @@ const SubjectDisplay = React.memo(({ subjects, viewedLang, onChange }: SubjectDi
   )
 })
 
-const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
-  const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
-  const sortedMatchingProcedures = sortByOrder(matchingProcedures)
-  const allDurations = sortedMatchingProcedures.map((item) => item.duration)
-
-  return allDurations
-}
-
 const sortByOrder = (items: CalendarItemType[]): CalendarItemType[] => {
   return [...items].sort((a, b) => {
     const aOrder = getIntegerProperty(a.publicProperties, 'CALENDARITEMTYPE|ORDER')
@@ -79,6 +72,14 @@ const sortByOrder = (items: CalendarItemType[]): CalendarItemType[] => {
 
     return aOrder - bOrder
   })
+}
+
+const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
+  const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
+  const sortedMatchingProcedures = sortByOrder(matchingProcedures)
+  const allDurations = sortedMatchingProcedures.map((item) => item.duration)
+
+  return allDurations
 }
 
 export interface LanguageDescription {
@@ -115,25 +116,28 @@ interface ServiceSettingProps {
 
 export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading }: ServiceSettingProps): ReactElement => {
   const { t } = useTranslation()
-  const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
-  const [showDeleteProcedureModal, setShowDeleteProcedureModal] = useState<boolean>(false)
-  const [procedureRowToBeDeleted, setProcedureRowToBeDeleted] = useState<ProcedureRow | undefined>(undefined)
-  const [proceduresList, setProceduresList] = useState<CalendarItemType[]>([])
-  const [showEditServiceTitle, setShowEditServiceTitle] = useState<boolean>(false)
-  const [editingKey, setEditingKey] = useState<string>('')
-  const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
-  const [rowViewedLangs, setRowViewedLangs] = useState<{ [rowKey: string]: string }>({})
-
-  const { attachedServices } = usePermissions()
+  const { calendarItemTypesByAgendaId } = useHierarchyContext()
+  const { attachedServices } = usePermissionContext()
 
   if (attachedServices?.length && !attachedServices.includes(service.id)) {
     return <div></div>
   }
 
-  const { data: procedures, isLoading: isProceduresLoading } = useGetCalendarItemTypesQuery(service?.id ?? '', { skip: !service })
+  const procedures = calendarItemTypesByAgendaId.get(service.id) || []
+
+  const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
+  const [showDeleteProcedureModal, setShowDeleteProcedureModal] = useState<boolean>(false)
+  const [procedureRowToBeDeleted, setProcedureRowToBeDeleted] = useState<ProcedureRow | undefined>(undefined)
+
+  const [showEditServiceTitle, setShowEditServiceTitle] = useState<boolean>(false)
+  const [editingKey, setEditingKey] = useState<string>('')
+  const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
+  const [rowViewedLangs, setRowViewedLangs] = useState<{ [rowKey: string]: string }>({})
+
+  const [form] = Form.useForm<FormValuesService>()
 
   const sortedProcedures = useMemo(() => {
-    return [...(procedures ?? [])]
+    return [...procedures]
       .sort((a, b) => {
         const nameA = a.name ?? ''
         const nameB = b.name ?? ''
@@ -142,45 +146,35 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       .filter((item) => item.defaultCalendarItemType === true)
   }, [procedures])
 
-  const [form] = Form.useForm<FormValuesService>()
-
   const [createUpdateService, { isLoading: isCreateUpdateServiceLoading }] = useCreateUpdateAgendaMutation()
   const [createUpdateProcedure, { isLoading: isCreateUpdateDemarcheLoading }] = useCreateUpdateCalendarItemTypeMutation()
   const [deleteProcedures, { isLoading: isDeleteDemarcheLoading }] = useDeleteCalendarItemTypesMutation()
 
-  const isFetching = useMemo(() => isProceduresLoading || isServicesLoading, [isProceduresLoading, isServicesLoading])
-  const isMutating = useMemo(() => isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading, [isCreateUpdateServiceLoading, isCreateUpdateDemarcheLoading, isDeleteDemarcheLoading])
-  const isLoading = useMemo(() => isFetching || isMutating, [isFetching, isMutating])
+  const isFetching = isServicesLoading
+  const isMutating = isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading
+  const isLoading = isFetching || isMutating
 
   const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
+  const openNotification = useCallback(
+    (type: 'error', message: string, description: string) => {
+      api.open({ type, message, description, duration: 0 })
+      setTimeout(api.destroy, 2500)
+    },
+    [api],
+  )
 
   const [messageApi, messageContextHolder] = message.useMessage()
-
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    // Dismiss manually and asynchronously
-    setTimeout(messageApi.destroy, 2500)
-  }
+  const showMessageFeedback = useCallback(
+    (type: 'loading' | 'success' | 'error', content: string) => {
+      messageApi.open({ type, content, duration: 0 })
+      setTimeout(messageApi.destroy, 2500)
+    },
+    [messageApi],
+  )
 
   const tableRows: ProcedureRow[] = useMemo(() => {
-    const proceduresByName = (procedures ?? []).reduce((acc, procedure) => {
-      if (!procedure.name) {
-        return acc
-      }
+    const proceduresByName = procedures.reduce((acc, procedure) => {
+      if (!procedure.name) return acc
       const existing = acc.get(procedure.name) || []
       acc.set(procedure.name, [...existing, procedure])
       return acc
@@ -192,7 +186,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       durationsMap.set(name, sortedDurations)
     })
 
-    return proceduresList.map((procedure) => ({
+    return sortedProcedures.map((procedure) => ({
       rowId: procedure.id,
       procedureId: procedure.id,
       procedureName: procedure.name,
@@ -203,12 +197,11 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       color: procedure.color ?? '',
       qBetterProcedureId: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID'),
     }))
-  }, [procedures, proceduresList])
+  }, [procedures, sortedProcedures])
 
   useEffect(() => {
-    setProceduresList(sortedProcedures)
     setEditingKey('')
-  }, [sortedProcedures, form])
+  }, [sortedProcedures])
 
   useEffect(() => {
     if (service) {
@@ -224,70 +217,17 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     try {
       if (!service) throw new Error()
 
-      const translationPropertyFR = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|TRANSLATION|FR',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.String,
-          stringValue: t('content.new_procedure'),
-        }),
-      })
-      const translationPropertyNL = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|TRANSLATION|NL',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.String,
-          stringValue: '',
-        }),
-      })
-      const translationPropertyEN = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|TRANSLATION|EN',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.String,
-          stringValue: '',
-        }),
-      })
-      const translationPropertyDE = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|TRANSLATION|DE',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.String,
-          stringValue: '',
-        }),
-      })
-      const isPublicProp = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|ISPUBLIC',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.Boolean,
-          booleanValue: true,
-        }),
-      })
-      const orderProp = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|ORDER',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.Integer,
-          integerValue: 0,
-        }),
-      })
-      const procedureDetailsProp = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|PROCEDUREDETAILS',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.String,
-          stringValue: '',
-        }),
-      })
-      const agendaIdProp = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|AGENDAID',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.String,
-          stringValue: service.id,
-        }),
-      })
-      const qBetterProcedureIdProp = new DecryptedPropertyStub({
-        id: 'CALENDARITEMTYPE|QBETTER_SERVICE_ID',
-        typedValue: new DecryptedTypedValue({
-          type: TypedValuesType.String,
-          stringValue: '',
-        }),
-      })
+      const translationPropertyFR = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|FR', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: t('content.new_procedure') }) })
+      const translationPropertyNL = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|NL', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
+      const translationPropertyEN = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|EN', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
+      const translationPropertyDE = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|DE', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
+      const isPublicProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|ISPUBLIC', typedValue: new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: true }) })
+      const orderProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|ORDER', typedValue: new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: 0 }) })
+      const procedureDetailsProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|PROCEDUREDETAILS', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
+      const agendaIdProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|AGENDAID', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }) })
+      const qBetterProcedureIdProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|QBETTER_SERVICE_ID', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
       const calendarItemTypeProperties = [isPublicProp, orderProp, qBetterProcedureIdProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
+
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
         defaultCalendarItemType: true,
@@ -333,75 +273,25 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
   const tableRowUpdate = async (procedureRow: ProcedureRow) => {
     try {
-      // Step 1 : We first make sure everything is valid
       if (!service) throw new Error()
       const rowValues = await form.validateFields()
 
-      // Step 2 : We get our current procedures and sort them by their order
-      const matchingProcedures = (procedures ?? []).filter((item) => item.name === procedureRow.subjectByLanguage['FR'])
+      const matchingProcedures = procedures.filter((item) => item.name === procedureRow.subjectByLanguage['FR'])
       const sortedMatchingProcedures = sortByOrder(matchingProcedures)
 
-      // Step 3 : We make our desired Array with the values the user has chosen
       const desiredArray = rowValues.appointmentDurations.map((duration, index) => {
         const properties: DecryptedPropertyStub[] = []
 
         Object.entries(rowValues.subjectByLanguage).forEach(([locale, value]) => {
-          setProperty(
-            properties,
-            `CALENDARITEMTYPE|TRANSLATION|${locale.toUpperCase()}`,
-            new DecryptedTypedValue({
-              type: TypedValuesType.String,
-              stringValue: value,
-            }),
-          )
+          setProperty(properties, `CALENDARITEMTYPE|TRANSLATION|${locale.toUpperCase()}`, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: value }))
         })
+        setProperty(properties, 'CALENDARITEMTYPE|ISPUBLIC', new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: rowValues.isPublic }))
+        setProperty(properties, 'CALENDARITEMTYPE|ORDER', new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
+        setProperty(properties, 'CALENDARITEMTYPE|PROCEDUREDETAILS', new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.procedureDetails }))
+        setProperty(properties, 'CALENDARITEMTYPE|AGENDAID', new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }))
+        setProperty(properties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID', new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.qBetterProcedureId }))
 
-        setProperty(
-          properties,
-          'CALENDARITEMTYPE|ISPUBLIC',
-          new DecryptedTypedValue({
-            type: TypedValuesType.Boolean,
-            booleanValue: rowValues.isPublic,
-          }),
-        )
-
-        setProperty(
-          properties,
-          'CALENDARITEMTYPE|ORDER',
-          new DecryptedTypedValue({
-            type: TypedValuesType.Integer,
-            integerValue: index,
-          }),
-        )
-
-        setProperty(
-          properties,
-          'CALENDARITEMTYPE|PROCEDUREDETAILS',
-          new DecryptedTypedValue({
-            type: TypedValuesType.String,
-            stringValue: rowValues.procedureDetails,
-          }),
-        )
-
-        setProperty(
-          properties,
-          'CALENDARITEMTYPE|AGENDAID',
-          new DecryptedTypedValue({
-            type: TypedValuesType.String,
-            stringValue: service.id,
-          }),
-        )
-
-        setProperty(
-          properties,
-          'CALENDARITEMTYPE|QBETTER_SERVICE_ID',
-          new DecryptedTypedValue({
-            type: TypedValuesType.String,
-            stringValue: rowValues.qBetterProcedureId,
-          }),
-        )
-
-        const updatedCalendarItemType = new CalendarItemType({
+        return new CalendarItemType({
           name: rowValues.subjectByLanguage['FR'],
           duration: duration,
           defaultCalendarItemType: index === 0,
@@ -410,22 +300,18 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
           color: typeof rowValues.color !== 'string' ? (rowValues.color as Color).toHexString() : rowValues.color,
           id: v4(),
         })
-        return updatedCalendarItemType
       })
 
-      // Step 4 : We will compare both our current array and our desired array and UPDATE, CREATE or DELETE as needed.
       const mutationPromises: Promise<unknown>[] = []
       const addedCalendarItemTypesIds: string[] = []
       const removedCalendarItemTypesIds: string[] = []
       const maxLen = Math.max(desiredArray.length, sortedMatchingProcedures.length)
 
       for (let i = 0; i < maxLen; i++) {
-        const desiredProps = desiredArray[i] // Target state for this slot (order i)
-        const existingItem = sortedMatchingProcedures[i] // Current item at this slot (order i)
+        const desiredProps = desiredArray[i]
+        const existingItem = sortedMatchingProcedures[i]
 
         if (desiredProps && existingItem) {
-          // === Both exist: Potential UPDATE ===
-          // Check if an update is actually needed by comparing relevant fields.
           if (
             existingItem.duration !== desiredProps.duration ||
             existingItem.defaultCalendarItemType !== desiredProps.defaultCalendarItemType ||
@@ -437,31 +323,31 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') ||
             getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID')
           ) {
-            const procedure = new CalendarItemType({
-              name: desiredProps.name,
-              duration: desiredProps.duration,
-              defaultCalendarItemType: desiredProps.defaultCalendarItemType,
-              healthcarePartyId: desiredProps.healthcarePartyId,
-              agendaId: desiredProps.agendaId,
-              id: existingItem.id,
-              rev: existingItem.rev,
-              publicProperties: desiredProps.publicProperties,
-              color: desiredProps.color,
-            })
-            mutationPromises.push(createUpdateProcedure(procedure).unwrap())
+            mutationPromises.push(
+              createUpdateProcedure(
+                new CalendarItemType({
+                  name: desiredProps.name,
+                  duration: desiredProps.duration,
+                  defaultCalendarItemType: desiredProps.defaultCalendarItemType,
+                  healthcarePartyId: desiredProps.healthcarePartyId,
+                  agendaId: desiredProps.agendaId,
+                  id: existingItem.id,
+                  rev: existingItem.rev,
+                  publicProperties: desiredProps.publicProperties,
+                  color: desiredProps.color,
+                }),
+              ).unwrap(),
+            )
           }
         } else if (desiredProps && !existingItem) {
-          // === Desired, but no corresponding existing item: CREATE ===
           mutationPromises.push(createUpdateProcedure(desiredProps).unwrap())
           addedCalendarItemTypesIds.push(desiredProps.id)
         } else if (!desiredProps && existingItem) {
-          // === No longer desired at this position, but exists: DELETE ===
           mutationPromises.push(deleteProcedures([existingItem.id]).unwrap())
           removedCalendarItemTypesIds.push(existingItem.id)
         }
       }
 
-      // 3. Execute all collected mutations
       if (mutationPromises.length > 0) {
         await Promise.all(mutationPromises)
         if (addedCalendarItemTypesIds.length || removedCalendarItemTypesIds.length) {
@@ -476,7 +362,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         openNotification('error', t('notification.procedure_modify_failed'), t('notification.procedure_modify_error'))
       }
     } finally {
-      // Step 5: we return the row to its display mode
       setEditingKey('')
     }
   }
@@ -510,13 +395,16 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const tableRowDelete = useCallback(async () => {
     try {
       if (!procedureRowToBeDeleted) throw new Error()
-      const proceduresToDelete = procedures?.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR']) || []
+      const proceduresToDelete = procedures.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR']) || []
+
       if (!proceduresToDelete || proceduresToDelete.length === 0) {
         console.warn('No matching procedures found to delete by that name.')
       }
+
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
       await deleteProcedures(proceduresToDeleteIds).unwrap()
       await updateAgendaSchedules(procedureRowToBeDeleted.procedureId, service, [], proceduresToDeleteIds)
+
       showMessageFeedback('success', t('notification.procedure_deleted'))
     } catch (error) {
       console.error('Failed to delete procedure group:', error)
@@ -525,7 +413,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       setShowDeleteProcedureModal(false)
       setProcedureRowToBeDeleted(undefined)
     }
-  }, [procedureRowToBeDeleted, procedures, deleteProcedures, showMessageFeedback, openNotification, setProcedureRowToBeDeleted, t])
+  }, [procedureRowToBeDeleted, procedures, deleteProcedures, showMessageFeedback, openNotification, updateAgendaSchedules, service, t])
 
   const renameService = useCallback(
     async (newTitles: LanguageDescription) => {
@@ -538,20 +426,9 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
           const existingProp = updatedProperties.find((p) => p.id === id)
 
           if (existingProp) {
-            existingProp.typedValue = new DecryptedTypedValue({
-              type: TypedValuesType.String,
-              stringValue: title,
-            })
+            existingProp.typedValue = new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: title })
           } else {
-            updatedProperties.push(
-              new DecryptedPropertyStub({
-                id,
-                typedValue: new DecryptedTypedValue({
-                  type: TypedValuesType.String,
-                  stringValue: title,
-                }),
-              }),
-            )
+            updatedProperties.push(new DecryptedPropertyStub({ id, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: title }) }))
           }
         })
         await createUpdateService(new Agenda({ ...service, name: newTitles['FR'], properties: updatedProperties })).unwrap()
@@ -646,16 +523,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                   const editable = isEditing(record)
                   if (editable) {
                     return (
-                      <Form.Item
-                        name="color"
-                        style={{ margin: 0 }}
-                        rules={[
-                          {
-                            required: true,
-                            message: t('validation.color_required'),
-                          },
-                        ]}
-                      >
+                      <Form.Item name="color" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.color_required') }]}>
                         <ColorPicker />
                       </Form.Item>
                     )

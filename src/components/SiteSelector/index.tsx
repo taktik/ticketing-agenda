@@ -24,11 +24,13 @@ export const SiteSelector = ({ sites, isSitesLoading, selectedSite, setSelectedS
   )
 
   useEffect(() => {
-    if (selectedSite) {
+    if (selectedSite && sites) {
       const selected = sites.find((site) => site.id === selectedSite.id)
-      setSelectedSite(selected)
+      if (selected && selected !== selectedSite) {
+        setSelectedSite(selected)
+      }
     }
-  }, [sites])
+  }, [sites, selectedSite, setSelectedSite])
 
   return (
     <div className="selector-root">
@@ -42,7 +44,7 @@ export const SiteSelector = ({ sites, isSitesLoading, selectedSite, setSelectedS
         options={options}
         value={selectedSite ? { label: selectedSite.name, value: selectedSite.id } : undefined}
         onChange={(option) => {
-          if (option && option.value) {
+          if (option && option.value && sites) {
             const selected = sites.find((site) => site.id === option.value)
             setSelectedSite(selected)
           } else {

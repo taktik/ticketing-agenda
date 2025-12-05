@@ -1,9 +1,10 @@
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
-import { Button, Form, FormInstance, Input, notification, Segmented, Space, Typography } from 'antd'
+import { Button, Form, FormInstance, Input, Segmented, Space, Typography } from 'antd'
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormValuesService, LanguageDescription } from '../ModalHierarchySettings/ServiceSetting'
+import { languages } from '../common/helpers'
 
 interface EditableServiceTitleProps {
   form: FormInstance<FormValuesService>
@@ -17,64 +18,58 @@ export const EditableServiceTitle = ({ form, initialTitles, onSave, showEditServ
   const { t } = useTranslation()
   const [selectedLang, setSelectedLang] = useState('FR')
 
-  const languages = ['FR', 'NL', 'EN', 'DE']
   const currentTitles = Form.useWatch('descr', form) || initialTitles
 
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
   useEffect(() => {
-    if (showEditServiceTitle) {
+    if (showEditServiceTitle && initialTitles) {
       form.setFieldsValue({ descr: initialTitles })
     }
   }, [showEditServiceTitle, initialTitles, form])
 
   const handleCancel = useCallback(() => {
-    form.resetFields()
+    form.setFieldsValue({ descr: initialTitles })
     setShowEditServiceTitle(false)
-  }, [setShowEditServiceTitle, form])
+  }, [setShowEditServiceTitle, form, initialTitles])
 
   const handleSave = useCallback(async () => {
     try {
-      const values = await form.validateFields()
+      await form.validateFields([
+        ['descr', 'FR'],
+        ['descr', 'NL'],
+        ['descr', 'EN'],
+        ['descr', 'DE'],
+      ])
+
+      const values = form.getFieldsValue()
       onSave(values.descr)
-      form.resetFields()
-    } catch (error) {
-      openNotification('error', t('validation.validation_failed'), t('validation.check_highlighted_fields_correct_errors'))
-    }
+    } catch (error) {}
   }, [form, onSave])
 
+  // --- DISPLAY MODE ---
   if (!showEditServiceTitle) {
-    // --- DISPLAY MODE ---
     return (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Typography.Title level={2}>{currentTitles?.FR || ''}</Typography.Title>
+        <Typography.Title level={2} style={{ margin: 0 }}>
+          {currentTitles?.FR || ''}
+        </Typography.Title>
       </div>
     )
   }
 
   // --- EDIT MODE ---
   return (
-    <Space direction="vertical" align="start">
-      {notificationContextHolder}
+    <Space direction="vertical" align="start" style={{ width: '100%' }}>
       <Segmented options={languages} value={selectedLang} onChange={(lang) => setSelectedLang(String(lang))} />
-      <Space.Compact style={{ width: '100%' }}>
+
+      <Space.Compact style={{ width: '100%', display: 'flex' }}>
         {languages.map((lang) => (
-          <div key={lang} style={{ display: selectedLang === lang ? 'block' : 'none', width: '100%' }}>
+          <div key={lang} style={{ display: selectedLang === lang ? 'block' : 'none', flex: 1 }}>
             <Form.Item name={['descr', lang]} rules={[{ required: lang === 'FR', message: t('validation.service_name_in_french_mandatory') }]} noStyle>
-              <Input size="large" placeholder={t('content.service_name_in_lang', { lang })} autoFocus onPressEnter={handleSave} style={{ minWidth: '350px', borderRadius: 0 }} />
+              <Input size="large" placeholder={t('content.service_name_in_lang', { lang })} autoFocus={selectedLang === 'FR'} onPressEnter={handleSave} style={{ width: '100%', borderRadius: 0 }} />
             </Form.Item>
           </div>
         ))}
+
         <Button size="large" icon={<CloseOutlined />} onClick={handleCancel}>
           {t('content.cancel')}
         </Button>
