@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { Agenda, CalendarItem, CalendarItemType, CodeStub, DecryptedCalendarItem, EncryptedPatient, HealthcareParty, RecoveryDataKey } from '@icure/cardinal-sdk'
+import { Agenda, CalendarItem, CalendarItemType, CodeStub, DecryptedCalendarItem, EncryptedPatient } from '@icure/cardinal-sdk'
 import { Button, message, notification, Segmented, Space, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
 import dayjs from 'dayjs'
@@ -18,16 +18,15 @@ import { useTranslation } from 'react-i18next'
 import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE, NEW_APPOINTMENT_ROUTE } from '../../constants'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
-import { SendEmailRequest } from '../../core/api/fetchType'
 import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
 import { useGetCurrentUserQuery } from '../../core/api/userApi'
-import { useCalendarItemDetails } from '../../core/hooks/useCalendarItemDetails'
-import { usePermissions } from '../../core/hooks/usePermissions'
+import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
+import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import { Lang } from '../../helpers/types'
 import { calculateNumericEventTimes, fuzzyDateTimeIntToDayjs, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
-import { combineDateAndTime, CreateEvent } from './CreateEvent/CreateEvent'
+import { combineDateAndTime, CreateCitizenAppointment } from './CreateCitizenAppointment/CreateCitizenAppointment'
 import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
@@ -40,32 +39,36 @@ interface CalendarProps {
   calendarDate: Date
   selectedAgenda: Agenda | undefined
   selectedProcedure: CalendarItemType | undefined
-  procedures: CalendarItemType[] | undefined
-  sites: HealthcareParty[] | undefined
 }
 
-type calendarRangeType = {
+type CalendarRangeType = {
   from: Date
   to: Date
 }
 
-export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate, procedures, sites }: CalendarProps): ReactElement => {
+export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate }: CalendarProps): ReactElement => {
+  const { t, i18n } = useTranslation()
+
+  const { allCalendarItemTypes, allSites } = useHierarchyContext()
+  const { dataOwnerId, isAdminLevel } = usePermissionContext()
+
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [createApptModalOpen, setCreateApptModalOpen] = useState(false)
   const [timeOffModalOpen, setTimeOffModalOpen] = useState(false)
   const [apptSelectorModalOpen, setApptSelectorModalOpen] = useState(false)
+
   const [selectedEvent, setSelectedEvent] = useState<EventApi | undefined>(undefined)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
   const [timeRange, setTimeRange] = useState<'week' | 'day'>('week')
   const [calendarTitle, setCalendarTitle] = useState<string>('')
-  const { t, i18n } = useTranslation()
-  const [calendarRange, setCalendarRange] = useState<calendarRangeType>({
+
+  const [calendarRange, setCalendarRange] = useState<CalendarRangeType>({
     from: startOfWeek(new Date()),
     to: endOfWeek(new Date()),
   })
 
-  const { dataOwnerId, isAdminLevel } = usePermissions()
   const { data: currentUser } = useGetCurrentUserQuery(undefined)
+
   const { data: calendarItems } = useGetCalendarItemByAgendaIdAndPeriodQuery(
     {
       agendaId: selectedAgenda?.id ?? '',
@@ -81,47 +84,43 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
 
+  const isCalendarItemLoading = isDeleteLoading || isUpdateLoading
+
   const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
-
   const [messageApi, messageContextHolder] = message.useMessage()
 
-  const showMessageFeedback = (type: 'loading' | 'success' | 'error', content: string) => {
-    messageApi.open({
-      type,
-      content,
-      duration: 0,
-    })
-    setTimeout(messageApi.destroy, 2500)
-  }
+  const openNotification = useCallback(
+    (type: 'error', message: string, description: string) => {
+      api.open({ type, message, description, duration: 0 })
+      setTimeout(api.destroy, 2500)
+    },
+    [api],
+  )
 
-  const isCalendarItemLoading = useMemo(() => isDeleteLoading || isUpdateLoading, [isDeleteLoading, isUpdateLoading])
+  const showMessageFeedback = useCallback(
+    (type: 'loading' | 'success' | 'error', content: string) => {
+      messageApi.open({ type, content, duration: 0 })
+      setTimeout(messageApi.destroy, 2500)
+    },
+    [messageApi],
+  )
+
+  const procedureMap = useMemo(() => new Map(allCalendarItemTypes.map((p) => [p.id, p])), [allCalendarItemTypes])
 
   const events: EventInput[] = useMemo(() => {
     if (!calendarItems) return []
+
     return calendarItems
       .map((calendarItem) => {
         const isTimeOff = calendarItem.tags.some((tag) => tag.type === 'TIMEOFF')
 
-        if (isTimeOff && !isAdminLevel) {
-          return null
-        }
+        if (isTimeOff && !isAdminLevel) return null
 
         if (calendarItem.startTime === undefined || calendarItem.endTime === undefined) {
-          console.warn('Skipping calendar item with missing start time or duration', calendarItem)
           return null
         }
 
-        const linkedProcedure = procedures?.find((procedure) => procedure.id === calendarItem.calendarItemTypeId)
+        const linkedProcedure = calendarItem.calendarItemTypeId ? procedureMap.get(calendarItem.calendarItemTypeId) : undefined
         const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
         const isAllDay = isAllDayEvent(eventTimes?.start, eventTimes?.end)
 
@@ -131,9 +130,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           start: eventTimes?.start,
           end: eventTimes?.end,
           color: isTimeOff ? 'orange' : linkedProcedure?.color,
-          details: calendarItem.details,
           allDay: isAllDay,
           extendedProps: {
+            details: calendarItem.details,
             calendarItemTypeId: calendarItem.calendarItemTypeId,
             agendaId: calendarItem.agendaId,
             patientId: calendarItem.patientId,
@@ -142,8 +141,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           },
         }
       })
-      .filter(Boolean) as EventInput[]
-  }, [calendarItems, procedures])
+      .filter((e) => e !== null) as EventInput[]
+  }, [calendarItems, isAdminLevel, procedureMap])
 
   const filteredEvents: EventInput[] = useMemo(() => {
     if (!events || !selectedAgenda) return []
@@ -156,46 +155,34 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   useEffect(() => {
     const calendarApi = calendarRef.current?.getApi()
     if (calendarApi) {
-      let targetView = ''
-      if (viewMode === 'calendar') {
-        targetView = timeRange === 'week' ? 'timeGridWeek' : 'timeGridDay'
-      } else {
-        targetView = timeRange === 'week' ? 'listWeek' : 'listDay'
-      }
+      const targetView = viewMode === 'calendar' ? (timeRange === 'week' ? 'timeGridWeek' : 'timeGridDay') : timeRange === 'week' ? 'listWeek' : 'listDay'
 
       if (calendarApi.view.type !== targetView) {
-        queueMicrotask(() => {
-          // Using queueMicrotask is a Fullcalendar fix. Atm in fullcalendar v6 and using react v18, we have 'flushSync inside useffect' console errors and may have rendering issues (Noticed none but better be safe).
-          // Fix is supposed to come in fullcalendar v7. https://github.com/fullcalendar/fullcalendar/issues/7448
-          calendarApi.changeView(targetView)
-        })
+        queueMicrotask(() => calendarApi.changeView(targetView))
       }
     }
-  }, [viewMode, timeRange])
+  }, [viewMode, timeRange, calendarRef])
 
   useEffect(() => {
     setCalendarRange({ from: startOfWeek(calendarDate), to: endOfWeek(calendarDate) })
-  }, [calendarDate, timeRange])
+  }, [calendarDate])
 
-  const handlePrev = useCallback(() => calendarRef.current?.getApi().prev(), [])
-  const handleNext = useCallback(() => calendarRef.current?.getApi().next(), [])
-  const handleToday = useCallback(() => calendarRef.current?.getApi().today(), [])
+  const handlePrev = useCallback(() => calendarRef.current?.getApi().prev(), [calendarRef])
+  const handleNext = useCallback(() => calendarRef.current?.getApi().next(), [calendarRef])
+  const handleToday = useCallback(() => calendarRef.current?.getApi().today(), [calendarRef])
 
   const handleDatesSet = useCallback(
     (dateInfo: { view: { title: string } }) => {
       setCalendarTitle(dateInfo.view.title)
       handleFullCalendarDateChange()
     },
-    [setCalendarTitle, handleFullCalendarDateChange],
+    [handleFullCalendarDateChange],
   )
 
-  const handleEventClick = useCallback(
-    (clickInfo: EventClickArg) => {
-      setSelectedEvent(clickInfo.event)
-      setEventModalOpen(true)
-    },
-    [setSelectedEvent, setEventModalOpen],
-  )
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+    setSelectedEvent(clickInfo.event)
+    setEventModalOpen(true)
+  }, [])
 
   const handleCreate = useCallback(() => {
     if (isAdminLevel) {
@@ -203,146 +190,61 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
     } else {
       setCreateApptModalOpen(true)
     }
-  }, [setApptSelectorModalOpen, setCreateApptModalOpen, isAdminLevel])
+  }, [isAdminLevel])
 
   const getEventContent = useCallback((arg: EventContentArg) => {
     const { view, event } = arg
-
-    if (view.type.startsWith('list')) {
-      return <ListEventContent event={event} view={view.type} />
-    } else if (view.type.startsWith('timeGrid')) {
-      return <GridEventContent event={event} view={view.type} />
-    }
+    if (view.type.startsWith('list')) return <ListEventContent event={event} view={view.type} />
+    if (view.type.startsWith('timeGrid')) return <GridEventContent event={event} view={view.type} />
     return <p>{event.title}</p>
   }, [])
 
   const noEventsContent = useMemo(() => {
-    if (timeRange === 'day') {
-      return t('content.no_events_today')
-    } else if (timeRange === 'week') {
-      return t('content.no_events_this_week')
-    }
-    return null
+    return timeRange === 'day' ? t('content.no_events_today') : t('content.no_events_this_week')
   }, [timeRange, t])
 
-  const computeDeleteEmailPayload = useCallback(
-    async (calendarItem: CalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
-      const lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+  const computeDeleteEmailPayload = useCallback(async (calendarItem: CalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
+    const lang: Lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+    const startDayjs = fuzzyDateTimeIntToDayjs(calendarItem.startTime)
+    const endDayjs = fuzzyDateTimeIntToDayjs(calendarItem.endTime)
 
-      const startDayjs = fuzzyDateTimeIntToDayjs(calendarItem.startTime)
-      const endDayjs = fuzzyDateTimeIntToDayjs(calendarItem.endTime)
-
-      const dateFormat = startDayjs.format('DD/MM/YYYY')
-      const heureFormat = `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`
-
-      return {
-        receiver: patientEmail!,
-        from: EMAIL_SENDER,
-        processId: lang === 'nl' ? EMAIL_APPOINTMENT_CANCELLATION_NL : EMAIL_APPOINTMENT_CANCELLATION_FR,
-        cc: [],
-        bcc: [],
-        variables: {
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          email: patientEmail,
-          mobilePhone: patientPhoneNumber,
-          service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
-          procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
-          date: dateFormat,
-          time: heureFormat,
-          location: calendarItem.addressText,
-          url: NEW_APPOINTMENT_ROUTE,
-        },
-      }
-    },
-    [useCalendarItemDetails],
-  )
-
-  const computeUrl = useCallback((recoveryDataKey: RecoveryDataKey, delegateId: string, calendarItemId: string) => {
-    const path = MANAGE_APPOINTMENT_ROUTE
-    const params = new URLSearchParams()
-    const recoveryPayload = {
-      delegateId: delegateId,
-      recoveryKey: recoveryDataKey.asHexString(),
+    return {
+      receiver: patientEmail,
+      from: EMAIL_SENDER,
+      processId: lang === 'nl' ? EMAIL_APPOINTMENT_CANCELLATION_NL : EMAIL_APPOINTMENT_CANCELLATION_FR,
+      cc: [],
+      bcc: [],
+      variables: {
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        email: patientEmail,
+        mobilePhone: patientPhoneNumber,
+        service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
+        procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
+        date: startDayjs.format('DD/MM/YYYY'),
+        time: `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`,
+        location: calendarItem.addressText,
+        url: NEW_APPOINTMENT_ROUTE,
+      },
     }
-    params.append('recoveryData', JSON.stringify(recoveryPayload))
-    params.append('calendarItemId', calendarItemId)
-    return `${path}?${params.toString()}`
   }, [])
-
-  const computeUpdateEmailPayload = useCallback(
-    async (
-      calendarItem: DecryptedCalendarItem,
-      patient: EncryptedPatient,
-      agenda: Agenda,
-      calendarItemType: CalendarItemType,
-      patientEmail: string,
-      patientPhoneNumber: string,
-      recoveryDataKey: RecoveryDataKey,
-      currentHcpId: string,
-      calendarItemId: string,
-    ) => {
-      const lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
-
-      const startDayjs = fuzzyDateTimeIntToDayjs(calendarItem.startTime)
-      const endDayjs = fuzzyDateTimeIntToDayjs(calendarItem.endTime)
-
-      const dateFormat = startDayjs.format('DD/MM/YYYY')
-      const heureFormat = `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`
-      const url = computeUrl(recoveryDataKey, currentHcpId, calendarItemId)
-
-      const hasProcedure = !!calendarItem.details?.trim()
-      const safeLang: Lang = lang === 'nl' ? 'nl' : 'fr'
-      const processId = EMAIL_APPOINTMENT_MODIFICATION[safeLang][hasProcedure ? 'withProcedureDetails' : 'withoutProcedureDetails']
-
-      return {
-        receiver: patientEmail!,
-        from: EMAIL_SENDER,
-        processId: processId,
-        cc: [],
-        bcc: [],
-        variables: {
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          email: patientEmail,
-          mobilePhone: patientPhoneNumber,
-          service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
-          procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
-          date: dateFormat,
-          time: heureFormat,
-          location: calendarItem.addressText,
-          url: url,
-          procedureDetails: calendarItem.details,
-        },
-      }
-    },
-    [useCalendarItemDetails],
-  )
-
-  const handleSendEmail = useCallback(
-    async (emailPayload: SendEmailRequest) => {
-      try {
-        await sendEmail(emailPayload)
-      } catch (error) {
-        //ignore
-      }
-    },
-    [sendEmail],
-  )
 
   const deleteEvent = useCallback(
     async (event: EventApi | undefined, calendarItem: CalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
+
         await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
+
         const emailPayload = await computeDeleteEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
-        await handleSendEmail(emailPayload)
+        await sendEmail(emailPayload)
+
         showMessageFeedback('success', t('notification.appointment_deleted'))
       } catch (error) {
         openNotification('error', t('notification.appointment_delete_failed'), t('notification.appointment_delete_error'))
       }
     },
-    [deleteCalendarItem, t, openNotification, showMessageFeedback],
+    [deleteCalendarItem, computeDeleteEmailPayload, sendEmail, t, openNotification, showMessageFeedback],
   )
 
   const updateEvent = useCallback(
@@ -359,16 +261,18 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       patientPhoneNumber: string,
     ) => {
       try {
-        if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
+        if (!event || !event.extendedProps.rev) throw new Error('No event to update')
         if (!dataOwnerId) throw new Error('No valid delegateId')
+
         await initializePatientExchangeDatas(patient.id).unwrap()
-        let updatedCalendarItem = new DecryptedCalendarItem({
-          ...calendarItem,
-          details,
-        })
+
+        let updatedCalendarItem = new DecryptedCalendarItem({ ...calendarItem, details })
+
         if (selectedDate && selectedTime && calendarItem?.duration) {
           const currentStartTime = combineDateAndTime({ date: selectedDate, time: selectedTime })
           const numericTimes = calculateNumericEventTimes(currentStartTime, calendarItem.duration)
+
+          const tags = calendarItem.tags.map((tag) => (tag.type === 'APPOINTMENT|LAST_AUTHOR' ? new CodeStub({ ...tag, code: currentUser?.id, version: '1' }) : tag))
 
           updatedCalendarItem = new DecryptedCalendarItem({
             ...calendarItem,
@@ -376,38 +280,62 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             details: details,
             startTime: numericTimes?.startTime,
             endTime: numericTimes?.endTime,
-            tags: calendarItem.tags.map((tag) =>
-              tag.type === 'APPOINTMENT|LAST_AUTHOR'
-                ? new CodeStub({
-                    id: 'APPOINTMENT|LAST_AUTHOR',
-                    code: currentUser?.id,
-                    type: 'APPOINTMENT|LAST_AUTHOR',
-                    version: '1',
-                  })
-                : tag,
-            ),
+            tags,
           })
         }
 
         await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
+
         const recoveryDataKey = await createRecoveryDataKey(patient.id).unwrap()
-        if (!recoveryDataKey) {
-          throw new Error('no valid exchange data.')
-        }
-        const emailPayload = await computeUpdateEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, recoveryDataKey, dataOwnerId, updatedCalendarItem.id)
-        await handleSendEmail(emailPayload)
+        if (!recoveryDataKey) throw new Error('no valid exchange data.')
+
+        // Email payload logic (inline or helper)
+        const lang: Lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+        const startDayjs = fuzzyDateTimeIntToDayjs(updatedCalendarItem.startTime)
+        const endDayjs = fuzzyDateTimeIntToDayjs(updatedCalendarItem.endTime)
+
+        // ... (URL compute logic matches original) ...
+        const params = new URLSearchParams()
+        params.append('recoveryData', JSON.stringify({ delegateId: dataOwnerId, recoveryKey: recoveryDataKey.asHexString() }))
+        params.append('calendarItemId', updatedCalendarItem.id)
+        const url = `${MANAGE_APPOINTMENT_ROUTE}?${params.toString()}`
+
+        const processId = EMAIL_APPOINTMENT_MODIFICATION[lang][updatedCalendarItem.details?.trim() ? 'withProcedureDetails' : 'withoutProcedureDetails']
+
+        await sendEmail({
+          receiver: patientEmail,
+          from: EMAIL_SENDER,
+          processId,
+          cc: [],
+          bcc: [],
+          variables: {
+            firstName: patient.firstName,
+            lastName: patient.lastName,
+            email: patientEmail,
+            mobilePhone: patientPhoneNumber,
+            service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
+            procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
+            date: startDayjs.format('DD/MM/YYYY'),
+            time: `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`,
+            location: calendarItem.addressText,
+            url,
+            procedureDetails: updatedCalendarItem.details,
+          },
+        })
+
         showMessageFeedback('success', t('notification.appointment_updated'))
       } catch (error) {
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
       }
     },
-    [updateCalendarItem, t, calendarItems, dataOwnerId, currentUser, openNotification, showMessageFeedback],
+    [updateCalendarItem, initializePatientExchangeDatas, createRecoveryDataKey, sendEmail, dataOwnerId, currentUser, t, openNotification, showMessageFeedback],
   )
 
   return (
     <div className="calendar-root">
       {notificationContextHolder}
       {messageContextHolder}
+
       <div className="calendar-header">
         <Space>
           <Space.Compact>
@@ -442,6 +370,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           />
         </Space>
       </div>
+
       <div className="fullcalendar-wrapper">
         <FullCalendar
           ref={calendarRef}
@@ -465,19 +394,26 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           allDayText={t('content.all_day')}
         />
       </div>
+
       {eventModalOpen &&
         createPortal(
           <EventDetails isVisible={eventModalOpen} onClose={() => setEventModalOpen(false)} event={selectedEvent} deleteEvent={deleteEvent} updateEvent={updateEvent} isCalendarItemLoading={isCalendarItemLoading} />,
           document.body,
         )}
-      {createApptModalOpen && createPortal(<CreateEvent isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} />, document.body)}
+
+      {createApptModalOpen && createPortal(<CreateCitizenAppointment isVisible={createApptModalOpen} onClose={() => setCreateApptModalOpen(false)} />, document.body)}
+
       {apptSelectorModalOpen &&
         createPortal(
           <AppointmentSelector isVisible={apptSelectorModalOpen} onClose={() => setApptSelectorModalOpen(false)} setCreateApptModalOpen={setCreateApptModalOpen} setTimeOffModalOpen={setTimeOffModalOpen} />,
           document.body,
         )}
+
       {timeOffModalOpen &&
-        createPortal(<CreateTimeOff isVisible={timeOffModalOpen} onClose={() => setTimeOffModalOpen(false)} sites={sites} showMessageFeedback={showMessageFeedback} openNotification={openNotification} />, document.body)}
+        createPortal(
+          <CreateTimeOff isVisible={timeOffModalOpen} onClose={() => setTimeOffModalOpen(false)} sites={allSites} showMessageFeedback={showMessageFeedback} openNotification={openNotification} />,
+          document.body,
+        )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { FormProcedure } from '../components/Calendar/CreateEvent/CreateEvent'
+import { FormProcedure } from '../components/Calendar/CreateCitizenAppointment/CreateCitizenAppointment'
 import { getIntegerProperty, getStringProperty, getTranslationForEntity, languages } from '../components/common/helpers'
 
 export interface ProcedureVariant {

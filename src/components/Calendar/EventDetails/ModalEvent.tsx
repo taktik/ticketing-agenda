@@ -22,6 +22,15 @@ export interface CalendarEventUpdateForm {
   details: string
 }
 
+interface EventExtendedProps {
+  calendarItemTypeId?: string
+  agendaId?: string
+  patientId?: string
+  isTimeOff?: boolean
+  rev?: string
+  details?: string
+}
+
 interface EventDetailsProps {
   isVisible: boolean
   onClose: () => void
@@ -51,26 +60,42 @@ interface EventDetailsProps {
 }
 
 export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event, deleteEvent, updateEvent }: EventDetailsProps) => {
+  const { t, i18n } = useTranslation()
+  const [form] = Form.useForm<CalendarEventUpdateForm>()
+
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState<boolean>(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [form] = Form.useForm<CalendarEventUpdateForm>()
-  const { t, i18n } = useTranslation()
-  const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
-  const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n])
-  const isTimeOff = useMemo(() => !!event?.extendedProps.isTimeOff, [event])
-  const patientName = useMemo(() => (patient ? patient.firstName + ' ' + patient.lastName : undefined), [patient])
-  const patientBirthDate = useMemo(() => (patient && patient.dateOfBirth ? format(parse(String(patient.dateOfBirth), 'yyyyMMdd', new Date()), 'dd MMMM yyyy', { locale: dateFnsLocale }) : undefined), [patient])
-  const allTelecoms = useMemo(() => patient?.addresses.flatMap((addr) => addr.telecoms || []), [patient])
-  const emailObj = useMemo(() => allTelecoms?.find((t) => t.telecomType === TelecomType.Email), [allTelecoms])
-  const phoneObj = useMemo(() => allTelecoms?.find((t) => t.telecomType === TelecomType.Mobile), [allTelecoms])
-  const patientEmail = useMemo(() => emailObj?.telecomNumber, [emailObj])
-  const patientPhoneNumber = useMemo(() => phoneObj?.telecomNumber, [phoneObj])
 
   const [availabilities, setAvailabilities] = useState<dayjs.Dayjs[]>([])
   const [currentMonth, setCurrentMonth] = useState(dayjs())
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
+
+  const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
+  const isDetailsLoading = !calendarItem || !patient || !agenda || !calendarItemType
+
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
+
+  const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n.language])
+
+  const extendedProps = event?.extendedProps as EventExtendedProps | undefined
+  const isTimeOff = !!extendedProps?.isTimeOff
+
+  const patientName = useMemo(() => (patient ? `${patient.firstName} ${patient.lastName}` : undefined), [patient])
+
+  const patientBirthDate = useMemo(() => {
+    if (!patient?.dateOfBirth) return undefined
+    const parsed = parse(String(patient.dateOfBirth), 'yyyyMMdd', new Date())
+    return format(parsed, 'dd MMMM yyyy', { locale: dateFnsLocale })
+  }, [patient, dateFnsLocale])
+
+  const { patientEmail, patientPhoneNumber } = useMemo(() => {
+    const allTelecoms = patient?.addresses.flatMap((addr) => addr.telecoms || [])
+    return {
+      patientEmail: allTelecoms?.find((t) => t.telecomType === TelecomType.Email)?.telecomNumber,
+      patientPhoneNumber: allTelecoms?.find((t) => t.telecomType === TelecomType.Mobile)?.telecomNumber,
+    }
+  }, [patient])
 
   const [api, notificationContextHolder] = notification.useNotification()
   const openNotification = useCallback(
@@ -81,9 +106,20 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   )
 
   useEffect(() => {
-    const fetchRescheduleAvailabilities = async () => {
-      if (!agenda?.id || !calendarItemType?.id) return
+    if (event && isVisible) {
+      form.setFieldsValue({
+        details: extendedProps?.details ?? '',
+      })
+      setIsEditing(false)
+      setSelectedDate(undefined)
+      setSelectedTime(undefined)
+    }
+  }, [event, isVisible, form, extendedProps])
 
+  useEffect(() => {
+    if (!isEditing || !agenda?.id || !calendarItemType?.id) return
+
+    const fetchRescheduleAvailabilities = async () => {
       try {
         const startDate = currentMonth.startOf('month')
         const endDate = currentMonth.endOf('month')
@@ -102,16 +138,15 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
 
         if (!selectedDate) {
           const firstAvailable = (results ?? []).find((d: dayjs.Dayjs) => d >= dayjs().startOf('day'))
-          if (firstAvailable) {
-            setSelectedDate(firstAvailable)
-          }
+          if (firstAvailable) setSelectedDate(firstAvailable)
         }
-      } catch (error: unknown) {
+      } catch (error) {
         openNotification('error', t('validation.unexpected_error'), '')
       }
     }
+
     fetchRescheduleAvailabilities()
-  }, [agenda, calendarItemType, currentMonth, getAvailabilities, openNotification, t, selectedDate])
+  }, [isEditing, agenda, calendarItemType, currentMonth, getAvailabilities, openNotification, t, selectedDate])
 
   const handleDateSelect = useCallback((date: dayjs.Dayjs) => {
     setSelectedDate(date)
@@ -122,101 +157,77 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     setSelectedTime(time)
   }, [])
 
-  const handleModify = useCallback(() => {
-    setIsEditing(true)
-  }, [setIsEditing])
-
-  const handleCancel = useCallback(() => {
-    setIsEditing(false)
-  }, [setIsEditing])
-
   const handleUpdate = useCallback(async () => {
     try {
       const { details } = await form.validateFields()
-      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
+
+      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) {
+        throw new Error('Missing data for email payload')
+      }
+
       await updateEvent(event, details, selectedDate, selectedTime, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       onClose()
     } catch (error) {
       console.error(error)
     }
-  }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber])
+  }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose])
 
   const handleDelete = useCallback(async () => {
     try {
-      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) throw new Error('Missing data for email payload')
+      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) {
+        throw new Error('Missing data for email payload')
+      }
       await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       setShowDeleteAppointmentModal(false)
       onClose()
     } catch (error) {
       console.error(error)
     }
-  }, [event, deleteEvent, setShowDeleteAppointmentModal, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber])
+  }, [event, deleteEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, onClose])
 
   const renderDisplayMode = () => (
     <div className="modal-event-display">
       <Card
         title={t('content.appointment_details')}
         variant="borderless"
-        styles={{
-          header: { paddingLeft: 0, borderBottom: 0, minHeight: 'auto' },
-          body: { padding: 0 },
-        }}
+        styles={{ header: { paddingLeft: 0, borderBottom: 0, minHeight: 'auto' }, body: { padding: 0 } }}
         style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
       >
-        <Descriptions
-          bordered
-          column={1}
-          styles={{
-            label: { width: '250px' },
-          }}
-        >
+        <Descriptions bordered column={1} styles={{ label: { width: '250px' } }}>
           <Descriptions.Item label={t('content.date_and_time')}>{event ? formatEventDate(event, dateFnsLocale) : ''}</Descriptions.Item>
           <Descriptions.Item label={t('content.procedure')}>{event?.title}</Descriptions.Item>
           <Descriptions.Item label={t('content.details')}>
-            <Text style={{ whiteSpace: 'pre-wrap' }}>{event?.extendedProps.details || t('content.no_details_provided')}</Text>
+            <Text style={{ whiteSpace: 'pre-wrap' }}>{extendedProps?.details || t('content.no_details_provided')}</Text>
           </Descriptions.Item>
         </Descriptions>
       </Card>
 
-      {!isTimeOff && (
-        <Card
-          title={t('content.citizen_details')}
-          variant="borderless"
-          styles={{
-            header: { paddingLeft: 0, borderBottom: 0, minHeight: 'auto' },
-            body: { padding: 0 },
-          }}
-          style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
-        >
-          <Descriptions
-            bordered
-            column={1}
-            styles={{
-              label: { width: '250px' },
-            }}
+      <Spin spinning={isCalendarItemLoading || isDetailsLoading} size="large">
+        {!isTimeOff && (
+          <Card
+            title={t('content.citizen_details')}
+            variant="borderless"
+            styles={{ header: { paddingLeft: 0, borderBottom: 0, minHeight: 'auto' }, body: { padding: 0 } }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
           >
-            <Descriptions.Item label={t('content.full_name')}>{patientName}</Descriptions.Item>
-            <Descriptions.Item label={t('content.email')}>{patientEmail}</Descriptions.Item>
-            <Descriptions.Item label={t('content.phone_number')}>{patientPhoneNumber}</Descriptions.Item>
-            <Descriptions.Item label={t('content.birth_date')}>{patientBirthDate}</Descriptions.Item>
-          </Descriptions>
-        </Card>
-      )}
+            <Descriptions bordered column={1} styles={{ label: { width: '250px' } }}>
+              <Descriptions.Item label={t('content.full_name')}>{patientName}</Descriptions.Item>
+              <Descriptions.Item label={t('content.email')}>{patientEmail}</Descriptions.Item>
+              <Descriptions.Item label={t('content.phone_number')}>{patientPhoneNumber}</Descriptions.Item>
+              <Descriptions.Item label={t('content.birth_date')}>{patientBirthDate}</Descriptions.Item>
+            </Descriptions>
+          </Card>
+        )}
+      </Spin>
     </div>
   )
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={isEditing ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={1000}>
       <div className="modal-event">
-        <Spin spinning={isCalendarItemLoading} size="large"></Spin>
         {notificationContextHolder}
-        <Form
-          form={form}
-          onFinish={handleUpdate}
-          initialValues={{ start: dayjs(event?.start), end: dayjs(event?.end), details: event?.extendedProps.details ?? '' }}
-          layout="vertical"
-          style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}
-        >
+
+        <Form form={form} onFinish={handleUpdate} layout="vertical" style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}>
           {isEditing ? (
             <>
               <div style={{ padding: '1rem' }}>
@@ -238,29 +249,32 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
           ) : (
             renderDisplayMode()
           )}
+
           <Divider />
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
             {isEditing ? (
               <>
-                <Button key="cancel" onClick={handleCancel}>
+                <Button key="cancel" onClick={() => setIsEditing(false)}>
                   {t('content.cancel')}
                 </Button>
-                <Button type="primary" htmlType="submit" key="save">
+                <Button type="primary" htmlType="submit" key="save" disabled={isDetailsLoading}>
                   {t('content.save')}
                 </Button>
               </>
             ) : (
               <>
-                <Button key="delete" danger onClick={() => setShowDeleteAppointmentModal(true)}>
+                <Button key="delete" danger onClick={() => setShowDeleteAppointmentModal(true)} disabled={isDetailsLoading}>
                   {t('content.delete')}
                 </Button>
-                <Button key="modify" type="primary" onClick={handleModify}>
+                <Button key="modify" type="primary" onClick={() => setIsEditing(true)} disabled={isDetailsLoading}>
                   {t('content.modify')}
                 </Button>
               </>
             )}
           </div>
         </Form>
+
         {showDeleteAppointmentModal &&
           createPortal(
             <ModalConfirmAction

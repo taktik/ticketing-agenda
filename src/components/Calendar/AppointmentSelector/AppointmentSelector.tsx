@@ -1,9 +1,10 @@
 import { CalendarOutlined, StopOutlined } from '@ant-design/icons'
 import { Card, Col, Row, Typography } from 'antd'
-import { useCallback } from 'react'
+import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomModal } from '../../common/CustomModal'
 import './index.css'
+
 const { Title, Text } = Typography
 
 interface AppointmentSelectorProps {
@@ -19,12 +20,12 @@ export const AppointmentSelector = ({ isVisible, onClose, setCreateApptModalOpen
   const handleStandardChoice = useCallback(() => {
     setCreateApptModalOpen(true)
     onClose()
-  }, [setCreateApptModalOpen])
+  }, [setCreateApptModalOpen, onClose])
 
-  const handletimeOffChoice = useCallback(() => {
+  const handleTimeOffChoice = useCallback(() => {
     setTimeOffModalOpen(true)
     onClose()
-  }, [setCreateApptModalOpen])
+  }, [setTimeOffModalOpen, onClose])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={800}>
@@ -45,7 +46,7 @@ export const AppointmentSelector = ({ isVisible, onClose, setCreateApptModalOpen
           </Col>
 
           <Col xs={24} sm={12}>
-            <Card hoverable onClick={handletimeOffChoice} style={{ textAlign: 'center', height: '100%' }}>
+            <Card hoverable onClick={handleTimeOffChoice} style={{ textAlign: 'center', height: '100%' }}>
               <StopOutlined style={{ fontSize: '48px', color: '#ff4d4f' }} />
               <Title level={5} style={{ marginTop: '12px' }}>
                 {t('content.manage_staff_leave_title')}

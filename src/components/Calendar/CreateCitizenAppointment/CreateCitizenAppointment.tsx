@@ -227,7 +227,7 @@ enum AppointmentStep {
   RESULT = 4,
 }
 
-export const CreateEvent = ({ isVisible, onClose }: CreateEventProps) => {
+export const CreateCitizenAppointment = ({ isVisible, onClose }: CreateEventProps) => {
   const { t } = useTranslation()
   const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)

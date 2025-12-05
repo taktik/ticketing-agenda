@@ -126,15 +126,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="right-panel">
-          <Calendar
-            calendarRef={calendarRef}
-            handleFullCalendarDateChange={handleFullCalendarDateChange}
-            selectedAgenda={selectedService}
-            procedures={filteredProcedures}
-            selectedProcedure={selectedProcedure}
-            calendarDate={calendarDate}
-            sites={displayableSites}
-          />
+          <Calendar calendarRef={calendarRef} handleFullCalendarDateChange={handleFullCalendarDateChange} selectedAgenda={selectedService} selectedProcedure={selectedProcedure} calendarDate={calendarDate} />
         </div>
       </div>
 

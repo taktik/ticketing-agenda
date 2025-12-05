@@ -5,34 +5,23 @@ import { Dayjs } from 'dayjs'
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { useGetAgendasByAuthorId } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
-import { usePermissions } from '../../../core/hooks/usePermissions'
-import { useRoot } from '../../../core/hooks/useRoot'
+import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
+import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss } from '../../common/helpers'
 import './index.css'
+
 const { RangePicker } = DatePicker
 
-/**
- * Splits a date range into smaller chunks, with each chunk ending at the end of a week.
- * @param start The start of the entire date range.
- * @param end The end of the entire date range.
- * @returns An array of objects, each with a `start` and `end` Dayjs object.
- */
 export const splitDateRangeIntoWeeks = (start: Dayjs, end: Dayjs): { start: Dayjs; end: Dayjs }[] => {
   const currentChunkStart = start.startOf('day')
-
-  if (currentChunkStart.isSameOrAfter(end)) {
-    return []
-  }
+  if (currentChunkStart.isSameOrAfter(end)) return []
 
   const startOfNextWeek = currentChunkStart.endOf('week').add(1, 'day').startOf('day')
   const firstChunkEnd = startOfNextWeek.isAfter(end) ? end : startOfNextWeek
   const firstChunk = { start: currentChunkStart, end: firstChunkEnd }
-
   const remainingChunks = splitDateRangeIntoWeeks(firstChunkEnd, end)
-
   return [firstChunk, ...remainingChunks]
 }
 
@@ -58,22 +47,19 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
   const watchedSite = Form.useWatch('site', form)
   const watchedService = Form.useWatch('service', form)
 
-  const { attachedServices } = usePermissions()
-  const { adminRoot } = useRoot()
+  const { attachedServices } = usePermissionContext()
+  const { adminRoot, agendasBySiteId } = useHierarchyContext()
 
-  const { data: services, isLoading: isAgendasLoading } = useGetAgendasByAuthorId({ skip: !watchedSite, authorId: watchedSite ?? '' })
+  const availableServices = useMemo(() => {
+    if (!watchedSite) return []
 
-  const sortedServices = useMemo(() => {
-    const baseServices = services ?? []
+    const siteAgendas = agendasBySiteId.get(watchedSite) || []
 
-    const filteredServices = attachedServices?.length ? baseServices.filter((service) => attachedServices.includes(service.id)) : baseServices
-
-    return [...filteredServices].sort((a, b) => {
-      const nameA = a.name ?? ''
-      const nameB = b.name ?? ''
-      return nameA.localeCompare(nameB)
-    })
-  }, [services, attachedServices])
+    if (attachedServices?.length) {
+      return siteAgendas.filter((a) => attachedServices.includes(a.id))
+    }
+    return siteAgendas
+  }, [watchedSite, agendasBySiteId, attachedServices])
 
   const [createUpdateEvent, { isLoading: isCreateUpdateEventLoading }] = useCreateUpdateCalendarItemMutation()
 
@@ -86,8 +72,6 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
         const startTime = values.period[0]
         const endTime = values.period[1]
 
-        // 1. Split the total period into weekly chunks
-        // We do that because we can't fetc properly events spanning several weeks.
         const weeklyChunks = splitDateRangeIntoWeeks(startTime, endTime)
 
         const timeOffTag = new CodeStub({
@@ -97,7 +81,6 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
           version: '1',
         })
 
-        // 2. Create an array of creation promises, one for each chunk
         const eventsCreationPromises = weeklyChunks.map(async (chunk) => {
           const newEvent = new DecryptedCalendarItem({
             id: v4(),
@@ -112,20 +95,23 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
           return createUpdateEvent({
             calendarItem: newEvent,
             patient: undefined,
-            delegates: { adminRootId: adminRoot.id, siteRootId: values.site },
+            delegates: {
+              adminRootId: adminRoot.id,
+              siteRootId: values.site,
+            },
           }).unwrap()
         })
 
         await Promise.all(eventsCreationPromises)
 
         showMessageFeedback('success', t('notification.appointment_saved'))
+        onClose()
+        form.resetFields()
       } catch (error) {
         openNotification('error', t('notification.appointment_save_failed'), t('notification.appointment_save_error'))
-      } finally {
-        onClose()
       }
     },
-    [createUpdateEvent, showMessageFeedback, openNotification, adminRoot, onClose],
+    [createUpdateEvent, showMessageFeedback, openNotification, adminRoot, onClose, form, t],
   )
 
   const handleCancel = useCallback(() => {
@@ -164,21 +150,21 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
               }))}
             />
           </Form.Item>
+
           <Form.Item name="service" label={t('content.service')} rules={[{ required: true }]} tooltip={watchedSite ? null : t('content.select_site_for_service')}>
             <Select
               showSearch
               placeholder={t('content.select_service')}
               optionFilterProp="label"
               allowClear
-              loading={isAgendasLoading}
-              filterSort={(a, b) => (a.label ?? '').toLowerCase().localeCompare((b.label ?? '').toLowerCase())}
               disabled={!watchedSite}
-              options={(sortedServices ?? []).map((agenda) => ({
+              options={availableServices.map((agenda) => ({
                 label: agenda.name,
                 value: agenda.id,
               }))}
             />
           </Form.Item>
+
           <Form.Item name="period" label={t('content.absence_period')} rules={[{ required: true }]} tooltip={watchedService ? null : t('content.select_service_for_period')}>
             <RangePicker showTime={{ format: 'HH:mm' }} format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} placeholder={[t('content.start'), t('content.end')]} disabled={!watchedService} allowEmpty />
           </Form.Item>

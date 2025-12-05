@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TimeSlotPickerUI } from '../../TimeSlotPickerUI/TimeSlotPickerUI'
 import { useLazyGetAvailabilitiesQuery } from '../../../../core/api/anonymousApi'
-import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateEvent'
+import { AppointmentForm, findProcedureData, FormProcedure } from '../CreateCitizenAppointment'
 import { dayjsToYYYYMMDDHHmmss } from '../../../common/helpers'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
 

@@ -3,7 +3,7 @@ import { Alert, Button, Card, Form, FormInstance, Select, Space, Tooltip, Typogr
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
-import { AppointmentForm, FormProcedure } from '../CreateEvent'
+import { AppointmentForm, FormProcedure } from '../CreateCitizenAppointment'
 import './index.css'
 const { Title, Paragraph } = Typography
 

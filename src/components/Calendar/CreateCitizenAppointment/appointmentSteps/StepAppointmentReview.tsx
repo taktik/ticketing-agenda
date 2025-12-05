@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProcedureSelection } from '../../../../helpers/transformProcedures'
-import { appointmentDuration, AppointmentForm, formatDateTime, languageMapping } from '../CreateEvent'
+import { appointmentDuration, AppointmentForm, formatDateTime, languageMapping } from '../CreateCitizenAppointment'
 import './index.css'
 
 const { Title, Text } = Typography

@@ -2,8 +2,8 @@ import { Button, Calendar, CalendarProps, Col, Divider, Empty, Row, Space, Typog
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CustomCellRender } from '../CreateEvent/CustomCellRender'
-import { CustomCalendarHeader } from '../CreateEvent/CustomCalendarHeader'
+import { CustomCellRender } from '../CreateCitizenAppointment/CustomCellRender'
+import { CustomCalendarHeader } from '../CreateCitizenAppointment/CustomCalendarHeader'
 import { SpinLoader } from '../../common/SpinLoader'
 
 const { Title, Paragraph } = Typography
