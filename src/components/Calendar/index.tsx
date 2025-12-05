@@ -372,6 +372,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
           updatedCalendarItem = new DecryptedCalendarItem({
             ...calendarItem,
+            modified: new Date().getTime(),
             details: details,
             startTime: numericTimes?.startTime,
             endTime: numericTimes?.endTime,
