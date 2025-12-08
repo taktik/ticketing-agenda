@@ -1,42 +1,6 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { FormProcedure } from '../components/Calendar/CreateCitizenAppointment/CreateCitizenAppointment'
+import { ProcedureGroup, ProcedureVariant, SiteVariant } from '../components/Calendar/CreateCitizenAppointment/CitizenReservationTypes'
 import { getIntegerProperty, getStringProperty, getTranslationForEntity, languages } from '../components/common/helpers'
-
-export interface ProcedureVariant {
-  id: string
-  procedureId: string
-  attendees: number
-  duration: number
-}
-
-export interface SiteVariants {
-  id: string
-  siteId: string
-  siteName: string
-  siteLocation: string
-  siteQbetterLocationId: string
-  agendaId: string | undefined
-  procedureDetails: string
-  variants: ProcedureVariant[]
-}
-
-export interface ProcedureSelection {
-  id: string
-  siteVariants: SiteVariants[]
-  displayText: string
-  serviceName: string
-  procedureName: string
-  procedureQbetterServiceId: string
-  displayTextByLanguage: { [key: string]: string }
-}
-
-export type ProcedureWithTimeAndSelections = {
-  procedure: FormProcedure
-  specificTimeslot: { startTime: number; endTime: number }
-  masterProcedure: ProcedureSelection
-  siteVariant: SiteVariants
-  procedureVariant: ProcedureVariant
-}
 
 const slugify = (text: string) =>
   text
@@ -44,110 +8,86 @@ const slugify = (text: string) =>
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
 
-/*
- * Transforms flat lists of services and procedures into a structured list
- * of unique "Procedure Selections" grouped by service and procedure name.
- */
-export function transformProceduresForSelection(allProcedures: CalendarItemType[], allAgendas: Agenda[], allSites: HealthcareParty[]): ProcedureSelection[] {
-  // 1. Create lookup maps for efficient access
-  const agendaMap = new Map(allAgendas.map((agenda) => [agenda.id, agenda]))
-  const siteMap = new Map(allSites.map((site) => [site.id, site]))
+export function transformProceduresForSelection(allProcedures: CalendarItemType[], allAgendas: Agenda[], allSites: HealthcareParty[]): ProcedureGroup[] {
+  const agendaMap = new Map(allAgendas.map((a) => [a.id, a]))
+  const siteMap = new Map(allSites.map((s) => [s.id, s]))
 
-  // 3. Group all procedures by their name (e.g., group all "Demande de passeport")
-  const proceduresGroupedByName = new Map<string, CalendarItemType[]>()
-  for (const procedure of allProcedures) {
-    const nameKey = procedure.name || 'Procédure inconnue'
-    if (!proceduresGroupedByName.has(nameKey)) {
-      proceduresGroupedByName.set(nameKey, [])
-    }
-    proceduresGroupedByName.get(nameKey)!.push(procedure)
-  }
+  const proceduresByName = new Map<string, CalendarItemType[]>()
+  allProcedures.forEach((proc) => {
+    const name = proc.name || 'Unknown'
+    if (!proceduresByName.has(name)) proceduresByName.set(name, [])
+    proceduresByName.get(name)!.push(proc)
+  })
 
-  // 4. Map over each group of same-named procedures to create the final structure
-  const finalSelection = Array.from(proceduresGroupedByName.entries()).map(([procedureName, proceduresWithSameName]) => {
-    const procedureNameSlug = slugify(procedureName)
-    // 5. Within this group, further group the procedures by the service that offers them
-    const proceduresGroupedByAgendaId = new Map<string, CalendarItemType[]>()
-    for (const procedure of proceduresWithSameName) {
-      const agendaId = procedure.agendaId || 'unknown-service'
-      if (!proceduresGroupedByAgendaId.has(agendaId)) {
-        proceduresGroupedByAgendaId.set(agendaId, [])
+  const groups: ProcedureGroup[] = []
+
+  proceduresByName.forEach((procs, procName) => {
+    const slug = slugify(procName)
+    const procsByAgenda = new Map<string, CalendarItemType[]>()
+
+    procs.forEach((p) => {
+      const agendaId = p.agendaId || getStringProperty(p.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
+      if (agendaId) {
+        if (!procsByAgenda.has(agendaId)) procsByAgenda.set(agendaId, [])
+        procsByAgenda.get(agendaId)!.push(p)
       }
-      proceduresGroupedByAgendaId.get(agendaId)!.push(procedure)
-    }
+    })
 
-    // 6. Create the `SiteVariants` array from these service groups
-    const siteVariants: SiteVariants[] = Array.from(proceduresGroupedByAgendaId.values())
-      .map((proceduresInOneService) => {
-        // All procedures here have the same name AND the same serviceId.
-        // These are the variants (e.g., for 1 person, 2 people, etc.)
-        const firstProcInService = proceduresInOneService[0]
+    const siteVariants: SiteVariant[] = []
 
-        const agendaId = getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
-        const agenda = agendaId ? agendaMap.get(agendaId) : undefined
-        const siteId = agenda ? getStringProperty(agenda.properties, 'SERVICE|PARENTID') : undefined
-        const site = siteId ? siteMap.get(siteId) : undefined
+    procsByAgenda.forEach((procsInService, agendaId) => {
+      const agenda = agendaMap.get(agendaId)
+      const siteId = agenda ? getStringProperty(agenda.properties, 'SERVICE|PARENTID') : undefined
+      const site = siteId ? siteMap.get(siteId) : undefined
 
-        // If we can't link this service back to a valid site, we skip it.
-        if (!site) {
-          return null
-        }
-
-        // This logic correctly creates the list of variants (1 person, 2 people...)
-        const procedureVariants: ProcedureVariant[] = proceduresInOneService
+      if (agenda && site) {
+        const variants: ProcedureVariant[] = procsInService
           .map((p) => {
             const order = getIntegerProperty(p.publicProperties, 'CALENDARITEMTYPE|ORDER')
             const attendees = isNaN(order) ? 1 : order + 1
             return {
-              id: `proc-variant-${p.id}-${attendees}`,
-              procedureId: p.id,
-              attendees: attendees,
-              duration: p.duration || 0,
-              procedure: p,
+              id: `var-${p.id}`,
+              attendees,
+              duration: p.duration || 15,
+              calendarItemType: p,
             }
           })
           .sort((a, b) => a.attendees - b.attendees)
 
-        // Construct the final SiteVariants object
-        return {
-          id: `site-variant-${procedureNameSlug}-${site.id}`,
+        // Level 2: Site Variants
+        siteVariants.push({
+          id: `sv-${slug}-${site.id}`,
           siteId: site.id,
-          agendaId: agenda?.id,
-          siteName: site.name,
-          siteLocation: getStringProperty(site.publicProperties, 'SITE|LOCATION'),
-          siteQbetterLocationId: getStringProperty(site.publicProperties, 'SITE|QBETTER_LOCATION_ID'),
-          procedureDetails: getStringProperty(firstProcInService.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
-          variants: procedureVariants,
-        }
+          siteName: site.name ?? '',
+          siteLocation: getStringProperty(site.publicProperties, 'SITE|LOCATION') ?? '',
+          procedureDetails: getStringProperty(procsInService[0].publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') ?? '',
+          site,
+          agenda,
+          procedureVariants: variants,
+        })
+      }
+    })
+
+    if (siteVariants.length > 0) {
+      const refAgenda = siteVariants[0].agenda
+      const refProc = procs[0]
+      const serviceName = refAgenda.name || 'Service'
+
+      const displayTextByLanguage = Object.fromEntries(
+        languages.map((lang) => {
+          const sName = getTranslationForEntity(refAgenda.properties, 'SERVICE', lang) || serviceName
+          const pName = getTranslationForEntity(refProc.publicProperties, 'CALENDARITEMTYPE', lang) || procName
+          return [lang, `${sName} - ${pName}`]
+        }),
+      )
+
+      groups.push({
+        id: `pg-${slug}`,
+        displayTextByLanguage,
+        siteVariants,
       })
-      .filter((sv): sv is SiteVariants => sv !== null)
-
-    // 7. Construct the final `ProcedureSelection` object for this procedure name
-    const firstProcedureInGroup = proceduresWithSameName[0]
-    const agendaId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
-    const procedureQbetterServiceId = getStringProperty(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID')
-    const representativeService = agendaId ? agendaMap.get(agendaId) : undefined
-    const serviceName = representativeService?.name || 'Service Inconnu'
-
-    //8. Get the translations for service - procedure
-    const displayTextByLanguage = Object.fromEntries(
-      languages.map((lang) => {
-        const servicePart = getTranslationForEntity(representativeService?.properties, 'SERVICE', lang) || serviceName
-        const procedurePart = getTranslationForEntity(firstProcedureInGroup.publicProperties, 'CALENDARITEMTYPE', lang) || procedureName
-        return [lang, `${servicePart} - ${procedurePart}`]
-      }),
-    )
-
-    return {
-      id: `selection-${procedureNameSlug}`,
-      siteVariants: siteVariants,
-      displayText: `${serviceName} - ${procedureName}`,
-      serviceName: serviceName,
-      procedureName: procedureName,
-      procedureQbetterServiceId: procedureQbetterServiceId,
-      displayTextByLanguage: displayTextByLanguage,
     }
   })
 
-  return finalSelection
+  return groups
 }

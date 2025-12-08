@@ -1,5 +1,5 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import React, { createContext, useContext, useMemo } from 'react'
+import React, { createContext, useContext, useEffect, useMemo } from 'react'
 import { useGetAgendasByAuthorIds } from '../api/agendaApi'
 import { useGetCalendarItemTypesForMultipleAgendasQuery } from '../api/calendarItemTypeApi' // Assuming this is the name of your generated hook
 import { HcpTag } from '../api/fetchType'

@@ -3,6 +3,7 @@ import { format, isSameDay, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs, { Dayjs } from 'dayjs'
 import { EventApi } from 'fullcalendar'
+import { TimeSlot } from '../Calendar/CreateCitizenAppointment/CitizenReservationTypes'
 
 export const languages = ['FR', 'NL', 'EN', 'DE']
 
@@ -411,4 +412,14 @@ export const getCodeTagById = (tags: CodeStub[] | undefined, id: string) => {
 
   const prop = tags.find((p) => p.id === id)
   return prop?.code ?? ''
+}
+
+export const combineDateAndTime = (timeslot: TimeSlot): Dayjs | null => {
+  const { date, time } = timeslot
+  if (!date || !date.isValid() || !time || !time.isValid()) {
+    console.error('Invalid date or time provided for combination.')
+    return null
+  }
+  const combinedDateTime = date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
+  return combinedDateTime
 }

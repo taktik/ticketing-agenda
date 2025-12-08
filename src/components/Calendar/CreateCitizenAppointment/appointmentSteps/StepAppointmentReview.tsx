@@ -1,51 +1,65 @@
-import { Descriptions, Space, Typography } from 'antd'
-import dayjs from 'dayjs'
-import { FC, useMemo } from 'react'
+import { Descriptions, Typography } from 'antd'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProcedureSelection } from '../../../../helpers/transformProcedures'
-import { appointmentDuration, AppointmentForm, formatDateTime, languageMapping } from '../CreateCitizenAppointment'
-import './index.css'
+import { useCitizenReservation } from '../../../../core/contexts/CitizenReservationContext'
 
-const { Title, Text } = Typography
+const { Title } = Typography
 
-export const StepAppointmentReview: FC<{ formValues: AppointmentForm; selections: ProcedureSelection[] }> = ({ formValues, selections }) => {
+export const StepAppointmentReview = () => {
   const { t, i18n } = useTranslation()
-  const langCode = useMemo(() => {
-    return languageMapping[i18n.language] || 'FR'
-  }, [i18n.language])
+  const { drafts, personalInfo, timeSlot, availableProcedures } = useCitizenReservation()
+
+  const currentLang = i18n.language.toUpperCase()
+
+  // 1. Format Date/Time
+  const formattedTime = useMemo(() => {
+    if (!timeSlot?.date || !timeSlot?.time) return 'N/A'
+    return timeSlot.date.hour(timeSlot.time.hour()).minute(timeSlot.time.minute()).format('LLLL') // Localized format based on Dayjs locale
+  }, [timeSlot])
 
   return (
-    <>
-      <Title level={4}>{t('content.review_your_appointment_title')}</Title>
-      <Descriptions bordered column={1} size="middle">
-        <Descriptions.Item label={t('content.procedures')}>
-          <Space direction="vertical">
-            {formValues.procedures?.map((item, index) => {
-              const procedure = selections.find((s) => s.id === item.procedureSelectionId)
-              if (!procedure) return null
-              return (
-                <Text key={index}>
-                  {item.quantity} x {procedure.displayTextByLanguage[langCode]}
-                </Text>
-              )
-            })}
-          </Space>
-        </Descriptions.Item>
-        <Descriptions.Item label={t('content.duration')}>
-          <Text strong>{appointmentDuration(formValues, selections) + ' ' + t('content.minutes')}</Text>
-        </Descriptions.Item>
-        <Descriptions.Item label={t('content.date')}>{formatDateTime(formValues.timeslot?.date, formValues.timeslot?.time)}</Descriptions.Item>
+    <div className="review-step">
+      <Title level={4}>{t('content.review_booking')}</Title>
+
+      {/* 1. Personal Info */}
+      <Descriptions title={t('content.your_info')} bordered column={1} size="small" style={{ marginTop: 16 }}>
         <Descriptions.Item label={t('content.full_name')}>
-          {formValues.personalInfo?.firstName} {formValues.personalInfo?.lastName}
+          {personalInfo?.firstName} {personalInfo?.lastName}
         </Descriptions.Item>
-        <Descriptions.Item label={t('content.email')}>{formValues.personalInfo?.email}</Descriptions.Item>
-        <Descriptions.Item label={t('content.language')}>{formValues.personalInfo?.language}</Descriptions.Item>
+        <Descriptions.Item label={t('content.email')}>{personalInfo?.email}</Descriptions.Item>
         <Descriptions.Item label={t('content.phone_number')}>
-          {formValues.personalInfo?.countryCode}
-          {formValues.personalInfo?.phoneNumber}
+          {personalInfo?.countryCode} {personalInfo?.phoneNumber}
         </Descriptions.Item>
-        <Descriptions.Item label={t('content.birth_date')}>{dayjs(formValues.personalInfo?.birthDate).format('DD/MM/YYYY')}</Descriptions.Item>
       </Descriptions>
-    </>
+
+      {/* 2. Time */}
+      <Descriptions title={t('content.date_and_time')} bordered column={1} size="small" style={{ marginTop: 16 }}>
+        <Descriptions.Item label={t('content.selected_time')}>{formattedTime}</Descriptions.Item>
+      </Descriptions>
+
+      {/* 3. Procedures */}
+      <Descriptions title={t('content.procedures')} bordered column={1} size="small" style={{ marginTop: 16 }}>
+        {drafts.map((draft, index) => {
+          // Look up the Group to get the nice multilingual label
+          const group = availableProcedures.find((p) => p.id === draft.procedureGroupId)
+
+          // Fallback logic for display text
+          const title = group ? group.displayTextByLanguage[currentLang] || group.displayTextByLanguage['FR'] : t('content.unknown_procedure')
+
+          const siteName = draft.site?.name || t('content.unknown_site')
+          const qty = draft.quantity || 1
+
+          return (
+            <Descriptions.Item key={draft.tempId} label={`${t('content.procedure')} ${index + 1}`}>
+              <div>
+                <strong>{title}</strong>
+                <br />
+                {siteName} — {qty} {qty > 1 ? t('content.persons') : t('content.person')}
+              </div>
+            </Descriptions.Item>
+          )
+        })}
+      </Descriptions>
+    </div>
   )
 }

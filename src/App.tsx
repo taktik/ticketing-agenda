@@ -12,11 +12,11 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import React, { Suspense, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { HierarchyProvider } from './core/contexts/HierarchyContext'
+import { PermissionProvider } from './core/contexts/PermissionContext'
 import { useAppSelector } from './core/hooks'
 import { Router } from './navigation/Router'
 import { ANTD_NEW_THEME } from './style/antd/antdTheme'
-import { HierarchyProvider } from './core/contexts/HierarchyContext'
-import { PermissionProvider } from './core/contexts/PermissionContext'
 dayjs.extend(localizedFormat)
 dayjs.extend(isSameOrAfter)
 
