@@ -116,15 +116,15 @@ export const StepPersonalInformation: FC = () => {
     <>
       <Title level={4}>{t('content.your_information_title')}</Title>
       <div className="your-info">
-        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'firstName']} label={t('content.firstname')} rules={[{ required: true, type: 'string' }]}>
+        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'firstName']} label={t('content.firstname')} rules={[{ required: true, type: 'string' }]} layout="horizontal">
           <Input size="large" placeholder="Phil" prefix={<UserOutlined />} />
         </Form.Item>
 
-        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'lastName']} label={t('content.lastname')} rules={[{ required: true, type: 'string' }]}>
+        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'lastName']} label={t('content.lastname')} rules={[{ required: true, type: 'string' }]} layout="horizontal">
           <Input size="large" placeholder="Defer" prefix={<UserOutlined />} />
         </Form.Item>
 
-        <Form.Item {...formItemLayout} labelAlign="left" label={t('content.phone_number')} required>
+        <Form.Item {...formItemLayout} labelAlign="left" label={t('content.phone_number')} required layout="horizontal">
           <Space.Compact>
             <Form.Item name={['personalInfo', 'countryCode']} noStyle rules={[{ required: true, type: 'string' }]}>
               <Select style={{ width: 120 }} size="large">
@@ -145,18 +145,18 @@ export const StepPersonalInformation: FC = () => {
           </Space.Compact>
         </Form.Item>
 
-        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'language']} label={t('content.language')} rules={[{ required: true, type: 'string' }]}>
+        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'language']} label={t('content.language')} rules={[{ required: true, type: 'string' }]} layout="horizontal">
           <Select style={{ width: 120 }} size="large">
             <Option value="Français">Français</Option>
             <Option value="Nederlands">Nederlands</Option>
           </Select>
         </Form.Item>
 
-        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'birthDate']} label={t('content.birth_date')} rules={[{ required: true }]}>
+        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'birthDate']} label={t('content.birth_date')} rules={[{ required: true }]} layout="horizontal">
           <BirthdayInput />
         </Form.Item>
 
-        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'email']} label={t('content.email_address')} rules={[{ required: true, type: 'email' }]}>
+        <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'email']} label={t('content.email_address')} rules={[{ required: true, type: 'email' }]} layout="horizontal">
           <Input size="large" placeholder="email@example.com" prefix={<MailOutlined />} />
         </Form.Item>
       </div>

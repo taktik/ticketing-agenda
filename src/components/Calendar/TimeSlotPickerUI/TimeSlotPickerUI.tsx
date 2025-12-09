@@ -16,7 +16,7 @@ interface TimeSlotPickerUIProps {
   selectedTime?: dayjs.Dayjs
   onMonthChange: (newMonth: dayjs.Dayjs) => void
   onDateSelect: (date: dayjs.Dayjs) => void
-  onTimeSelect: (time: dayjs.Dayjs) => void
+  onTimeSelect: (time: dayjs.Dayjs | undefined) => void
 }
 
 export const TimeSlotPickerUI = (props: TimeSlotPickerUIProps) => {
@@ -75,6 +75,7 @@ export const TimeSlotPickerUI = (props: TimeSlotPickerUIProps) => {
   const handleHourSelect = useCallback(
     (hour: dayjs.Dayjs) => {
       setSelectedHour(hour)
+      onTimeSelect(undefined)
     },
     [setSelectedHour],
   )

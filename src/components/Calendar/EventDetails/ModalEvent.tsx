@@ -153,7 +153,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     setSelectedTime(undefined)
   }, [])
 
-  const handleTimeSelect = useCallback((time: dayjs.Dayjs) => {
+  const handleTimeSelect = useCallback((time: dayjs.Dayjs | undefined) => {
     setSelectedTime(time)
   }, [])
 

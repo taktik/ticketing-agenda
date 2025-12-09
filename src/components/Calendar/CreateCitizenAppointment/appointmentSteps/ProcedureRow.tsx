@@ -17,40 +17,27 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
   const { t, i18n } = useTranslation()
   const { updateDraft, removeDraft } = useCitizenReservation()
 
-  // 1. Resolve Hierarchy Nodes
   const selectedGroup = useMemo(() => availableProcedures.find((p) => p.id === draft.procedureGroupId), [availableProcedures, draft.procedureGroupId])
 
-  // 2. Filter Sites based on Agenda Lock
   const availableSiteVariants = useMemo(() => {
     if (!selectedGroup) return []
 
-    // If locked, strict filter by Agenda ID
     if (lockedAgendaId) {
       return selectedGroup.siteVariants.filter((sv) => sv.agenda.id === lockedAgendaId)
     }
     return selectedGroup.siteVariants
   }, [selectedGroup, lockedAgendaId])
 
-  // 3. Resolve Selected Variant
-  const selectedSiteVariant = useMemo(
-    () =>
-      // Check against filtered list to ensure validity
-      availableSiteVariants.find((sv) => sv.id === draft.siteVariantId),
-    [availableSiteVariants, draft.siteVariantId],
-  )
+  const selectedSiteVariant = useMemo(() => availableSiteVariants.find((sv) => sv.id === draft.siteVariantId), [availableSiteVariants, draft.siteVariantId])
 
-  // 4. Quantities
   const availableQuantities = useMemo(() => {
     return selectedSiteVariant?.procedureVariants.map((v) => v.attendees) || []
   }, [selectedSiteVariant])
-
-  // --- HANDLERS ---
 
   const handleProcedureChange = useCallback(
     (val: string) => {
       let autoSiteVariantId = undefined
 
-      // Auto-Select Logic
       const group = availableProcedures.find((p) => p.id === val)
       if (group) {
         let validVariants = group.siteVariants
@@ -60,7 +47,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
           validVariants = validVariants.filter((sv) => sv.agenda.id === lockedAgendaId)
         }
 
-        // If only 1 valid option exists (common with Locks), auto-select it
+        // If only 1 valid option exists auto-select it
         if (validVariants.length === 1) {
           autoSiteVariantId = validVariants[0].id
         }
@@ -69,7 +56,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
       updateDraft(draft.tempId, {
         procedureGroupId: val,
         siteVariantId: autoSiteVariantId,
-        quantity: undefined, // Reset quantity
+        quantity: 1,
       })
     },
     [draft.tempId, lockedAgendaId, availableProcedures, updateDraft],
@@ -77,7 +64,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
 
   const handleSiteChange = useCallback(
     (val: string) => {
-      updateDraft(draft.tempId, { siteVariantId: val, quantity: undefined })
+      updateDraft(draft.tempId, { siteVariantId: val, quantity: 1 })
     },
     [draft.tempId, updateDraft],
   )
@@ -95,9 +82,9 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
     <Card style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
         <Space align="end" style={{ gap: '2rem' }}>
-          {/* PROCEDURE */}
           <Form.Item label={t('content.procedure')} required style={{ marginBottom: 0 }}>
             <Select
+              placeholder={t('content.select_procedure_placeholder')}
               style={{ width: '300px' }}
               loading={isLoading}
               showSearch
@@ -111,12 +98,10 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
             />
           </Form.Item>
 
-          {/* SITE (Auto-filtered by Agenda Lock) */}
           <Form.Item label={t('content.site')} required style={{ marginBottom: 0 }}>
             <Select
               style={{ width: '200px' }}
-              // Disable if no procedure, OR if locked/auto-selected (User choice depends on UX preference)
-              // Enabling it allows user to see "Oh, only 1 site available"
+              placeholder={t('content.site')}
               disabled={!draft.procedureGroupId}
               value={draft.siteVariantId}
               onChange={handleSiteChange}
@@ -127,10 +112,10 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
             />
           </Form.Item>
 
-          {/* QUANTITY */}
           <Form.Item label={t('content.quantity')} required style={{ marginBottom: 0 }}>
             <Select
               style={{ minWidth: '80px' }}
+              placeholder="Qty"
               disabled={!draft.siteVariantId}
               value={draft.quantity}
               onChange={handleQuantityChange}

@@ -11,19 +11,23 @@ export const StepProcedureSelector = () => {
   const { t } = useTranslation()
   const { drafts, availableProcedures, addDraft, isLoadingData } = useCitizenReservation()
 
-  // 1. Locking Logic
-  // The first valid draft dictates the Service (Agenda) for everyone else.
-  // Since an Agenda belongs to one Site, this implicitly locks the Site too.
   const primaryDraft = drafts[0]
   const lockedAgendaId = primaryDraft?.agenda?.id
 
-  // 2. Filter available options for subsequent rows
-  // Only show procedures available in the locked Service.
+  const selectedProcedureIds = useMemo(() => {
+    return new Set(drafts.map((d) => d.procedureGroupId).filter(Boolean))
+  }, [drafts])
+
   const filteredProcedures = useMemo(() => {
     if (!lockedAgendaId) return availableProcedures
 
     return availableProcedures.filter((p) => p.siteVariants.some((sv) => sv.agenda.id === lockedAgendaId))
   }, [availableProcedures, lockedAgendaId])
+
+  const remainingOptions = useMemo(() => {
+    if (!lockedAgendaId) return []
+    return filteredProcedures.filter((p) => !selectedProcedureIds.has(p.id))
+  }, [filteredProcedures, selectedProcedureIds, lockedAgendaId])
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }} className="procedure-selector">
@@ -32,8 +36,12 @@ export const StepProcedureSelector = () => {
 
       <Space direction="vertical" style={{ width: '100%', maxHeight: '350px', overflow: 'auto' }}>
         {drafts.map((draft, index) => {
-          // Row 0 gets full list. Row 1+ gets filtered list.
-          const rowOptions = index === 0 ? availableProcedures : filteredProcedures
+          const rowOptions =
+            index === 0
+              ? availableProcedures
+              : filteredProcedures.filter((p) => {
+                  return !selectedProcedureIds.has(p.id) || p.id === draft.procedureGroupId
+                })
 
           return (
             <ProcedureRow
@@ -42,7 +50,6 @@ export const StepProcedureSelector = () => {
               index={index}
               canRemove={drafts.length > 1}
               availableProcedures={rowOptions}
-              // Pass ONLY the Agenda Lock
               lockedAgendaId={index === 0 ? undefined : lockedAgendaId}
               isLoading={isLoadingData}
             />
@@ -50,14 +57,7 @@ export const StepProcedureSelector = () => {
         })}
 
         <div style={{ marginTop: 8 }}>
-          <Button
-            type="dashed"
-            onClick={addDraft}
-            block
-            icon={<PlusOutlined />}
-            // Disable until a Service is selected
-            disabled={!lockedAgendaId || isLoadingData}
-          >
+          <Button type="dashed" onClick={addDraft} block icon={<PlusOutlined />} disabled={!lockedAgendaId || isLoadingData || remainingOptions.length === 0}>
             {t('content.add_another_procedure')}
           </Button>
         </div>

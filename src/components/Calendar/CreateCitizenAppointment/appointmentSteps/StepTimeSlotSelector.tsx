@@ -10,9 +10,19 @@ export const StepTimeSlotSelector = () => {
   const form = Form.useFormInstance()
   const [currentMonth, setCurrentMonth] = useState(dayjs())
 
-  const { availabilities, isAvailabilitiesLoading, fetchAvailabilitiesForMonth, setTimeSlot, timeSlot } = useCitizenReservation()
+  const {
+    availabilities,
+    isAvailabilitiesLoading,
+    fetchAvailabilitiesForMonth,
+    setTimeSlot,
+    // We intentionally DO NOT use 'timeSlot' here to avoid circular logic
+  } = useCitizenReservation()
 
   const [api, notificationContextHolder] = notification.useNotification()
+
+  // Watch Form State
+  const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
+  const timeValue: Dayjs = Form.useWatch(['timeslot', 'time'], form)
 
   // 1. Fetch Data when Month changes
   useEffect(() => {
@@ -21,44 +31,54 @@ export const StepTimeSlotSelector = () => {
     })
   }, [currentMonth, fetchAvailabilitiesForMonth, api, t])
 
-  // 2. Auto-select first available date if nothing selected
+  // 2. Auto-select first available date ONLY if form is empty
+  // FIX: Removed 'timeSlot' dependency. We rely on 'dateValue' (Form State) instead.
   useEffect(() => {
-    if (availabilities.length > 0 && !timeSlot?.date) {
+    // Only auto-select if we have data AND the user hasn't picked a date yet
+    if (availabilities.length > 0 && !dateValue) {
       const firstAvailable = availabilities.find((d) => d >= dayjs().startOf('day'))
+
+      // Only set if we found a valid future date
       if (firstAvailable) {
         form.setFieldsValue({
           timeslot: { date: firstAvailable },
         })
       }
     }
-  }, [availabilities, form, timeSlot])
+  }, [availabilities, form, dateValue])
 
-  // 3. Sync Form <-> UI
-  const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
-  const timeValue: Dayjs = Form.useWatch(['timeslot', 'time'], form)
-
+  // 3. Handlers
   const handleDateSelect = useCallback(
     (date: Dayjs) => {
-      // Update Form (for validation)
+      // Update Form
       form.setFieldsValue({ timeslot: { date: date, time: undefined } })
       form.validateFields([['timeslot', 'time']])
 
-      // Update Context (Optional here, but cleaner if done on Next,
-      // though setting date in context might be useful if other steps depend on it)
+      // Clear Context (This used to trigger the bug, now it's safe)
+      setTimeSlot(undefined)
     },
-    [form],
+    [form, setTimeSlot],
   )
 
   const handleTimeSelect = useCallback(
-    (time: Dayjs) => {
+    (time: Dayjs | undefined) => {
       const date = form.getFieldValue(['timeslot', 'date'])
 
-      // Update Form
       form.setFieldsValue({ timeslot: { time: time } })
-      form.validateFields([['timeslot', 'time']])
 
-      // Update Context immediately so "Next" button enables
-      setTimeSlot({ date, time })
+      // Only validate if a time is actually selected
+      if (time) {
+        form.validateFields([['timeslot', 'time']])
+      }
+
+      if (time && date) {
+        // Create a combined object to ensure specific time precision
+        // (Though usually 'time' from availability list already has the correct date)
+        const combined = time.year(date.year()).month(date.month()).date(date.date())
+        setTimeSlot({ date, time: combined })
+      } else {
+        setTimeSlot(undefined)
+      }
     },
     [form, setTimeSlot],
   )
@@ -67,7 +87,6 @@ export const StepTimeSlotSelector = () => {
     <>
       {notificationContextHolder}
 
-      {/* Hidden Form Items for AntD Validation */}
       <Form.Item name={['timeslot', 'date']} rules={[{ required: true }]} noStyle />
       <Form.Item name={['timeslot', 'time']} rules={[{ required: true, message: t('content.select_time_prompt') }]} noStyle />
 

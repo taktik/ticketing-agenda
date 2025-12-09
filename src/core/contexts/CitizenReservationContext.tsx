@@ -177,23 +177,43 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
 
   const updateDraft = useCallback(
     (tempId: string, updates: Partial<AppointmentDraft>) => {
-      setDrafts((prev) =>
-        prev.map((draft) => {
+      setDrafts((prev) => {
+        const index = prev.findIndex((d) => d.tempId === tempId)
+        if (index === -1) return prev
+
+        const currentDraft = prev[index]
+
+        // --- 1. Master Reset Check ---
+        // If we are updating Row 0, we must wipe subsequent drafts if:
+        // A. The Procedure Group changes (New procedure type)
+        // B. The Site Variant changes (New Service/Agenda)
+        const isMasterRow = index === 0
+
+        const procedureChanged = updates.procedureGroupId !== undefined && updates.procedureGroupId !== currentDraft.procedureGroupId
+
+        const siteChanged = updates.siteVariantId !== undefined && updates.siteVariantId !== currentDraft.siteVariantId
+
+        const shouldResetDependents = isMasterRow && (procedureChanged || siteChanged)
+
+        // If resetting, we keep ONLY the first draft (which we are about to update).
+        // Otherwise, we keep the whole list.
+        const listToProcess = shouldResetDependents ? [currentDraft] : prev
+
+        return listToProcess.map((draft) => {
+          // Only modify the specific draft we are targeting
           if (draft.tempId !== tempId) return draft
 
-          // Start with current state + primitive ID updates
+          // --- 2. Merge Updates ---
           const next: AppointmentDraft = { ...draft, ...updates }
 
-          // --- AUTO-HYDRATION LOGIC ---
-          // We assume availableProcedures is the source of truth.
+          // --- 3. Hydration & Reset Logic ---
 
-          // 1. Resolve Procedure Group
-          const group = availableProcedures.find((p) => p.id === next.procedureGroupId)
+          // A. Resolve Procedure Group
+          const selectedGroup = availableProcedures.find((p) => p.id === next.procedureGroupId)
 
-          // If group changed (and this is the primary draft), reset children
-          if (updates.procedureGroupId && draft.tempId === drafts[0].tempId) {
-            next.siteVariantId = undefined
-            next.procedureVariantId = undefined
+          // If Group has changed, we must reset all downstream selections for THIS draft
+          if (updates.procedureGroupId && next.procedureGroupId !== draft.procedureGroupId) {
+            next.siteVariantId = updates.siteVariantId
             next.quantity = 1
             next.site = undefined
             next.agenda = undefined
@@ -201,13 +221,13 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
             next.duration = undefined
           }
 
-          // 2. Resolve Site Variant
+          // B. Resolve Site Variant
           let siteVariant = undefined
-          if (group && next.siteVariantId) {
-            siteVariant = group.siteVariants.find((sv) => sv.id === next.siteVariantId)
+          if (selectedGroup && next.siteVariantId) {
+            siteVariant = selectedGroup.siteVariants.find((sv) => sv.id === next.siteVariantId)
           }
 
-          // Populate Objects: Site & Agenda
+          // Populate Site & Agenda Objects
           if (siteVariant) {
             next.site = siteVariant.site
             next.agenda = siteVariant.agenda
@@ -216,13 +236,14 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
             next.agenda = undefined
           }
 
-          // 3. Resolve Procedure Variant (Quantity)
+          // C. Resolve Procedure Variant (Driven by QUANTITY)
           let procVariant = undefined
-          if (siteVariant && next.procedureVariantId) {
-            procVariant = siteVariant.procedureVariants.find((pv) => pv.id === next.procedureVariantId)
+          if (siteVariant && next.quantity) {
+            // Find the variant that matches the selected number of attendees
+            procVariant = siteVariant.procedureVariants.find((pv) => pv.attendees === next.quantity)
           }
 
-          // Populate Objects: CalendarItemType & Duration
+          // Populate CalendarItemType & Duration
           if (procVariant) {
             next.calendarItemType = procVariant.calendarItemType
             next.duration = procVariant.duration
@@ -232,10 +253,10 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
           }
 
           return next
-        }),
-      )
+        })
+      })
     },
-    [availableProcedures, drafts],
+    [availableProcedures],
   )
 
   // 6. Availability Fetcher
