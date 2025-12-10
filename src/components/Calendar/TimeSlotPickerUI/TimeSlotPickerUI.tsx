@@ -67,7 +67,6 @@ export const TimeSlotPickerUI = (props: TimeSlotPickerUIProps) => {
       })
   }, [slotsByHour])
 
-  // Reset internal hour state when date changes
   useEffect(() => {
     setSelectedHour(undefined)
   }, [selectedDate])

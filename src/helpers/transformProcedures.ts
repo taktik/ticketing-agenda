@@ -54,7 +54,6 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           })
           .sort((a, b) => a.attendees - b.attendees)
 
-        // Level 2: Site Variants
         siteVariants.push({
           id: `sv-${slug}-${site.id}`,
           siteId: site.id,

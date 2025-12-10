@@ -289,12 +289,10 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         const recoveryDataKey = await createRecoveryDataKey(patient.id).unwrap()
         if (!recoveryDataKey) throw new Error('no valid exchange data.')
 
-        // Email payload logic (inline or helper)
         const lang: Lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
         const startDayjs = fuzzyDateTimeIntToDayjs(updatedCalendarItem.startTime)
         const endDayjs = fuzzyDateTimeIntToDayjs(updatedCalendarItem.endTime)
 
-        // ... (URL compute logic matches original) ...
         const params = new URLSearchParams()
         params.append('recoveryData', JSON.stringify({ delegateId: dataOwnerId, recoveryKey: recoveryDataKey.asHexString() }))
         params.append('calendarItemId', updatedCalendarItem.id)
