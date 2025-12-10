@@ -14,28 +14,19 @@ interface ProcessedAvailabilities {
 }
 
 interface CitizenReservationContextType {
-  // Data
   isLoadingData: boolean
   availableProcedures: ProcedureGroup[]
-
-  // State
   drafts: AppointmentDraft[]
   timeSlot: TimeSlot | undefined
   personalInfo: PersonalInfo | undefined
-
-  // Availability
   availabilities: Dayjs[]
   isAvailabilitiesLoading: boolean
-
-  // Actions
   addDraft: () => void
   removeDraft: (tempId: string) => void
   updateDraft: (tempId: string, updates: Partial<AppointmentDraft>) => void
   setTimeSlot: (slot: TimeSlot | undefined) => void
   setPersonalInfo: (info: PersonalInfo) => void
   fetchAvailabilitiesForMonth: (month: Dayjs) => Promise<void>
-
-  // Computed
   totalDuration: number
   isValidProcedureStep: boolean
 }
@@ -105,11 +96,9 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
   const [availabilities, setAvailabilities] = useState<Dayjs[]>([])
   const [isAvailabilitiesLoading, setIsAvailabilitiesLoading] = useState(false)
 
-  // 4. Logic: Consecutive Slot Finding
   const findConsecutiveSlots = useCallback((processedAvailabilities: ProcessedAvailabilities[]): Dayjs[] => {
     if (!processedAvailabilities || processedAvailabilities.length === 0) return []
 
-    // Map each procedure's start times to a set of ALL occupied 5-min intervals
     const allProcedureIntervals = processedAvailabilities.map((proc) => {
       const slotsNeeded = proc.procedureDuration / 5
       const intervals = new Set<number>()
@@ -123,7 +112,6 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
 
     if (allProcedureIntervals.length === 0) return []
 
-    // Find intersection of all intervals (Time where everyone is free)
     let commonIntervals = new Set(allProcedureIntervals[0])
     for (let i = 1; i < allProcedureIntervals.length; i++) {
       commonIntervals = new Set(Array.from(commonIntervals).filter((timestamp) => allProcedureIntervals[i].has(timestamp)))
@@ -134,7 +122,6 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
 
     if (requiredConsecutiveSlots <= 0) return []
 
-    // Find sequences in the common intervals
     const validStartSlots: Dayjs[] = []
     const sortedCommonIntervals = Array.from(commonIntervals).sort()
 
@@ -156,9 +143,7 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
     return validStartSlots
   }, [])
 
-  // 5. Actions
   const addDraft = useCallback(() => {
-    // We add an empty draft. The UI (ProcedureRow) handles filtering based on the first draft's site.
     setDrafts((prev) => [
       ...prev,
       {
@@ -182,36 +167,18 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
         if (index === -1) return prev
 
         const currentDraft = prev[index]
-
-        // --- 1. Master Reset Check ---
-        // If we are updating Row 0, we must wipe subsequent drafts if:
-        // A. The Procedure Group changes (New procedure type)
-        // B. The Site Variant changes (New Service/Agenda)
         const isMasterRow = index === 0
-
         const procedureChanged = updates.procedureGroupId !== undefined && updates.procedureGroupId !== currentDraft.procedureGroupId
-
         const siteChanged = updates.siteVariantId !== undefined && updates.siteVariantId !== currentDraft.siteVariantId
-
         const shouldResetDependents = isMasterRow && (procedureChanged || siteChanged)
 
-        // If resetting, we keep ONLY the first draft (which we are about to update).
-        // Otherwise, we keep the whole list.
         const listToProcess = shouldResetDependents ? [currentDraft] : prev
 
         return listToProcess.map((draft) => {
-          // Only modify the specific draft we are targeting
           if (draft.tempId !== tempId) return draft
-
-          // --- 2. Merge Updates ---
           const next: AppointmentDraft = { ...draft, ...updates }
-
-          // --- 3. Hydration & Reset Logic ---
-
-          // A. Resolve Procedure Group
           const selectedGroup = availableProcedures.find((p) => p.id === next.procedureGroupId)
 
-          // If Group has changed, we must reset all downstream selections for THIS draft
           if (updates.procedureGroupId && next.procedureGroupId !== draft.procedureGroupId) {
             next.siteVariantId = updates.siteVariantId
             next.quantity = 1
@@ -221,13 +188,11 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
             next.duration = undefined
           }
 
-          // B. Resolve Site Variant
           let siteVariant = undefined
           if (selectedGroup && next.siteVariantId) {
             siteVariant = selectedGroup.siteVariants.find((sv) => sv.id === next.siteVariantId)
           }
 
-          // Populate Site & Agenda Objects
           if (siteVariant) {
             next.site = siteVariant.site
             next.agenda = siteVariant.agenda
@@ -236,14 +201,11 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
             next.agenda = undefined
           }
 
-          // C. Resolve Procedure Variant (Driven by QUANTITY)
           let procVariant = undefined
           if (siteVariant && next.quantity) {
-            // Find the variant that matches the selected number of attendees
             procVariant = siteVariant.procedureVariants.find((pv) => pv.attendees === next.quantity)
           }
 
-          // Populate CalendarItemType & Duration
           if (procVariant) {
             next.calendarItemType = procVariant.calendarItemType
             next.duration = procVariant.duration
@@ -259,13 +221,11 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
     [availableProcedures],
   )
 
-  // 6. Availability Fetcher
   const fetchAvailabilitiesForMonth = useCallback(
     async (month: Dayjs) => {
       setIsAvailabilitiesLoading(true)
       try {
         const promises = drafts.map(async (draft) => {
-          // We rely on the hydrated objects
           const agendaId = draft.agenda?.id
           const typeId = draft.calendarItemType?.id
           const duration = draft.duration
@@ -294,10 +254,7 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
         })
 
         const results = await Promise.all(promises)
-
-        // If we have multiple drafts, we must find the intersection
         const finalList = results.length === 1 ? results[0].availabilityList : findConsecutiveSlots(results)
-
         setAvailabilities(finalList)
       } catch (e) {
         setAvailabilities([])
@@ -308,7 +265,6 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
     [drafts, triggerAvailabilityFetch, findConsecutiveSlots],
   )
 
-  // 7. Time Slot Setter (Computes start/end for each draft)
   const handleSetTimeSlot = useCallback((slot: TimeSlot | undefined) => {
     setTimeSlot(slot)
 
@@ -317,7 +273,6 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
       return
     }
 
-    // Assign sequential times
     let currentStart = slot.date.hour(slot.time.hour()).minute(slot.time.minute())
 
     setDrafts((prev) =>
@@ -330,20 +285,17 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
           calculatedStartTime: currentStart,
           calculatedEndTime: end,
         }
-
-        currentStart = end // Move start pointer for next draft
+        currentStart = end
         return updated
       }),
     )
   }, [])
 
-  // 8. Computed
   const totalDuration = useMemo(() => {
     return drafts.reduce((sum, draft) => sum + (draft.duration || 0), 0)
   }, [drafts])
 
   const isValidProcedureStep = useMemo(() => {
-    // Valid if we have at least one draft, and ALL drafts have fully resolved objects
     return drafts.length > 0 && drafts.every((d) => !!d.calendarItemType && !!d.site && !!d.agenda)
   }, [drafts])
 

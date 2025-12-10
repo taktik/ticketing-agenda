@@ -45,7 +45,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose, initialSiteId }: Mo
   }, [allSites, attachedSites, isAdminLevel])
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && selectedKey === 'default') {
       if (initialSiteId) {
         setSelectedKey(`site-${initialSiteId}`)
         setOpenKeys([`site-${initialSiteId}`])

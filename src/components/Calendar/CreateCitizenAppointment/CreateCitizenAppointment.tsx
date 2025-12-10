@@ -5,24 +5,18 @@ import dayjs from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-
-// --- API ---
+import { EMAIL_APPOINTMENT_CONFIRMATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
 import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
 import { useCreateDecryptedPatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery, useUpdateEncryptedPatientMutation } from '../../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
 import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../../core/api/userApi'
-
-// --- HELPERS ---
-import { EMAIL_APPOINTMENT_CONFIRMATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
-import { Lang } from '../../../helpers/types'
-import { calculateNumericEventTimes, getStringProperty, getTranslationForEntity } from '../../common/helpers'
-
-// --- COMPONENTS ---
 import { CitizenReservationProvider, useCitizenReservation } from '../../../core/contexts/CitizenReservationContext'
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
+import { Lang } from '../../../helpers/types'
 import { CustomModal } from '../../common/CustomModal'
+import { calculateNumericEventTimes, getStringProperty, getTranslationForEntity } from '../../common/helpers'
 import { StepAppointmentReview } from './appointmentSteps/StepAppointmentReview'
 import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
@@ -58,23 +52,14 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   const { t } = useTranslation()
   const [form] = Form.useForm()
 
-  // 1. Context Access
-  const {
-    drafts,
-    timeSlot,
-    setPersonalInfo,
-    isValidProcedureStep,
-    availableProcedures, // <--- We need this for metadata lookup
-  } = useCitizenReservation()
+  const { drafts, timeSlot, setPersonalInfo, isValidProcedureStep, availableProcedures } = useCitizenReservation()
 
   const { adminRoot, siteRoot } = useHierarchyContext()
   const { dataOwnerId } = usePermissionContext()
 
-  // 2. Local State
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
   const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
 
-  // 3. API
   const [getUserByMailLazy] = useLazyGetUserByEmailQuery()
   const [getPatientByIdLazy] = useLazyGetEncryptedPatientByIdQuery()
   const [createUpdateUser] = useCreateUpdateUserMutation()
@@ -87,12 +72,9 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
   const [api, notificationContextHolder] = notification.useNotification()
 
-  // 4. Time Helper
   const combineDateAndTime = useCallback((slot: { date: dayjs.Dayjs; time: dayjs.Dayjs }) => {
     return slot.date.hour(slot.time.hour()).minute(slot.time.minute()).second(0)
   }, [])
-
-  // --- PATIENT FLOW HELPERS ---
 
   const buildDecryptedContactPayload = useCallback(
     (email: string, mobilePhone?: string) => ({
@@ -228,8 +210,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     [getUserByMailLazy, handleExistingCitizenFlow, handleNewCitizenFlow],
   )
 
-  // --- CREATION LOGIC ---
-
   const createAppointments = useCallback(
     async (citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient, info: PersonalInfo) => {
       if (!citizenUser || !citizenPatient?.id || !adminRoot?.id || !siteRoot?.id || !timeSlot) {
@@ -239,11 +219,9 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       let rollingStartTime = combineDateAndTime(timeSlot)
 
       const creationPromises = drafts.map(async (draft) => {
-        // --- LOOKUP METADATA ---
         const group = availableProcedures.find((p) => p.id === draft.procedureGroupId)
         const siteVariant = group?.siteVariants.find((sv) => sv.id === draft.siteVariantId)
 
-        // Safety check
         if (!draft.calendarItemType || !draft.agenda || !draft.site || !draft.duration || !group || !siteVariant) {
           throw new Error('Incomplete draft data')
         }
@@ -252,7 +230,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         const numericTimes = calculateNumericEventTimes(rollingStartTime, duration)
         if (!numericTimes) throw new Error('Time calc error')
 
-        // Move time forward for next appointment
         rollingStartTime = rollingStartTime.add(duration, 'minute')
 
         const newEvent = new DecryptedCalendarItem({
@@ -269,7 +246,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           tags: [
             new CodeStub({ id: 'APPOINTMENT', code: group.id, type: 'APPOINTMENT', version: '1' }),
             new CodeStub({ id: 'APPOINTMENT|LAST_AUTHOR', code: citizenUser.id, type: 'APPOINTMENT|LAST_AUTHOR', version: '1' }),
-            // QBetter metadata is retrieved from the UI Hierarchy objects
             new CodeStub({ id: 'APPOINTMENT|QBETTER_SERVICE_ID', code: getStringProperty(draft.site.publicProperties, 'SITE|QBETTER_LOCATION_ID'), type: 'APPOINTMENT|QBETTER_SERVICE_ID', version: '1' }),
             new CodeStub({
               id: 'APPOINTMENT|QBETTER_LOCATION_ID',
@@ -293,8 +269,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     [drafts, adminRoot, siteRoot, createUpdateEvent, timeSlot, combineDateAndTime, availableProcedures],
   )
 
-  // --- EMAIL LOGIC ---
-
   const sendEmails = useCallback(
     async (recoveryDataKey: RecoveryDataKey, citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient, calendarItems: DecryptedCalendarItem[], info: PersonalInfo) => {
       if (!citizenUser.email) throw new Error('No valid email')
@@ -302,25 +276,20 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       let rollingStartTime = combineDateAndTime(timeSlot!)
 
       for (const draft of drafts) {
-        // --- LOOKUP METADATA ---
         const group = availableProcedures.find((p) => p.id === draft.procedureGroupId)
         const siteVariant = group?.siteVariants.find((sv) => sv.id === draft.siteVariantId)
 
         if (!draft.calendarItemType || !draft.agenda || !draft.duration || !group || !siteVariant) continue
 
-        // Calculate timing for this specific email
         const duration = draft.duration
         const endTime = rollingStartTime.add(duration, 'minute')
 
-        // Match created item
         const itemStartTime = Number(rollingStartTime.format('YYYYMMDDHHmmss'))
         const calendarItem = calendarItems.find((ci) => ci.startTime === itemStartTime)
 
-        // Prepare Variables
         const langCode = info.language === 'Nederlands' ? 'nl' : 'fr'
         const safeLang: Lang = langCode
 
-        // Display Strings
         const serviceName = getTranslationForEntity(draft.agenda.properties, 'SERVICE', safeLang)
         const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, 'CALENDARITEMTYPE', safeLang)
 
@@ -355,15 +324,11 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
             procedureDetails: siteVariant.procedureDetails,
           },
         })
-
-        // Advance time loop
         rollingStartTime = endTime
       }
     },
     [drafts, dataOwnerId, sendConfirmationEmail, timeSlot, combineDateAndTime, availableProcedures],
   )
-
-  // --- MAIN HANDLER ---
 
   const handleAppointmentCreation = useCallback(async () => {
     try {
@@ -394,8 +359,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     }
   }, [form, dataOwnerId, getOrCreateCitizenProfile, initializePatientExchangeDatas, createAppointments, createRecoveryDataKey, sendEmails, t, api])
 
-  // --- NAVIGATION ---
-
   const next = useCallback(async () => {
     try {
       if (currentStep === AppointmentStep.PERSONAL_INFO) {
@@ -416,8 +379,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     setCreationStatus(null)
     onClose()
   }, [form, onClose])
-
-  // --- RENDER ---
 
   const steps = useMemo(
     () => [
@@ -497,7 +458,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   )
 }
 
-// === WRAPPER ===
 export const CreateCitizenAppointment = (props: CreateEventProps) => {
   if (!props.isVisible) return null
   return (
