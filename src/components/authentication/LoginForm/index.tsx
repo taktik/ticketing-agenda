@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { MSG_GW_URL, SPEC_ID } from '../../../constants'
-import { SpinLoader } from '../../common/SpinLoader'
 import '../index.css'
 import { KerberusWidget } from '../KerberusWidget'
 
@@ -87,7 +86,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
   return (
     <>
       {notificationContextHolder}
-      {state === 'loading' && <SpinLoader />}
       <Form onFinish={(values) => handleSubmit(values)} className="auth-form" layout="vertical">
         <div className="auth-form__title">
           <h2>{t('content.login_title')}</h2>
