@@ -226,18 +226,17 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           throw new Error('Incomplete draft data')
         }
 
-        const duration = draft.duration
-        const numericTimes = calculateNumericEventTimes(rollingStartTime, duration)
-        if (!numericTimes) throw new Error('Time calc error')
+        const numericTimes = calculateNumericEventTimes(rollingStartTime, draft.duration)
+        if (!numericTimes) throw new Error('Time calculation error')
 
-        rollingStartTime = rollingStartTime.add(duration, 'minute')
+        rollingStartTime = rollingStartTime.add(draft.duration, 'minute')
 
         const newEvent = new DecryptedCalendarItem({
           id: v4(),
           patientId: citizenPatient.id,
           title: group.displayTextByLanguage[info.language] || group.displayTextByLanguage['FR'],
           calendarItemTypeId: draft.calendarItemType.id,
-          duration: duration,
+          duration: draft.duration,
           agendaId: draft.agenda.id,
           phoneNumber: info.countryCode && info.phoneNumber ? `${info.countryCode}${info.phoneNumber}` : undefined,
           startTime: numericTimes.startTime,

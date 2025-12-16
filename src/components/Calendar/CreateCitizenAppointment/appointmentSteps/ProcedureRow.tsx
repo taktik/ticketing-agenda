@@ -16,16 +16,20 @@ interface ProcedureRowProps {
 export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRemove, isLoading }: ProcedureRowProps) => {
   const { t, i18n } = useTranslation()
   const { updateDraft, removeDraft } = useCitizenReservation()
+  const currentLang = i18n.language.toUpperCase()
 
   const selectedGroup = useMemo(() => availableProcedures.find((p) => p.id === draft.procedureGroupId), [availableProcedures, draft.procedureGroupId])
 
   const availableSiteVariants = useMemo(() => {
     if (!selectedGroup) return []
 
-    if (lockedAgendaId) {
-      return selectedGroup.siteVariants.filter((sv) => sv.agenda.id === lockedAgendaId)
-    }
-    return selectedGroup.siteVariants
+    const filteredVariants = lockedAgendaId ? selectedGroup.siteVariants.filter((sv) => sv.agenda.id === lockedAgendaId) : selectedGroup.siteVariants
+
+    return [...filteredVariants].sort((a, b) => {
+      const nameA = a.site.name || ''
+      const nameB = b.site.name || ''
+      return nameA.localeCompare(nameB)
+    })
   }, [selectedGroup, lockedAgendaId])
 
   const selectedSiteVariant = useMemo(() => availableSiteVariants.find((sv) => sv.id === draft.siteVariantId), [availableSiteVariants, draft.siteVariantId])
@@ -33,6 +37,15 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
   const availableQuantities = useMemo(() => {
     return selectedSiteVariant?.procedureVariants.map((v) => v.attendees) || []
   }, [selectedSiteVariant])
+
+  const sortedProcedures = useMemo(() => {
+    return [...availableProcedures].sort((a, b) => {
+      const labelA = a.displayTextByLanguage[currentLang] || a.displayTextByLanguage['FR'] || ''
+      const labelB = b.displayTextByLanguage[currentLang] || b.displayTextByLanguage['FR'] || ''
+
+      return labelA.localeCompare(labelB)
+    })
+  }, [availableProcedures, currentLang])
 
   const handleProcedureChange = useCallback(
     (val: string) => {
@@ -76,8 +89,6 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
     [draft.tempId, updateDraft],
   )
 
-  const currentLang = i18n.language.toUpperCase()
-
   return (
     <Card style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
@@ -91,7 +102,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
               optionFilterProp="label"
               value={draft.procedureGroupId}
               onChange={handleProcedureChange}
-              options={availableProcedures.map((p) => ({
+              options={sortedProcedures.map((p) => ({
                 value: p.id,
                 label: p.displayTextByLanguage[currentLang] || p.displayTextByLanguage['FR'],
               }))}
