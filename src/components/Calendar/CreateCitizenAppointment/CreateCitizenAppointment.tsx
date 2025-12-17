@@ -245,10 +245,15 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           tags: [
             new CodeStub({ id: 'APPOINTMENT', code: group.id, type: 'APPOINTMENT', version: '1' }),
             new CodeStub({ id: 'APPOINTMENT|LAST_AUTHOR', code: citizenUser.id, type: 'APPOINTMENT|LAST_AUTHOR', version: '1' }),
-            new CodeStub({ id: 'APPOINTMENT|QBETTER_SERVICE_ID', code: getStringProperty(draft.site.publicProperties, 'SITE|QBETTER_LOCATION_ID'), type: 'APPOINTMENT|QBETTER_SERVICE_ID', version: '1' }),
+            new CodeStub({
+              id: 'APPOINTMENT|QBETTER_SERVICE_ID',
+              code: getStringProperty(draft.calendarItemType.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID'),
+              type: 'APPOINTMENT|QBETTER_SERVICE_ID',
+              version: '1',
+            }),
             new CodeStub({
               id: 'APPOINTMENT|QBETTER_LOCATION_ID',
-              code: getStringProperty(draft.calendarItemType.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID'),
+              code: getStringProperty(draft.site.publicProperties, 'SITE|QBETTER_LOCATION_ID'),
               type: 'APPOINTMENT|QBETTER_LOCATION_ID',
               version: '1',
             }),
