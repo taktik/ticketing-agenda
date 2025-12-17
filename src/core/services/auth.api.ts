@@ -22,7 +22,7 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { msalInstance } from '../..'
-import { APPLICATION_ID, BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, ICURE_NIGHTLY_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
+import { APPLICATION_ID, EMAIL_AUTH_CODE_ADMIN_FR, ICURE_NIGHTLY_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
@@ -58,7 +58,8 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     const hcp = await (await sdk.dataOwner.getCurrentDataOwner()).dataOwner
     if (!!formattedKey && !!hcp) {
       try {
-        const response = await fetch(`${BACKEND_API}/api/keys`, {
+        const response = await fetch(`http://localhost:8080/api/keys`, {
+          //`${BACKEND_API}/api/keys`
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -82,7 +83,8 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
   async fetchRecoveryKey(hcpId: string): Promise<string | undefined> {
     try {
-      const response = await fetch(`${BACKEND_API}/api/keys/${hcpId}`, {
+      const response = await fetch(`http://localhost:8080/api/keys/${hcpId}`, {
+        //${BACKEND_API}/api/keys/${hcpId}`
         method: 'GET',
         headers: {
           Authorization: `Bearer ${await this.bearerTokenProvider()}`,

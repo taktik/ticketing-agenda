@@ -5,7 +5,7 @@ import { cardinalApi } from '../services/auth.api'
 import { GetCalendarItemsByAgendaAndPeriods } from './fetchType'
 import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
-enum CalendarItemTags {
+export enum CalendarItemTags {
   CalendarItem = 'CalendarItem',
 }
 

@@ -1,5 +1,4 @@
 import { createApi } from '@reduxjs/toolkit/query/react'
-import { BACKEND_API } from '../../constants'
 import { baseQueryWithRetry } from './utils'
 
 export enum PropagationStatus {
@@ -35,7 +34,7 @@ export const AppointmentPollingApiRtk = createApi({
   endpoints: (builder) => ({
     getPropagationStatus: builder.query<PropagationTask, string>({
       query: (icureAppointmentId) => ({
-        url: `${BACKEND_API}/api/propagation-status/${icureAppointmentId}`,
+        url: `http://localhost:8080/api/propagation-status/${icureAppointmentId}`, //`${BACKEND_API}/api/propagation-status/${icureAppointmentId}`,
         method: 'GET',
       }),
       providesTags: (result, error, id) => [{ type: AppointmentPollingApiTags.AppointmentPolling, id }],

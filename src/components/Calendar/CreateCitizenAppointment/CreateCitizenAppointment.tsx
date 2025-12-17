@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { EMAIL_APPOINTMENT_CONFIRMATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
 import { PropagationStatus, PropagationTask, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../../core/api/appointmentPollingApi'
-import { useCreateUpdateCalendarItemMutation, useDeleteCalendarItemByIdMutation } from '../../../core/api/calendarItemApi'
+import { calendarItemApiRtk, CalendarItemTags, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemByIdMutation } from '../../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
 import { useCreateDecryptedPatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery, useUpdateEncryptedPatientMutation } from '../../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
@@ -15,6 +15,7 @@ import { useCreateUpdateUserMutation, useLazyGetUserByEmailQuery } from '../../.
 import { CitizenReservationProvider, useCitizenReservation } from '../../../core/contexts/CitizenReservationContext'
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
+import { useAppDispatch } from '../../../core/hooks'
 import { Lang } from '../../../helpers/types'
 import { CustomModal } from '../../common/CustomModal'
 import { calculateNumericEventTimes, getStringProperty, getTranslationForEntity } from '../../common/helpers'
@@ -50,6 +51,7 @@ interface CitizenInputData {
 }
 
 const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) => {
+  const dispatch = useAppDispatch()
   const { t } = useTranslation()
   const [form] = Form.useForm()
 
@@ -237,7 +239,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         const newEvent = new DecryptedCalendarItem({
           id: v4(),
           patientId: citizenPatient.id,
-          title: group.displayTextByLanguage[info.language] || group.displayTextByLanguage['FR'],
+          title: draft.calendarItemType.name,
           calendarItemTypeId: draft.calendarItemType.id,
           duration: draft.duration,
           agendaId: draft.agenda.id,
@@ -277,7 +279,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   )
 
   const sendEmails = useCallback(
-    async (recoveryDataKey: RecoveryDataKey, citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient, calendarItems: DecryptedCalendarItem[], info: PersonalInfo) => {
+    async (recoveryDataKey: RecoveryDataKey, citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient, calendarItems: DecryptedCalendarItem[], info: PersonalInfo, qBetterCodes: Record<string, string>) => {
       if (!citizenUser.email) throw new Error('No valid email')
 
       let rollingStartTime = combineDateAndTime(timeSlot!)
@@ -294,6 +296,14 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         const itemStartTime = Number(rollingStartTime.format('YYYYMMDDHHmmss'))
         const calendarItem = calendarItems.find((ci) => ci.startTime === itemStartTime)
 
+        let confirmationCode = ''
+        if (calendarItem && qBetterCodes[calendarItem.id]) {
+          const code = qBetterCodes[calendarItem.id]
+          if (code !== 'SKIPPED' && code !== 'NONE') {
+            confirmationCode = code
+          }
+        }
+
         const langCode = info.language === 'Nederlands' ? 'nl' : 'fr'
         const safeLang: Lang = langCode
 
@@ -309,7 +319,17 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         const url = `${MANAGE_APPOINTMENT_ROUTE}?${params.toString()}`
 
         const hasProcedure = !!siteVariant.procedureDetails?.trim()
-        const processId = EMAIL_APPOINTMENT_CONFIRMATION[safeLang][hasProcedure ? 'withProcedureDetails' : 'withoutProcedureDetails']
+        const hasCC = !!confirmationCode
+
+        let templateKey: 'withProcedureDetails' | 'withProcedureDetailsAndCC' | 'withoutProcedureDetails' | 'withoutProcedureDetailsAndCC'
+
+        if (hasProcedure) {
+          templateKey = hasCC ? 'withProcedureDetailsAndCC' : 'withProcedureDetails'
+        } else {
+          templateKey = hasCC ? 'withoutProcedureDetailsAndCC' : 'withoutProcedureDetails'
+        }
+
+        const processId = EMAIL_APPOINTMENT_CONFIRMATION[safeLang][templateKey]
 
         await sendConfirmationEmail({
           receiver: citizenUser.email,
@@ -329,6 +349,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
             location: siteVariant.siteLocation,
             url: url,
             procedureDetails: siteVariant.procedureDetails,
+            validationCode: confirmationCode,
           },
         })
         rollingStartTime = endTime
@@ -344,9 +365,14 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       const hasFailure = results.some((r) => r === null || r.status === PropagationStatus.FAILED)
 
       if (!hasFailure) {
-        return
+        const codeMap: Record<string, string> = {}
+        results.forEach((r) => {
+          if (r) {
+            codeMap[r.icureAppointmentId] = r.confirmationCode ?? ''
+          }
+        })
+        return codeMap
       }
-      console.error('Batch propagation failed. Initiating rollback...')
 
       const successfulTasks = results.filter((r): r is PropagationTask => r !== null && r.status === PropagationStatus.SUCCESS)
       const itemsToRollback = items.filter((item) => successfulTasks.some((task) => task.icureAppointmentId === item.id))
@@ -360,7 +386,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
             }).unwrap(),
           ),
         )
-        console.info(`Rolled back ${itemsToRollback.length} appointments.`)
       }
       throw new Error('Propagation failed for one or more appointments')
     },
@@ -386,14 +411,17 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       const recoveryDataKey = await createRecoveryDataKey(citizenPatient.id).unwrap()
       if (!recoveryDataKey) throw new Error('No recovery key')
 
-      await ensurePropagationOrRollback(calendarItems)
-      await sendEmails(recoveryDataKey, citizenUser, citizenPatient, calendarItems, personalInfo)
+      const qBetterCodes = await ensurePropagationOrRollback(calendarItems)
+
+      await sendEmails(recoveryDataKey, citizenUser, citizenPatient, calendarItems, personalInfo, qBetterCodes)
 
       setCreationStatus('success')
     } catch (err) {
       console.error(err)
       setCreationStatus('failure')
       api.error({ message: t('validation.unexpected_error') })
+    } finally {
+      dispatch(calendarItemApiRtk.util.invalidateTags([CalendarItemTags.CalendarItem]))
     }
   }, [form, dataOwnerId, getOrCreateCitizenProfile, initializePatientExchangeDatas, createAppointments, createRecoveryDataKey, sendEmails, t, api])
 
