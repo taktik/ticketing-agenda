@@ -6,7 +6,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { EMAIL_APPOINTMENT_CONFIRMATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
-import { useCreateUpdateCalendarItemMutation } from '../../../core/api/calendarItemApi'
+import { PropagationStatus, PropagationTask, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../../core/api/appointmentPollingApi'
+import { useCreateUpdateCalendarItemMutation, useDeleteCalendarItemByIdMutation } from '../../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
 import { useCreateDecryptedPatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery, useUpdateEncryptedPatientMutation } from '../../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../../core/api/recoveryApi'
@@ -68,7 +69,9 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   const [createUpdateEvent] = useCreateUpdateCalendarItemMutation()
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
+  const [deleteEvent] = useDeleteCalendarItemByIdMutation()
   const [sendConfirmationEmail] = useSendEmailMutation()
+  const [triggerPolling] = useLazyGetPropagationStatusQuery()
 
   const [api, notificationContextHolder] = notification.useNotification()
 
@@ -334,6 +337,36 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     [drafts, dataOwnerId, sendConfirmationEmail, timeSlot, combineDateAndTime, availableProcedures],
   )
 
+  const ensurePropagationOrRollback = useCallback(
+    async (items: DecryptedCalendarItem[]) => {
+      const pollingPromises = items.map((item) => waitForPropagation(triggerPolling, item.id))
+      const results = await Promise.all(pollingPromises)
+      const hasFailure = results.some((r) => r === null || r.status === PropagationStatus.FAILED)
+
+      if (!hasFailure) {
+        return
+      }
+      console.error('Batch propagation failed. Initiating rollback...')
+
+      const successfulTasks = results.filter((r): r is PropagationTask => r !== null && r.status === PropagationStatus.SUCCESS)
+      const itemsToRollback = items.filter((item) => successfulTasks.some((task) => task.icureAppointmentId === item.id))
+
+      if (itemsToRollback.length > 0) {
+        await Promise.allSettled(
+          itemsToRollback.map((item) =>
+            deleteEvent({
+              calendarItemId: item.id,
+              rev: item.rev ?? '',
+            }).unwrap(),
+          ),
+        )
+        console.info(`Rolled back ${itemsToRollback.length} appointments.`)
+      }
+      throw new Error('Propagation failed for one or more appointments')
+    },
+    [triggerPolling, deleteEvent],
+  )
+
   const handleAppointmentCreation = useCallback(async () => {
     try {
       setCreationStatus('loading')
@@ -353,6 +386,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       const recoveryDataKey = await createRecoveryDataKey(citizenPatient.id).unwrap()
       if (!recoveryDataKey) throw new Error('No recovery key')
 
+      await ensurePropagationOrRollback(calendarItems)
       await sendEmails(recoveryDataKey, citizenUser, citizenPatient, calendarItems, personalInfo)
 
       setCreationStatus('success')
@@ -450,7 +484,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
                 </Button>
               )}
               {currentStep === AppointmentStep.RESULT && (
-                <Button size="large" type="primary" onClick={reset}>
+                <Button size="large" type="primary" onClick={reset} disabled={creationStatus === 'loading'}>
                   {t('content.close')}
                 </Button>
               )}

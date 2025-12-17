@@ -2,6 +2,7 @@ import { Action, configureStore, ThunkAction } from '@reduxjs/toolkit'
 import { persistStore } from 'redux-persist'
 import { agendaApiRtk } from './api/agendaApi'
 import { anonymousApiRtk } from './api/anonymousApi'
+import { AppointmentPollingApiRtk } from './api/appointmentPollingApi'
 import { calendarItemApiRtk } from './api/calendarItemApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from './api/dataOwnerApi'
@@ -32,6 +33,7 @@ export const store = configureStore({
       roleApiRtk.middleware,
       recoveryApiRtk.middleware,
       emailApiRtk.middleware,
+      AppointmentPollingApiRtk.middleware,
     ),
 })
 

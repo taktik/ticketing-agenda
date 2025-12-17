@@ -1,20 +1,21 @@
 import { combineReducers } from '@reduxjs/toolkit'
 import { persistReducer } from 'redux-persist'
-import { patientApiRtk } from './api/patientApi'
-import { userApiRtk } from './api/userApi'
-import { app, persistConfig } from './app'
-import { cardinalApiRtk } from './services/auth.api'
 import { agendaApiRtk } from './api/agendaApi'
-import { timeTableApiRtk } from './api/timeTableApi'
+import { anonymousApiRtk } from './api/anonymousApi'
+import { AppointmentPollingApiRtk } from './api/appointmentPollingApi'
 import { calendarItemApiRtk } from './api/calendarItemApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from './api/dataOwnerApi'
-import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
-import { groupApiRtk } from './api/groupApi'
-import { anonymousApiRtk } from './api/anonymousApi'
-import { roleApiRtk } from './api/roleApi'
-import { recoveryApiRtk } from './api/recoveryApi'
 import { emailApiRtk } from './api/emailApi'
+import { groupApiRtk } from './api/groupApi'
+import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
+import { patientApiRtk } from './api/patientApi'
+import { recoveryApiRtk } from './api/recoveryApi'
+import { roleApiRtk } from './api/roleApi'
+import { timeTableApiRtk } from './api/timeTableApi'
+import { userApiRtk } from './api/userApi'
+import { app, persistConfig } from './app'
+import { cardinalApiRtk } from './services/auth.api'
 
 export const appReducer = combineReducers({
   app: app.reducer,
@@ -32,6 +33,7 @@ export const appReducer = combineReducers({
   roleApi: roleApiRtk.reducer,
   recoveryApi: recoveryApiRtk.reducer,
   emailApi: emailApiRtk.reducer,
+  AppointmentPollingApi: AppointmentPollingApiRtk.reducer,
 })
 
 export const persistedReducer = persistReducer(persistConfig, appReducer)
