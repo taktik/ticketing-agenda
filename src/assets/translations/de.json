@@ -190,7 +190,7 @@
     "no_slots_available": "Für dieses Datum ist kein Zeitfenster verfügbar.",
     "appointment_details": "Termindetails",
     "edit_appointment": "Termin bearbeiten",
-    "no_details_provided": "Keine Details angegeben.",
+    "no_details_provided": "Keine Details angegeben",
     "citizen": "Bürger",
     "citizen_information": "Bürgerinformationen",
     "appointment_information": "Termininformationen",
@@ -228,7 +228,9 @@
     "sign_in_with_microsoft": "Mit Microsoft anmelden",
     "address": "Adresse",
     "qBetterLocationId": "QBetter Localisation Id",
-    "qBetterProcedureId": "QBetter Service Id"
+    "qBetterProcedureId": "QBetter Service Id",
+    "confirmationCode": "Bestätigungscode",
+    "no_code_provided": "Kein Code angegeben"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

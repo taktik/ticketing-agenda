@@ -24,7 +24,7 @@ import { useGetCurrentUserQuery } from '../../core/api/userApi'
 import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import { Lang } from '../../helpers/types'
-import { calculateNumericEventTimes, combineDateAndTime, fuzzyDateTimeIntToDayjs, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
+import { calculateNumericEventTimes, combineDateAndTime, fuzzyDateTimeIntToDayjs, getCodeTagById, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { CreateCitizenAppointment } from './CreateCitizenAppointment/CreateCitizenAppointment'
 import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
@@ -124,6 +124,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
         const isAllDay = isAllDayEvent(eventTimes?.start, eventTimes?.end)
 
+        const qBetterConfirmationCode = getCodeTagById(calendarItem?.tags, 'APPOINTMENT|QBETTER_CODE')
+
         return {
           id: calendarItem.id,
           title: calendarItem.title,
@@ -138,6 +140,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             patientId: calendarItem.patientId,
             isTimeOff: isTimeOff,
             rev: calendarItem.rev,
+            qBetterConfirmationCode: qBetterConfirmationCode,
           },
         }
       })

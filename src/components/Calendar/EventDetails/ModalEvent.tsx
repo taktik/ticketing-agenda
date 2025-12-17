@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useLazyGetAvailabilitiesQuery } from '../../../core/api/anonymousApi'
 import { useCalendarItemDetails } from '../../../core/hooks/useCalendarItemDetails'
 import { CustomModal } from '../../common/CustomModal'
-import { dayjsToYYYYMMDDHHmmss, formatEventDate, localeMap } from '../../common/helpers'
+import { dayjsToYYYYMMDDHHmmss, formatEventDate, getCodeTagById, localeMap } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { TimeSlotPickerUI } from '../TimeSlotPickerUI/TimeSlotPickerUI'
 import './index.css'
@@ -104,6 +104,8 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     },
     [api],
   )
+
+  const qBetterConfirmationCode = useMemo(() => getCodeTagById(calendarItem?.tags, 'APPOINTMENT|QBETTER_CODE'), [calendarItem])
 
   useEffect(() => {
     if (event && isVisible) {
@@ -199,6 +201,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
           <Descriptions.Item label={t('content.details')}>
             <Text style={{ whiteSpace: 'pre-wrap' }}>{extendedProps?.details || t('content.no_details_provided')}</Text>
           </Descriptions.Item>
+          <Descriptions.Item label={t('content.confirmationCode')}>{qBetterConfirmationCode || t('content.no_code_provided')}</Descriptions.Item>
         </Descriptions>
       </Card>
 

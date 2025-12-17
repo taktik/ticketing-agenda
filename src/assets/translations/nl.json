@@ -189,7 +189,7 @@
     "no_slots_available": "Geen tijdslot beschikbaar voor deze datum.",
     "appointment_details": "Afspraakdetails",
     "edit_appointment": "Afspraak bewerken",
-    "no_details_provided": "Geen details verstrekt.",
+    "no_details_provided": "Geen details verstrekt",
     "citizen": "Burger",
     "citizen_information": "Burgerinformatie",
     "appointment_information": "Afspraakinformatie",
@@ -227,7 +227,9 @@
     "sign_in_with_microsoft": "Inloggen met Microsoft",
     "address": "Adres",
     "qBetterLocationId": "QBetter Localisation Id",
-    "qBetterProcedureId": "QBetter Service Id"
+    "qBetterProcedureId": "QBetter Service Id",
+    "confirmationCode": "Bevestigingscode",
+    "no_code_provided": "Geen code opgegeven"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

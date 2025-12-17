@@ -189,7 +189,7 @@
     "no_slots_available": "No time slot available for this date.",
     "appointment_details": "Appointment details",
     "edit_appointment": "Edit Appointment",
-    "no_details_provided": "No details provided.",
+    "no_details_provided": "No details provided",
     "citizen": "Citizen",
     "citizen_information": "Citizen information",
     "appointment_information": "Appointment information",
@@ -227,7 +227,9 @@
     "sign_in_with_microsoft": "Sign in with Microsoft",
     "address": "Address",
     "qBetterLocationId": "QBetter Location Id",
-    "qBetterProcedureId": "QBetter Service Id"
+    "qBetterProcedureId": "QBetter Service Id",
+    "confirmationCode": "Confirmation code",
+    "no_code_provided": "No code provided"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

@@ -189,7 +189,7 @@
     "no_slots_available": "Aucun créneau disponible pour cette date.",
     "appointment_details": "Détails du rendez-vous",
     "edit_appointment": "Modifier le rendez-vous",
-    "no_details_provided": "Aucun détail fourni.",
+    "no_details_provided": "Aucun détail fourni",
     "citizen": "Citoyen",
     "citizen_information": "Informations sur le citoyen",
     "appointment_information": "Informations sur le rendez-vous",
@@ -227,7 +227,9 @@
     "sign_in_with_microsoft": "Se connecter avec Microsoft",
     "address": "Adresse",
     "qBetterLocationId": "QBetter Localisation Id",
-    "qBetterProcedureId": "QBetter Service Id"
+    "qBetterProcedureId": "QBetter Service Id",
+    "confirmationCode": "Code de confirmation",
+    "no_code_provided": "Aucun code fourni"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
