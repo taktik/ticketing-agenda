@@ -2,8 +2,10 @@ import { Descriptions, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { DEFAULT_LANGUAGE_FALLBACK } from '../../../../constants'
 import { useCitizenReservation } from '../../../../core/contexts/CitizenReservationContext'
 import { getStringProperty } from '../../../common/helpers'
+import { PropertyId } from '../../../../core/api/fetchType'
 
 const { Title } = Typography
 
@@ -18,7 +20,7 @@ export const StepAppointmentReview = () => {
     return timeSlot.date.hour(timeSlot.time.hour()).minute(timeSlot.time.minute()).format('LLLL')
   }, [timeSlot])
 
-  const siteLocation = useMemo(() => getStringProperty(drafts[0].site?.publicProperties, 'SITE|LOCATION') ?? '', [drafts])
+  const siteLocation = useMemo(() => getStringProperty(drafts[0]?.site?.publicProperties, PropertyId.SITE_LOCATION) ?? '', [drafts])
 
   return (
     <>
@@ -27,7 +29,7 @@ export const StepAppointmentReview = () => {
       <Descriptions bordered column={1} size="small" style={{ marginTop: 16 }} labelStyle={{ width: '25%', minWidth: '120px' }}>
         {drafts.map((draft, index) => {
           const group = availableProcedures.find((p) => p.id === draft.procedureGroupId)
-          const title = group ? group.displayTextByLanguage[currentLang] || group.displayTextByLanguage['FR'] : t('content.unknown_procedure')
+          const title = group ? group.displayTextByLanguage[currentLang] || group.displayTextByLanguage[DEFAULT_LANGUAGE_FALLBACK] : t('content.unknown_procedure')
           const siteName = draft.site?.name || t('content.unknown_site')
           const qty = draft.quantity || 1
 
@@ -51,7 +53,7 @@ export const StepAppointmentReview = () => {
         <Descriptions.Item label={t('content.phone_number')}>
           {personalInfo?.countryCode} {personalInfo?.phoneNumber}
         </Descriptions.Item>
-        <Descriptions.Item label={t('content.birth_date')}>{dayjs(personalInfo?.birthDate).format('DD/MM/YYYY')}</Descriptions.Item>
+        <Descriptions.Item label={t('content.birth_date')}>{personalInfo?.birthDate ? dayjs(personalInfo.birthDate).format('DD/MM/YYYY') : '—'}</Descriptions.Item>
       </Descriptions>
     </>
   )

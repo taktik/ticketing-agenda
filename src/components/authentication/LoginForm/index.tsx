@@ -1,9 +1,10 @@
 import { Challenge, Solution, resolveChallenge } from '@icure/cardinal-sdk'
-import { Button, Form, Input, notification } from 'antd'
+import { Button, Form, Input } from 'antd'
 import React, { useCallback, useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { MSG_GW_URL, SPEC_ID } from '../../../constants'
+import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import '../index.css'
 import { KerberusWidget } from '../KerberusWidget'
 
@@ -19,14 +20,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
   const [progress, setProgress] = useState<number | undefined>(undefined)
   const [challenge, setChallenge] = useState<Challenge | undefined>(undefined)
 
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = useCallback(
-    (type: 'error', message: string, description: string) => {
-      api.open({ type, message, description, duration: 4 })
-    },
-    [api],
-  )
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
 
   useEffect(() => {
     fetch(`${MSG_GW_URL}/${SPEC_ID}/challenge`)
@@ -46,13 +40,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
 
   useEffect(() => {
     if (challenge != undefined) {
-      resolveChallenge(challenge, SPEC_ID!, undefined, updateProgress).then((solution) => {
-        setProgress(undefined)
-        setChallenge(undefined)
-        setCaptchaToken(solution)
-      })
+      resolveChallenge(challenge, SPEC_ID!, undefined, updateProgress)
+        .then((solution) => {
+          setProgress(undefined)
+          setChallenge(undefined)
+          setCaptchaToken(solution)
+        })
+        .catch(() => {
+          setProgress(undefined)
+          setChallenge(undefined)
+          openNotification('error', t('validation.captcha_error'), '')
+        })
     }
-  }, [challenge])
+  }, [challenge, updateProgress, openNotification, t])
 
   /**
    * This function is called each time we press on the submit button of the login form

@@ -1,12 +1,13 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { HealthcareParty, User } from '@icure/cardinal-sdk'
-import { Button, Empty, Form, Input, message, notification, Select, Space, Table, Tag } from 'antd'
+import { Button, Empty, Form, Input, message, Select, Space, Table, Tag } from 'antd'
 import Column from 'antd/es/table/Column'
 import { ReactElement, useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
 import { RESERVED_WORDS } from '../../../../constants'
+import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
 import {
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
@@ -87,16 +88,8 @@ export const ManagerUsers = (): ReactElement => {
     isSilentDeleteHcpLoading ||
     isSilentUndeleteHcpLoading
 
-  const [api, notificationContextHolder] = notification.useNotification()
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
   const [messageApi, messageContextHolder] = message.useMessage()
-
-  const openNotification = useCallback(
-    (type: 'error', message: string, description: string) => {
-      api.open({ type, message, description, duration: 0 })
-      setTimeout(api.destroy, 2500)
-    },
-    [api],
-  )
 
   const showMessageFeedback = useCallback(
     (type: 'loading' | 'success' | 'error', content: string) => {

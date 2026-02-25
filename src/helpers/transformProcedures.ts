@@ -1,6 +1,7 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { ProcedureGroup, ProcedureVariant, SiteVariant } from '../components/Calendar/CreateCitizenAppointment/CitizenReservationTypes'
+import { ProcedureGroup, ProcedureVariant, SiteVariant } from '../types/citizenReservationTypes'
 import { getIntegerProperty, getStringProperty, getTranslationForEntity, languages } from '../components/common/helpers'
+import { EntityType, PropertyId } from '../core/api/fetchType'
 
 const slugify = (text: string) =>
   text
@@ -26,7 +27,7 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
     const procsByAgenda = new Map<string, CalendarItemType[]>()
 
     procs.forEach((p) => {
-      const agendaId = p.agendaId || getStringProperty(p.publicProperties, 'CALENDARITEMTYPE|AGENDAID')
+      const agendaId = p.agendaId || getStringProperty(p.publicProperties, PropertyId.CALENDARITEMTYPE_AGENDAID)
       if (agendaId) {
         if (!procsByAgenda.has(agendaId)) procsByAgenda.set(agendaId, [])
         procsByAgenda.get(agendaId)!.push(p)
@@ -37,13 +38,13 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
 
     procsByAgenda.forEach((procsInService, agendaId) => {
       const agenda = agendaMap.get(agendaId)
-      const siteId = agenda ? getStringProperty(agenda.properties, 'SERVICE|PARENTID') : undefined
+      const siteId = agenda ? getStringProperty(agenda.properties, PropertyId.SERVICE_PARENTID) : undefined
       const site = siteId ? siteMap.get(siteId) : undefined
 
       if (agenda && site) {
         const variants: ProcedureVariant[] = procsInService
           .map((p) => {
-            const order = getIntegerProperty(p.publicProperties, 'CALENDARITEMTYPE|ORDER')
+            const order = getIntegerProperty(p.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER)
             const attendees = isNaN(order) ? 1 : order + 1
             return {
               id: `var-${p.id}`,
@@ -58,8 +59,8 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
           id: `sv-${slug}-${site.id}`,
           siteId: site.id,
           siteName: site.name ?? '',
-          siteLocation: getStringProperty(site.publicProperties, 'SITE|LOCATION') ?? '',
-          procedureDetails: getStringProperty(procsInService[0].publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') ?? '',
+          siteLocation: getStringProperty(site.publicProperties, PropertyId.SITE_LOCATION) ?? '',
+          procedureDetails: getStringProperty(procsInService[0].publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS) ?? '',
           site,
           agenda,
           procedureVariants: variants,
@@ -74,8 +75,8 @@ export function transformProceduresForSelection(allProcedures: CalendarItemType[
 
       const displayTextByLanguage = Object.fromEntries(
         languages.map((lang) => {
-          const sName = getTranslationForEntity(refAgenda.properties, 'SERVICE', lang) || serviceName
-          const pName = getTranslationForEntity(refProc.publicProperties, 'CALENDARITEMTYPE', lang) || procName
+          const sName = getTranslationForEntity(refAgenda.properties, EntityType.SERVICE, lang) || serviceName
+          const pName = getTranslationForEntity(refProc.publicProperties, EntityType.CALENDARITEMTYPE, lang) || procName
           return [lang, `${sName} - ${pName}`]
         }),
       )

@@ -8,7 +8,7 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItem, CalendarItemType, CodeStub, DecryptedCalendarItem, EncryptedPatient } from '@icure/cardinal-sdk'
-import { Button, message, notification, Segmented, Space, Typography } from 'antd'
+import { Button, message, Segmented, Space, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
 import dayjs from 'dayjs'
 import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalendar'
@@ -22,9 +22,10 @@ import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
 import { useGetCurrentUserQuery } from '../../core/api/userApi'
 import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
+import { useNotificationHelper } from '../../core/hooks/useNotificationHelper'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
-import { Lang } from '../../helpers/types'
-import { calculateNumericEventTimes, combineDateAndTime, fuzzyDateTimeIntToDayjs, getCodeTagById, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
+import { calculateNumericEventTimes, combineDateAndTime, detectLanguage, fuzzyDateTimeIntToDayjs, getCodeTagById, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
+import { CalendarItemTag, EntityType } from '../../core/api/fetchType'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { CreateCitizenAppointment } from './CreateCitizenAppointment/CreateCitizenAppointment'
 import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
@@ -86,16 +87,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
   const isCalendarItemLoading = isDeleteLoading || isUpdateLoading
 
-  const [api, notificationContextHolder] = notification.useNotification()
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
   const [messageApi, messageContextHolder] = message.useMessage()
-
-  const openNotification = useCallback(
-    (type: 'error', message: string, description: string) => {
-      api.open({ type, message, description, duration: 0 })
-      setTimeout(api.destroy, 2500)
-    },
-    [api],
-  )
 
   const showMessageFeedback = useCallback(
     (type: 'loading' | 'success' | 'error', content: string) => {
@@ -124,7 +117,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         const eventTimes = parseTimeRange(calendarItem.startTime, calendarItem.endTime)
         const isAllDay = isAllDayEvent(eventTimes?.start, eventTimes?.end)
 
-        const qBetterConfirmationCode = getCodeTagById(calendarItem?.tags, 'APPOINTMENT|QBETTER_CODE')
+        const qBetterConfirmationCode = getCodeTagById(calendarItem?.tags, CalendarItemTag.APPOINTMENT_QBETTER_CODE)
 
         return {
           id: calendarItem.id,
@@ -207,7 +200,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   }, [timeRange, t])
 
   const computeDeleteEmailPayload = useCallback(async (calendarItem: CalendarItem, patient: EncryptedPatient, agenda: Agenda, calendarItemType: CalendarItemType, patientEmail: string, patientPhoneNumber: string) => {
-    const lang: Lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+    const lang = detectLanguage(patient.languages)
     const startDayjs = fuzzyDateTimeIntToDayjs(calendarItem.startTime)
     const endDayjs = fuzzyDateTimeIntToDayjs(calendarItem.endTime)
 
@@ -222,8 +215,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         lastName: patient.lastName,
         email: patientEmail,
         mobilePhone: patientPhoneNumber,
-        service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
-        procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
+        service: getTranslationForEntity(agenda.properties, EntityType.SERVICE, lang) || '',
+        procedure: getTranslationForEntity(calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, lang) || '',
         date: startDayjs.format('DD/MM/YYYY'),
         time: `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`,
         location: calendarItem.addressText,
@@ -275,7 +268,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           const currentStartTime = combineDateAndTime({ date: selectedDate, time: selectedTime })
           const numericTimes = calculateNumericEventTimes(currentStartTime, calendarItem.duration)
 
-          const tags = calendarItem.tags.map((tag) => (tag.type === 'APPOINTMENT|LAST_AUTHOR' ? new CodeStub({ ...tag, code: currentUser?.id, version: '1' }) : tag))
+          const tags = calendarItem.tags.map((tag) => (tag.type === CalendarItemTag.APPOINTMENT_LAST_AUTHOR ? new CodeStub({ ...tag, code: currentUser?.id, version: '1' }) : tag))
 
           updatedCalendarItem = new DecryptedCalendarItem({
             ...calendarItem,
@@ -292,7 +285,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         const recoveryDataKey = await createRecoveryDataKey(patient.id).unwrap()
         if (!recoveryDataKey) throw new Error('no valid exchange data.')
 
-        const lang: Lang = patient.languages[0] === 'Néerlandais' ? 'nl' : 'fr'
+        const lang = detectLanguage(patient.languages)
         const startDayjs = fuzzyDateTimeIntToDayjs(updatedCalendarItem.startTime)
         const endDayjs = fuzzyDateTimeIntToDayjs(updatedCalendarItem.endTime)
 
@@ -314,8 +307,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             lastName: patient.lastName,
             email: patientEmail,
             mobilePhone: patientPhoneNumber,
-            service: getTranslationForEntity(agenda.properties, 'SERVICE', lang) || '',
-            procedure: getTranslationForEntity(calendarItemType.publicProperties, 'CALENDARITEMTYPE', lang) || '',
+            service: getTranslationForEntity(agenda.properties, EntityType.SERVICE, lang) || '',
+            procedure: getTranslationForEntity(calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, lang) || '',
             date: startDayjs.format('DD/MM/YYYY'),
             time: `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`,
             location: calendarItem.addressText,

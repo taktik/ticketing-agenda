@@ -1,5 +1,5 @@
 import { HealthcareParty, User } from '@icure/cardinal-sdk'
-import { Button, Form, Input, Upload, UploadFile, UploadProps, message, notification } from 'antd'
+import { Button, Form, Input, Upload, UploadFile, UploadProps, message } from 'antd'
 import ImgCrop from 'antd-img-crop'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,6 +7,7 @@ import { useCreateUpdateHealthcarePartyMutation } from '../../../../core/api/hea
 import { useCreateUpdateUserMutation } from '../../../../core/api/userApi'
 import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileToBase64'
 import { SpinLoader } from '../../../common/SpinLoader'
+import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
 import './index.css'
 
 interface AccountSettingProps {
@@ -27,7 +28,7 @@ export const AccountSetting = ({ currentUserHcp, user }: AccountSettingProps): R
   const [isPictureRemoved, setIsPictureRemoved] = useState(false)
   const [fileList, setFileList] = useState<UploadFile[]>([])
 
-  const [api, notificationContextHolder] = notification.useNotification()
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
   const [messageApi, messageContextHolder] = message.useMessage()
 
   useEffect(() => {
@@ -82,13 +83,10 @@ export const AccountSetting = ({ currentUserHcp, user }: AccountSettingProps): R
 
         messageApi.success(t('notification.user_modified'))
       } catch (error) {
-        api.error({
-          message: t('notification.user_modify_failed'),
-          description: t('notification.user_modify_error'),
-        })
+        openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
       }
     },
-    [currentUserHcp, user, patientPictureAsBase64, isPictureRemoved, updateHcp, updateUser, messageApi, api, t],
+    [currentUserHcp, user, patientPictureAsBase64, isPictureRemoved, updateHcp, updateUser, messageApi, openNotification, t],
   )
 
   const handleCancel = useCallback(() => {

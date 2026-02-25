@@ -2,10 +2,11 @@ import { Agenda, CalendarItemType } from '@icure/cardinal-sdk'
 import dayjs, { Dayjs } from 'dayjs'
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { v4 } from 'uuid'
-import { AppointmentDraft, PersonalInfo, ProcedureGroup, TimeSlot } from '../../components/Calendar/CreateCitizenAppointment/CitizenReservationTypes'
+import { AppointmentDraft, PersonalInfo, ProcedureGroup, TimeSlot } from '../../types/citizenReservationTypes'
 import { dayjsToYYYYMMDDHHmmss } from '../../components/common/helpers'
 import { useLazyGetAgendaAndProceduresQuery, useLazyGetAvailabilitiesQuery } from '../../core/api/anonymousApi'
 import { transformProceduresForSelection } from '../../helpers/transformProcedures'
+import { PropertyId } from '../api/fetchType'
 import { useHierarchyContext } from './HierarchyContext'
 
 interface ProcessedAvailabilities {
@@ -21,14 +22,15 @@ interface CitizenReservationContextType {
   personalInfo: PersonalInfo | undefined
   availabilities: Dayjs[]
   isAvailabilitiesLoading: boolean
+  totalDuration: number
+  isValidProcedureStep: boolean
   addDraft: () => void
   removeDraft: (tempId: string) => void
   updateDraft: (tempId: string, updates: Partial<AppointmentDraft>) => void
   setTimeSlot: (slot: TimeSlot | undefined) => void
   setPersonalInfo: (info: PersonalInfo) => void
   fetchAvailabilitiesForMonth: (month: Dayjs) => Promise<void>
-  totalDuration: number
-  isValidProcedureStep: boolean
+  resetReservation: () => void
 }
 
 const CitizenReservationContext = createContext<CitizenReservationContextType>({} as CitizenReservationContextType)
@@ -53,14 +55,17 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
   const [isLoadingData, setIsLoadingData] = useState(true)
 
   useEffect(() => {
-    if (!siteIdsFingerprint) return
+    if (!siteIdsFingerprint) {
+      setIsLoadingData(false)
+      return
+    }
 
     const fetchData = async () => {
       setIsLoadingData(true)
       const siteIds = siteIdsFingerprint.split(',').filter(Boolean)
 
       const promises = siteIds.map((id) =>
-        triggerFetch({ propertyId: 'SERVICE|PARENTID', propertyValue: id })
+        triggerFetch({ propertyId: PropertyId.SERVICE_PARENTID, propertyValue: id })
           .unwrap()
           .catch(() => null),
       )
@@ -79,7 +84,7 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
   const availableProcedures = useMemo(() => {
     if (!allSites || isLoadingData) return []
     return transformProceduresForSelection(rawProcedures, rawAgendas, allSites)
-  }, [rawProcedures, rawAgendas, allSites, isLoadingData, transformProceduresForSelection])
+  }, [rawProcedures, rawAgendas, allSites, isLoadingData])
 
   const [drafts, setDrafts] = useState<AppointmentDraft[]>([
     {
@@ -157,22 +162,36 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
   }, [])
 
   const removeDraft = useCallback((tempId: string) => {
+    setTimeSlot(undefined)
     setDrafts((prev) => prev.filter((d) => d.tempId !== tempId))
   }, [])
 
   const updateDraft = useCallback(
     (tempId: string, updates: Partial<AppointmentDraft>) => {
-      setDrafts((prev) => {
-        const index = prev.findIndex((d) => d.tempId === tempId)
-        if (index === -1) return prev
-
-        const currentDraft = prev[index]
-        const isMasterRow = index === 0
+      // Detect changes that invalidate the selected time slot before entering the updater.
+      // We read drafts here so we can conditionally call setTimeSlot outside the setDrafts callback.
+      const currentDraft = drafts.find((d) => d.tempId === tempId)
+      const index = drafts.findIndex((d) => d.tempId === tempId)
+      if (currentDraft && index === 0) {
         const procedureChanged = updates.procedureGroupId !== undefined && updates.procedureGroupId !== currentDraft.procedureGroupId
         const siteChanged = updates.siteVariantId !== undefined && updates.siteVariantId !== currentDraft.siteVariantId
+        const quantityChanged = updates.quantity !== undefined && updates.quantity !== currentDraft.quantity
+        if (procedureChanged || siteChanged || quantityChanged) {
+          setTimeSlot(undefined)
+        }
+      }
+
+      setDrafts((prev) => {
+        const idx = prev.findIndex((d) => d.tempId === tempId)
+        if (idx === -1) return prev
+
+        const curr = prev[idx]
+        const isMasterRow = idx === 0
+        const procedureChanged = updates.procedureGroupId !== undefined && updates.procedureGroupId !== curr.procedureGroupId
+        const siteChanged = updates.siteVariantId !== undefined && updates.siteVariantId !== curr.siteVariantId
         const shouldResetDependents = isMasterRow && (procedureChanged || siteChanged)
 
-        const listToProcess = shouldResetDependents ? [currentDraft] : prev
+        const listToProcess = shouldResetDependents ? [curr] : prev
 
         return listToProcess.map((draft) => {
           if (draft.tempId !== tempId) return draft
@@ -218,7 +237,7 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
         })
       })
     },
-    [availableProcedures],
+    [availableProcedures, drafts],
   )
 
   const fetchAvailabilitiesForMonth = useCallback(
@@ -258,6 +277,7 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
         setAvailabilities(finalList)
       } catch (e) {
         setAvailabilities([])
+        throw e
       } finally {
         setIsAvailabilitiesLoading(false)
       }
@@ -299,6 +319,22 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
     return drafts.length > 0 && drafts.every((d) => !!d.calendarItemType && !!d.site && !!d.agenda)
   }, [drafts])
 
+  const resetReservation = useCallback(() => {
+    setDrafts([
+      {
+        tempId: v4(),
+        quantity: 1,
+        procedureGroupId: undefined,
+        siteVariantId: undefined,
+        procedureVariantId: undefined,
+      },
+    ])
+    setTimeSlot(undefined)
+    setPersonalInfo(undefined)
+    setAvailabilities([])
+    setIsAvailabilitiesLoading(false)
+  }, [])
+
   const value = useMemo(
     () => ({
       isLoadingData,
@@ -308,14 +344,15 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
       personalInfo,
       availabilities,
       isAvailabilitiesLoading,
+      totalDuration,
+      isValidProcedureStep,
       addDraft,
       removeDraft,
       updateDraft,
       setTimeSlot: handleSetTimeSlot,
       setPersonalInfo,
       fetchAvailabilitiesForMonth,
-      totalDuration,
-      isValidProcedureStep,
+      resetReservation,
     }),
     [
       isLoadingData,
@@ -332,6 +369,7 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
       updateDraft,
       handleSetTimeSlot,
       fetchAvailabilitiesForMonth,
+      resetReservation,
     ],
   )
 

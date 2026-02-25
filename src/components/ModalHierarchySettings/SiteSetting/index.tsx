@@ -1,6 +1,6 @@
 import { EditOutlined, EllipsisOutlined } from '@ant-design/icons'
 import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Card, Dropdown, MenuProps, message, notification, Space, Typography } from 'antd'
+import { Button, Card, Dropdown, MenuProps, message, Space, Typography } from 'antd'
 import { ReactElement, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
@@ -8,6 +8,8 @@ import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/health
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { EditableSiteInfo, SiteInfoFormValues } from '../../common/EditableSiteInfo'
 import { createStringProperty } from '../../common/helpers'
+import { PropertyId } from '../../../core/api/fetchType'
+import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import './index.css'
 
@@ -41,22 +43,24 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
 
   const mutationIsLoading = isCreateUpdateAgendaLoading || isCreateUpdateSiteLoading
 
-  const [api, notificationContextHolder] = notification.useNotification()
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
   const [messageApi, messageContextHolder] = message.useMessage()
 
   const onSiteInfoSave = useCallback(
     async (formValues: SiteInfoFormValues) => {
       try {
         const updatedPublicProperties = [
-          ...(site.publicProperties || []).filter((p) => p.id !== 'SITE|LOCATION' && p.id !== 'SITE|QBETTER_LOCATION_ID'),
-          createStringProperty('SITE|LOCATION', formValues.location),
-          createStringProperty('SITE|QBETTER_LOCATION_ID', formValues.qBetterLocationId),
+          ...(site.publicProperties || []).filter((p) => p.id !== PropertyId.SITE_LOCATION && p.id !== PropertyId.SITE_QBETTER_LOCATION_ID),
+          createStringProperty(PropertyId.SITE_LOCATION, formValues.location),
+          createStringProperty(PropertyId.SITE_QBETTER_LOCATION_ID, formValues.qBetterLocationId),
         ]
 
         await createUpdateSite(
           new HealthcareParty({
             ...site,
             name: formValues.name,
+            firstName: formValues.name,
+            lastName: formValues.name,
             publicProperties: updatedPublicProperties,
             addresses: [new DecryptedAddress({ street: formValues.location, addressType: AddressType.Hq })],
           }),
@@ -64,18 +68,18 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
 
         messageApi.success(t('notification.site_saved'))
       } catch (error) {
-        api.error({ message: t('notification.site_save_failed'), description: t('notification.site_save_error') })
+        openNotification('error', t('notification.site_save_failed'), t('notification.site_save_error'))
       } finally {
         setShowEditableSite(false)
       }
     },
-    [site, createUpdateSite, messageApi, api, t],
+    [site, createUpdateSite, messageApi, openNotification, t],
   )
 
   const handleCreateNewService = useCallback(async () => {
     try {
       const properties = [
-        createStringProperty('SERVICE|PARENTID', site.id),
+        createStringProperty(PropertyId.SERVICE_PARENTID, site.id),
         createStringProperty('SERVICE|TRANSLATION|FR', t('content.new_service')),
         createStringProperty('SERVICE|TRANSLATION|NL', ''),
         createStringProperty('SERVICE|TRANSLATION|EN', ''),
@@ -96,9 +100,9 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
 
       messageApi.success(t('notification.service_saved'))
     } catch (error) {
-      api.error({ message: t('notification.service_save_failed'), description: t('notification.service_save_error') })
+      openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     }
-  }, [site, createUpdateAgendaMutation, messageApi, api, t])
+  }, [site, createUpdateAgendaMutation, messageApi, openNotification, t])
 
   const siteActionItems: MenuProps['items'] = [
     {

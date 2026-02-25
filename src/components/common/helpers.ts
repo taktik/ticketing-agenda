@@ -3,9 +3,15 @@ import { format, isSameDay, Locale } from 'date-fns'
 import { de, enUS, fr, nl } from 'date-fns/locale'
 import dayjs, { Dayjs } from 'dayjs'
 import { EventApi } from 'fullcalendar'
-import { TimeSlot } from '../Calendar/CreateCitizenAppointment/CitizenReservationTypes'
+import { Lang } from '../../helpers/types'
+import { TimeSlot } from '../../types/citizenReservationTypes'
+import { EntityType, PATIENT_LANGUAGE_NL } from '../../core/api/fetchType'
 
 export const languages = ['FR', 'NL', 'EN', 'DE']
+
+export const detectLanguage = (patientLanguages: string[]): Lang => {
+  return patientLanguages[0] === PATIENT_LANGUAGE_NL ? 'nl' : 'fr'
+}
 
 export const minutesToDayjs = (totalMinutes: number): dayjs.Dayjs => {
   return dayjs().startOf('day').add(totalMinutes, 'minute')
@@ -354,7 +360,7 @@ export const isAllDayEvent = (start: Date | undefined, end: Date | undefined): b
   return startsAtMidnight && endsAtMidnight
 }
 
-export const getTranslationForEntity = (properties: DecryptedPropertyStub[] | undefined, entityType: string, locale: string) => {
+export const getTranslationForEntity = (properties: DecryptedPropertyStub[] | undefined, entityType: EntityType, locale: string) => {
   if (!properties) return ''
 
   const id = `${entityType.toUpperCase()}|TRANSLATION|${locale.toUpperCase()}`

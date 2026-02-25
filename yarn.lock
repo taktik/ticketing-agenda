@@ -2042,13 +2042,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@icure/cardinal-sdk@npm:2.0.0-PREVIEW-23-ts.1":
-  version: 2.0.0-PREVIEW-23-ts.1
-  resolution: "@icure/cardinal-sdk@npm:2.0.0-PREVIEW-23-ts.1"
+"@icure/cardinal-sdk@npm:2.0.0-PREVIEW-25":
+  version: 2.0.0-PREVIEW-25
+  resolution: "@icure/cardinal-sdk@npm:2.0.0-PREVIEW-25"
   dependencies:
     "@js-joda/core": "npm:3.2.0"
     ws: "npm:8.18.0"
-  checksum: b96ba41d14407787b98e55294ffec9f26b696aafd9086cb479dfe94cf797079c2f6c3a889bc7c3f494df7bf27002095f12a7f8950137b90ba7c443bd120b9783
+  checksum: f9e04f1a73cd56991cbf77755568dfadd6368057ca09e9a77b9ba8cc33e9ff3c39a86c2d1bca783e16f714d4c252f2fbad6c5bdfcfdc2d82ae53847bae2e1f5b
   languageName: node
   linkType: hard
 
@@ -16073,7 +16073,7 @@ __metadata:
     "@fullcalendar/core": "npm:6.1.17"
     "@fullcalendar/daygrid": "npm:^6.1.17"
     "@fullcalendar/react": "npm:^6.1.17"
-    "@icure/cardinal-sdk": "npm:2.0.0-PREVIEW-23-ts.1"
+    "@icure/cardinal-sdk": "npm:2.0.0-PREVIEW-25"
     "@icure/form": "npm:^3.0.1"
     "@reduxjs/toolkit": "npm:2.8.2"
     "@testing-library/dom": "npm:^10.4.0"

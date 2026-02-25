@@ -1,6 +1,20 @@
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
 import { Dayjs } from 'dayjs'
 
+export enum AppointmentStep {
+  PROCEDURE = 0,
+  TIMESLOT = 1,
+  PERSONAL_INFO = 2,
+  REVIEW = 3,
+  RESULT = 4,
+}
+
+export enum CreationStatus {
+  LOADING = 'loading',
+  SUCCESS = 'success',
+  FAILURE = 'failure',
+}
+
 export interface ProcedureVariant {
   id: string
   attendees: number
@@ -21,7 +35,7 @@ export interface SiteVariant {
 
 export interface ProcedureGroup {
   id: string
-  displayTextByLanguage: { [key: string]: string }
+  displayTextByLanguage: Record<string, string>
   siteVariants: SiteVariant[]
 }
 
@@ -45,7 +59,7 @@ export interface PersonalInfo {
   email: string
   phoneNumber: string
   countryCode: string
-  birthDate: Dayjs
+  birthDate?: Dayjs
   language: string
 }
 

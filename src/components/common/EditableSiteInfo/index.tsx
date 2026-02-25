@@ -5,6 +5,7 @@ import React, { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RESERVED_WORDS } from '../../../constants'
 import { getStringProperty } from '../helpers'
+import { PropertyId } from '../../../core/api/fetchType'
 
 export type SiteInfoFormValues = {
   name: string
@@ -26,7 +27,7 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
     form.setFieldsValue({
       name: hcp.name,
       location: hcp.addresses[0]?.street ?? '',
-      qBetterLocationId: getStringProperty(hcp.publicProperties, 'SITE|QBETTER_LOCATION_ID'),
+      qBetterLocationId: getStringProperty(hcp.publicProperties, PropertyId.SITE_QBETTER_LOCATION_ID),
     })
   }, [hcp, form])
 

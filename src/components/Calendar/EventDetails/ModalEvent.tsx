@@ -1,5 +1,5 @@
 import { Agenda, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, TelecomType } from '@icure/cardinal-sdk'
-import { Button, Card, Descriptions, Divider, Form, Input, notification, Spin, Typography } from 'antd'
+import { Button, Card, Descriptions, Divider, Form, Input, Spin, Typography } from 'antd'
 import { format, parse } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import dayjs from 'dayjs'
@@ -9,8 +9,10 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useLazyGetAvailabilitiesQuery } from '../../../core/api/anonymousApi'
 import { useCalendarItemDetails } from '../../../core/hooks/useCalendarItemDetails'
+import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss, formatEventDate, getCodeTagById, localeMap } from '../../common/helpers'
+import { CalendarItemTag } from '../../../core/api/fetchType'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { TimeSlotPickerUI } from '../TimeSlotPickerUI/TimeSlotPickerUI'
 import './index.css'
@@ -97,15 +99,9 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     }
   }, [patient])
 
-  const [api, notificationContextHolder] = notification.useNotification()
-  const openNotification = useCallback(
-    (type: 'error', message: string, description: string) => {
-      api.open({ type, message, description, duration: 4 })
-    },
-    [api],
-  )
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
 
-  const qBetterConfirmationCode = useMemo(() => getCodeTagById(calendarItem?.tags, 'APPOINTMENT|QBETTER_CODE'), [calendarItem])
+  const qBetterConfirmationCode = useMemo(() => getCodeTagById(calendarItem?.tags, CalendarItemTag.APPOINTMENT_QBETTER_CODE), [calendarItem])
 
   useEffect(() => {
     if (event && isVisible) {
@@ -171,8 +167,9 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
       onClose()
     } catch (error) {
       console.error(error)
+      openNotification('error', t('validation.unexpected_error'), '')
     }
-  }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose])
+  }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t])
 
   const handleDelete = useCallback(async () => {
     try {
@@ -184,8 +181,9 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
       onClose()
     } catch (error) {
       console.error(error)
+      openNotification('error', t('validation.unexpected_error'), '')
     }
-  }, [event, deleteEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, onClose])
+  }, [event, deleteEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, onClose, openNotification, t])
 
   const renderDisplayMode = () => (
     <div className="modal-event-display">

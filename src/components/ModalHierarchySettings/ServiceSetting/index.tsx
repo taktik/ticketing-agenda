@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined, EllipsisOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { Agenda, CalendarItemType, DecryptedPropertyStub, DecryptedTypedValue, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule, TypedValuesType } from '@icure/cardinal-sdk'
-import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, notification, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
+import { Button, ColorPicker, Dropdown, Empty, Form, Input, InputNumber, MenuProps, message, Radio, Segmented, Space, Table, Tag, Typography } from 'antd'
 import type { Color } from 'antd/es/color-picker'
 import Column from 'antd/es/table/Column'
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
@@ -12,6 +12,8 @@ import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMuta
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { getBooleanProperty, getIntegerProperty, getStringProperty, getTranslationForEntity, languages, setProperty } from '../../common/helpers'
+import { EntityType, PropertyId } from '../../../core/api/fetchType'
+import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
 import './index.css'
@@ -67,8 +69,8 @@ const SubjectDisplay = React.memo(({ subjects, viewedLang, onChange }: SubjectDi
 
 const sortByOrder = (items: CalendarItemType[]): CalendarItemType[] => {
   return [...items].sort((a, b) => {
-    const aOrder = getIntegerProperty(a.publicProperties, 'CALENDARITEMTYPE|ORDER')
-    const bOrder = getIntegerProperty(b.publicProperties, 'CALENDARITEMTYPE|ORDER')
+    const aOrder = getIntegerProperty(a.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER)
+    const bOrder = getIntegerProperty(b.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER)
 
     return aOrder - bOrder
   })
@@ -154,14 +156,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const isMutating = isCreateUpdateServiceLoading || isCreateUpdateDemarcheLoading || isDeleteDemarcheLoading
   const isLoading = isFetching || isMutating
 
-  const [api, notificationContextHolder] = notification.useNotification()
-  const openNotification = useCallback(
-    (type: 'error', message: string, description: string) => {
-      api.open({ type, message, description, duration: 0 })
-      setTimeout(api.destroy, 2500)
-    },
-    [api],
-  )
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
 
   const [messageApi, messageContextHolder] = message.useMessage()
   const showMessageFeedback = useCallback(
@@ -191,11 +186,11 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       procedureId: procedure.id,
       procedureName: procedure.name,
       appointmentDurations: procedure.name ? durationsMap.get(procedure.name) || [] : [],
-      isPublic: getBooleanProperty(procedure.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC'),
-      procedureDetails: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS'),
-      subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, 'CALENDARITEMTYPE', locale)])),
+      isPublic: getBooleanProperty(procedure.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC),
+      procedureDetails: getStringProperty(procedure.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS),
+      subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, EntityType.CALENDARITEMTYPE, locale)])),
       color: procedure.color ?? '',
-      qBetterProcedureId: getStringProperty(procedure.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID'),
+      qBetterProcedureId: getStringProperty(procedure.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID),
     }))
   }, [procedures, sortedProcedures])
 
@@ -207,7 +202,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     if (service) {
       form.setFieldsValue({
         descr: {
-          FR: getTranslationForEntity(service.properties, 'SERVICE', 'FR'),
+          FR: getTranslationForEntity(service.properties, EntityType.SERVICE, 'FR'),
         },
       })
     }
@@ -221,11 +216,11 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       const translationPropertyNL = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|NL', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
       const translationPropertyEN = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|EN', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
       const translationPropertyDE = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|DE', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
-      const isPublicProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|ISPUBLIC', typedValue: new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: true }) })
-      const orderProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|ORDER', typedValue: new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: 0 }) })
-      const procedureDetailsProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|PROCEDUREDETAILS', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
-      const agendaIdProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|AGENDAID', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }) })
-      const qBetterProcedureIdProp = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|QBETTER_SERVICE_ID', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
+      const isPublicProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_ISPUBLIC, typedValue: new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: true }) })
+      const orderProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_ORDER, typedValue: new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: 0 }) })
+      const procedureDetailsProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
+      const agendaIdProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_AGENDAID, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }) })
+      const qBetterProcedureIdProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
       const calendarItemTypeProperties = [isPublicProp, orderProp, qBetterProcedureIdProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
 
       const procedure = new CalendarItemType({
@@ -285,11 +280,11 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         Object.entries(rowValues.subjectByLanguage).forEach(([locale, value]) => {
           setProperty(properties, `CALENDARITEMTYPE|TRANSLATION|${locale.toUpperCase()}`, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: value }))
         })
-        setProperty(properties, 'CALENDARITEMTYPE|ISPUBLIC', new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: rowValues.isPublic }))
-        setProperty(properties, 'CALENDARITEMTYPE|ORDER', new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
-        setProperty(properties, 'CALENDARITEMTYPE|PROCEDUREDETAILS', new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.procedureDetails }))
-        setProperty(properties, 'CALENDARITEMTYPE|AGENDAID', new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }))
-        setProperty(properties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID', new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.qBetterProcedureId }))
+        setProperty(properties, PropertyId.CALENDARITEMTYPE_ISPUBLIC, new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: rowValues.isPublic }))
+        setProperty(properties, PropertyId.CALENDARITEMTYPE_ORDER, new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
+        setProperty(properties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.procedureDetails }))
+        setProperty(properties, PropertyId.CALENDARITEMTYPE_AGENDAID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }))
+        setProperty(properties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.qBetterProcedureId }))
 
         return new CalendarItemType({
           name: rowValues.subjectByLanguage['FR'],
@@ -317,11 +312,13 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             existingItem.defaultCalendarItemType !== desiredProps.defaultCalendarItemType ||
             existingItem.name !== desiredProps.name ||
             existingItem.color !== desiredProps.color ||
-            languages.some((locale) => getTranslationForEntity(existingItem.publicProperties, 'CALENDARITEMTYPE', locale) !== getTranslationForEntity(desiredProps.publicProperties, 'CALENDARITEMTYPE', locale)) ||
-            getBooleanProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') !== getBooleanProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ISPUBLIC') ||
-            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|ORDER') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|ORDER') ||
-            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|PROCEDUREDETAILS') ||
-            getStringProperty(existingItem.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID') !== getStringProperty(desiredProps.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID')
+            languages.some(
+              (locale) => getTranslationForEntity(existingItem.publicProperties, EntityType.CALENDARITEMTYPE, locale) !== getTranslationForEntity(desiredProps.publicProperties, EntityType.CALENDARITEMTYPE, locale),
+            ) ||
+            getBooleanProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC) !== getBooleanProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC) ||
+            getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) ||
+            getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS) ||
+            getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID)
           ) {
             mutationPromises.push(
               createUpdateProcedure(
@@ -466,10 +463,10 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     }
 
     return {
-      FR: getTranslationForEntity(service.properties, 'SERVICE', 'FR'),
-      NL: getTranslationForEntity(service.properties, 'SERVICE', 'NL'),
-      EN: getTranslationForEntity(service.properties, 'SERVICE', 'EN'),
-      DE: getTranslationForEntity(service.properties, 'SERVICE', 'DE'),
+      FR: getTranslationForEntity(service.properties, EntityType.SERVICE, 'FR'),
+      NL: getTranslationForEntity(service.properties, EntityType.SERVICE, 'NL'),
+      EN: getTranslationForEntity(service.properties, EntityType.SERVICE, 'EN'),
+      DE: getTranslationForEntity(service.properties, EntityType.SERVICE, 'DE'),
     }
   }, [service?.properties])
 

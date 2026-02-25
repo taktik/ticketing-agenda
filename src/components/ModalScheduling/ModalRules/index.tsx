@@ -1,6 +1,6 @@
 import { CloseOutlined, ExclamationCircleOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { Agenda, CalendarItemType, EmbeddedTimeTableHour, EmbeddedTimeTableItem, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
-import { Button, DatePicker, Empty, Form, Input, InputNumber, notification, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
+import { Button, DatePicker, Empty, Form, Input, InputNumber, Radio, Select, Space, Table, Tag, TimePicker, Typography } from 'antd'
 import Column from 'antd/es/table/Column'
 import { format, setDay, setMonth } from 'date-fns'
 import { enUS, fr } from 'date-fns/locale'
@@ -12,6 +12,7 @@ import { Frequency, Options, RRule, Weekday } from 'rrule'
 import { Language } from 'rrule/dist/esm/nlp/i18n'
 import { v4 } from 'uuid'
 import { NOT_AFTER_IN_MINUTES, NOT_BEFORE_IN_MINUTES, TOKENS } from '../../../constants'
+import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { useUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
 import { CustomModal } from '../../common/CustomModal'
@@ -227,17 +228,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
     }
   }, [schedulingTableRow, form])
 
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const openNotification = (type: 'error', message: string, description: string) => {
-    api.open({
-      type,
-      message,
-      description,
-      duration: 0,
-    })
-    setTimeout(api.destroy, 2500)
-  }
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
 
   const handleNameCancel = useCallback(() => {
     form.resetFields(['public', 'availabilities', 'hours', 'rruleStart', 'rrule', '_until', '_byday', '_freq', '_interval', 'calendarItemTypesIds', 'notBeforeInMinutes', 'notAfterInMinutes'])

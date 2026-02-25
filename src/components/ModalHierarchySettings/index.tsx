@@ -1,6 +1,6 @@
 import { AppstoreOutlined, BankOutlined, DownOutlined, RightOutlined } from '@ant-design/icons'
 import { Agenda } from '@icure/cardinal-sdk'
-import { Empty, Layout, Menu, MenuProps, message, notification } from 'antd'
+import { Empty, Layout, Menu, MenuProps, message } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
@@ -10,6 +10,7 @@ import { useDeleteAgendaMutation } from '../../core/api/agendaApi'
 import { useDeleteCalendarItemTypesMutation } from '../../core/api/calendarItemTypeApi'
 import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
+import { useNotificationHelper } from '../../core/hooks/useNotificationHelper'
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
 import './index.css'
@@ -34,7 +35,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose, initialSiteId }: Mo
   const [deleteAgenda, { isLoading: isDeleteAgendaLoading }] = useDeleteAgendaMutation()
   const [deleteCalendarItemTypes, { isLoading: isDeleteCalendarItemTypesLoading }] = useDeleteCalendarItemTypesMutation()
 
-  const [api, notificationContextHolder] = notification.useNotification()
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
   const [messageApi, messageContextHolder] = message.useMessage()
 
   const displayableSites = useMemo(() => {
@@ -121,13 +122,10 @@ export const ModalHierarchySettings = ({ isVisible, onClose, initialSiteId }: Mo
         messageApi.success(t('notification.service_deleted'))
         setSelectedKey(`site-${service.author}`)
       } catch (error) {
-        api.error({
-          message: t('notification.service_delete_failed'),
-          description: t('notification.service_delete_error'),
-        })
+        openNotification('error', t('notification.service_delete_failed'), t('notification.service_delete_error'))
       }
     },
-    [calendarItemTypesByAgendaId, deleteCalendarItemTypes, deleteAgenda, messageApi, api, t],
+    [calendarItemTypesByAgendaId, deleteCalendarItemTypes, deleteAgenda, messageApi, openNotification, t],
   )
 
   const settingContent = useMemo(() => {

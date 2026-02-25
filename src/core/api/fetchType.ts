@@ -4,6 +4,39 @@ export enum HcpTag {
   SITE = 'SITE',
 }
 
+export enum EntityType {
+  SERVICE = 'SERVICE',
+  CALENDARITEMTYPE = 'CALENDARITEMTYPE',
+  SITE = 'SITE',
+}
+
+export enum PropertyId {
+  SERVICE_PARENTID = 'SERVICE|PARENTID',
+  CALENDARITEMTYPE_AGENDAID = 'CALENDARITEMTYPE|AGENDAID',
+  CALENDARITEMTYPE_ORDER = 'CALENDARITEMTYPE|ORDER',
+  CALENDARITEMTYPE_PROCEDUREDETAILS = 'CALENDARITEMTYPE|PROCEDUREDETAILS',
+  CALENDARITEMTYPE_QBETTER_SERVICE_ID = 'CALENDARITEMTYPE|QBETTER_SERVICE_ID',
+  CALENDARITEMTYPE_ISPUBLIC = 'CALENDARITEMTYPE|ISPUBLIC',
+  SITE_LOCATION = 'SITE|LOCATION',
+  SITE_QBETTER_LOCATION_ID = 'SITE|QBETTER_LOCATION_ID',
+}
+
+export enum CalendarItemTag {
+  APPOINTMENT_LAST_AUTHOR = 'APPOINTMENT|LAST_AUTHOR',
+  APPOINTMENT_QBETTER_SERVICE_ID = 'APPOINTMENT|QBETTER_SERVICE_ID',
+  APPOINTMENT_QBETTER_LOCATION_ID = 'APPOINTMENT|QBETTER_LOCATION_ID',
+  APPOINTMENT_QBETTER_CODE = 'APPOINTMENT|QBETTER_CODE',
+}
+
+/** Special confirmation code values returned by the propagation backend */
+export enum ConfirmationCodeSpecialValue {
+  SKIPPED = 'SKIPPED',
+  NONE = 'NONE',
+}
+
+/** The iCure patient language value that maps to Dutch */
+export const PATIENT_LANGUAGE_NL = 'Nederlands'
+
 export type TimeTablesServiceParameters = {
   agendaId: string
 }
@@ -61,8 +94,7 @@ export interface SendEmailRequest {
   processId: string
   bcc: string[]
   cc: string[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  variables: Record<string, any>
+  variables: Record<string, string | number | boolean | null | undefined>
 }
 
 export interface SendEmailResponse {

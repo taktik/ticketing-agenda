@@ -14,6 +14,7 @@ interface BirthdayInputProps {
 }
 
 const BirthdayInput: FC<BirthdayInputProps> = ({ value, onChange }) => {
+  const { t } = useTranslation()
   const day = value?.date()
   const month = value?.month()
   const year = value?.year()
@@ -65,21 +66,21 @@ const BirthdayInput: FC<BirthdayInputProps> = ({ value, onChange }) => {
 
   return (
     <Space.Compact style={{ width: '50%' }}>
-      <Select size="large" placeholder="Day" value={day} onChange={handleDayChange} style={{ width: '25%' }}>
+      <Select size="large" placeholder={t('content.day')} value={day} onChange={handleDayChange} style={{ width: '25%' }}>
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
           <Option key={d} value={d}>
             {d}
           </Option>
         ))}
       </Select>
-      <Select size="large" placeholder="Month" value={month} onChange={handleMonthChange} style={{ width: '45%' }}>
+      <Select size="large" placeholder={t('content.month')} value={month} onChange={handleMonthChange} style={{ width: '45%' }}>
         {months.map((m) => (
           <Option key={m.value} value={m.value}>
             {m.label}
           </Option>
         ))}
       </Select>
-      <Select size="large" placeholder="Year" value={year} onChange={handleYearChange} style={{ width: '30%' }}>
+      <Select size="large" placeholder={t('content.year')} value={year} onChange={handleYearChange} style={{ width: '30%' }}>
         {years.map((y) => (
           <Option key={y} value={y}>
             {y}

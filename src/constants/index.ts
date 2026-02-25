@@ -47,6 +47,16 @@ export enum RootHcpType {
   ADMIN_ROOT = 'admin-root',
 }
 
+export enum EmailTemplateKey {
+  WITH_PROCEDURE_DETAILS = 'withProcedureDetails',
+  WITH_PROCEDURE_DETAILS_AND_CC = 'withProcedureDetailsAndCC',
+  WITHOUT_PROCEDURE_DETAILS = 'withoutProcedureDetails',
+  WITHOUT_PROCEDURE_DETAILS_AND_CC = 'withoutProcedureDetailsAndCC',
+}
+
+/** Default fallback language key used when a translation for the current UI language is not available */
+export const DEFAULT_LANGUAGE_FALLBACK = 'FR'
+
 export const DATE_FORMAT = 'dd.MM.yyyy'
 export const DATE_FORMAT_TO_DISPLAY = 'DD.MM.YYYY'
 
@@ -100,18 +110,18 @@ export const TOKENS = {
 export const NOT_BEFORE_IN_MINUTES = 10080 // Can book an appointment 7 days in advance
 export const NOT_AFTER_IN_MINUTES = 1440 // Cannot book an appointment 1 day before the appointment
 
-export const EMAIL_APPOINTMENT_CONFIRMATION = {
+export const EMAIL_APPOINTMENT_CONFIRMATION: Record<string, Record<EmailTemplateKey, string>> = {
   fr: {
-    withProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR,
-    withProcedureDetailsAndCC: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR_CC,
-    withoutProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR_NP,
-    withoutProcedureDetailsAndCC: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR_NP_CC,
+    [EmailTemplateKey.WITH_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR,
+    [EmailTemplateKey.WITH_PROCEDURE_DETAILS_AND_CC]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR_CC,
+    [EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR_NP,
+    [EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS_AND_CC]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_FR_NP_CC,
   },
   nl: {
-    withProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL,
-    withProcedureDetailsAndCC: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL_CC,
-    withoutProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL_NP,
-    withoutProcedureDetailsAndCC: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL_NP_CC,
+    [EmailTemplateKey.WITH_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL,
+    [EmailTemplateKey.WITH_PROCEDURE_DETAILS_AND_CC]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL_CC,
+    [EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL_NP,
+    [EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS_AND_CC]: window.config.REACT_APP_EMAIL_APPOINTMENT_CONFIRMATION_NL_NP_CC,
   },
 }
 export const EMAIL_APPOINTMENT_CANCELLATION = {

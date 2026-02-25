@@ -1,8 +1,9 @@
-import { Form, notification } from 'antd'
+import { Form } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCitizenReservation } from '../../../../core/contexts/CitizenReservationContext'
+import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
 import { TimeSlotPickerUI } from '../../TimeSlotPickerUI/TimeSlotPickerUI'
 
 export const StepTimeSlotSelector = () => {
@@ -12,16 +13,16 @@ export const StepTimeSlotSelector = () => {
 
   const { availabilities, isAvailabilitiesLoading, fetchAvailabilitiesForMonth, setTimeSlot } = useCitizenReservation()
 
-  const [api, notificationContextHolder] = notification.useNotification()
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
 
   const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
   const timeValue: Dayjs = Form.useWatch(['timeslot', 'time'], form)
 
   useEffect(() => {
     fetchAvailabilitiesForMonth(currentMonth).catch(() => {
-      api.error({ message: t('validation.unexpected_error') })
+      openNotification('error', t('validation.unexpected_error'))
     })
-  }, [currentMonth, fetchAvailabilitiesForMonth, api, t])
+  }, [currentMonth, fetchAvailabilitiesForMonth, openNotification, t])
 
   useEffect(() => {
     if (availabilities.length > 0 && !dateValue) {

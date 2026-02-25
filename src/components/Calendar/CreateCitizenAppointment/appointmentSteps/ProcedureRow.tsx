@@ -2,8 +2,9 @@ import { MinusCircleOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Select, Space, Tooltip } from 'antd'
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { DEFAULT_LANGUAGE_FALLBACK } from '../../../../constants'
 import { useCitizenReservation } from '../../../../core/contexts/CitizenReservationContext'
-import { AppointmentDraft, ProcedureGroup } from '../CitizenReservationTypes'
+import { AppointmentDraft, ProcedureGroup } from '../../../../types/citizenReservationTypes'
 interface ProcedureRowProps {
   draft: AppointmentDraft
   index: number
@@ -40,8 +41,8 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
 
   const sortedProcedures = useMemo(() => {
     return [...availableProcedures].sort((a, b) => {
-      const labelA = a.displayTextByLanguage[currentLang] || a.displayTextByLanguage['FR'] || ''
-      const labelB = b.displayTextByLanguage[currentLang] || b.displayTextByLanguage['FR'] || ''
+      const labelA = a.displayTextByLanguage[currentLang] || a.displayTextByLanguage[DEFAULT_LANGUAGE_FALLBACK] || ''
+      const labelB = b.displayTextByLanguage[currentLang] || b.displayTextByLanguage[DEFAULT_LANGUAGE_FALLBACK] || ''
 
       return labelA.localeCompare(labelB)
     })
@@ -104,7 +105,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
               onChange={handleProcedureChange}
               options={sortedProcedures.map((p) => ({
                 value: p.id,
-                label: p.displayTextByLanguage[currentLang] || p.displayTextByLanguage['FR'],
+                label: p.displayTextByLanguage[currentLang] || p.displayTextByLanguage[DEFAULT_LANGUAGE_FALLBACK],
               }))}
             />
           </Form.Item>
@@ -126,7 +127,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
           <Form.Item label={t('content.quantity')} required style={{ marginBottom: 0 }}>
             <Select
               style={{ minWidth: '80px' }}
-              placeholder="Qty"
+              placeholder={t('content.quantity')}
               disabled={!draft.siteVariantId}
               value={draft.quantity}
               onChange={handleQuantityChange}

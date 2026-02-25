@@ -1,12 +1,12 @@
 import { CalendarOutlined, CheckCircleOutlined, ToolOutlined, UserOutlined } from '@ant-design/icons'
 import { CodeStub, DecryptedAddress, DecryptedCalendarItem, DecryptedPatient, DecryptedTelecom, EncryptedAddress, EncryptedPatient, EncryptedTelecom, RecoveryDataKey, TelecomType, User } from '@icure/cardinal-sdk'
-import { Button, Divider, Form, notification, Steps } from 'antd'
+import { Button, Divider, Form, Steps } from 'antd'
 import dayjs from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { EMAIL_APPOINTMENT_CONFIRMATION, EMAIL_SENDER, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
-import { PropagationStatus, PropagationTask, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../../core/api/appointmentPollingApi'
+import { EMAIL_APPOINTMENT_CONFIRMATION, EMAIL_SENDER, EmailTemplateKey, MANAGE_APPOINTMENT_ROUTE } from '../../../constants'
+import { PropagationStatus, WaitForPropagationResult, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../../core/api/appointmentPollingApi'
 import { calendarItemApiRtk, CalendarItemTags, useCreateUpdateCalendarItemMutation, useDeleteCalendarItemByIdMutation } from '../../../core/api/calendarItemApi'
 import { useSendEmailMutation } from '../../../core/api/emailApi'
 import { useCreateDecryptedPatientMutation, useInitializeExchangeDataMutation, useLazyGetEncryptedPatientByIdQuery, useUpdateEncryptedPatientMutation } from '../../../core/api/patientApi'
@@ -16,25 +16,16 @@ import { CitizenReservationProvider, useCitizenReservation } from '../../../core
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { useAppDispatch } from '../../../core/hooks'
-import { Lang } from '../../../helpers/types'
 import { CustomModal } from '../../common/CustomModal'
-import { calculateNumericEventTimes, getStringProperty, getTranslationForEntity } from '../../common/helpers'
+import { calculateNumericEventTimes, combineDateAndTime, detectLanguage, getStringProperty, getTranslationForEntity } from '../../common/helpers'
+import { CalendarItemTag, ConfirmationCodeSpecialValue, EntityType, PropertyId } from '../../../core/api/fetchType'
 import { StepAppointmentReview } from './appointmentSteps/StepAppointmentReview'
 import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
-import { PersonalInfo } from './CitizenReservationTypes'
-
-const { Step } = Steps
-
-enum AppointmentStep {
-  PROCEDURE = 0,
-  TIMESLOT = 1,
-  PERSONAL_INFO = 2,
-  REVIEW = 3,
-  RESULT = 4,
-}
+import { AppointmentStep, CreationStatus, PersonalInfo } from '../../../types/citizenReservationTypes'
+import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 
 interface CreateEventProps {
   isVisible: boolean
@@ -61,7 +52,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   const { dataOwnerId } = usePermissionContext()
 
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
-  const [creationStatus, setCreationStatus] = useState<'loading' | 'success' | 'failure' | null>(null)
+  const [creationStatus, setCreationStatus] = useState<CreationStatus | null>(null)
 
   const [getUserByMailLazy] = useLazyGetUserByEmailQuery()
   const [getPatientByIdLazy] = useLazyGetEncryptedPatientByIdQuery()
@@ -75,11 +66,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   const [sendConfirmationEmail] = useSendEmailMutation()
   const [triggerPolling] = useLazyGetPropagationStatusQuery()
 
-  const [api, notificationContextHolder] = notification.useNotification()
-
-  const combineDateAndTime = useCallback((slot: { date: dayjs.Dayjs; time: dayjs.Dayjs }) => {
-    return slot.date.hour(slot.time.hour()).minute(slot.time.minute()).second(0)
-  }, [])
+  const { openNotification, notificationContextHolder } = useNotificationHelper()
 
   const buildDecryptedContactPayload = useCallback(
     (email: string, mobilePhone?: string) => ({
@@ -221,7 +208,9 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         throw new Error('Missing critical information for creation.')
       }
 
-      let rollingStartTime = combineDateAndTime(timeSlot)
+      const startTime = combineDateAndTime(timeSlot)
+      if (!startTime) throw new Error('Invalid time slot')
+      let rollingStartTime = startTime
 
       const creationPromises = drafts.map(async (draft) => {
         const group = availableProcedures.find((p) => p.id === draft.procedureGroupId)
@@ -249,17 +238,17 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           addressText: siteVariant.siteLocation,
           tags: [
             new CodeStub({ id: 'APPOINTMENT', code: group.id, type: 'APPOINTMENT', version: '1' }),
-            new CodeStub({ id: 'APPOINTMENT|LAST_AUTHOR', code: citizenUser.id, type: 'APPOINTMENT|LAST_AUTHOR', version: '1' }),
+            new CodeStub({ id: CalendarItemTag.APPOINTMENT_LAST_AUTHOR, code: citizenUser.id, type: CalendarItemTag.APPOINTMENT_LAST_AUTHOR, version: '1' }),
             new CodeStub({
-              id: 'APPOINTMENT|QBETTER_SERVICE_ID',
-              code: getStringProperty(draft.calendarItemType.publicProperties, 'CALENDARITEMTYPE|QBETTER_SERVICE_ID'),
-              type: 'APPOINTMENT|QBETTER_SERVICE_ID',
+              id: CalendarItemTag.APPOINTMENT_QBETTER_SERVICE_ID,
+              code: getStringProperty(draft.calendarItemType.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID),
+              type: CalendarItemTag.APPOINTMENT_QBETTER_SERVICE_ID,
               version: '1',
             }),
             new CodeStub({
-              id: 'APPOINTMENT|QBETTER_LOCATION_ID',
-              code: getStringProperty(draft.site.publicProperties, 'SITE|QBETTER_LOCATION_ID'),
-              type: 'APPOINTMENT|QBETTER_LOCATION_ID',
+              id: CalendarItemTag.APPOINTMENT_QBETTER_LOCATION_ID,
+              code: getStringProperty(draft.site.publicProperties, PropertyId.SITE_QBETTER_LOCATION_ID),
+              type: CalendarItemTag.APPOINTMENT_QBETTER_LOCATION_ID,
               version: '1',
             }),
           ],
@@ -273,16 +262,22 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       })
 
       const results = await Promise.allSettled(creationPromises)
+      const failures = results.filter((r) => r.status === 'rejected')
+      if (failures.length > 0) {
+        throw new Error(`Failed to create ${failures.length} of ${drafts.length} appointment(s)`)
+      }
       return results.filter((r): r is PromiseFulfilledResult<DecryptedCalendarItem> => r.status === 'fulfilled' && !!r.value).map((r) => r.value)
     },
-    [drafts, adminRoot, siteRoot, createUpdateEvent, timeSlot, combineDateAndTime, availableProcedures],
+    [drafts, adminRoot, siteRoot, createUpdateEvent, timeSlot, availableProcedures],
   )
 
   const sendEmails = useCallback(
     async (recoveryDataKey: RecoveryDataKey, citizenUser: User, citizenPatient: EncryptedPatient | DecryptedPatient, calendarItems: DecryptedCalendarItem[], info: PersonalInfo, qBetterCodes: Record<string, string>) => {
       if (!citizenUser.email) throw new Error('No valid email')
 
-      let rollingStartTime = combineDateAndTime(timeSlot!)
+      const emailStartTime = combineDateAndTime(timeSlot!)
+      if (!emailStartTime) throw new Error('Invalid time slot')
+      let rollingStartTime = emailStartTime
 
       for (const draft of drafts) {
         const group = availableProcedures.find((p) => p.id === draft.procedureGroupId)
@@ -299,16 +294,15 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         let confirmationCode = ''
         if (calendarItem && qBetterCodes[calendarItem.id]) {
           const code = qBetterCodes[calendarItem.id]
-          if (code !== 'SKIPPED' && code !== 'NONE') {
+          if (code !== ConfirmationCodeSpecialValue.SKIPPED && code !== ConfirmationCodeSpecialValue.NONE) {
             confirmationCode = code
           }
         }
 
-        const langCode = info.language === 'Nederlands' ? 'nl' : 'fr'
-        const safeLang: Lang = langCode
+        const safeLang = detectLanguage([info.language])
 
-        const serviceName = getTranslationForEntity(draft.agenda.properties, 'SERVICE', safeLang)
-        const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, 'CALENDARITEMTYPE', safeLang)
+        const serviceName = getTranslationForEntity(draft.agenda.properties, EntityType.SERVICE, safeLang)
+        const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, safeLang)
 
         const dateFormat = rollingStartTime.format('DD/MM/YYYY')
         const timeFormat = `${rollingStartTime.format('HH[h]mm')} - ${endTime.format('HH[h]mm')}`
@@ -321,12 +315,12 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         const hasProcedure = !!siteVariant.procedureDetails?.trim()
         const hasCC = !!confirmationCode
 
-        let templateKey: 'withProcedureDetails' | 'withProcedureDetailsAndCC' | 'withoutProcedureDetails' | 'withoutProcedureDetailsAndCC'
+        let templateKey: EmailTemplateKey
 
         if (hasProcedure) {
-          templateKey = hasCC ? 'withProcedureDetailsAndCC' : 'withProcedureDetails'
+          templateKey = hasCC ? EmailTemplateKey.WITH_PROCEDURE_DETAILS_AND_CC : EmailTemplateKey.WITH_PROCEDURE_DETAILS
         } else {
-          templateKey = hasCC ? 'withoutProcedureDetailsAndCC' : 'withoutProcedureDetails'
+          templateKey = hasCC ? EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS_AND_CC : EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS
         }
 
         const processId = EMAIL_APPOINTMENT_CONFIRMATION[safeLang][templateKey]
@@ -355,38 +349,35 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         rollingStartTime = endTime
       }
     },
-    [drafts, dataOwnerId, sendConfirmationEmail, timeSlot, combineDateAndTime, availableProcedures],
+    [drafts, dataOwnerId, sendConfirmationEmail, timeSlot, availableProcedures],
   )
 
   const ensurePropagationOrRollback = useCallback(
     async (items: DecryptedCalendarItem[]) => {
-      const pollingPromises = items.map((item) => waitForPropagation(triggerPolling, item.id))
-      const results = await Promise.all(pollingPromises)
-      const hasFailure = results.some((r) => r === null || r.status === PropagationStatus.FAILED)
+      const results: WaitForPropagationResult[] = await Promise.all(items.map((item) => waitForPropagation(triggerPolling, item.id)))
+      const hasFailure = results.some((r) => r.status === PropagationStatus.FAILED || r.status === 'TIMEOUT')
 
       if (!hasFailure) {
         const codeMap: Record<string, string> = {}
         results.forEach((r) => {
-          if (r) {
+          if ('icureAppointmentId' in r) {
             codeMap[r.icureAppointmentId] = r.confirmationCode ?? ''
           }
         })
         return codeMap
       }
 
-      const successfulTasks = results.filter((r): r is PropagationTask => r !== null && r.status === PropagationStatus.SUCCESS)
-      const itemsToRollback = items.filter((item) => successfulTasks.some((task) => task.icureAppointmentId === item.id))
-
-      if (itemsToRollback.length > 0) {
-        await Promise.allSettled(
-          itemsToRollback.map((item) =>
-            deleteEvent({
-              calendarItemId: item.id,
-              rev: item.rev ?? '',
-            }).unwrap(),
-          ),
-        )
-      }
+      // On any failure, roll back ALL created iCure calendar items.
+      // Items that reached QBetter will be cancelled when iCure deletion is detected by the backend.
+      // Items that failed QBetter propagation are cleaned up from iCure.
+      await Promise.allSettled(
+        items.map((item) =>
+          deleteEvent({
+            calendarItemId: item.id,
+            rev: item.rev ?? '',
+          }).unwrap(),
+        ),
+      )
       throw new Error('Propagation failed for one or more appointments')
     },
     [triggerPolling, deleteEvent],
@@ -394,7 +385,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
   const handleAppointmentCreation = useCallback(async () => {
     try {
-      setCreationStatus('loading')
+      setCreationStatus(CreationStatus.LOADING)
       setCurrentStep(AppointmentStep.RESULT)
 
       if (!dataOwnerId) throw new Error('No valid delegateId')
@@ -413,17 +404,24 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
       const qBetterCodes = await ensurePropagationOrRollback(calendarItems)
 
-      await sendEmails(recoveryDataKey, citizenUser, citizenPatient, calendarItems, personalInfo, qBetterCodes)
+      // Email is non-critical: appointments are confirmed in QBetter at this point.
+      // A failure here means the citizen won't get a confirmation email, but the booking exists.
+      try {
+        await sendEmails(recoveryDataKey, citizenUser, citizenPatient, calendarItems, personalInfo, qBetterCodes)
+      } catch (emailErr) {
+        console.error('Failed to send confirmation email:', emailErr)
+        openNotification('warning', t('validation.appointments_created_email_failed'))
+      }
 
-      setCreationStatus('success')
+      setCreationStatus(CreationStatus.SUCCESS)
     } catch (err) {
       console.error(err)
-      setCreationStatus('failure')
-      api.error({ message: t('validation.unexpected_error') })
+      setCreationStatus(CreationStatus.FAILURE)
+      openNotification('error', t('validation.unexpected_error'))
     } finally {
       dispatch(calendarItemApiRtk.util.invalidateTags([CalendarItemTags.CalendarItem]))
     }
-  }, [form, dataOwnerId, getOrCreateCitizenProfile, initializePatientExchangeDatas, createAppointments, createRecoveryDataKey, sendEmails, t, api])
+  }, [dispatch, form, dataOwnerId, getOrCreateCitizenProfile, initializePatientExchangeDatas, createAppointments, createRecoveryDataKey, ensurePropagationOrRollback, sendEmails, t, openNotification])
 
   const next = useCallback(async () => {
     try {
@@ -433,9 +431,9 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       }
       setCurrentStep((p) => p + 1)
     } catch {
-      api.error({ message: t('content.complete_required_fields') })
+      openNotification('error', t('content.complete_required_fields'))
     }
-  }, [currentStep, form, setPersonalInfo, api, t])
+  }, [currentStep, form, setPersonalInfo, openNotification, t])
 
   const prev = useCallback(() => setCurrentStep((p) => p - 1), [])
 
@@ -446,12 +444,12 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     onClose()
   }, [form, onClose])
 
-  const steps = useMemo(
+  const stepItems = useMemo(
     () => [
-      { title: t('content.procedure'), icon: <ToolOutlined /> },
-      { title: t('content.date_and_time'), icon: <CalendarOutlined /> },
-      { title: t('content.your_info'), icon: <UserOutlined /> },
-      { title: t('content.confirm'), icon: <CheckCircleOutlined /> },
+      { key: 'procedure', title: t('content.procedure'), icon: <ToolOutlined /> },
+      { key: 'timeslot', title: t('content.date_and_time'), icon: <CalendarOutlined /> },
+      { key: 'info', title: t('content.your_info'), icon: <UserOutlined /> },
+      { key: 'confirm', title: t('content.confirm'), icon: <CheckCircleOutlined /> },
     ],
     [t],
   )
@@ -483,11 +481,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     <CustomModal isVisible={true} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={1100}>
       <div style={{ width: '100%', padding: '1.5rem' }}>
         {notificationContextHolder}
-        <Steps current={currentStep} style={{ marginBottom: 32 }}>
-          {steps.map((s) => (
-            <Step key={s.title} title={s.title} icon={s.icon} />
-          ))}
-        </Steps>
+        <Steps current={currentStep} items={stepItems} style={{ marginBottom: 32 }} />
 
         <Form form={form} layout="vertical" initialValues={{ personalInfo: { countryCode: '+32', language: 'Français', birthDate: dayjs() } }}>
           <div style={{ minHeight: '350px' }}>{renderStep()}</div>
@@ -512,7 +506,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
                 </Button>
               )}
               {currentStep === AppointmentStep.RESULT && (
-                <Button size="large" type="primary" onClick={reset} disabled={creationStatus === 'loading'}>
+                <Button size="large" type="primary" onClick={reset} disabled={creationStatus === CreationStatus.LOADING}>
                   {t('content.close')}
                 </Button>
               )}
