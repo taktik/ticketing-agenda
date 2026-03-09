@@ -121,10 +121,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const { calendarItemTypesByAgendaId } = useHierarchyContext()
   const { attachedServices } = usePermissionContext()
 
-  if (attachedServices?.length && !attachedServices.includes(service.id)) {
-    return <div></div>
-  }
-
   const procedures = calendarItemTypesByAgendaId.get(service.id) || []
 
   const [showDeleteServiceModal, setShowDeleteServiceModal] = useState<boolean>(false)
@@ -481,6 +477,10 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       DE: getTranslationForEntity(service.properties, EntityType.SERVICE, 'DE'),
     }
   }, [service?.properties])
+
+  if (attachedServices?.length && !attachedServices.includes(service.id)) {
+    return <div></div>
+  }
 
   return (
     <div className="root">

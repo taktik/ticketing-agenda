@@ -22,29 +22,17 @@ export const getAge = (date: number | undefined): string | undefined => {
 
   const years = differenceInYears(now, birthDate)
   if (years !== 0) {
-    if (years % 10 == 1) {
-      return `${years} year`
-    } else {
-      return `${years} years`
-    }
+    return years === 1 ? `${years} year` : `${years} years`
   }
 
   const months = differenceInMonths(now, birthDate)
   if (months !== 0) {
-    if (months % 10 == 1) {
-      return `${months} month`
-    } else {
-      return `${months} months`
-    }
+    return months === 1 ? `${months} month` : `${months} months`
   }
 
   const days = differenceInDays(now, birthDate)
   if (days !== 0) {
-    if (days % 10 == 1) {
-      return `${days} day`
-    } else {
-      return `${days} days`
-    }
+    return days === 1 ? `${days} day` : `${days} days`
   }
 
   return 'error'

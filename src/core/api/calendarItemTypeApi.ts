@@ -80,7 +80,7 @@ export const calendarItemTypeApiRtk = createApi({
         return guard([calendarItemTypeApi], async () => {
           const result = await calendarItemTypeApi?.deleteCalendarItemTypes(calendarItemTypeIds)
           if (!result) {
-            throw new Error('CalendarItemType can`t be deleted')
+            throw new Error("CalendarItemType can't be deleted")
           }
           return result
         })

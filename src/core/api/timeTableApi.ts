@@ -54,7 +54,7 @@ export const timeTableApiRtk = createApi({
         return guard([timeTableApi], async () => {
           const result = await timeTableApi?.deleteTimeTable(timeTable)
           if (!result) {
-            throw new Error('TimeTable can`t be deleted')
+            throw new Error("TimeTable can't be deleted")
           }
           return result.id
         })
@@ -70,7 +70,7 @@ export const timeTableApiRtk = createApi({
         return guard([timeTableApi], async () => {
           const result = await timeTableApi?.deleteTimeTables(timeTables)
           if (!result) {
-            throw new Error('TimeTable can`t be deleted')
+            throw new Error("TimeTable can't be deleted")
           }
           return result
         })

@@ -219,10 +219,10 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
     dispatch(setAzureLoginProcessStarted(true))
 
     if (!account.idTokenClaims?.preferred_username) {
-      throw new Error('No valid prefered username')
+      throw new Error('No valid preferred username')
     }
     if (!account.idToken) {
-      throw new Error('No valid prefered username')
+      throw new Error('No valid idToken')
     }
 
     const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', account.idToken), {
