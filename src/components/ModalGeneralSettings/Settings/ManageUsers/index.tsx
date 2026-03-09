@@ -6,7 +6,7 @@ import { ReactElement, useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { RESERVED_WORDS } from '../../../../constants'
+import { assignmentPropertyId, ASSIGNMENT_PROPERTY_PREFIX, RESERVED_WORDS } from '../../../../constants'
 import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
 import {
   useCreateUpdateHealthcarePartyMutation,
@@ -117,7 +117,7 @@ export const ManagerUsers = (): ReactElement => {
       const hcpTag = hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type])
 
       const assignments = hcp.properties.flatMap((property) => {
-        if (!property?.id?.startsWith('ASSIGNMENT|')) return []
+        if (!property?.id?.startsWith(ASSIGNMENT_PROPERTY_PREFIX)) return []
 
         const targetId = property.typedValue?.stringValue
         if (!targetId) return []
@@ -261,7 +261,7 @@ export const ManagerUsers = (): ReactElement => {
         if (!record.hcp || !record.user) throw new Error('No user selected')
         const rowValues = await form.validateFields()
 
-        const assignmentProperties = rowValues.assignment?.filter((a) => a.agendaId !== undefined).map((a) => createStringProperty(`ASSIGNMENT|${a.agendaId}`, a.agendaId!)) || []
+        const assignmentProperties = rowValues.assignment?.filter((a) => a.agendaId !== undefined).map((a) => createStringProperty(assignmentPropertyId(a.agendaId!), a.agendaId!)) || []
 
         let assignmentParentId: string | undefined
         if (rowValues.role === UserRole.ADMINISTRATOR) {
@@ -280,7 +280,7 @@ export const ManagerUsers = (): ReactElement => {
         const otherTags = isNew ? [] : record.hcp.tags.filter((t) => !roleTypeMap[t.type ?? ''])
         const finalTags = [...otherTags, ...roleTags]
 
-        const otherProps = isNew ? [] : (record.hcp.properties?.filter((p) => !p.id?.startsWith('ASSIGNMENT|')) ?? [])
+        const otherProps = isNew ? [] : (record.hcp.properties?.filter((p) => !p.id?.startsWith(ASSIGNMENT_PROPERTY_PREFIX)) ?? [])
         const finalProps = [...otherProps, ...assignmentProperties]
 
         const hcpPayload = new HealthcareParty({

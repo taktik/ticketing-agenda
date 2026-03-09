@@ -373,6 +373,7 @@
     "service_name_in_french_mandatory": "Le nom du service en français est obligatoire.",
     "name_is_reserved": "'{{word}}' est un nom réservé. Veuillez en choisir un autre.",
     "role_is_required": "Le rôle est requis",
-    "assignment_is_required": "L'affectation est requise"
+    "assignment_is_required": "L'affectation est requise",
+    "appointments_created_email_failed": "Le rendez-vous a bien été enregistré, mais l'e-mail de confirmation n'a pas pu être envoyé."
   }
 }

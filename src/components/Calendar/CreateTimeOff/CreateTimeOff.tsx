@@ -10,6 +10,7 @@ import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss } from '../../common/helpers'
+import { CalendarItemTag } from '../../../core/api/fetchType'
 import './index.css'
 
 const { RangePicker } = DatePicker
@@ -75,9 +76,9 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
         const weeklyChunks = splitDateRangeIntoWeeks(startTime, endTime)
 
         const timeOffTag = new CodeStub({
-          id: `TIMEOFF|1`,
-          code: 'TIMEOFF',
-          type: 'TIMEOFF',
+          id: CalendarItemTag.TIMEOFF,
+          code: CalendarItemTag.TIMEOFF,
+          type: CalendarItemTag.TIMEOFF,
           version: '1',
         })
 

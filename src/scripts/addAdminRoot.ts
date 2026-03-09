@@ -16,24 +16,24 @@ async function addAdminRootToGroupId() {
   const adminRootEmail = ''
 
   const adminRootProperty = new DecryptedPropertyStub({
-    id: 'admin-root',
+    id: 'ADMIN_ROOT',
     typedValue: new DecryptedTypedValue({
       type: TypedValuesType.String,
-      stringValue: 'admin-root',
+      stringValue: 'ADMIN_ROOT',
     }),
   })
 
   const adminRootHcp = new HealthcareParty({
     id: hcpId,
-    name: 'admin-root',
-    firstName: 'admin-root',
-    lastName: 'admin-root',
+    name: 'ADMIN_ROOT',
+    firstName: 'ADMIN_ROOT',
+    lastName: 'ADMIN_ROOT',
     public: true,
     userId: userId,
-    tags: [new CodeStub({ id: 'admin-root|1', code: 'admin-root', type: 'admin-root', version: '1' })],
+    tags: [new CodeStub({ id: 'ADMIN_ROOT', code: 'ADMIN_ROOT', type: 'ADMIN_ROOT', version: '1' })],
     publicProperties: [adminRootProperty],
   })
-  const adminRootUser = new User({ id: userId, email: adminRootEmail, name: 'admin-root', healthcarePartyId: hcpId })
+  const adminRootUser = new User({ id: userId, email: adminRootEmail, name: 'ADMIN_ROOT', healthcarePartyId: hcpId })
 
   try {
     console.log(`Creating adminRoot in group ${concernedGroupId}...`)

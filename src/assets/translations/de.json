@@ -374,6 +374,7 @@
     "service_name_in_french_mandatory": "Der Dienstname auf Französisch ist obligatorisch.",
     "name_is_reserved": "'{{word}}' ist ein reservierter Name. Bitte wählen Sie einen anderen.",
     "role_is_required": "Rolle ist erforderlich",
-    "assignment_is_required": "Zuweisung ist erforderlich"
+    "assignment_is_required": "Zuweisung ist erforderlich",
+    "appointments_created_email_failed": "Der Termin wurde erfolgreich registriert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden."
   }
 }

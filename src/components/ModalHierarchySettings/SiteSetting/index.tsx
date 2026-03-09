@@ -7,8 +7,8 @@ import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/healthcarePartyApi'
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { EditableSiteInfo, SiteInfoFormValues } from '../../common/EditableSiteInfo'
-import { createStringProperty } from '../../common/helpers'
-import { PropertyId } from '../../../core/api/fetchType'
+import { createStringProperty, translationPropertyId } from '../../common/helpers'
+import { EntityType, PropertyId } from '../../../core/api/fetchType'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import './index.css'
@@ -80,10 +80,10 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
     try {
       const properties = [
         createStringProperty(PropertyId.SERVICE_PARENTID, site.id),
-        createStringProperty('SERVICE|TRANSLATION|FR', t('content.new_service')),
-        createStringProperty('SERVICE|TRANSLATION|NL', ''),
-        createStringProperty('SERVICE|TRANSLATION|EN', ''),
-        createStringProperty('SERVICE|TRANSLATION|DE', ''),
+        createStringProperty(translationPropertyId(EntityType.SERVICE, 'FR'), t('content.new_service')),
+        createStringProperty(translationPropertyId(EntityType.SERVICE, 'NL'), ''),
+        createStringProperty(translationPropertyId(EntityType.SERVICE, 'EN'), ''),
+        createStringProperty(translationPropertyId(EntityType.SERVICE, 'DE'), ''),
       ]
 
       const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({ intervalMinutes: 5 })

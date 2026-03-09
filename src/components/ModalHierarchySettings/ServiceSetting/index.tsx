@@ -11,7 +11,7 @@ import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useCreateUpdateCalendarItemTypeMutation, useDeleteCalendarItemTypesMutation } from '../../../core/api/calendarItemTypeApi'
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
-import { getBooleanProperty, getIntegerProperty, getStringProperty, getTranslationForEntity, languages, setProperty } from '../../common/helpers'
+import { getBooleanProperty, getIntegerProperty, getStringProperty, getTranslationForEntity, languages, setProperty, translationPropertyId } from '../../common/helpers'
 import { EntityType, PropertyId } from '../../../core/api/fetchType'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
@@ -212,10 +212,22 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     try {
       if (!service) throw new Error()
 
-      const translationPropertyFR = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|FR', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: t('content.new_procedure') }) })
-      const translationPropertyNL = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|NL', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
-      const translationPropertyEN = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|EN', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
-      const translationPropertyDE = new DecryptedPropertyStub({ id: 'CALENDARITEMTYPE|TRANSLATION|DE', typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
+      const translationPropertyFR = new DecryptedPropertyStub({
+        id: translationPropertyId(EntityType.CALENDARITEMTYPE, 'FR'),
+        typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: t('content.new_procedure') }),
+      })
+      const translationPropertyNL = new DecryptedPropertyStub({
+        id: translationPropertyId(EntityType.CALENDARITEMTYPE, 'NL'),
+        typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }),
+      })
+      const translationPropertyEN = new DecryptedPropertyStub({
+        id: translationPropertyId(EntityType.CALENDARITEMTYPE, 'EN'),
+        typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }),
+      })
+      const translationPropertyDE = new DecryptedPropertyStub({
+        id: translationPropertyId(EntityType.CALENDARITEMTYPE, 'DE'),
+        typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }),
+      })
       const isPublicProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_ISPUBLIC, typedValue: new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: true }) })
       const orderProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_ORDER, typedValue: new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: 0 }) })
       const procedureDetailsProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
@@ -278,7 +290,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         const properties: DecryptedPropertyStub[] = []
 
         Object.entries(rowValues.subjectByLanguage).forEach(([locale, value]) => {
-          setProperty(properties, `CALENDARITEMTYPE|TRANSLATION|${locale.toUpperCase()}`, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: value }))
+          setProperty(properties, translationPropertyId(EntityType.CALENDARITEMTYPE, locale), new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: value }))
         })
         setProperty(properties, PropertyId.CALENDARITEMTYPE_ISPUBLIC, new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: rowValues.isPublic }))
         setProperty(properties, PropertyId.CALENDARITEMTYPE_ORDER, new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
@@ -419,7 +431,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         const updatedProperties = [...(service.properties || [])]
 
         Object.entries(newTitles).forEach(([locale, title]) => {
-          const id = `SERVICE|TRANSLATION|${locale.toUpperCase()}`
+          const id = translationPropertyId(EntityType.SERVICE, locale)
           const existingProp = updatedProperties.find((p) => p.id === id)
 
           if (existingProp) {

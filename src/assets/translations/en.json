@@ -373,6 +373,7 @@
     "service_name_in_french_mandatory": "The service name in French is mandatory.",
     "name_is_reserved": "'{{word}}' is a reserved name. Please choose another.",
     "role_is_required": "Role is required",
-    "assignment_is_required": "Assignment is required"
+    "assignment_is_required": "Assignment is required",
+    "appointments_created_email_failed": "The appointment was successfully registered, but the confirmation email could not be sent."
   }
 }

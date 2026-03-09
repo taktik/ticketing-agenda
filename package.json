@@ -10,7 +10,7 @@
     "@fullcalendar/core": "6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
-    "@icure/cardinal-sdk": "2.0.0-PREVIEW-25",
+    "@icure/cardinal-sdk": "2.1.0",
     "@icure/form": "^3.0.1",
     "@reduxjs/toolkit": "2.8.2",
     "antd": "5.25.1",

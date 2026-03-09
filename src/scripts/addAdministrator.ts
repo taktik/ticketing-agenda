@@ -32,9 +32,9 @@ async function addAdministratorToGroupId() {
     firstName: adminFirstName,
     lastName: adminLastName,
     parentId: adminRoot_ID,
-    public: true,
+    public: false,
     userId: userId,
-    tags: [new CodeStub({ id: 'ADMINISTRATOR|1', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })],
+    tags: [new CodeStub({ id: 'ADMINISTRATOR', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })],
   })
   const administratorUser = new User({ id: userId, email: adminEmail, name: adminName, healthcarePartyId: hcpId })
 

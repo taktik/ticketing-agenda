@@ -43,9 +43,12 @@ export const ADMIN_SOLUTIONS_EMAIL = '' // get the email through icure dashboard
 export const EMAIL_TEMPLATE = '' // request the template id of the solution to icure
 
 export enum RootHcpType {
-  SITE_ROOT = 'site-root',
-  ADMIN_ROOT = 'admin-root',
+  SITE_ROOT = 'SITE_ROOT',
+  ADMIN_ROOT = 'ADMIN_ROOT',
 }
+
+export const ASSIGNMENT_PROPERTY_PREFIX = 'ASSIGNMENT|'
+export const assignmentPropertyId = (agendaId: string): string => `${ASSIGNMENT_PROPERTY_PREFIX}${agendaId}`
 
 export enum EmailTemplateKey {
   WITH_PROCEDURE_DETAILS = 'withProcedureDetails',
@@ -60,7 +63,7 @@ export const DEFAULT_LANGUAGE_FALLBACK = 'FR'
 export const DATE_FORMAT = 'dd.MM.yyyy'
 export const DATE_FORMAT_TO_DISPLAY = 'DD.MM.YYYY'
 
-export const RESERVED_WORDS = ['site-root', 'admin-root']
+export const RESERVED_WORDS = ['SITE_ROOT', 'ADMIN_ROOT']
 
 export const TOKENS = {
   SKIP: /^[ \r\n\t]+|^\.$/,

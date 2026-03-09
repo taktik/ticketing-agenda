@@ -37,7 +37,7 @@ async function addSiteToGroupId() {
     parentId: siteRoot_ID,
     public: true,
     userId: userId,
-    tags: [new CodeStub({ id: 'SITE|1', code: 'SITE', type: 'SITE', version: '1' })],
+    tags: [new CodeStub({ id: 'SITE', code: 'SITE', type: 'SITE', version: '1' })],
     publicProperties: [siteProperty]
   })
 

@@ -373,6 +373,7 @@
     "service_name_in_french_mandatory": "De servicenaam in het Frans is verplicht.",
     "name_is_reserved": "'{{word}}' is een gereserveerde naam. Kies alstublieft een andere.",
     "role_is_required": "Rol is verplicht",
-    "assignment_is_required": "Toewijzing is verplicht"
+    "assignment_is_required": "Toewijzing is verplicht",
+    "appointments_created_email_failed": "De afspraak is succesvol geregistreerd, maar de bevestigingsmail kon niet worden verzonden."
   }
 }

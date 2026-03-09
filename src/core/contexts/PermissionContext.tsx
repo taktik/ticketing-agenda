@@ -2,6 +2,7 @@ import { Agenda, HealthcareParty } from '@icure/cardinal-sdk'
 import React, { createContext, useContext, useMemo } from 'react'
 import { useGetCurrentDataOwnerRoleQuery } from '../api/dataOwnerApi'
 import { UserRole } from '../api/roleApi'
+import { ASSIGNMENT_PROPERTY_PREFIX } from '../../constants'
 import { useAppSelector } from '../hooks'
 import { useHierarchyContext } from './HierarchyContext'
 
@@ -42,7 +43,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return properties.flatMap((property) => {
       const agendaId = property.typedValue?.stringValue
 
-      if (property.id?.startsWith('ASSIGNMENT|') && agendaId) {
+      if (property.id?.startsWith(ASSIGNMENT_PROPERTY_PREFIX) && agendaId) {
         const agenda = agendaMap.get(agendaId)
         if (agenda && agenda.author) {
           const site = allSites.find((s) => s.id === agenda.author)

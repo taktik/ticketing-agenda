@@ -360,11 +360,12 @@ export const isAllDayEvent = (start: Date | undefined, end: Date | undefined): b
   return startsAtMidnight && endsAtMidnight
 }
 
+export const translationPropertyId = (entityType: EntityType, lang: string): string => `${entityType}|TRANSLATION|${lang.toUpperCase()}`
+
 export const getTranslationForEntity = (properties: DecryptedPropertyStub[] | undefined, entityType: EntityType, locale: string) => {
   if (!properties) return ''
 
-  const id = `${entityType.toUpperCase()}|TRANSLATION|${locale.toUpperCase()}`
-  const prop = properties.find((p) => p.id === id)
+  const prop = properties.find((p) => p.id === translationPropertyId(entityType, locale))
   return prop?.typedValue?.stringValue || ''
 }
 

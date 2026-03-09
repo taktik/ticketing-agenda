@@ -237,7 +237,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           endTime: numericTimes.endTime,
           addressText: siteVariant.siteLocation,
           tags: [
-            new CodeStub({ id: 'APPOINTMENT', code: group.id, type: 'APPOINTMENT', version: '1' }),
+            new CodeStub({ id: CalendarItemTag.APPOINTMENT, code: group.id, type: CalendarItemTag.APPOINTMENT, version: '1' }),
             new CodeStub({ id: CalendarItemTag.APPOINTMENT_LAST_AUTHOR, code: citizenUser.id, type: CalendarItemTag.APPOINTMENT_LAST_AUTHOR, version: '1' }),
             new CodeStub({
               id: CalendarItemTag.APPOINTMENT_QBETTER_SERVICE_ID,

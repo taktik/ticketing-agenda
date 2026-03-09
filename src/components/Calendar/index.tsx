@@ -105,7 +105,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
     return calendarItems
       .map((calendarItem) => {
-        const isTimeOff = calendarItem.tags.some((tag) => tag.type === 'TIMEOFF')
+        const isTimeOff = calendarItem.tags.some((tag) => tag.type === CalendarItemTag.TIMEOFF)
 
         if (isTimeOff && !isAdminLevel) return null
 

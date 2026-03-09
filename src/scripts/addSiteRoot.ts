@@ -20,25 +20,25 @@ async function addSiteRootToGroupId() {
   const adminRoot_ID = ''
 
   const siteRootProperty = new DecryptedPropertyStub({
-    id: 'site-root',
+    id: 'SITE_ROOT',
     typedValue: new DecryptedTypedValue({
       type: TypedValuesType.String,
-      stringValue: 'site-root',
+      stringValue: 'SITE_ROOT',
     }),
   })
 
   const siteRootHcp = new HealthcareParty({
     id: hcpId,
-    name: 'site-root',
-    firstName: 'site-root',
-    lastName: 'site-root',
+    name: 'SITE_ROOT',
+    firstName: 'SITE_ROOT',
+    lastName: 'SITE_ROOT',
     public: true,
     parentId: adminRoot_ID,
     userId: userId,
-    tags: [new CodeStub({ id: 'site-root|1', code: 'site-root', type: 'site-root', version: '1' })],
+    tags: [new CodeStub({ id: 'SITE_ROOT', code: 'SITE_ROOT', type: 'SITE_ROOT', version: '1' })],
     publicProperties: [siteRootProperty],
   })
-  const siteRootUser = new User({ id: userId, email: siteRootEmail, name: 'site-root', healthcarePartyId: hcpId })
+  const siteRootUser = new User({ id: userId, email: siteRootEmail, name: 'SITE_ROOT', healthcarePartyId: hcpId })
 
   try {
     console.log(`Creating siteRoot in group ${concernedGroupId}...`)

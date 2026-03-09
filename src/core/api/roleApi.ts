@@ -28,9 +28,9 @@ export const rolesMap = {
   [UserRole.CITY_WORKER]: cityWorkerRoles,
 }
 
-export const administratorTag = [new CodeStub({ id: 'ADMINISTRATOR|1', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })]
-export const headOfServiceTag = [new CodeStub({ id: 'HEAD_OF_SERVICE|1', code: 'HEAD_OF_SERVICE', type: 'HEAD_OF_SERVICE', version: '1' })]
-export const cityWorkerTag = [new CodeStub({ id: 'CITY_WORKER|1', code: 'CITY_WORKER', type: 'CITY_WORKER', version: '1' })]
+export const administratorTag = [new CodeStub({ id: UserRole.ADMINISTRATOR, code: UserRole.ADMINISTRATOR, type: UserRole.ADMINISTRATOR, version: '1' })]
+export const headOfServiceTag = [new CodeStub({ id: UserRole.HEAD_OF_SERVICE, code: UserRole.HEAD_OF_SERVICE, type: UserRole.HEAD_OF_SERVICE, version: '1' })]
+export const cityWorkerTag = [new CodeStub({ id: UserRole.CITY_WORKER, code: UserRole.CITY_WORKER, type: UserRole.CITY_WORKER, version: '1' })]
 export const allRoleTags = [...administratorTag, ...headOfServiceTag, ...cityWorkerTag]
 
 export const tagMap = {
