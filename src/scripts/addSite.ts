@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
-
 import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL } from '../constants/index'
@@ -38,7 +37,7 @@ async function addSiteToGroupId() {
     public: true,
     userId: userId,
     tags: [new CodeStub({ id: 'SITE', code: 'SITE', type: 'SITE', version: '1' })],
-    publicProperties: [siteProperty]
+    publicProperties: [siteProperty],
   })
 
   const siteUser = new User({ id: userId, email: siteEmail, name: siteName, healthcarePartyId: hcpId })
