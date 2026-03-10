@@ -4,6 +4,7 @@ dotenv.config()
 import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL } from '../constants/index'
+import { HcpTag } from '../core/api/fetchType'
 
 async function addSiteRootToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
@@ -20,24 +21,24 @@ async function addSiteRootToGroupId() {
   const adminRoot_ID = ''
 
   const siteRootProperty = new DecryptedPropertyStub({
-    id: 'SITE_ROOT',
+    id: HcpTag.SITE_ROOT,
     typedValue: new DecryptedTypedValue({
       type: TypedValuesType.String,
-      stringValue: 'SITE_ROOT',
+      stringValue: HcpTag.SITE_ROOT,
     }),
   })
 
   const siteRootHcp = new HealthcareParty({
     id: hcpId,
-    name: 'SITE_ROOT',
-    firstName: 'SITE_ROOT',
-    lastName: 'SITE_ROOT',
+    name: HcpTag.SITE_ROOT,
+    firstName: HcpTag.SITE_ROOT,
+    lastName: HcpTag.SITE_ROOT,
     public: true,
     parentId: adminRoot_ID,
-    tags: [new CodeStub({ id: 'SITE_ROOT', code: 'SITE_ROOT', type: 'SITE_ROOT', version: '1' })],
+    tags: [new CodeStub({ id: HcpTag.SITE_ROOT, code: HcpTag.SITE_ROOT, type: HcpTag.SITE_ROOT, version: '1' })],
     publicProperties: [siteRootProperty],
   })
-  const siteRootUser = new User({ id: userId, email: siteRootEmail, name: 'SITE_ROOT', healthcarePartyId: hcpId })
+  const siteRootUser = new User({ id: userId, email: siteRootEmail, name: HcpTag.SITE_ROOT, healthcarePartyId: hcpId })
 
   try {
     console.log(`Creating siteRoot in group ${concernedGroupId}...`)

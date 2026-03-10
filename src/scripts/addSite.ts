@@ -3,6 +3,7 @@ dotenv.config()
 import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL } from '../constants/index'
+import { HcpTag } from '../core/api/fetchType'
 
 async function addSiteToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
@@ -21,10 +22,10 @@ async function addSiteToGroupId() {
   const siteEmail = ''
 
   const siteProperty = new DecryptedPropertyStub({
-    id: 'SITE',
+    id: HcpTag.SITE,
     typedValue: new DecryptedTypedValue({
       type: TypedValuesType.String,
-      stringValue: 'SITE',
+      stringValue: HcpTag.SITE,
     }),
   })
 
@@ -35,7 +36,7 @@ async function addSiteToGroupId() {
     lastName: siteName,
     parentId: siteRoot_ID,
     public: true,
-    tags: [new CodeStub({ id: 'SITE', code: 'SITE', type: 'SITE', version: '1' })],
+    tags: [new CodeStub({ id: HcpTag.SITE, code: HcpTag.SITE, type: HcpTag.SITE, version: '1' })],
     publicProperties: [siteProperty],
   })
 

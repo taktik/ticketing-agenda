@@ -42,6 +42,12 @@ export const ADMIN_SOLUTIONS_AUTH_TOKEN = '' // get the token through icure dash
 export const ADMIN_SOLUTIONS_EMAIL = '' // get the email through icure dashboard
 export const EMAIL_TEMPLATE = '' // request the template id of the solution to icure
 
+// Script-only role IDs (browser equivalent: ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER)
+// Adapt as needed !
+export const SCRIPT_ROLE_ADMINISTRATOR = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'
+export const SCRIPT_ROLE_HEAD_OF_SERVICE = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:HEAD_OF_SERVICE'
+export const SCRIPT_ROLE_CITY_WORKER = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'
+
 export enum RootHcpType {
   SITE_ROOT = 'SITE_ROOT',
   ADMIN_ROOT = 'ADMIN_ROOT',

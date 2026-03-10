@@ -4,6 +4,7 @@ dotenv.config()
 import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL } from '../constants/index'
+import { HcpTag } from '../core/api/fetchType'
 
 async function addAdminRootToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
@@ -16,23 +17,23 @@ async function addAdminRootToGroupId() {
   const adminRootEmail = ''
 
   const adminRootProperty = new DecryptedPropertyStub({
-    id: 'ADMIN_ROOT',
+    id: HcpTag.ADMIN_ROOT,
     typedValue: new DecryptedTypedValue({
       type: TypedValuesType.String,
-      stringValue: 'ADMIN_ROOT',
+      stringValue: HcpTag.ADMIN_ROOT,
     }),
   })
 
   const adminRootHcp = new HealthcareParty({
     id: hcpId,
-    name: 'ADMIN_ROOT',
-    firstName: 'ADMIN_ROOT',
-    lastName: 'ADMIN_ROOT',
+    name: HcpTag.ADMIN_ROOT,
+    firstName: HcpTag.ADMIN_ROOT,
+    lastName: HcpTag.ADMIN_ROOT,
     public: true,
-    tags: [new CodeStub({ id: 'ADMIN_ROOT', code: 'ADMIN_ROOT', type: 'ADMIN_ROOT', version: '1' })],
+    tags: [new CodeStub({ id: HcpTag.ADMIN_ROOT, code: HcpTag.ADMIN_ROOT, type: HcpTag.ADMIN_ROOT, version: '1' })],
     publicProperties: [adminRootProperty],
   })
-  const adminRootUser = new User({ id: userId, email: adminRootEmail, name: 'ADMIN_ROOT', healthcarePartyId: hcpId })
+  const adminRootUser = new User({ id: userId, email: adminRootEmail, name: HcpTag.ADMIN_ROOT, healthcarePartyId: hcpId })
 
   try {
     console.log(`Creating adminRoot in group ${concernedGroupId}...`)

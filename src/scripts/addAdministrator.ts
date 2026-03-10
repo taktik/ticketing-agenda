@@ -4,7 +4,8 @@ dotenv.config()
 import { AuthenticationMethod, CardinalBaseSdk, CodeStub, GroupScoped, HealthcareParty, User } from '@icure/cardinal-sdk'
 import axios from 'axios'
 import { v4 } from 'uuid'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_API_URL, ICURE_NIGHTLY_URL } from '../constants/index'
+import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_API_URL, ICURE_NIGHTLY_URL, SCRIPT_ROLE_ADMINISTRATOR, SCRIPT_ROLE_CITY_WORKER, SCRIPT_ROLE_HEAD_OF_SERVICE } from '../constants/index'
+import { HcpTag } from '../core/api/fetchType'
 
 async function addAdministratorToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
@@ -33,7 +34,7 @@ async function addAdministratorToGroupId() {
     lastName: adminLastName,
     parentId: adminRoot_ID,
     public: false,
-    tags: [new CodeStub({ id: 'ADMINISTRATOR', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })],
+    tags: [new CodeStub({ id: HcpTag.ADMINISTRATOR, code: HcpTag.ADMINISTRATOR, type: HcpTag.ADMINISTRATOR, version: '1' })],
   })
   const administratorUser = new User({ id: userId, email: adminEmail, name: adminName, healthcarePartyId: hcpId })
 
@@ -49,7 +50,7 @@ async function addAdministratorToGroupId() {
 
     const apiEndpoint = `${ICURE_API_URL}/rest/v2/user/${userId}/inGroup/${concernedGroupId}/roles/set`
     const requestBody = {
-      ids: ['ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR', 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:HEAD_OF_SERVICE', 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'],
+      ids: [SCRIPT_ROLE_ADMINISTRATOR, SCRIPT_ROLE_HEAD_OF_SERVICE, SCRIPT_ROLE_CITY_WORKER],
     }
     const requestHeaders = {
       Authorization: `Bearer ${JWT_TOKEN}`,
