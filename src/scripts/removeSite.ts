@@ -2,8 +2,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 import { AuthenticationMethod, CardinalBaseSdk, GroupScoped, HealthcarePartyFilters, UserFilters } from '@icure/cardinal-sdk'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL } from '../constants/index'
-import { loadFromIterator } from './utils'
+import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, loadFromIterator } from './utils'
 
 async function removeSiteOfGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))

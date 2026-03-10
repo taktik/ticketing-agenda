@@ -36,21 +36,6 @@ export const APPLICATION_ID = window.config.REACT_APP_APPLICATION_ID
 export const AZURE_CLIENT_ID = window.config.REACT_APP_AZURE_CLIENT_ID
 export const AZURE_TENANT_ID = window.config.REACT_APP_AZURE_TENANT_ID
 
-export const ADMIN_SOLUTIONS_AUTH_TOKEN = '' // get the token through icure dashboard
-export const ADMIN_SOLUTIONS_EMAIL = '' // get the email through icure dashboard
-export const EMAIL_TEMPLATE = '' // request the template id of the solution to icure
-
-// Script-only role IDs (browser equivalent: ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER)
-// Adapt as needed !
-export const SCRIPT_ROLE_ADMINISTRATOR = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:ADMINISTRATOR'
-export const SCRIPT_ROLE_HEAD_OF_SERVICE = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:HEAD_OF_SERVICE'
-export const SCRIPT_ROLE_CITY_WORKER = 'ic-omarech-61494b71-2d10-4279-8bbc-8f776f012000:CITY_WORKER'
-
-export enum RootHcpType {
-  SITE_ROOT = 'SITE_ROOT',
-  ADMIN_ROOT = 'ADMIN_ROOT',
-}
-
 export const ASSIGNMENT_PROPERTY_PREFIX = 'ASSIGNMENT|'
 export const assignmentPropertyId = (agendaId: string): string => `${ASSIGNMENT_PROPERTY_PREFIX}${agendaId}`
 

@@ -11,16 +11,14 @@ npx ts-node -P tsconfig.scripts.json src/scripts/<scriptName>.ts
 
 ## Credentials Setup (before running any script)
 
-Script constants are read from `src/constants/index.ts`. Two of them (`ADMIN_SOLUTIONS_EMAIL`, `ADMIN_SOLUTIONS_AUTH_TOKEN`) are hardcoded empty strings that **must be filled in manually** before running. Other constants (`DATABASE_ID`, `ICURE_NIGHTLY_URL`) use `window.config.*` which doesn't exist in Node.js — those need to be temporarily hardcoded too.
+Script constants are read from `src/scripts/utils.ts`. Fill in the empty strings before running, revert after.
 
 **Before running a script:**
-1. Open `src/constants/index.ts`
+1. Open `src/scripts/utils.ts`
 2. Fill in `ADMIN_SOLUTIONS_EMAIL` and `ADMIN_SOLUTIONS_AUTH_TOKEN` (get from iCure Cockpit dashboard)
-3. Temporarily replace `window.config.REACT_APP_DATABASE_ID` with the actual database ID string, and same for `ICURE_NIGHTLY_URL` if needed
+3. Fill in `ICURE_NIGHTLY_URL` and `DATABASE_ID`
 
-**After running:** revert `src/constants/index.ts` to avoid committing credentials.
-
-The `ADMIN_SOLUTIONS_AUTH_TOKEN` in `.env` as `REACT_APP_ADMIN_SOLUTION_AUTH_TOKEN` is for the browser app, not the scripts.
+**After running:** revert `src/scripts/utils.ts` to avoid committing credentials.
 
 ## Initialization Order
 

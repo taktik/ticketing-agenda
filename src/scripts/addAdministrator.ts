@@ -3,8 +3,7 @@ dotenv.config()
 import { AuthenticationMethod, CardinalBaseSdk, CodeStub, GroupScoped, HealthcareParty, User } from '@icure/cardinal-sdk'
 import axios from 'axios'
 import { v4 } from 'uuid'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_API_URL, ICURE_NIGHTLY_URL, SCRIPT_ROLE_ADMINISTRATOR, SCRIPT_ROLE_CITY_WORKER, SCRIPT_ROLE_HEAD_OF_SERVICE } from '../constants/index'
-import { HcpTag } from '../core/api/fetchType'
+import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_API_URL, ICURE_NIGHTLY_URL, SCRIPT_ROLE_ADMINISTRATOR, SCRIPT_ROLE_CITY_WORKER, SCRIPT_ROLE_HEAD_OF_SERVICE, HcpTag } from './utils'
 
 async function addAdministratorToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
@@ -19,12 +18,12 @@ async function addAdministratorToGroupId() {
 
   const hcpId = v4()
   const userId = v4()
-  const adminName = ''
-  const adminFirstName = ''
-  const adminLastName = ''
+  const adminName = 'Olivier M'
+  const adminFirstName = 'Olivier'
+  const adminLastName = 'Maréchal'
   const adminRoot_ID = ''
   const adminEmail = ''
-  const JWT_TOKEN = ''
+  const JWT_TOKEN = 'eyJhbGciOiJSUzI1NiJ9.eyJwcCI6IlFJYjFId0FBQUlhclZGVlZWYTFVVmF1cXFxQ0txcXFxaWdvQUNGQXBCUVBndjBNUkFnRUFHQT09IiwiaGgiOltdLCJhIjpbIlJPTEVfVVNFUiIsIlJPTEVfSENQIiwiUk9MRV9BRE1JTklTVFJBVE9SIl0sInIiOiJiNGJkYjI2Mi1kOWY3LTRmMjMtYWVlNC1kOGY2ZDM5YjI2N2IiLCJ1IjoiZjg1MDRlNTMtMWNlOS00MDIzLWE0OTAtZTVkMGEyZGNlMzFkIiwiZyI6ImljLW9tYXJlY2gtNjE0OTRiNzEtMmQxMC00Mjc5LThiYmMtOGY3NzZmMDEyMDAwIiwidGFjIjozMCwiZG9UcCI6IkhDUCIsImRvSWQiOiJjODhlZDJiNy1lYWZmLTQ5NWQtOTVmYS01Y2I0MmYxNWI5YjciLCJleHAiOjE3NzMxNTcwODEsInNhIjoxLCJtYWMiOjIwfQ.By6OmRBfUyz0C_FG5TQAR1l2nWM9TFgM56j88rj6-xlz77Y9o_cQhV0qNJQBtnoA95Sqo9K2LrjmNBeBt_kMM2W1aESnDcnRwrHSaPUbFIGw8pXbF_5mBgtriapE-qxQNkehvNV9tsDqIxMgxVWaJmMwlxoStNUkcHQK9N8-igfow_7EXHPo2J1oU-hloT9e3eJKeD6FNrFXuQ7_Zav-s71P-PVKUK--ARZltT117pRH8flcFtQv0hAnYFHY4xJbLKHGq-UW6bCpAWZATh5zB5pwtzIk9RBg-Wb3CGYsNAhIZj2V6jRqNkQv8EvlCh17X2ebER7o1PE3GpFtHtN4yA'
 
   const administratorHcp = new HealthcareParty({
     id: hcpId,

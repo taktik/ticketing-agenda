@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 import axios from 'axios'
-import { DATABASE_ID, EMAIL_TEMPLATE, SPEC_ID } from '../constants/index'
+import { DATABASE_ID, EMAIL_TEMPLATE, SPEC_ID } from './utils'
 async function addEmailProcess() {
   const JWT_TOKEN = ''
   const emailLanguage = ''
