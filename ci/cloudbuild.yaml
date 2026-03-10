@@ -32,5 +32,7 @@ availableSecrets:
 
 logsBucket: 'gs://taktik-build-logs'
 options:
+  pool:
+    name: "projects/taktik-dev/locations/europe-west1/workerPools/taktik-gcb-medium-pool"
   logging: GCS_ONLY
-timeout: 900s
+timeout: 1200s
