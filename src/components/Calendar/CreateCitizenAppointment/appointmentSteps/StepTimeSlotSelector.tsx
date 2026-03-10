@@ -15,8 +15,8 @@ export const StepTimeSlotSelector = () => {
 
   const { openNotification, notificationContextHolder } = useNotificationHelper()
 
-  const dateValue: Dayjs = Form.useWatch(['timeslot', 'date'], form)
-  const timeValue: Dayjs = Form.useWatch(['timeslot', 'time'], form)
+  const dateValue: Dayjs | undefined = Form.useWatch(['timeslot', 'date'], form)
+  const timeValue: Dayjs | undefined = Form.useWatch(['timeslot', 'time'], form)
 
   useEffect(() => {
     fetchAvailabilitiesForMonth(currentMonth).catch(() => {

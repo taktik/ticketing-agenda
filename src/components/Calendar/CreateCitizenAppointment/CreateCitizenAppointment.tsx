@@ -414,7 +414,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
       setCreationStatus(CreationStatus.SUCCESS)
     } catch (err) {
-      console.error(err)
       setCreationStatus(CreationStatus.FAILURE)
       openNotification('error', t('validation.unexpected_error'))
     } finally {

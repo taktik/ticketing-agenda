@@ -73,8 +73,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
           throw new Error(errorData.message || 'Backend request failed')
         }
 
-        const result = await response.json()
-        console.log('Backend success message:', result.message)
+        await response.json()
       } catch (error) {
         console.error('Failed to save key via fetch:', error)
       }

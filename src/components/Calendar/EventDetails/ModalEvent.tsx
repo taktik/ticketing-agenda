@@ -94,7 +94,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     const allTelecoms = patient?.addresses.flatMap((addr) => addr.telecoms || [])
     return {
       patientEmail: allTelecoms?.find((t) => t.telecomType === TelecomType.Email)?.telecomNumber,
-      patientPhoneNumber: allTelecoms?.find((t) => t.telecomType === TelecomType.Mobile)?.telecomNumber,
+      patientPhoneNumber: allTelecoms?.find((t) => t.telecomType === TelecomType.Mobile)?.telecomNumber ?? '',
     }
   }, [patient])
 
@@ -158,28 +158,26 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     try {
       const { details } = await form.validateFields()
 
-      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) {
+      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail) {
         throw new Error('Missing data for email payload')
       }
 
       await updateEvent(event, details, selectedDate, selectedTime, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       onClose()
-    } catch (error) {
-      console.error(error)
+    } catch {
       openNotification('error', t('validation.unexpected_error'), '')
     }
   }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t])
 
   const handleDelete = useCallback(async () => {
     try {
-      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail || !patientPhoneNumber) {
+      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail) {
         throw new Error('Missing data for email payload')
       }
       await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       setShowDeleteAppointmentModal(false)
       onClose()
-    } catch (error) {
-      console.error(error)
+    } catch {
       openNotification('error', t('validation.unexpected_error'), '')
     }
   }, [event, deleteEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, onClose, openNotification, t])

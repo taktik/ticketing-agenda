@@ -76,7 +76,7 @@ export const TimeSlotPickerUI = (props: TimeSlotPickerUIProps) => {
       setSelectedHour(hour)
       onTimeSelect(undefined)
     },
-    [setSelectedHour],
+    [onTimeSelect],
   )
 
   const cellRender = useCallback(
