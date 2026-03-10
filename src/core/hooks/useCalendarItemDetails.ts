@@ -1,5 +1,5 @@
 import { useGetAgendaQuery } from '../api/agendaApi'
-import { useGetCalendarItemQuery } from '../api/calendarItemApi'
+import { useGetCalendarItemPatientIdQuery, useGetCalendarItemQuery } from '../api/calendarItemApi'
 import { useGetCalendarItemTypeQuery } from '../api/calendarItemTypeApi'
 import { useGetEncryptedPatientByIdQuery } from '../api/patientApi'
 
@@ -21,11 +21,19 @@ export const useCalendarItemDetails = (calendarItemId?: string) => {
   })
 
   const {
+    data: patientId,
+    isLoading: patientIdLoading,
+    error: patientIdError,
+  } = useGetCalendarItemPatientIdQuery(calendarItem!, {
+    skip: !calendarItem,
+  })
+
+  const {
     data: patient,
     isLoading: patientLoading,
     error: patientError,
-  } = useGetEncryptedPatientByIdQuery(calendarItem?.patientId ?? '', {
-    skip: !calendarItem?.patientId,
+  } = useGetEncryptedPatientByIdQuery(patientId ?? '', {
+    skip: !patientId,
   })
 
   const {
@@ -41,7 +49,7 @@ export const useCalendarItemDetails = (calendarItemId?: string) => {
     calendarItemType,
     patient,
     agenda,
-    isLoading: calendarItemLoading || calendarItemTypeLoading || patientLoading || agendaLoading,
-    error: calendarItemError || calendarItemTypeError || patientError || agendaError,
+    isLoading: calendarItemLoading || calendarItemTypeLoading || patientLoading || agendaLoading || patientIdLoading,
+    error: calendarItemError || calendarItemTypeError || patientError || agendaError || patientIdError,
   }
 }

@@ -113,8 +113,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose, initialSiteId }: Mo
         const existingTypes = calendarItemTypesByAgendaId.get(service.id) || []
 
         if (existingTypes.length > 0) {
-          const ids = existingTypes.map((cit) => cit.id)
-          await deleteCalendarItemTypes(ids).unwrap()
+          await deleteCalendarItemTypes(existingTypes).unwrap()
         }
 
         await deleteAgenda(service).unwrap()

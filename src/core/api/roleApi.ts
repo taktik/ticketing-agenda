@@ -1,4 +1,4 @@
-import { CodeStub, ListOfIds, Role } from '@icure/cardinal-sdk'
+import { CodeStub, Role } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER } from '../../constants'
 import { cardinalApi } from '../services/auth.api'
@@ -16,11 +16,9 @@ export const roleTypeMap: { [key: string]: UserRole } = {
   CITY_WORKER: UserRole.CITY_WORKER,
 }
 
-export const cityWorkerRoles = new ListOfIds({ ids: [ROLE_CITY_WORKER] })
-export const headOfServiceRoles = new ListOfIds({ ids: [ROLE_CHIEF_OF_SERVICE] })
-export const adminRoles = new ListOfIds({
-  ids: [ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER],
-})
+export const cityWorkerRoles = [ROLE_CITY_WORKER]
+export const headOfServiceRoles = [ROLE_CHIEF_OF_SERVICE]
+export const adminRoles = [ROLE_ADMINISTRATOR, ROLE_CHIEF_OF_SERVICE, ROLE_CITY_WORKER]
 
 export const rolesMap = {
   [UserRole.ADMINISTRATOR]: adminRoles,

@@ -6,8 +6,7 @@ import { ReactElement, useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { v4 } from 'uuid'
-import { assignmentPropertyId, ASSIGNMENT_PROPERTY_PREFIX, RESERVED_WORDS } from '../../../../constants'
-import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
+import { ASSIGNMENT_PROPERTY_PREFIX, assignmentPropertyId, RESERVED_WORDS } from '../../../../constants'
 import {
   useCreateUpdateHealthcarePartyMutation,
   useDeleteHealthcarePartyMutation,
@@ -16,9 +15,10 @@ import {
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
 import { administratorTag, cityWorkerTag, headOfServiceTag, rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
-import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUsersByIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
+import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUserByHcpIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
 import { useHierarchyContext } from '../../../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../../../core/contexts/PermissionContext'
+import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
 import { AssignmentSelector } from '../../../AssignmentSelector/AssignmentSelector'
 import { createStringProperty } from '../../../common/helpers'
 import { ModalConfirmAction } from '../../../common/ModalConfirmAction'
@@ -60,10 +60,10 @@ export const ManagerUsers = (): ReactElement => {
   const [editingKey, setEditingKey] = useState<string>('')
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartyUsers()
-  const userIds = useMemo(() => hcps?.map((hcp) => hcp.userId).filter((id): id is string => !!id) ?? [], [hcps])
+  const hcpIds = useMemo(() => hcps?.map((hcp) => hcp.id).filter((id): id is string => !!id) ?? [], [hcps])
 
-  const { data: users, isLoading: isUsersLoading } = useGetUsersByIdsQuery(userIds, {
-    skip: userIds.length === 0,
+  const { data: users, isLoading: isUsersLoading } = useGetUserByHcpIdsQuery(hcpIds, {
+    skip: hcpIds.length === 0,
   })
 
   const [createUpdateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
@@ -179,7 +179,7 @@ export const ManagerUsers = (): ReactElement => {
   const addUser = useCallback(() => {
     const hcpId = v4()
     const userId = v4()
-    const newHcp = new HealthcareParty({ id: hcpId, userId: userId })
+    const newHcp = new HealthcareParty({ id: hcpId })
     const newUser = new User({ id: userId, healthcarePartyId: hcpId })
 
     const newUserRow: UserRow = {

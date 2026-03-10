@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
+import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL } from '../constants/index'
 
@@ -35,7 +35,6 @@ async function addSiteToGroupId() {
     lastName: siteName,
     parentId: siteRoot_ID,
     public: true,
-    userId: userId,
     tags: [new CodeStub({ id: 'SITE', code: 'SITE', type: 'SITE', version: '1' })],
     publicProperties: [siteProperty],
   })
@@ -49,19 +48,19 @@ async function addSiteToGroupId() {
       throw new Error('Missing mandatory args')
     }
 
-    const createdSite = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, siteHcp)
-    const createdUser = await sdk.user.createUserInGroup(concernedGroupId, siteUser)
+    const createdSite = await sdk.healthcareParty.inGroup.createHealthcareParty(new GroupScoped({ groupId: concernedGroupId, entity: siteHcp }))
+    const createdUser = await sdk.user.inGroup.createUser(new GroupScoped({ groupId: concernedGroupId, entity: siteUser }))
 
     console.log('✅ Successfully created new Site!')
     console.log(`Group ID: ${concernedGroupId}`)
     console.log('SITE HCP ---')
-    console.log(`ID: ${createdSite.id}`)
-    console.log(`Name: ${createdSite.name}`)
+    console.log(`ID: ${createdSite.entity.id}`)
+    console.log(`Name: ${createdSite.entity.name}`)
     console.log('SITE HCP ---')
     console.log('SITE USER ---')
-    console.log(`ID: ${createdUser.id}`)
-    console.log(`Name: ${createdUser.name}`)
-    console.log(`Email: ${createdUser.email}`)
+    console.log(`ID: ${createdUser.entity.id}`)
+    console.log(`Name: ${createdUser.entity.name}`)
+    console.log(`Email: ${createdUser.entity.email}`)
     console.log('SITE USER ---')
   } catch (error) {
     console.error('❌ An error occurred while creating the Site:', error)

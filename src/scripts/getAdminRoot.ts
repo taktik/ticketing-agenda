@@ -1,6 +1,7 @@
-import { AuthenticationMethod, CardinalBaseSdk } from '@icure/cardinal-sdk'
+import { AuthenticationMethod, CardinalBaseSdk, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import * as dotenv from 'dotenv'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, RootHcpType } from '../constants/index'
+import { loadFromIterator } from './utils'
 dotenv.config()
 
 async function getAdminRootFromGroupId() {
@@ -16,7 +17,8 @@ async function getAdminRootFromGroupId() {
       throw new Error('Missing mandatory args')
     }
 
-    const healthcareParties = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
+    const groupScopedHcps = await loadFromIterator(await sdk.healthcareParty.inGroup.filterHealthPartiesBy(concernedGroupId, HealthcarePartyFilters.all()), 1000)
+    const healthcareParties = groupScopedHcps.map((gs) => gs.entity)
     const adminRoots = healthcareParties.filter((hcp) => hcp.publicProperties?.some((prop) => prop.id === RootHcpType.ADMIN_ROOT))
     if (adminRoots.length !== 1) throw Error(`Error, expected unique result but found ${adminRoots.length}`)
     const result = adminRoots[0]

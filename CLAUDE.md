@@ -73,7 +73,6 @@ src/
       agendaApi.ts           # Services CRUD (Agenda objects)
       calendarItemApi.ts     # Appointments CRUD (CalendarItem objects)
       calendarItemTypeApi.ts # Procedures CRUD (CalendarItemType objects)
-      timeTableApi.ts        # Scheduling rules (TimeTable with ResourceGroupAllocationSchedule)
       healthcarePartyApi.ts  # Sites (HealthcareParty with tag SITE)
       userApi.ts             # User CRUD + queries
       patientApi.ts          # Patient/citizen CRUD

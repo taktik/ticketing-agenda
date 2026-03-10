@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, HealthcareParty, User } from '@icure/cardinal-sdk'
+import { AuthenticationMethod, CardinalBaseSdk, CodeStub, GroupScoped, HealthcareParty, User } from '@icure/cardinal-sdk'
 import axios from 'axios'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_API_URL, ICURE_NIGHTLY_URL } from '../constants/index'
@@ -33,7 +33,6 @@ async function addAdministratorToGroupId() {
     lastName: adminLastName,
     parentId: adminRoot_ID,
     public: false,
-    userId: userId,
     tags: [new CodeStub({ id: 'ADMINISTRATOR', code: 'ADMINISTRATOR', type: 'ADMINISTRATOR', version: '1' })],
   })
   const administratorUser = new User({ id: userId, email: adminEmail, name: adminName, healthcarePartyId: hcpId })
@@ -45,8 +44,8 @@ async function addAdministratorToGroupId() {
       throw new Error('Missing mandatory args')
     }
 
-    const createdAdministratorHcp = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, administratorHcp)
-    const createdAdministratorUser = await sdk.user.createUserInGroup(concernedGroupId, administratorUser)
+    const createdAdministratorHcp = await sdk.healthcareParty.inGroup.createHealthcareParty(new GroupScoped({ groupId: concernedGroupId, entity: administratorHcp }))
+    const createdAdministratorUser = await sdk.user.inGroup.createUser(new GroupScoped({ groupId: concernedGroupId, entity: administratorUser }))
 
     const apiEndpoint = `${ICURE_API_URL}/rest/v2/user/${userId}/inGroup/${concernedGroupId}/roles/set`
     const requestBody = {
@@ -62,13 +61,13 @@ async function addAdministratorToGroupId() {
     console.log('✅ Successfully created new Administrator!')
     console.log(`Group ID: ${concernedGroupId}`)
     console.log('Administrator HCP ---')
-    console.log(`ID: ${createdAdministratorHcp.id}`)
-    console.log(`Name: ${createdAdministratorHcp.name}`)
+    console.log(`ID: ${createdAdministratorHcp.entity.id}`)
+    console.log(`Name: ${createdAdministratorHcp.entity.name}`)
     console.log('Administrator HCP ---')
     console.log('Administrator USER ---')
-    console.log(`ID: ${createdAdministratorUser.id}`)
-    console.log(`Name: ${createdAdministratorUser.name}`)
-    console.log(`Email: ${createdAdministratorUser.email}`)
+    console.log(`ID: ${createdAdministratorUser.entity.id}`)
+    console.log(`Name: ${createdAdministratorUser.entity.name}`)
+    console.log(`Email: ${createdAdministratorUser.entity.email}`)
     console.log('Administrator USER ---')
   } catch (error) {
     console.error('❌ An error occurred while creating the Administrator:', error)

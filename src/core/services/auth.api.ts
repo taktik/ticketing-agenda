@@ -33,7 +33,6 @@ import { groupApiRtk } from '../api/groupApi'
 import { patientApiRtk } from '../api/patientApi'
 import { recoveryApiRtk } from '../api/recoveryApi'
 import { roleApiRtk } from '../api/roleApi'
-import { timeTableApiRtk } from '../api/timeTableApi'
 import { userApiRtk } from '../api/userApi'
 import { revertAll, setSavedCredentials } from '../app'
 
@@ -396,7 +395,6 @@ export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { 
   dispatch(dataOwnerApiRtk.util.resetApiState())
   dispatch(patientApiRtk.util.resetApiState())
   dispatch(roleApiRtk.util.resetApiState())
-  dispatch(timeTableApiRtk.util.resetApiState())
   dispatch(groupApiRtk.util.resetApiState())
   dispatch(revertAll())
   dispatch(resetCredentials())

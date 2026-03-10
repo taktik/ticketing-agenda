@@ -130,7 +130,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
             details: calendarItem.details,
             calendarItemTypeId: calendarItem.calendarItemTypeId,
             agendaId: calendarItem.agendaId,
-            patientId: calendarItem.patientId,
             isTimeOff: isTimeOff,
             rev: calendarItem.rev,
             qBetterConfirmationCode: qBetterConfirmationCode,

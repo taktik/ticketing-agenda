@@ -1,4 +1,4 @@
-import { AccessLevel, CalendarItemFilters, DecryptedCalendarItem, Patient, SecretIdUseOption } from '@icure/cardinal-sdk'
+import { AccessLevel, CalendarItem, CalendarItemFilters, DecryptedCalendarItem, EntityReferenceInGroup, Patient, SecretIdUseOption } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { dateToYYYYMMDD } from '../../components/common/helpers'
 import { cardinalApi } from '../services/auth.api'
@@ -44,6 +44,19 @@ export const calendarItemApiRtk = createApi({
           },
         ]
       },
+    }),
+    getCalendarItemPatientId: builder.query<string | undefined, CalendarItem>({
+      async queryFn(calendarItem, { getState }) {
+        const calendarApi = (await cardinalApi(getState))?.calendarItem
+        return guard([calendarApi], async (): Promise<string | undefined> => {
+          const entityReference = await calendarApi?.decryptPatientIdOf(calendarItem)
+          if (!entityReference) {
+            throw new Error('EntityReference does not exist')
+          }
+          return entityReference?.find((entity) => entity !== null)?.entityId
+        })
+      },
+      providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: 'all' }] : []),
     }),
     createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient | undefined; delegates: { adminRootId: string; siteRootId: string } }>({
       async queryFn({ calendarItem, patient, delegates }, { getState }) {
@@ -100,4 +113,11 @@ export const calendarItemApiRtk = createApi({
   }),
 })
 
-export const { useGetCalendarItemQuery, useCreateUpdateCalendarItemMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useDeleteCalendarItemByIdMutation, useUpdateCalendarItemMutation } = calendarItemApiRtk
+export const {
+  useGetCalendarItemQuery,
+  useCreateUpdateCalendarItemMutation,
+  useGetCalendarItemByAgendaIdAndPeriodQuery,
+  useDeleteCalendarItemByIdMutation,
+  useUpdateCalendarItemMutation,
+  useGetCalendarItemPatientIdQuery,
+} = calendarItemApiRtk

@@ -1,4 +1,4 @@
-import { CalendarItemType, DocIdentifier, ListOfIds } from '@icure/cardinal-sdk'
+import { CalendarItemType, StoredDocumentIdentifier } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { cardinalApi } from '../services/auth.api'
 import { baseQueryWithRetry, guard } from './utils'
@@ -73,12 +73,11 @@ export const calendarItemTypeApiRtk = createApi({
       },
       invalidatesTags: (result) => (result ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
     }),
-    deleteCalendarItemTypes: builder.mutation<DocIdentifier[] | undefined, string[]>({
-      async queryFn(ids, { getState }) {
-        const calendarItemTypeIds = new ListOfIds({ ids: ids })
+    deleteCalendarItemTypes: builder.mutation<StoredDocumentIdentifier[] | undefined, CalendarItemType[]>({
+      async queryFn(calendarItemTypes, { getState }) {
         const calendarItemTypeApi = (await cardinalApi(getState))?.calendarItemType
         return guard([calendarItemTypeApi], async () => {
-          const result = await calendarItemTypeApi?.deleteCalendarItemTypes(calendarItemTypeIds)
+          const result = await calendarItemTypeApi?.deleteCalendarItemTypes(calendarItemTypes)
           if (!result) {
             throw new Error("CalendarItemType can't be deleted")
           }

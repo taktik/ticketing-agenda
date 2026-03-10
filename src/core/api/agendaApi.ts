@@ -77,7 +77,7 @@ export const agendaApiRtk = createApi({
         return guard([agendaApi], async () => {
           const result = await agendaApi?.deleteAgendas(agendas)
           if (!result) {
-            throw new Error("Agenda can’t be deleted")
+            throw new Error('Agenda can’t be deleted')
           }
           return true
         })
@@ -90,7 +90,7 @@ export const agendaApiRtk = createApi({
         return guard([agendaApi], async () => {
           const result = await agendaApi?.deleteAgenda(agenda)
           if (!result) {
-            throw new Error("Agenda can’t be deleted")
+            throw new Error('Agenda can’t be deleted')
           }
           return result.id
         })

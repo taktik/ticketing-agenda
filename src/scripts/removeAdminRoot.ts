@@ -1,8 +1,9 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { AuthenticationMethod, CardinalBaseSdk } from '@icure/cardinal-sdk'
+import { AuthenticationMethod, CardinalBaseSdk, GroupScoped, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, RootHcpType } from '../constants/index'
+import { loadFromIterator } from './utils'
 
 async function removeAdminRootToGroupId() {
   const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
@@ -12,8 +13,8 @@ async function removeAdminRootToGroupId() {
 
   // Fetch the adminroots to delete
   // We fetch and delete an array of hcp/adminRoots. There should only be one, but if we added several by mistake we can remove them all at once.
-  const healthcareParties = await sdk.healthcareParty.getHealthcarePartiesInGroup(concernedGroupId)
-  const adminRoots = healthcareParties.filter((hcp) => hcp.publicProperties?.some((prop) => prop.id === RootHcpType.ADMIN_ROOT))
+  const groupScopedHcps = await loadFromIterator(await sdk.healthcareParty.inGroup.filterHealthPartiesBy(concernedGroupId, HealthcarePartyFilters.all()), 1000)
+  const adminRoots = groupScopedHcps.map((gs) => gs.entity).filter((hcp) => hcp.publicProperties?.some((prop) => prop.id === RootHcpType.ADMIN_ROOT))
 
   try {
     console.log(`Deleting adminRoot in group ${concernedGroupId}...`)
@@ -22,7 +23,7 @@ async function removeAdminRootToGroupId() {
       throw new Error('Missing mandatory args')
     }
 
-    const deletedHcps = await sdk.healthcareParty.deleteHealthcarePartiesInGroup(concernedGroupId, adminRoots)
+    const deletedHcps = await sdk.healthcareParty.inGroup.deleteHealthcareParties(adminRoots.map((hcp) => new GroupScoped({ groupId: concernedGroupId, entity: hcp })))
 
     console.log('✅ Successfully removed the adminRoot!')
     console.log('---')

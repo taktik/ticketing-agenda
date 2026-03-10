@@ -1,4 +1,4 @@
-import { ListOfIds, randomUuid, User, UserFilters } from '@icure/cardinal-sdk'
+import { randomUuid, User, UserFilters } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { cardinalApi } from '../services/auth.api'
 import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
@@ -25,15 +25,6 @@ export const userApiRtk = createApi({
       },
       providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
-    getUsers: builder.query<User[] | undefined, void>({
-      async queryFn(_, { getState }) {
-        const userApi = (await cardinalApi(getState))?.user
-        return guard([userApi], async (): Promise<User[]> => {
-          return await loadFromIterator(await userApi!.filterUsersBy(UserFilters.all()), 1000)
-        })
-      },
-      providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
-    }),
     getUsersByIds: builder.query<User[] | undefined, string[]>({
       async queryFn(ids, { getState }) {
         const userApi = (await cardinalApi(getState))?.user
@@ -42,6 +33,22 @@ export const userApiRtk = createApi({
         })
       },
       providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
+    }),
+    getUserByHcpIds: builder.query<User[] | undefined, string[]>({
+      async queryFn(hcpIds, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi, hcpIds.length > 0], async (): Promise<User[]> => {
+          const userPromises = hcpIds.map(async (id) => {
+            const filter = UserFilters.byHealthcarePartyId(id)
+            const iterator = await userApi!.filterUsersBy(filter)
+            const results = await loadFromIterator(iterator, 1000)
+            return results.find((u) => u !== null)
+          })
+          const allResults = await Promise.all(userPromises)
+          return allResults.filter((user): user is User => !!user)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
     getUserByEmail: builder.query<User | undefined, string>({
       async queryFn(email, { getState }) {
@@ -118,7 +125,7 @@ export const userApiRtk = createApi({
         })
       },
     }),
-    setUserRoles: builder.mutation<User | undefined, { userId: string; roleIds: ListOfIds }>({
+    setUserRoles: builder.mutation<User | undefined, { userId: string; roleIds: string[] }>({
       async queryFn(params, { getState }) {
         const { userId, roleIds } = params
         const userApi = (await cardinalApi(getState))?.user
@@ -150,9 +157,8 @@ export const userApiRtk = createApi({
 
 export const {
   useGetCurrentUserQuery,
-  useGetUsersQuery,
+  useGetUserByHcpIdsQuery,
   useGetUsersByIdsQuery,
-  useLazyGetUsersQuery,
   useGetUserByEmailQuery,
   useCreateUserMutation,
   useCreateUpdateUserMutation,

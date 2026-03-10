@@ -1,13 +1,11 @@
 import { HealthcareParty, User } from '@icure/cardinal-sdk'
-import { Button, Form, Input, Upload, UploadFile, UploadProps, message } from 'antd'
-import ImgCrop from 'antd-img-crop'
-import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { Button, Form, Input, message } from 'antd'
+import { ReactElement, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCreateUpdateHealthcarePartyMutation } from '../../../../core/api/healthcarePartyApi'
 import { useCreateUpdateUserMutation } from '../../../../core/api/userApi'
-import { getFileUploaderCommonProps, getImgSRC } from '../../../../helpers/fileToBase64'
-import { SpinLoader } from '../../../common/SpinLoader'
 import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
+import { SpinLoader } from '../../../common/SpinLoader'
 import './index.css'
 
 interface AccountSettingProps {
@@ -22,12 +20,6 @@ export const AccountSetting = ({ currentUserHcp, user }: AccountSettingProps): R
   const [updateUser, { isLoading: isCreateUpdateUserLoading }] = useCreateUpdateUserMutation()
   const [updateHcp, { isLoading: isHcpUpdatingLoading }] = useCreateUpdateHealthcarePartyMutation()
 
-  const userAvatarSrc = useMemo(() => getImgSRC(currentUserHcp?.picture), [currentUserHcp?.picture])
-
-  const [patientPictureAsBase64, setPatientPictureAsBase64] = useState<Int8Array | undefined>(undefined)
-  const [isPictureRemoved, setIsPictureRemoved] = useState(false)
-  const [fileList, setFileList] = useState<UploadFile[]>([])
-
   const { openNotification, notificationContextHolder } = useNotificationHelper()
   const [messageApi, messageContextHolder] = message.useMessage()
 
@@ -39,41 +31,16 @@ export const AccountSetting = ({ currentUserHcp, user }: AccountSettingProps): R
     })
   }, [currentUserHcp, user, form])
 
-  useEffect(() => {
-    if (userAvatarSrc) {
-      setFileList([
-        {
-          uid: '-1',
-          name: 'profile-picture.png',
-          status: 'done',
-          url: userAvatarSrc,
-        },
-      ])
-      setIsPictureRemoved(false)
-    } else {
-      setFileList([])
-    }
-  }, [userAvatarSrc])
-
   const handleSubmit = useCallback(
     async (values: { firstName: string; lastName: string; emailAddress: string }) => {
       try {
         const { firstName, lastName, emailAddress } = values
-
-        let finalPicture = currentUserHcp?.picture
-
-        if (patientPictureAsBase64) {
-          finalPicture = patientPictureAsBase64
-        } else if (isPictureRemoved) {
-          finalPicture = undefined
-        }
 
         await updateHcp(
           new HealthcareParty({
             ...currentUserHcp,
             firstName,
             lastName,
-            picture: finalPicture,
           }),
         ).unwrap()
 
@@ -86,43 +53,12 @@ export const AccountSetting = ({ currentUserHcp, user }: AccountSettingProps): R
         openNotification('error', t('notification.user_modify_failed'), t('notification.user_modify_error'))
       }
     },
-    [currentUserHcp, user, patientPictureAsBase64, isPictureRemoved, updateHcp, updateUser, messageApi, openNotification, t],
+    [currentUserHcp, user, updateHcp, updateUser, messageApi, openNotification, t],
   )
 
   const handleCancel = useCallback(() => {
     form.resetFields()
-    setIsPictureRemoved(false)
-    setPatientPictureAsBase64(undefined)
-    setFileList(userAvatarSrc ? [{ uid: '-1', name: 'image.png', status: 'done', url: userAvatarSrc }] : [])
-  }, [form, userAvatarSrc])
-
-  const handleFileChange = useCallback(({ fileList: newFileList }: { fileList: UploadFile[] }) => {
-    setFileList(newFileList)
-    if (newFileList.length > 0) {
-      setIsPictureRemoved(false)
-    }
-  }, [])
-
-  const handleFileRemove = useCallback(() => {
-    setFileList([])
-    setPatientPictureAsBase64(undefined)
-    setIsPictureRemoved(true)
-  }, [])
-
-  const onUploadData = useCallback((data: Int8Array | undefined) => {
-    setPatientPictureAsBase64(data)
-  }, [])
-
-  const fileUploaderProps: UploadProps = useMemo(
-    () => ({
-      listType: 'picture-card',
-      maxCount: 1,
-      fileList: fileList,
-      onChange: handleFileChange,
-      onRemove: handleFileRemove,
-    }),
-    [fileList, handleFileChange, handleFileRemove],
-  )
+  }, [form])
 
   const isLoading = isHcpUpdatingLoading || isCreateUpdateUserLoading
 
@@ -163,14 +99,6 @@ export const AccountSetting = ({ currentUserHcp, user }: AccountSettingProps): R
             ]}
           >
             <Input placeholder={t('content.email')} size="large" />
-          </Form.Item>
-
-          <Form.Item label={t('content.picture')}>
-            <ImgCrop rotationSlider modalClassName="PatientImgCrop">
-              <Upload {...fileUploaderProps} {...getFileUploaderCommonProps(onUploadData)}>
-                {fileList.length === 0 ? `+ ${t('content.upload')}` : `+ ${t('content.replace')}`}
-              </Upload>
-            </ImgCrop>
           </Form.Item>
         </div>
 

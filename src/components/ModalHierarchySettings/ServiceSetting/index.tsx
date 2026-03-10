@@ -348,7 +348,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
           mutationPromises.push(createUpdateProcedure(desiredProps).unwrap())
           addedCalendarItemTypesIds.push(desiredProps.id)
         } else if (!desiredProps && existingItem) {
-          mutationPromises.push(deleteProcedures([existingItem.id]).unwrap())
+          mutationPromises.push(deleteProcedures([existingItem]).unwrap())
           removedCalendarItemTypesIds.push(existingItem.id)
         }
       }
@@ -407,7 +407,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       }
 
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
-      await deleteProcedures(proceduresToDeleteIds).unwrap()
+      await deleteProcedures(proceduresToDelete).unwrap()
       await updateAgendaSchedules(procedureRowToBeDeleted.procedureId, service, [], proceduresToDeleteIds)
 
       showMessageFeedback('success', t('notification.procedure_deleted'))

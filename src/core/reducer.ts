@@ -12,7 +12,6 @@ import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { patientApiRtk } from './api/patientApi'
 import { recoveryApiRtk } from './api/recoveryApi'
 import { roleApiRtk } from './api/roleApi'
-import { timeTableApiRtk } from './api/timeTableApi'
 import { userApiRtk } from './api/userApi'
 import { app, persistConfig } from './app'
 import { cardinalApiRtk } from './services/auth.api'
@@ -23,7 +22,6 @@ export const appReducer = combineReducers({
   userApi: userApiRtk.reducer,
   patientApi: patientApiRtk.reducer,
   agendaApi: agendaApiRtk.reducer,
-  timeTableApi: timeTableApiRtk.reducer,
   calendarItemApi: calendarItemApiRtk.reducer,
   healthcarePartyApi: healthcarePartyApiRtk.reducer,
   calendarItemTypeApi: calendarItemTypeApiRtk.reducer,

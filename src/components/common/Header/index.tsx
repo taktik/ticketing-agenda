@@ -1,7 +1,7 @@
 import Icon from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { Dropdown } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { arrowDownIcn, logOutIcn, manageUserIcn, userIcn } from '../../../assets/CustomIcons'
@@ -10,7 +10,6 @@ import { useGetCurrentUserQuery } from '../../../core/api/userApi'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { useAppDispatch } from '../../../core/hooks'
 import { logout } from '../../../core/services/auth.api'
-import { getImgSRC } from '../../../helpers/fileToBase64'
 import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
 import './index.css'
@@ -23,10 +22,6 @@ export const Header = () => {
 
   const { currentDataOwner: currentUserHcp, isLoading: isContextLoading } = usePermissionContext()
   const { data: currentUser } = useGetCurrentUserQuery(undefined, { skip: !currentUserHcp })
-
-  const userAvatarSrc = useMemo(() => {
-    return getImgSRC(currentUserHcp?.picture)
-  }, [currentUserHcp?.picture])
 
   const handleLogout = useCallback(() => {
     dispatch(logout())
@@ -81,15 +76,9 @@ export const Header = () => {
                 <div className="header__userDropdown__heading">
                   <p className="header__userDropdown__heading__name">{`${currentUserHcp.firstName ?? ''} ${currentUserHcp.lastName ?? ''}`}</p>
                 </div>
-                {userAvatarSrc ? (
-                  <div className="header__userDropdown__picture">
-                    <img src={userAvatarSrc} alt={currentUser?.name ?? 'User'} />
-                  </div>
-                ) : (
-                  <div className="header__userDropdown__userAvatarPlaceholder">
-                    <Icon component={userIcn} />
-                  </div>
-                )}
+                <div className="header__userDropdown__userAvatarPlaceholder">
+                  <Icon component={userIcn} />
+                </div>
                 <div className="header__userDropdown__arrow">
                   <Icon component={arrowDownIcn} />
                 </div>

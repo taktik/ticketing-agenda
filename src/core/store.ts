@@ -12,7 +12,6 @@ import { healthcarePartyApiRtk } from './api/healthcarePartyApi'
 import { patientApiRtk } from './api/patientApi'
 import { recoveryApiRtk } from './api/recoveryApi'
 import { roleApiRtk } from './api/roleApi'
-import { timeTableApiRtk } from './api/timeTableApi'
 import { userApiRtk } from './api/userApi'
 import { persistedReducer } from './reducer'
 
@@ -23,7 +22,6 @@ export const store = configureStore({
       userApiRtk.middleware,
       patientApiRtk.middleware,
       agendaApiRtk.middleware,
-      timeTableApiRtk.middleware,
       calendarItemApiRtk.middleware,
       healthcarePartyApiRtk.middleware,
       calendarItemTypeApiRtk.middleware,

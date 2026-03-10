@@ -27,7 +27,6 @@ export interface CalendarEventUpdateForm {
 interface EventExtendedProps {
   calendarItemTypeId?: string
   agendaId?: string
-  patientId?: string
   isTimeOff?: boolean
   rev?: string
   details?: string

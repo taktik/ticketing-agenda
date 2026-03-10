@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
+import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL } from '../constants/index'
 
@@ -29,7 +29,6 @@ async function addAdminRootToGroupId() {
     firstName: 'ADMIN_ROOT',
     lastName: 'ADMIN_ROOT',
     public: true,
-    userId: userId,
     tags: [new CodeStub({ id: 'ADMIN_ROOT', code: 'ADMIN_ROOT', type: 'ADMIN_ROOT', version: '1' })],
     publicProperties: [adminRootProperty],
   })
@@ -41,13 +40,13 @@ async function addAdminRootToGroupId() {
     if (!hcpId || !userId || !adminRootEmail || !concernedGroupId) {
       throw new Error('Missing mandatory args')
     }
-    const createdAdminRootHcp = await sdk.healthcareParty.createHealthcarePartyInGroup(concernedGroupId, adminRootHcp)
-    const createdAdminRootUser = await sdk.user.createUserInGroup(concernedGroupId, adminRootUser)
+    const createdAdminRootHcp = await sdk.healthcareParty.inGroup.createHealthcareParty(new GroupScoped({ groupId: concernedGroupId, entity: adminRootHcp }))
+    await sdk.user.inGroup.createUser(new GroupScoped({ groupId: concernedGroupId, entity: adminRootUser }))
 
     console.log('✅ Successfully created new adminRoot!')
     console.log('---')
-    console.log(`ID: ${createdAdminRootHcp.id}`)
-    console.log(`Name: ${createdAdminRootHcp.name}`)
+    console.log(`ID: ${createdAdminRootHcp.entity.id}`)
+    console.log(`Name: ${createdAdminRootHcp.entity.name}`)
     console.log(`Group ID: ${concernedGroupId}`)
     console.log('---')
   } catch (error) {

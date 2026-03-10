@@ -227,7 +227,6 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
         const newEvent = new DecryptedCalendarItem({
           id: v4(),
-          patientId: citizenPatient.id,
           title: draft.calendarItemType.name,
           calendarItemTypeId: draft.calendarItemType.id,
           duration: draft.duration,
