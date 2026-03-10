@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
-
 import { AuthenticationMethod, CardinalBaseSdk, CodeStub, GroupScoped, HealthcareParty, User } from '@icure/cardinal-sdk'
 import axios from 'axios'
 import { v4 } from 'uuid'
