@@ -1,6 +1,9 @@
+import { PRIMARY_COLOR } from '../../constants'
+const PRIMARY_COLOR_ALPHA = `${PRIMARY_COLOR}1a`
+
 export const ANTD_NEW_THEME = {
   token: {
-    colorPrimary: '#e30613',
+    colorPrimary: PRIMARY_COLOR,
   },
   components: {
     Button: {
@@ -11,16 +14,16 @@ export const ANTD_NEW_THEME = {
       primaryShadow: 'none',
       paddingInline: 16,
       contentFontSizeLG: 14,
-      colorPrimary: '#e30613',
+      colorPrimary: PRIMARY_COLOR,
     },
     DatePicker: {
       fontSizeLG: 13,
       fontSize: 13,
       borderRadius: 0,
-      hoverBorderColor: '#e30613',
-      colorPrimary: '#e30613',
-      activeBorderColor: '#e30613',
-      controlOutline: '#e306131a',
+      hoverBorderColor: PRIMARY_COLOR,
+      colorPrimary: PRIMARY_COLOR,
+      activeBorderColor: PRIMARY_COLOR,
+      controlOutline: PRIMARY_COLOR_ALPHA,
     },
     Form: {
       itemMarginBottom: 0,
@@ -29,8 +32,8 @@ export const ANTD_NEW_THEME = {
       colorBgSpotlight: '#1F2C4E',
     },
     Menu: {
-      itemHoverBg: '#e306131a',
-      itemSelectedBg: '#e30613',
+      itemHoverBg: PRIMARY_COLOR_ALPHA,
+      itemSelectedBg: PRIMARY_COLOR,
       itemSelectedColor: '#ffffff',
       itemMarginBlock: '0.75rem',
       itemPaddingInline: 0,
@@ -40,7 +43,7 @@ export const ANTD_NEW_THEME = {
       itemBorderRadius: 0,
     },
     Calendar: {
-      colorPrimary: '#e30613',
+      colorPrimary: PRIMARY_COLOR,
     },
     Modal: {
       margin: 0,
@@ -49,10 +52,10 @@ export const ANTD_NEW_THEME = {
       fontSizeLG: 13,
       fontSize: 13,
       borderRadius: 0,
-      hoverBorderColor: '#e30613',
-      colorPrimary: '#e30613',
-      activeBorderColor: '#e30613',
-      controlOutline: '#e306131a',
+      hoverBorderColor: PRIMARY_COLOR,
+      colorPrimary: PRIMARY_COLOR,
+      activeBorderColor: PRIMARY_COLOR,
+      controlOutline: PRIMARY_COLOR_ALPHA,
     },
     InputNumber: {
       fontSizeLG: 13,
@@ -64,12 +67,12 @@ export const ANTD_NEW_THEME = {
     Select: {
       fontSizeLG: 13,
       fontSize: 13,
-      hoverBorderColor: '#e30613',
-      optionSelectedBg: '#e306131a',
-      controlOutline: '#e306131a',
-      optionSelectedColor: '#e30613',
-      activeBorderColor: '#e30613',
-      colorPrimary: '#e30613',
+      hoverBorderColor: PRIMARY_COLOR,
+      optionSelectedBg: PRIMARY_COLOR_ALPHA,
+      controlOutline: PRIMARY_COLOR_ALPHA,
+      optionSelectedColor: PRIMARY_COLOR,
+      activeBorderColor: PRIMARY_COLOR,
+      colorPrimary: PRIMARY_COLOR,
     },
     Popconfirm: {
       colorWarning: '#EB3437',

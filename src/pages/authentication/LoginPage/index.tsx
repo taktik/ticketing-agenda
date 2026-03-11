@@ -4,12 +4,15 @@ import { createSelector } from '@reduxjs/toolkit'
 import { Card, Spin } from 'antd'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import logo from '../../../assets/mouscronLogo.png'
+import defaultLogo from '../../../assets/mouscronLogo.png'
+import { LOGO_URL } from '../../../constants'
 import { useAppSelector } from '../../../core/hooks'
 import { CardinalApiState } from '../../../core/services/auth.api'
 import AzureLogin from '../AzureLogin'
 import EmailLogin from '../EmailLogin'
 import { SpinLoader } from '../../../components/common/SpinLoader'
+
+const logoSrc = LOGO_URL ?? defaultLogo
 
 const selectRestApiData = (state: { cardinalApi: CardinalApiState }) => state.cardinalApi
 
@@ -33,7 +36,7 @@ export default function LoginPage() {
       {isLoading && <SpinLoader />}
       <div className="auth-page">
         <div className="auth-page__logo">
-          <img src={logo} alt="Mouscron logo" />
+          <img src={logoSrc} alt="logo" />
         </div>
         <Card className="login-card">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

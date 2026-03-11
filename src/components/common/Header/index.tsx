@@ -5,7 +5,8 @@ import { useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { arrowDownIcn, logOutIcn, manageUserIcn, userIcn } from '../../../assets/CustomIcons'
-import mouscronLogo from '../../../assets/mouscronLogo.png'
+import defaultLogo from '../../../assets/mouscronLogo.png'
+import { LOGO_URL } from '../../../constants'
 import { useGetCurrentUserQuery } from '../../../core/api/userApi'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { useAppDispatch } from '../../../core/hooks'
@@ -13,6 +14,8 @@ import { logout } from '../../../core/services/auth.api'
 import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
 import './index.css'
+
+const logoSrc = LOGO_URL ?? defaultLogo
 
 export const Header = () => {
   const { t } = useTranslation()
@@ -67,7 +70,7 @@ export const Header = () => {
     <>
       <div className="header">
         <div className="header__logoHolder">
-          <img src={mouscronLogo} alt="mouscron logo" />
+          <img src={logoSrc} alt="logo" />
         </div>
         <div className="right-side">
           {!isContextLoading && currentUserHcp && (
