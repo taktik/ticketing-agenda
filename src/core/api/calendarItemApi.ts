@@ -61,7 +61,9 @@ export const calendarItemApiRtk = createApi({
     createUpdateCalendarItem: builder.mutation<DecryptedCalendarItem | undefined, { calendarItem: DecryptedCalendarItem; patient: Patient | undefined; delegates: { adminRootId: string; siteRootId: string } }>({
       async queryFn({ calendarItem, patient, delegates }, { getState }) {
         const { adminRootId, siteRootId } = delegates
-        const calendarApi = (await cardinalApi(getState))?.calendarItem
+        const api = await cardinalApi(getState)
+        const calendarApi = api?.calendarItem
+        const patientApi = api?.patient
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
           const delegatesAcessLevel = {
             [siteRootId]: AccessLevel.Write,
@@ -70,9 +72,21 @@ export const calendarItemApiRtk = createApi({
           if (patient?.id) {
             delegatesAcessLevel[patient.id] = AccessLevel.Write
           }
+          let secretId: SecretIdUseOption = SecretIdUseOption.UseNone
+          if (!calendarItem.rev && patient && patientApi) {
+            try {
+              const secretIds = await patientApi.getSecretIdsOf(patient)
+              const firstSecretId = Object.keys(secretIds)[0]
+              if (firstSecretId) {
+                secretId = new SecretIdUseOption.Use({ secretIds: [firstSecretId] })
+              }
+            } catch {
+              // Fall back to UseNone if secret IDs cannot be retrieved
+            }
+          }
           const updatedCalendarItem = !!calendarItem.rev
             ? await calendarApi?.modifyCalendarItem(calendarItem)
-            : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient, { delegates: delegatesAcessLevel, secretId: SecretIdUseOption.UseNone }))
+            : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient, { delegates: delegatesAcessLevel, secretId }))
           if (!updatedCalendarItem) {
             throw new Error('CalendarItem update failed')
           }

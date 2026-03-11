@@ -261,13 +261,15 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       })
 
       const results = await Promise.allSettled(creationPromises)
+      const successes = results.filter((r): r is PromiseFulfilledResult<DecryptedCalendarItem> => r.status === 'fulfilled' && !!r.value).map((r) => r.value)
       const failures = results.filter((r) => r.status === 'rejected')
       if (failures.length > 0) {
+        await Promise.allSettled(successes.map((s) => deleteEvent({ calendarItemId: s.id, rev: s.rev ?? '' }).unwrap()))
         throw new Error(`Failed to create ${failures.length} of ${drafts.length} appointment(s)`)
       }
-      return results.filter((r): r is PromiseFulfilledResult<DecryptedCalendarItem> => r.status === 'fulfilled' && !!r.value).map((r) => r.value)
+      return successes
     },
-    [drafts, adminRoot, siteRoot, createUpdateEvent, timeSlot, availableProcedures],
+    [drafts, adminRoot, siteRoot, createUpdateEvent, timeSlot, availableProcedures, deleteEvent],
   )
 
   const sendEmails = useCallback(

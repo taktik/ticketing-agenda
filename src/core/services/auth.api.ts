@@ -225,6 +225,7 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
 
     const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', account.idToken), {
       encryptedFields: { patient: [], calendarItem: [] },
+      lenientJson: true,
     })
 
     const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
@@ -237,7 +238,7 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
 
     apiCache[`${user.groupId}/${user.id}`] = api
 
-    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
+    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL, { lenientJson: true })
     anonymousApiCache['anonymous'] = anonymousApi
 
     dispatch(
@@ -286,6 +287,7 @@ export const startEmailAuthentication = createAsyncThunk(
         { firstName, lastName },
         {
           encryptedFields: { patient: [], calendarItem: [] },
+          lenientJson: true,
         },
       )
 
@@ -327,7 +329,7 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
 
     apiCache[`${user.groupId}/${user.id}`] = api
 
-    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
+    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL, { lenientJson: true })
     anonymousApiCache['anonymous'] = anonymousApi
 
     dispatch(
@@ -366,11 +368,12 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
     const api = await CardinalSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
       useHierarchicalDataOwners: true,
       encryptedFields: { patient: [], calendarItem: [] },
+      lenientJson: true,
     })
     const user = await api.user.getCurrentUser()
     apiCache[`${user.groupId}/${user.id}`] = api
 
-    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL)
+    const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL, { lenientJson: true })
     anonymousApiCache['anonymous'] = anonymousApi
 
     return new User(user)

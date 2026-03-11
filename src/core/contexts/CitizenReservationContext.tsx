@@ -287,19 +287,15 @@ export const CitizenReservationProvider: React.FC<{ children: React.ReactNode }>
 
   const handleSetTimeSlot = useCallback((slot: TimeSlot | undefined) => {
     setTimeSlot(slot)
-
     if (!slot) {
       setDrafts((prev) => prev.map((d) => ({ ...d, calculatedStartTime: undefined, calculatedEndTime: undefined })))
       return
     }
-
     let currentStart = slot.date.hour(slot.time.hour()).minute(slot.time.minute())
-
     setDrafts((prev) =>
       prev.map((d) => {
         const duration = d.duration || 15
         const end = currentStart.add(duration, 'minutes')
-
         const updated = {
           ...d,
           calculatedStartTime: currentStart,
