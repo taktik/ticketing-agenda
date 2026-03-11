@@ -1,50 +1,47 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, HcpTag } from './utils'
+import { DATABASE_ID, HcpTag, initSdk } from './utils'
 
 async function addSiteRootToGroupId() {
-  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!), { lenientJson: true })
+  const concernedGroupId = DATABASE_ID
 
-  // Modify this to the correct databaseId
-  const concernedGroupId = DATABASE_ID!
-
-  // - You can get the AdminRoot ID by either
-  //    1) Running the addAdminRoot script and we console.log the resulting object, giving you the id
-  //    2) Running the getAdminRoot script, which console.logs the AdminRoot object
-  const hcpId = v4()
-  const userId = v4()
+  // Modify these before running
+  // You can get the AdminRoot ID by running getAdminRoot.ts or from the addAdminRoot.ts output
   const siteRootEmail = ''
   const adminRoot_ID = ''
 
-  const siteRootProperty = new DecryptedPropertyStub({
-    id: HcpTag.SITE_ROOT,
-    typedValue: new DecryptedTypedValue({
-      type: TypedValuesType.String,
-      stringValue: HcpTag.SITE_ROOT,
-    }),
-  })
-
-  const siteRootHcp = new HealthcareParty({
-    id: hcpId,
-    name: HcpTag.SITE_ROOT,
-    firstName: HcpTag.SITE_ROOT,
-    lastName: HcpTag.SITE_ROOT,
-    public: true,
-    parentId: adminRoot_ID,
-    tags: [new CodeStub({ id: HcpTag.SITE_ROOT, code: HcpTag.SITE_ROOT, type: HcpTag.SITE_ROOT, version: '1' })],
-    publicProperties: [siteRootProperty],
-  })
-  const siteRootUser = new User({ id: userId, email: siteRootEmail, name: HcpTag.SITE_ROOT, healthcarePartyId: hcpId })
-
   try {
+    if (!siteRootEmail || !adminRoot_ID || !concernedGroupId) {
+      throw new Error('Missing mandatory args: fill in siteRootEmail, adminRoot_ID, and DATABASE_ID')
+    }
+
     console.log(`Creating siteRoot in group ${concernedGroupId}...`)
 
-    if (!hcpId || !userId || !siteRootEmail || !adminRoot_ID || !concernedGroupId) {
-      throw new Error('Missing mandatory args')
-    }
+    const sdk = await initSdk()
+
+    const hcpId = v4()
+    const userId = v4()
+
+    const siteRootHcp = new HealthcareParty({
+      id: hcpId,
+      name: HcpTag.SITE_ROOT,
+      firstName: HcpTag.SITE_ROOT,
+      lastName: HcpTag.SITE_ROOT,
+      public: true,
+      parentId: adminRoot_ID,
+      tags: [new CodeStub({ id: HcpTag.SITE_ROOT, code: HcpTag.SITE_ROOT, type: HcpTag.SITE_ROOT, version: '1' })],
+      publicProperties: [
+        new DecryptedPropertyStub({
+          id: HcpTag.SITE_ROOT,
+          typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: HcpTag.SITE_ROOT }),
+        }),
+      ],
+    })
+    const siteRootUser = new User({ id: userId, email: siteRootEmail, name: HcpTag.SITE_ROOT, healthcarePartyId: hcpId })
+
     const createdHcp = await sdk.healthcareParty.inGroup.createHealthcareParty(new GroupScoped({ groupId: concernedGroupId, entity: siteRootHcp }))
     await sdk.user.inGroup.createUser(new GroupScoped({ groupId: concernedGroupId, entity: siteRootUser }))
 

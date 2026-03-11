@@ -39,10 +39,14 @@ export const userApiRtk = createApi({
         const userApi = (await cardinalApi(getState))?.user
         return guard([userApi, hcpIds.length > 0], async (): Promise<User[]> => {
           const userPromises = hcpIds.map(async (id) => {
-            const filter = UserFilters.byHealthcarePartyId(id)
-            const iterator = await userApi!.filterUsersBy(filter)
-            const results = await loadFromIterator(iterator, 1000)
-            return results.find((u) => u !== null)
+            try {
+              const filter = UserFilters.byHealthcarePartyId(id)
+              const iterator = await userApi!.filterUsersBy(filter)
+              const results = await loadFromIterator(iterator, 1000)
+              return results.find((u) => u !== null) ?? null
+            } catch {
+              return null
+            }
           })
           const allResults = await Promise.all(userPromises)
           return allResults.filter((user): user is User => !!user)

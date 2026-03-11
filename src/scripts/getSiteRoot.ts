@@ -1,21 +1,20 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { AuthenticationMethod, CardinalBaseSdk, HealthcarePartyFilters } from '@icure/cardinal-sdk'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, HcpTag, loadFromIterator } from './utils'
+import { HealthcarePartyFilters } from '@icure/cardinal-sdk'
+import { DATABASE_ID, HcpTag, initSdk, loadFromIterator } from './utils'
 
 async function getSiteRootFromGroupId() {
-  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!), { lenientJson: true })
-
-  // Modify this to the correct databaseId
-  const concernedGroupId = DATABASE_ID!
+  const concernedGroupId = DATABASE_ID
 
   try {
+    if (!concernedGroupId) {
+      throw new Error('Missing mandatory args: fill in DATABASE_ID')
+    }
+
     console.log(`Fetching SiteRoot in group ${concernedGroupId}...`)
 
-    if (!concernedGroupId) {
-      throw new Error('Missing mandatory args')
-    }
+    const sdk = await initSdk()
 
     const groupScopedHcps = await loadFromIterator(await sdk.healthcareParty.inGroup.filterHealthPartiesBy(concernedGroupId, HealthcarePartyFilters.byTag(HcpTag.SITE_ROOT, { tagCode: HcpTag.SITE_ROOT })), 1000)
     const siteRoots = groupScopedHcps.map((gs) => gs.entity)

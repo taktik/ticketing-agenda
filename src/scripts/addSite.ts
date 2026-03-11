@@ -1,67 +1,59 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
+
+import { CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, HcpTag } from './utils'
+import { DATABASE_ID, HcpTag, initSdk } from './utils'
 
 async function addSiteToGroupId() {
-  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!), { lenientJson: true })
+  const concernedGroupId = DATABASE_ID
 
-  // Modify this to the correct databaseId
-  const concernedGroupId = DATABASE_ID!
-
-  // - You can get the siteRoot ID by either
-  //     1) Running the addSiteRoot script and we console.log the resulting object, giving you the id. Max one SiteRoot !
-  //     2) Running the getSiteRoot script, which console.logs the siteRoot object
-
-  const hcpId = v4()
-  const userId = v4()
+  // Modify these before running
+  // You can get the SiteRoot ID by running getSiteRoot.ts or from the addSiteRoot.ts output
   const siteName = ''
   const siteRoot_ID = ''
   const siteEmail = ''
 
-  const siteProperty = new DecryptedPropertyStub({
-    id: HcpTag.SITE,
-    typedValue: new DecryptedTypedValue({
-      type: TypedValuesType.String,
-      stringValue: HcpTag.SITE,
-    }),
-  })
-
-  const siteHcp = new HealthcareParty({
-    id: hcpId,
-    name: siteName,
-    firstName: siteName,
-    lastName: siteName,
-    parentId: siteRoot_ID,
-    public: true,
-    tags: [new CodeStub({ id: HcpTag.SITE, code: HcpTag.SITE, type: HcpTag.SITE, version: '1' })],
-    publicProperties: [siteProperty],
-  })
-
-  const siteUser = new User({ id: userId, email: siteEmail, name: siteName, healthcarePartyId: hcpId })
-
   try {
-    console.log(`Creating Site "${siteHcp.name}" in group ${concernedGroupId}...`)
-
-    if (!hcpId || !userId || !siteName || !siteEmail || !siteRoot_ID || !concernedGroupId) {
-      throw new Error('Missing mandatory args')
+    if (!siteName || !siteRoot_ID || !siteEmail || !concernedGroupId) {
+      throw new Error('Missing mandatory args: fill in siteName, siteRoot_ID, siteEmail, and DATABASE_ID')
     }
+
+    console.log(`Creating Site "${siteName}" in group ${concernedGroupId}...`)
+
+    const sdk = await initSdk()
+
+    const hcpId = v4()
+    const userId = v4()
+
+    const siteHcp = new HealthcareParty({
+      id: hcpId,
+      name: siteName,
+      firstName: siteName,
+      lastName: siteName,
+      parentId: siteRoot_ID,
+      public: true,
+      tags: [new CodeStub({ id: HcpTag.SITE, code: HcpTag.SITE, type: HcpTag.SITE, version: '1' })],
+      publicProperties: [
+        new DecryptedPropertyStub({
+          id: HcpTag.SITE,
+          typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: HcpTag.SITE }),
+        }),
+      ],
+    })
+    const siteUser = new User({ id: userId, email: siteEmail, name: siteName, healthcarePartyId: hcpId })
 
     const createdSite = await sdk.healthcareParty.inGroup.createHealthcareParty(new GroupScoped({ groupId: concernedGroupId, entity: siteHcp }))
     const createdUser = await sdk.user.inGroup.createUser(new GroupScoped({ groupId: concernedGroupId, entity: siteUser }))
 
     console.log('✅ Successfully created new Site!')
+    console.log('---')
+    console.log(`Site ID: ${createdSite.entity.id}`)
+    console.log(`Site Name: ${createdSite.entity.name}`)
+    console.log(`User ID: ${createdUser.entity.id}`)
+    console.log(`User Email: ${createdUser.entity.email}`)
     console.log(`Group ID: ${concernedGroupId}`)
-    console.log('SITE HCP ---')
-    console.log(`ID: ${createdSite.entity.id}`)
-    console.log(`Name: ${createdSite.entity.name}`)
-    console.log('SITE HCP ---')
-    console.log('SITE USER ---')
-    console.log(`ID: ${createdUser.entity.id}`)
-    console.log(`Name: ${createdUser.entity.name}`)
-    console.log(`Email: ${createdUser.entity.email}`)
-    console.log('SITE USER ---')
+    console.log('---')
   } catch (error) {
     console.error('❌ An error occurred while creating the Site:', error)
   }

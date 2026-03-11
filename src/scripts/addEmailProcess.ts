@@ -3,6 +3,7 @@ dotenv.config()
 
 import axios from 'axios'
 import { DATABASE_ID, EMAIL_TEMPLATE, SPEC_ID } from './utils'
+
 async function addEmailProcess() {
   const JWT_TOKEN = ''
   const emailLanguage = ''
@@ -11,7 +12,7 @@ async function addEmailProcess() {
 
   try {
     if (!JWT_TOKEN || !emailLanguage || !emailSubject || !emailBody) {
-      throw new Error('Missing mandatory args')
+      throw new Error('Missing mandatory args: fill in JWT_TOKEN, emailLanguage, emailSubject, and emailBody')
     }
 
     const apiEndpoint = `https://msg-gw.icure.cloud/${SPEC_ID}/process/template/${EMAIL_TEMPLATE}/${DATABASE_ID}?language=${emailLanguage}`
@@ -24,7 +25,7 @@ async function addEmailProcess() {
       'Content-Type': 'application/json',
     }
 
-    console.log(`📡 Making POST request to ${apiEndpoint}...`)
+    console.log(`Creating email process for language "${emailLanguage}"...`)
     const response = await axios.post(apiEndpoint, requestBody, { headers: requestHeaders })
 
     const processId = response.data.id
@@ -33,8 +34,10 @@ async function addEmailProcess() {
     }
 
     console.log('✅ Successfully created email process!')
-    console.log(`➡️  Process ID: ${processId}`)
-    console.log('You can now store this ID to use in your frontend.')
+    console.log('---')
+    console.log(`Process ID: ${processId}`)
+    console.log(`Language: ${emailLanguage}`)
+    console.log('---')
   } catch (error) {
     console.error('❌ An error occurred while creating the email process:', error)
   }

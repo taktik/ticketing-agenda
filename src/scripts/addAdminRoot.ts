@@ -1,45 +1,44 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { AuthenticationMethod, CardinalBaseSdk, CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
+import { CodeStub, DecryptedPropertyStub, DecryptedTypedValue, GroupScoped, HealthcareParty, TypedValuesType, User } from '@icure/cardinal-sdk'
 import { v4 } from 'uuid'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, HcpTag } from './utils'
+import { DATABASE_ID, HcpTag, initSdk } from './utils'
 
 async function addAdminRootToGroupId() {
-  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!), { lenientJson: true })
+  const concernedGroupId = DATABASE_ID
 
-  // Modify this to the correct databaseId
-  const concernedGroupId = DATABASE_ID!
-
-  const hcpId = v4()
-  const userId = v4()
+  // Modify this to the correct email
   const adminRootEmail = ''
 
-  const adminRootProperty = new DecryptedPropertyStub({
-    id: HcpTag.ADMIN_ROOT,
-    typedValue: new DecryptedTypedValue({
-      type: TypedValuesType.String,
-      stringValue: HcpTag.ADMIN_ROOT,
-    }),
-  })
-
-  const adminRootHcp = new HealthcareParty({
-    id: hcpId,
-    name: HcpTag.ADMIN_ROOT,
-    firstName: HcpTag.ADMIN_ROOT,
-    lastName: HcpTag.ADMIN_ROOT,
-    public: true,
-    tags: [new CodeStub({ id: HcpTag.ADMIN_ROOT, code: HcpTag.ADMIN_ROOT, type: HcpTag.ADMIN_ROOT, version: '1' })],
-    publicProperties: [adminRootProperty],
-  })
-  const adminRootUser = new User({ id: userId, email: adminRootEmail, name: HcpTag.ADMIN_ROOT, healthcarePartyId: hcpId })
-
   try {
+    if (!adminRootEmail || !concernedGroupId) {
+      throw new Error('Missing mandatory args: fill in adminRootEmail and DATABASE_ID')
+    }
+
     console.log(`Creating adminRoot in group ${concernedGroupId}...`)
 
-    if (!hcpId || !userId || !adminRootEmail || !concernedGroupId) {
-      throw new Error('Missing mandatory args')
-    }
+    const sdk = await initSdk()
+
+    const hcpId = v4()
+    const userId = v4()
+
+    const adminRootHcp = new HealthcareParty({
+      id: hcpId,
+      name: HcpTag.ADMIN_ROOT,
+      firstName: HcpTag.ADMIN_ROOT,
+      lastName: HcpTag.ADMIN_ROOT,
+      public: true,
+      tags: [new CodeStub({ id: HcpTag.ADMIN_ROOT, code: HcpTag.ADMIN_ROOT, type: HcpTag.ADMIN_ROOT, version: '1' })],
+      publicProperties: [
+        new DecryptedPropertyStub({
+          id: HcpTag.ADMIN_ROOT,
+          typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: HcpTag.ADMIN_ROOT }),
+        }),
+      ],
+    })
+    const adminRootUser = new User({ id: userId, email: adminRootEmail, name: HcpTag.ADMIN_ROOT, healthcarePartyId: hcpId })
+
     const createdAdminRootHcp = await sdk.healthcareParty.inGroup.createHealthcareParty(new GroupScoped({ groupId: concernedGroupId, entity: adminRootHcp }))
     await sdk.user.inGroup.createUser(new GroupScoped({ groupId: concernedGroupId, entity: adminRootUser }))
 
