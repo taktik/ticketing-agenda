@@ -5,7 +5,7 @@ import { AuthenticationMethod, CardinalBaseSdk, HealthcarePartyFilters } from '@
 import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, HcpTag, loadFromIterator } from './utils'
 
 async function getSiteRootFromGroupId() {
-  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
+  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!), { lenientJson: true })
 
   // Modify this to the correct databaseId
   const concernedGroupId = DATABASE_ID!
@@ -17,9 +17,8 @@ async function getSiteRootFromGroupId() {
       throw new Error('Missing mandatory args')
     }
 
-    const groupScopedHcps = await loadFromIterator(await sdk.healthcareParty.inGroup.filterHealthPartiesBy(concernedGroupId, HealthcarePartyFilters.all()), 1000)
-    const healthcareParties = groupScopedHcps.map((gs) => gs.entity)
-    const siteRoots = healthcareParties.filter((hcp) => hcp.publicProperties?.some((prop) => prop.id === HcpTag.SITE_ROOT))
+    const groupScopedHcps = await loadFromIterator(await sdk.healthcareParty.inGroup.filterHealthPartiesBy(concernedGroupId, HealthcarePartyFilters.byTag(HcpTag.SITE_ROOT, { tagCode: HcpTag.SITE_ROOT })), 1000)
+    const siteRoots = groupScopedHcps.map((gs) => gs.entity)
     if (siteRoots.length !== 1) throw Error(`Error, expected unique result but found ${siteRoots.length}`)
     const result = siteRoots[0]
 

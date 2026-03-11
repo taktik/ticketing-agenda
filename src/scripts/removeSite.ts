@@ -2,10 +2,10 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 import { AuthenticationMethod, CardinalBaseSdk, GroupScoped, HealthcarePartyFilters, UserFilters } from '@icure/cardinal-sdk'
-import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, loadFromIterator } from './utils'
+import { ADMIN_SOLUTIONS_AUTH_TOKEN, ADMIN_SOLUTIONS_EMAIL, DATABASE_ID, ICURE_NIGHTLY_URL, HcpTag, loadFromIterator } from './utils'
 
 async function removeSiteOfGroupId() {
-  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!))
+  const sdk = await CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL!, ADMIN_SOLUTIONS_AUTH_TOKEN!), { lenientJson: true })
 
   // Modify this to the correct databaseId
   const concernedGroupId = DATABASE_ID!
@@ -20,7 +20,7 @@ async function removeSiteOfGroupId() {
       throw new Error('Missing mandatory args')
     }
 
-    const groupScopedHcps = await loadFromIterator(await sdk.healthcareParty.inGroup.filterHealthPartiesBy(concernedGroupId, HealthcarePartyFilters.all()), 1000)
+    const groupScopedHcps = await loadFromIterator(await sdk.healthcareParty.inGroup.filterHealthPartiesBy(concernedGroupId, HealthcarePartyFilters.byTag(HcpTag.SITE, { tagCode: HcpTag.SITE })), 1000)
     const sites = groupScopedHcps.map((gs) => gs.entity)
 
     const foundSites = sites.filter((site) => site.name === siteNameToDelete)
