@@ -145,7 +145,7 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
 
               <Card title={t('content.citizen_appointments')} variant="borderless" styles={{ header: { paddingLeft: 0, borderBottom: 0, minHeight: 'auto' }, body: { padding: 0 } }}>
                 <Spin spinning={isLoadingAppointments}>
-                  {sortedAppointments.length === 0 && !isLoadingAppointments ? (
+                  {isLoadingAppointments ? null : sortedAppointments.length === 0 ? (
                     <Empty description={t('content.no_appointments')} />
                   ) : (
                     <List
