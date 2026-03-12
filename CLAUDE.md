@@ -41,6 +41,7 @@ src/
       EventContent/          # GridEventContent, ListEventContent (calendar event rendering)
       AppointmentSelector/   # Appointment action selector
       TimeSlotPickerUI/      # Time slot picker component
+    ModalCitizenSearch/      # Search citizens by name, view their details + appointment history
     ModalScheduling/
       index.tsx              # List scheduling rules per service
       ModalRules/index.tsx   # Create/edit rules: RRule, hours, availabilities, procedures, public flag
@@ -185,9 +186,17 @@ Left panel:
 - Procedure filter list
 
 Right panel:
+- Calendar toolbar: nav buttons, "Create Appointment", citizen search button, view/time-range selectors
 - FullCalendar view (grid or list, day or week range)
 - Appointments displayed as calendar events
 - Click event → ModalEvent (view/edit/delete details)
+
+## Citizen Search
+Accessible via search button in the calendar toolbar. Opens `ModalCitizenSearch` (two-panel modal):
+- **Left panel**: Search input (debounced 400ms, min 2 chars) → patient list with name, email, DOB
+- **Right panel**: Selected citizen's details (name, email, phone, DOB) + appointment history sorted by date desc
+- **Search filter**: `PatientFilters.byFuzzyNameForDataOwner` — fuzzy matches on `firstName`/`lastName` only (not email/phone)
+- **Appointments filter**: `CalendarItemFilters.byPatientsStartTimeForSelf` — requires `secretForeignKeys` on CalendarItems (set via `SecretIdUseOption.Use` at creation)
 
 ## Appointment Flow (Worker creates for citizen)
 The `CreateCitizenAppointment` wizard mirrors the citizen portal flow:

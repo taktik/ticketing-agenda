@@ -94,7 +94,7 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
   }, [appointments])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.search_citizen')} noFooter width={1300}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.search_citizen')} noFooter width={1300} blockAntModalBodyVerticalScroll>
       <div className="modal-citizen-search">
         <div className="modal-citizen-search__left">
           <Input prefix={<SearchOutlined />} placeholder={t('content.search_citizen_placeholder')} value={searchValue} onChange={(e) => setSearchValue(e.target.value)} allowClear size="large" />

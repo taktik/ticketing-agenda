@@ -1,4 +1,4 @@
-import { CalendarOutlined, LeftOutlined, RightOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { CalendarOutlined, LeftOutlined, RightOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import '@fullcalendar/core/locales/de'
 import '@fullcalendar/core/locales/fr'
 import '@fullcalendar/core/locales/nl'
@@ -8,7 +8,7 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItem, CalendarItemType, CodeStub, DecryptedCalendarItem, EncryptedPatient } from '@icure/cardinal-sdk'
-import { Button, message, Segmented, Space, Typography } from 'antd'
+import { Button, message, Segmented, Space, Tooltip, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
 import dayjs from 'dayjs'
 import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalendar'
@@ -27,6 +27,7 @@ import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import { calculateNumericEventTimes, combineDateAndTime, detectLanguage, fuzzyDateTimeIntToDayjs, getCodeTagById, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
 import { CalendarItemTag, EntityType } from '../../core/api/fetchType'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
+import { ModalCitizenSearch } from '../ModalCitizenSearch'
 import { CreateCitizenAppointment } from './CreateCitizenAppointment/CreateCitizenAppointment'
 import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
 import { GridEventContent } from './EventContent/GridEventContent'
@@ -57,6 +58,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const [createApptModalOpen, setCreateApptModalOpen] = useState(false)
   const [timeOffModalOpen, setTimeOffModalOpen] = useState(false)
   const [apptSelectorModalOpen, setApptSelectorModalOpen] = useState(false)
+  const [citizenSearchOpen, setCitizenSearchOpen] = useState(false)
 
   const [selectedEvent, setSelectedEvent] = useState<EventApi | undefined>(undefined)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
@@ -337,6 +339,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           </Space.Compact>
           <Button onClick={handleToday}>{t('content.today')}</Button>
           <Button onClick={handleCreate}>{t('content.create_appointment')}</Button>
+          <Tooltip title={t('content.search_citizen')}>
+            <Button icon={<SearchOutlined />} onClick={() => setCitizenSearchOpen(true)} />
+          </Tooltip>
         </Space>
 
         <Typography.Title level={4} ellipsis={{ rows: 2 }} className="calendar-title">
@@ -407,6 +412,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           <CreateTimeOff isVisible={timeOffModalOpen} onClose={() => setTimeOffModalOpen(false)} sites={allSites} showMessageFeedback={showMessageFeedback} openNotification={openNotification} />,
           document.body,
         )}
+
+      {citizenSearchOpen && createPortal(<ModalCitizenSearch isVisible={citizenSearchOpen} onClose={() => setCitizenSearchOpen(false)} />, document.body)}
     </div>
   )
 }
