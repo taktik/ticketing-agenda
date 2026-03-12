@@ -478,7 +478,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   }
 
   return (
-    <CustomModal isVisible={true} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={1100}>
+    <CustomModal isVisible={true} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={1200}>
       <div style={{ width: '100%', padding: '1.5rem' }}>
         {notificationContextHolder}
         <Steps current={currentStep} items={stepItems} style={{ marginBottom: 32 }} />

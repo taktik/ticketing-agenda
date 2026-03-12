@@ -227,7 +227,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   )
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={isEditing ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={1000}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={isEditing ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={1100}>
       <div className="modal-event">
         {notificationContextHolder}
 

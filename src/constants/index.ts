@@ -1,5 +1,5 @@
-export const DEFAULT_MODAL_WIDTH = 1100
-export const SMALL_MODAL_WIDTH = 700
+export const DEFAULT_MODAL_WIDTH = 1200
+export const SMALL_MODAL_WIDTH = 800
 
 export const ICURE_NIGHTLY_URL = window.config.REACT_APP_ICURE_NIGHTLY_URL
 export const ICURE_API_URL = window.config.REACT_APP_ICURE_API_URL

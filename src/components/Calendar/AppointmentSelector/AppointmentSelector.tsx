@@ -28,7 +28,7 @@ export const AppointmentSelector = ({ isVisible, onClose, setCreateApptModalOpen
   }, [setTimeOffModalOpen, onClose])
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={800}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={900}>
       <div className="appointment-selector-root">
         <Text type="secondary" style={{ marginBottom: '24px', display: 'block' }}>
           {t('content.booking_type_prompt')}
