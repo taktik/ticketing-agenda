@@ -4,6 +4,7 @@ const PRIMARY_COLOR_ALPHA = `${PRIMARY_COLOR}1a`
 export const ANTD_NEW_THEME = {
   token: {
     colorPrimary: PRIMARY_COLOR,
+    fontSize: 14,
   },
   components: {
     Button: {
@@ -13,12 +14,9 @@ export const ANTD_NEW_THEME = {
       defaultShadow: 'none',
       primaryShadow: 'none',
       paddingInline: 16,
-      contentFontSizeLG: 14,
       colorPrimary: PRIMARY_COLOR,
     },
     DatePicker: {
-      fontSizeLG: 13,
-      fontSize: 13,
       borderRadius: 0,
       hoverBorderColor: PRIMARY_COLOR,
       colorPrimary: PRIMARY_COLOR,
@@ -49,24 +47,16 @@ export const ANTD_NEW_THEME = {
       margin: 0,
     },
     Input: {
-      fontSizeLG: 13,
-      fontSize: 13,
       borderRadius: 0,
       hoverBorderColor: PRIMARY_COLOR,
       colorPrimary: PRIMARY_COLOR,
       activeBorderColor: PRIMARY_COLOR,
       controlOutline: PRIMARY_COLOR_ALPHA,
     },
-    InputNumber: {
-      fontSizeLG: 13,
-      fontSize: 13,
-    },
     List: {
       itemPadding: '0',
     },
     Select: {
-      fontSizeLG: 13,
-      fontSize: 13,
       hoverBorderColor: PRIMARY_COLOR,
       optionSelectedBg: PRIMARY_COLOR_ALPHA,
       controlOutline: PRIMARY_COLOR_ALPHA,
