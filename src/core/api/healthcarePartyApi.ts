@@ -2,7 +2,7 @@ import { HealthcareParty, HealthcarePartyFilters } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { useMemo } from 'react'
 import { cardinalApi } from '../services/auth.api'
-import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, UndeleteHcpByIdParameters } from './fetchType'
+import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters, HcpTag, UndeleteHcpByIdParameters } from './fetchType'
 import { allRoleTags } from './roleApi'
 import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
@@ -219,14 +219,15 @@ export const useGetHealthcarePartyUsers = () => {
   const data1 = useGetHealthcarePartyByTagQuery(allRoleTags[0]?.type ?? '', { skip: !allRoleTags[0]?.type })
   const data2 = useGetHealthcarePartyByTagQuery(allRoleTags[1]?.type ?? '', { skip: !allRoleTags[1]?.type })
   const data3 = useGetHealthcarePartyByTagQuery(allRoleTags[2]?.type ?? '', { skip: !allRoleTags[2]?.type })
+  const dataPending = useGetHealthcarePartyByTagQuery(HcpTag.PENDING_ASSIGNMENT)
 
-  const isLoading = data1.isLoading || data2.isLoading || data3.isLoading
+  const isLoading = data1.isLoading || data2.isLoading || data3.isLoading || dataPending.isLoading
 
   // Only combine data once all queries have settled to prevent cascade re-fetching of downstream queries
   const combinedData = useMemo(() => {
     if (isLoading) return []
-    return [...(data1.data ?? []), ...(data2.data ?? []), ...(data3.data ?? [])]
-  }, [isLoading, data1.data, data2.data, data3.data])
+    return [...(data1.data ?? []), ...(data2.data ?? []), ...(data3.data ?? []), ...(dataPending.data ?? [])]
+  }, [isLoading, data1.data, data2.data, data3.data, dataPending.data])
 
   return { data: combinedData, isLoading }
 }

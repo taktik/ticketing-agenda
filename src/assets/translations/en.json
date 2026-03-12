@@ -117,6 +117,7 @@
     "your_profile": "Your profile",
     "manage_users": "Manage users",
     "organize_hierarchy": "Organize Hierarchy",
+    "pending_users_warning": "{{count}} user(s) pending role assignment.",
     "manage_planning": "Manage Planning",
     "hierarchical_organization": "Hierarchical Organization",
     "service_not_found": "Service not found",

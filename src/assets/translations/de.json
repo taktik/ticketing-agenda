@@ -117,6 +117,7 @@
     "your_profile": "Ihr Profil",
     "manage_users": "Benutzer verwalten",
     "organize_hierarchy": "Hierarchie organisieren",
+    "pending_users_warning": "{{count}} Benutzer warten auf Rollenzuweisung.",
     "manage_planning": "Planung verwalten",
     "hierarchical_organization": "Hierarchische Organisation",
     "service_not_found": "Dienst nicht gefunden",

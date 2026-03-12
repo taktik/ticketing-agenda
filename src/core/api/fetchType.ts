@@ -3,6 +3,7 @@ export enum HcpTag {
   ADMIN_ROOT = 'ADMIN_ROOT',
   SITE = 'SITE',
   ADMINISTRATOR = 'ADMINISTRATOR',
+  PENDING_ASSIGNMENT = 'PENDING_ASSIGNMENT',
 }
 
 export enum EntityType {

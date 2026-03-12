@@ -117,6 +117,7 @@
     "your_profile": "Uw profiel",
     "manage_users": "Gebruikers beheren",
     "organize_hierarchy": "Hiërarchie organiseren",
+    "pending_users_warning": "{{count}} gebruiker(s) wacht(en) op roltoewijzing.",
     "manage_planning": "Planning beheren",
     "hierarchical_organization": "Hiërarchische organisatie",
     "service_not_found": "Dienst niet gevonden",

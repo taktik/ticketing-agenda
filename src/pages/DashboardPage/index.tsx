@@ -4,7 +4,7 @@ import '@fullcalendar/core/locales/fr'
 import '@fullcalendar/core/locales/nl'
 import FullCalendar from '@fullcalendar/react'
 import { Agenda, CalendarItemType, HealthcareParty } from '@icure/cardinal-sdk'
-import { Calendar as AntCalendar, Button, Card, Space, Tooltip } from 'antd'
+import { Alert, Calendar as AntCalendar, Button, Card, Space, Tooltip } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -15,6 +15,8 @@ import { ItemSelector } from '../../components/ItemSelector/ItemSelector'
 import { ModalHierarchySettings } from '../../components/ModalHierarchySettings'
 import { ModalScheduling } from '../../components/ModalScheduling'
 import { SiteSelector } from '../../components/SiteSelector'
+import { HcpTag } from '../../core/api/fetchType'
+import { useGetHealthcarePartyByTagQuery } from '../../core/api/healthcarePartyApi'
 import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import './index.css'
@@ -23,7 +25,9 @@ export default function DashboardPage() {
   const { t } = useTranslation()
 
   const { allSites, agendasBySiteId, calendarItemTypesByAgendaId, isLoading: isDataLoading } = useHierarchyContext()
-  const { isAdminLevel, attachedSites, attachedServices } = usePermissionContext()
+  const { isAdminLevel, isAdministrator, attachedSites, attachedServices } = usePermissionContext()
+
+  const { data: pendingUsers } = useGetHealthcarePartyByTagQuery(HcpTag.PENDING_ASSIGNMENT, { skip: !isAdministrator })
 
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
   const [schedulingModalOpen, setSchedulingModalOpen] = useState<boolean>(false)
@@ -93,6 +97,7 @@ export default function DashboardPage() {
   return (
     <div className="Dashboard">
       <Header />
+      {isAdministrator && pendingUsers && pendingUsers.length > 0 && <Alert type="warning" showIcon message={t('content.pending_users_warning', { count: pendingUsers.length })} banner />}
       <div className="Panel">
         <div className="left-panel">
           <Card className="card">

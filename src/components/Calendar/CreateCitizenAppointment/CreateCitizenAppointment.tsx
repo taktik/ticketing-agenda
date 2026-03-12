@@ -391,7 +391,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
       if (!dataOwnerId) throw new Error('No valid delegateId')
 
-      const personalInfo = await form.validateFields(['personalInfo']).then((v) => v.personalInfo as PersonalInfo)
+      const personalInfo = await form.validateFields().then((v) => v.personalInfo as PersonalInfo)
 
       const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile(personalInfo)
 
@@ -426,7 +426,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   const next = useCallback(async () => {
     try {
       if (currentStep === AppointmentStep.PERSONAL_INFO) {
-        const values = await form.validateFields(['personalInfo'])
+        const values = await form.validateFields()
         setPersonalInfo(values.personalInfo)
       }
       setCurrentStep((p) => p + 1)

@@ -14,6 +14,7 @@ import {
   useSilentDeleteHealthcarePartyMutation,
   useSilentUnDeleteHealthcarePartyMutation,
 } from '../../../../core/api/healthcarePartyApi'
+import { HcpTag } from '../../../../core/api/fetchType'
 import { administratorTag, cityWorkerTag, headOfServiceTag, rolesMap, roleTypeMap, tagMap, UserRole } from '../../../../core/api/roleApi'
 import { useCreateUpdateUserMutation, useDeleteUserMutation, useGetUserByHcpIdsQuery, useSetUserRolesMutation, useSilentDeleteUserMutation } from '../../../../core/api/userApi'
 import { useHierarchyContext } from '../../../../core/contexts/HierarchyContext'
@@ -112,7 +113,8 @@ export const ManagerUsers = (): ReactElement => {
       if (!hcp) return []
 
       const hasAllowedRole = hcp.tags?.some((tag) => allowedRoleIds.has(tag.id))
-      if (!hasAllowedRole) return []
+      const hasPendingTag = hcp.tags?.some((tag) => tag.type === HcpTag.PENDING_ASSIGNMENT)
+      if (!hasAllowedRole && !hasPendingTag) return []
 
       const hcpTag = hcp.tags.find((tag) => tag.type && roleTypeMap[tag.type])
 
@@ -277,7 +279,7 @@ export const ManagerUsers = (): ReactElement => {
         if (!assignmentParentId) throw new Error('Missing assignment parent ID')
 
         const roleTags = rowValues.role ? tagMap[rowValues.role] : []
-        const otherTags = isNew ? [] : record.hcp.tags.filter((t) => !roleTypeMap[t.type ?? ''])
+        const otherTags = isNew ? [] : record.hcp.tags.filter((t) => !roleTypeMap[t.type ?? ''] && t.type !== HcpTag.PENDING_ASSIGNMENT)
         const finalTags = [...otherTags, ...roleTags]
 
         const otherProps = isNew ? [] : (record.hcp.properties?.filter((p) => !p.id?.startsWith(ASSIGNMENT_PROPERTY_PREFIX)) ?? [])
