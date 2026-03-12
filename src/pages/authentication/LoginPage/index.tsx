@@ -12,8 +12,6 @@ import AzureLogin from '../AzureLogin'
 import EmailLogin from '../EmailLogin'
 import { SpinLoader } from '../../../components/common/SpinLoader'
 
-const logoSrc = LOGO_URL ?? defaultLogo
-
 const selectRestApiData = (state: { cardinalApi: CardinalApiState }) => state.cardinalApi
 
 const combinedSelector = createSelector([selectRestApiData], (cardinalApi: CardinalApiState) => ({
@@ -36,7 +34,7 @@ export default function LoginPage() {
       {isLoading && <SpinLoader />}
       <div className="auth-page">
         <div className="auth-page__logo">
-          <img src={logoSrc} alt="logo" />
+          <img src={LOGO_URL ?? defaultLogo} alt="logo" />
         </div>
         <Card className="login-card">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

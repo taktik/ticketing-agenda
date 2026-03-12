@@ -15,8 +15,6 @@ import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
 import './index.css'
 
-const logoSrc = LOGO_URL ?? defaultLogo
-
 export const Header = () => {
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
@@ -70,7 +68,7 @@ export const Header = () => {
     <>
       <div className="header">
         <div className="header__logoHolder">
-          <img src={logoSrc} alt="logo" />
+          <img src={LOGO_URL ?? defaultLogo} alt="logo" />
         </div>
         <div className="right-side">
           {!isContextLoading && currentUserHcp && (

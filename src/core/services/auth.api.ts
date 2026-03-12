@@ -212,6 +212,33 @@ export const anonymousCardinalApi = () => {
   return anonymousApiCache['anonymous'] as CardinalAnonymousSdk
 }
 
+const tryAzureLogin = async (idToken: string) => {
+  const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', idToken), {
+    encryptedFields: { patient: [], calendarItem: [] },
+    lenientJson: true,
+  })
+
+  const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
+    useHierarchicalDataOwners: true,
+    cryptoStrategies: new PetraCareCryptoStrategies(() => baseSdk.auth.getBearerToken()),
+  })
+
+  return { baseSdk, api }
+}
+
+const registerAzureUser = async (idToken: string): Promise<void> => {
+  const response = await fetch(`${BACKEND_API}/api/users/register-azure`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}))
+    throw new Error(body.message ?? `Registration failed with status ${response.status}`)
+  }
+}
+
 export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ account }: { account: AccountInfo }, { dispatch }) => {
   try {
     dispatch(setAzureLoginProcessStarted(true))
@@ -223,16 +250,16 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
       throw new Error('No valid idToken')
     }
 
-    const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', account.idToken), {
-      encryptedFields: { patient: [], calendarItem: [] },
-      lenientJson: true,
-    })
+    let sdkResult: Awaited<ReturnType<typeof tryAzureLogin>>
+    try {
+      sdkResult = await tryAzureLogin(account.idToken)
+    } catch (loginError) {
+      console.info('Azure login failed, attempting auto-registration...', loginError)
+      await registerAzureUser(account.idToken)
+      sdkResult = await tryAzureLogin(account.idToken)
+    }
 
-    const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
-      useHierarchicalDataOwners: true,
-      cryptoStrategies: new PetraCareCryptoStrategies(() => baseSdk.auth.getBearerToken()),
-    })
-
+    const { baseSdk, api } = sdkResult
     const user = await api.user.getCurrentUser()
     const newToken = await api.user.getToken(user.id, 'rememberMe')
 
