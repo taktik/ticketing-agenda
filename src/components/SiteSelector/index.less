@@ -1,14 +1,13 @@
-@import '../../style/less/index';
+@import '../../style/less/utils/_variables';
 
 .selector-root {
-  display: flex;
+  .flex-row();
   width: 100%;
-  flex-direction: row;
-  border-color: #d9d9d9;
+  border-color: @border-default;
   > :first-child {
     width: 100%;
   }
 }
 .ant-select:hover .ant-select-selector {
-  border: 1px solid #d9d9d9 !important;
+  border: 1px solid @border-default !important;
 }

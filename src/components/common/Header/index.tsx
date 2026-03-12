@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next'
 import { arrowDownIcn, logOutIcn, manageUserIcn, userIcn } from '../../../assets/CustomIcons'
 import defaultLogo from '../../../assets/mouscronLogo.png'
 import { LOGO_URL } from '../../../constants'
-import { useGetCurrentUserQuery } from '../../../core/api/userApi'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { useAppDispatch } from '../../../core/hooks'
 import { logout } from '../../../core/services/auth.api'
@@ -21,7 +20,6 @@ export const Header = () => {
   const [isUserDropdownOpen, setUserDropdownOpen] = useState(false)
   const [isModalManageAccountFormOpen, setModalManageAccountFormOpen] = useState(false)
   const { currentDataOwner: currentUserHcp, isLoading: isContextLoading } = usePermissionContext()
-  const { data: currentUser } = useGetCurrentUserQuery(undefined, { skip: !currentUserHcp })
 
   const handleLogout = useCallback(() => {
     dispatch(logout())
@@ -91,7 +89,7 @@ export const Header = () => {
 
       {isModalManageAccountFormOpen &&
         currentUserHcp &&
-        createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUserHcp={currentUserHcp} user={currentUser} />, document.body)}
+        createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUserHcp={currentUserHcp} />, document.body)}
     </>
   )
 }

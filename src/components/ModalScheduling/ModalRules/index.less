@@ -1,12 +1,11 @@
-@import '../../../style/less/index';
+@import '../../../style/less/utils/_variables';
 
 .modal-rule {
   width: 100%;
   height: 75vh;
-  display: flex;
+  .flex-column();
   align-self: stretch;
   position: relative;
-  flex-direction: column;
   overflow: hidden;
 
   .media-breakpoint-down(@md,
@@ -15,23 +14,19 @@
     });
 }
 .header-rule {
-  display: flex;
+  .flex-between();
   padding: 1.5rem;
-  justify-content: space-between;
-  align-items: center;
   flex: 1 0 0;
   align-self: stretch;
 }
 .selectors {
-  display: flex;
-  flex-direction: row;
+  .flex-row();
   align-items: center;
   gap: 1rem;
 }
 .ant-select-rule {
-  display: flex;
+  .flex-column();
   position: relative;
-  flex-direction: column;
   font-size: small;
   font-weight: 700;
 }
@@ -43,8 +38,7 @@
   justify-content: flex-end;
 }
 .actionButtons {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   width: 100%;
   > * {
     width: 100%;

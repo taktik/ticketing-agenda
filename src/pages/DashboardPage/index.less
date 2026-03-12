@@ -1,32 +1,29 @@
-@import '../../style/less/index';
+@import '../../style/less/utils/_variables';
 
 .Dashboard {
   min-width: 100vw;
   width: 100%;
   min-height: 100vh;
   height: 100%;
-  background: #ffffff;
+  background: @white;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   flex-wrap: nowrap;
 }
 .Panel {
   position: relative;
-  display: flex;
-  flex-direction: row;
+  .flex-row();
   height: 100%;
   width: 100%;
   padding: 1.5rem;
   gap: 1.5rem;
-  background-color: #f0f2f5;
+  background-color: @bg-panel;
   flex-wrap: nowrap;
   overflow: hidden;
   flex-grow: 1;
 }
 .left-panel {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   gap: 1rem;
   height: auto;
   overflow: hidden;
@@ -35,12 +32,11 @@
 }
 
 .right-panel {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   flex-grow: 1;
 }
 .card {
-  border: 1px solid #d9d9d9;
+  border: 1px solid @border-default;
   border-radius: 0;
 }
 .SiteSelectorRow {
@@ -103,34 +99,31 @@
   position: relative !important;
 }
 .fc .fc-view-harness-active > .fc-view {
-  background: #ffffff !important;
+  background: @white !important;
 }
 .table-add-entry {
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   width: 100%;
   padding: 1rem;
-  background-color: #fafafa;
+  background-color: @bg-hover-light;
 }
 .ant-calendar-wrapper > :first-child {
   border-radius: 0;
 }
 .ant-calendar-wrapper {
-  border: 1px solid #d9d9d9;
+  border: 1px solid @border-default;
 
   > :first-child {
     border-radius: 0;
   }
 }
 .selector-spin {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  .flex-center();
   padding: 1rem;
 }
 .itemselectors-wrapper {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   flex: 1;
   gap: 1rem;
   overflow: hidden;

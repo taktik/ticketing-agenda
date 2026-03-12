@@ -357,7 +357,7 @@ export const ManagerUsers = (): ReactElement => {
             pagination={false}
             dataSource={tableRows}
             rowKey="rowId"
-            locale={{ emptyText: <Empty description={t('content.no_user_yet')} /> }}
+            locale={{ emptyText: isLoading ? ' ' : <Empty description={t('content.no_user_yet')} /> }}
             loading={isLoading}
             scroll={{ y: 'calc(800px - 300px)', x: 'max-content' }}
           >

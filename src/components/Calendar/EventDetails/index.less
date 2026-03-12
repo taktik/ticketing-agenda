@@ -1,4 +1,4 @@
-@import '../../../style/less/index';
+@import '../../../style/less/utils/_variables';
 
 .modal-event {
   display: flex;
@@ -6,8 +6,7 @@
   padding: 1rem;
 }
 .modal-event-display {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   gap: 0.5rem;
   width: 100%;
 }

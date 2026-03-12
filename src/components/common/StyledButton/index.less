@@ -1,4 +1,4 @@
-@import '../../../style/less/index';
+@import '../../../style/less/utils/_variables';
 
 .styled-button-icon {
   padding: 0 !important;
@@ -8,27 +8,29 @@
 }
 
 .styled-button-warning {
-  background-color: #faad14 !important;
-  border-color: #faad14 !important;
-  color: #fff !important;
-}
-.styled-button-warning:hover,
-.styled-button-warning:focus {
-  background-color: #ffc53d !important;
-  border-color: #ffc53d !important;
-  color: #fff !important;
+  background-color: @orange-900 !important;
+  border-color: @orange-900 !important;
+  color: @white !important;
+
+  &:hover,
+  &:focus {
+    background-color: @warning-hover !important;
+    border-color: @warning-hover !important;
+    color: @white !important;
+  }
 }
 
 .styled-button-success {
-  background-color: #52c41a !important;
-  border-color: #52c41a !important;
-  color: #fff !important;
-}
-.styled-button-success:hover,
-.styled-button-success:focus {
-  background-color: #73d13d !important;
-  border-color: #73d13d !important;
-  color: #fff !important;
+  background-color: @success-color !important;
+  border-color: @success-color !important;
+  color: @white !important;
+
+  &:hover,
+  &:focus {
+    background-color: @success-hover !important;
+    border-color: @success-hover !important;
+    color: @white !important;
+  }
 }
 
 .styled-button-no-border {
@@ -37,7 +39,7 @@
   background: transparent !important;
   font-size: large;
   &:hover {
-    color: red !important;
+    color: @red-700 !important;
   }
 }
 
@@ -45,7 +47,7 @@
   white-space: nowrap !important;
   min-width: 80px !important;
   &:hover {
-    border-color: gray !important;
+    border-color: @grey-700 !important;
     color: black !important;
   }
 }
@@ -57,18 +59,18 @@
   color: white !important;
   border-color: black !important;
   &:hover {
-    background-color: #696969 !important;
-    border-color: #696969 !important;
+    background-color: @dimgray !important;
+    border-color: @dimgray !important;
   }
 }
 
 .styled-button-default-active {
-  background: #1f608f;
-  border-color: #1f608f;
+  background: @btn-active-blue;
+  border-color: @btn-active-blue;
   color: white;
   &:hover {
-    background: #1f608f !important;
-    border-color: #1f608f !important;
+    background: @btn-active-blue !important;
+    border-color: @btn-active-blue !important;
     color: white !important;
   }
 }

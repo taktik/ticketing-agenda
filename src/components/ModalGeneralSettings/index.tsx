@@ -1,5 +1,5 @@
 import { ProfileOutlined, UsergroupAddOutlined } from '@ant-design/icons'
-import { HealthcareParty, User } from '@icure/cardinal-sdk'
+import { HealthcareParty } from '@icure/cardinal-sdk'
 import { Layout, Menu, MenuProps } from 'antd'
 import { Content } from 'antd/es/layout/layout'
 import Sider from 'antd/es/layout/Sider'
@@ -15,12 +15,11 @@ interface ModalSettingsProps {
   isVisible: boolean
   onClose: () => void
   currentUserHcp?: HealthcareParty
-  user?: User
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
 
-export const ModalSettings = ({ isVisible, onClose, currentUserHcp, user }: ModalSettingsProps): ReactElement => {
+export const ModalSettings = ({ isVisible, onClose, currentUserHcp }: ModalSettingsProps): ReactElement => {
   const { t } = useTranslation()
   const [selectedKey, setSelectedKey] = useState<string>('profil')
   const { isAdministrator } = usePermissionContext()
@@ -46,9 +45,9 @@ export const ModalSettings = ({ isVisible, onClose, currentUserHcp, user }: Moda
         return <ManagerUsers />
       case 'profil':
       default:
-        return <AccountSetting currentUserHcp={currentUserHcp} user={user} />
+        return <AccountSetting currentUserHcp={currentUserHcp} />
     }
-  }, [selectedKey, currentUserHcp, user])
+  }, [selectedKey, currentUserHcp])
 
   return (
     <CustomModal isVisible={isVisible} handleClose={onClose} title={t('content.your_settings')} noFooter blockAntModalBodyVerticalScroll width={1300}>

@@ -1,4 +1,4 @@
-@import '../../../../style/less/index';
+@import '../../../../style/less/utils/_variables';
 
 .right {
   display: flex;
@@ -22,11 +22,9 @@ th {
   text-align: center;
 }
 .your-info {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   gap: 1.25rem;
 }
 .column-layout {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
 }

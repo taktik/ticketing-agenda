@@ -1,8 +1,7 @@
-@import '../../style/less/index';
+@import '../../style/less/utils/_variables';
 
 .settingsTitle {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
 }
 .ant-menu-inline {
   border-right: none !important;
@@ -28,7 +27,7 @@
   .ant-dropdown-menu-item,
   .ant-list-item {
     width: auto !important;
-    margin-left: 0px !important;
+    margin-left: 0 !important;
     text-align: left !important;
     padding-left: 24px !important;
     margin-bottom: 0 !important;
@@ -37,16 +36,13 @@
 }
 .selected-setting-user {
   height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   width: auto;
   flex-grow: 1;
   overflow: hidden;
-  background: white;
+  background: @white;
 }
 .role-column {
-  display: flex;
-  flex-direction: column;
+  .flex-column();
   gap: 0.5rem;
 }
