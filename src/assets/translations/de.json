@@ -230,7 +230,15 @@
     "qBetterLocationId": "QBetter Localisation Id",
     "qBetterProcedureId": "QBetter Service Id",
     "confirmationCode": "Bestätigungscode",
-    "no_code_provided": "Kein Code angegeben"
+    "no_code_provided": "Kein Code angegeben",
+    "search_citizen": "Bürger suchen",
+    "search_citizen_placeholder": "Nach Name suchen...",
+    "search_min_chars": "Geben Sie mindestens 2 Zeichen ein",
+    "no_results": "Keine Bürger gefunden",
+    "citizen_appointments": "Termine",
+    "no_appointments": "Keine Termine für diesen Bürger gefunden",
+    "select_citizen_prompt": "Wählen Sie einen Bürger aus, um seine Termine anzuzeigen",
+    "past": "Vergangen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

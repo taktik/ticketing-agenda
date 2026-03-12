@@ -1,7 +1,7 @@
-import { DecryptedPatient, EncryptedPatient } from '@icure/cardinal-sdk'
+import { DecryptedPatient, EncryptedPatient, PatientFilters } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { cardinalApi } from '../services/auth.api'
-import { baseQueryWithRetry, guard } from './utils'
+import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
 enum PatientTags {
   Patient = 'Patient',
@@ -51,6 +51,18 @@ export const patientApiRtk = createApi({
       },
       providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
+    searchPatients: builder.query<DecryptedPatient[] | undefined, string>({
+      async queryFn(searchTerm, { getState }) {
+        const api = await cardinalApi(getState)
+        const patientApi = api?.patient
+        const dataOwnerId = (await api?.dataOwner.getCurrentDataOwner())?.dataOwner.id
+        return guard([patientApi, dataOwnerId], async (): Promise<DecryptedPatient[]> => {
+          const filter = PatientFilters.byFuzzyNameForDataOwner(dataOwnerId!, searchTerm)
+          return await loadFromIterator(await patientApi!.filterPatientsBy(filter), 50)
+        })
+      },
+      providesTags: [{ type: PatientTags.Patient, id: 'search' }],
+    }),
     initializeExchangeData: builder.mutation<boolean | undefined, string>({
       async queryFn(patientId, { getState }) {
         const patientApi = (await cardinalApi(getState))?.patient
@@ -67,4 +79,5 @@ export const patientApiRtk = createApi({
   }),
 })
 
-export const { useCreateDecryptedPatientMutation, useUpdateEncryptedPatientMutation, useGetEncryptedPatientByIdQuery, useLazyGetEncryptedPatientByIdQuery, useInitializeExchangeDataMutation } = patientApiRtk
+export const { useCreateDecryptedPatientMutation, useUpdateEncryptedPatientMutation, useGetEncryptedPatientByIdQuery, useLazyGetEncryptedPatientByIdQuery, useInitializeExchangeDataMutation, useLazySearchPatientsQuery } =
+  patientApiRtk

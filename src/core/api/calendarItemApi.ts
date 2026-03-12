@@ -1,4 +1,4 @@
-import { AccessLevel, CalendarItem, CalendarItemFilters, DecryptedCalendarItem, EntityReferenceInGroup, Patient, SecretIdUseOption } from '@icure/cardinal-sdk'
+import { AccessLevel, CalendarItem, CalendarItemFilters, DecryptedCalendarItem, DecryptedPatient, Patient, SecretIdUseOption } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { dateToYYYYMMDD } from '../../components/common/helpers'
 import { cardinalApi } from '../services/auth.api'
@@ -111,6 +111,22 @@ export const calendarItemApiRtk = createApi({
       },
       invalidatesTags: [{ type: CalendarItemTags.CalendarItem }],
     }),
+    getCalendarItemsByPatient: builder.query<DecryptedCalendarItem[] | undefined, DecryptedPatient>({
+      async queryFn(patient, { getState }) {
+        const api = await cardinalApi(getState)
+        const calendarApi = api?.calendarItem
+        const patientApi = api?.patient
+        return guard([calendarApi, patientApi], async (): Promise<DecryptedCalendarItem[]> => {
+          const secretIds = await patientApi!.getSecretIdsOf(patient)
+          const firstSecretId = Object.keys(secretIds)[0]
+          if (!firstSecretId) return []
+
+          const filter = CalendarItemFilters.byPatientsStartTimeForSelf([patient])
+          return await loadFromIterator(await calendarApi!.filterCalendarItemsBy(filter), 100)
+        })
+      },
+      providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: 'patient-search' }] : []),
+    }),
     deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string; rev: string }>({
       async queryFn({ calendarItemId, rev }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
@@ -134,4 +150,5 @@ export const {
   useDeleteCalendarItemByIdMutation,
   useUpdateCalendarItemMutation,
   useGetCalendarItemPatientIdQuery,
+  useLazyGetCalendarItemsByPatientQuery,
 } = calendarItemApiRtk

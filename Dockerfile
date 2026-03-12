@@ -18,7 +18,9 @@ COPY --from=taktik/json-env:1.0.9-gf64566798c /usr/local/bin/json-env /usr/local
 
 EXPOSE 80
 
-CMD perl -0777 -ne 'print $1 if /window\.config\s*=\s*(\{.*?\})/s' /usr/share/nginx/html/index.html | jq '.' > /tmp/config.json \
+CMD perl -0777 -ne 'print $1 if /window\.config\s*=\s*(\{.*?\})/s' /usr/share/nginx/html/index.html \
+    | perl -pe 's/([{,])\s*([A-Za-z_][A-Za-z0-9_]*):/\1"\2":/g' \
+    | jq '.' > /tmp/config.json \
     && /usr/local/bin/json-env /tmp/config.json \
     && CONF=$(jq -c . /tmp/config.json) \
     && perl -i -0777 -pe "s|window\.config\s*=\s*\{.*?\}|window.config=${CONF}|s" /usr/share/nginx/html/index.html \

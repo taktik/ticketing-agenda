@@ -229,7 +229,15 @@
     "qBetterLocationId": "QBetter Location Id",
     "qBetterProcedureId": "QBetter Service Id",
     "confirmationCode": "Confirmation code",
-    "no_code_provided": "No code provided"
+    "no_code_provided": "No code provided",
+    "search_citizen": "Search citizen",
+    "search_citizen_placeholder": "Search by name...",
+    "search_min_chars": "Enter at least 2 characters",
+    "no_results": "No citizens found",
+    "citizen_appointments": "Appointments",
+    "no_appointments": "No appointments found for this citizen",
+    "select_citizen_prompt": "Select a citizen to view their appointments",
+    "past": "Past"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",

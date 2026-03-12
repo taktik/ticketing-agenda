@@ -1,6 +1,6 @@
-import Icon from '@ant-design/icons'
+import Icon, { SearchOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
-import { Dropdown } from 'antd'
+import { Button, Dropdown, Tooltip } from 'antd'
 import { useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +11,7 @@ import { useGetCurrentUserQuery } from '../../../core/api/userApi'
 import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { useAppDispatch } from '../../../core/hooks'
 import { logout } from '../../../core/services/auth.api'
+import { ModalCitizenSearch } from '../../ModalCitizenSearch'
 import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
 import './index.css'
@@ -20,6 +21,7 @@ export const Header = () => {
   const dispatch = useAppDispatch()
   const [isUserDropdownOpen, setUserDropdownOpen] = useState(false)
   const [isModalManageAccountFormOpen, setModalManageAccountFormOpen] = useState(false)
+  const [isCitizenSearchOpen, setCitizenSearchOpen] = useState(false)
 
   const { currentDataOwner: currentUserHcp, isLoading: isContextLoading } = usePermissionContext()
   const { data: currentUser } = useGetCurrentUserQuery(undefined, { skip: !currentUserHcp })
@@ -72,19 +74,24 @@ export const Header = () => {
         </div>
         <div className="right-side">
           {!isContextLoading && currentUserHcp && (
-            <Dropdown menu={{ items, onClick }} placement="bottomRight" arrow onOpenChange={setUserDropdownOpen}>
-              <div className={`header__userDropdown ${isUserDropdownOpen ? 'header__userDropdown--active' : ''}`}>
-                <div className="header__userDropdown__heading">
-                  <p className="header__userDropdown__heading__name">{`${currentUserHcp.firstName ?? ''} ${currentUserHcp.lastName ?? ''}`}</p>
+            <>
+              <Tooltip title={t('content.search_citizen')}>
+                <Button icon={<SearchOutlined />} onClick={() => setCitizenSearchOpen(true)} aria-label={t('content.search_citizen')} />
+              </Tooltip>
+              <Dropdown menu={{ items, onClick }} placement="bottomRight" arrow onOpenChange={setUserDropdownOpen}>
+                <div className={`header__userDropdown ${isUserDropdownOpen ? 'header__userDropdown--active' : ''}`}>
+                  <div className="header__userDropdown__heading">
+                    <p className="header__userDropdown__heading__name">{`${currentUserHcp.firstName ?? ''} ${currentUserHcp.lastName ?? ''}`}</p>
+                  </div>
+                  <div className="header__userDropdown__userAvatarPlaceholder">
+                    <Icon component={userIcn} />
+                  </div>
+                  <div className="header__userDropdown__arrow">
+                    <Icon component={arrowDownIcn} />
+                  </div>
                 </div>
-                <div className="header__userDropdown__userAvatarPlaceholder">
-                  <Icon component={userIcn} />
-                </div>
-                <div className="header__userDropdown__arrow">
-                  <Icon component={arrowDownIcn} />
-                </div>
-              </div>
-            </Dropdown>
+              </Dropdown>
+            </>
           )}
           <LanguageSelector />
         </div>
@@ -93,6 +100,8 @@ export const Header = () => {
       {isModalManageAccountFormOpen &&
         currentUserHcp &&
         createPortal(<ModalSettings isVisible={isModalManageAccountFormOpen} onClose={() => setModalManageAccountFormOpen(false)} currentUserHcp={currentUserHcp} user={currentUser} />, document.body)}
+
+      {isCitizenSearchOpen && createPortal(<ModalCitizenSearch isVisible={isCitizenSearchOpen} onClose={() => setCitizenSearchOpen(false)} />, document.body)}
     </>
   )
 }
