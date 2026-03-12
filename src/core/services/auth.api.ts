@@ -75,7 +75,8 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
 
         await response.json()
       } catch (error) {
-        console.error('Failed to save key via fetch:', error)
+        console.error('Failed to save recovery key:', error)
+        throw error
       }
     }
   }
@@ -117,7 +118,7 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
     const result: { [dataOwnerId: string]: CryptoStrategies.RecoveredKeyData } = {}
     for (const key of keysData) {
       const hcp = key.dataOwnerDetails.dataOwner
-      if (!key.unavailableKeys || key.unavailableKeys.length === 0 || !key.unknownKeys || key.unknownKeys.length === 0) {
+      if ((!key.unavailableKeys || key.unavailableKeys.length === 0) && (!key.unknownKeys || key.unknownKeys.length === 0)) {
         result[hcp.id] = { recoveredKeys: {}, keyAuthenticity: {} }
       } else {
         const rk = hcp ? await this.fetchRecoveryKey(hcp.id) : undefined
@@ -280,6 +281,7 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
     return new User(user)
   } catch (e) {
     console.error(`Couldn't start authentication: ${e}`)
+    throw e
   } finally {
     dispatch(setAzureLoginProcessStarted(false))
   }
@@ -322,6 +324,7 @@ export const startEmailAuthentication = createAsyncThunk(
       return authenticationStep
     } catch (e) {
       console.error(`Couldn't start authentication: ${e}`)
+      throw e
     } finally {
       dispatch(setEmailLoginProcessStarted(false))
     }
@@ -392,10 +395,14 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
   }
 
   try {
-    const api = await CardinalSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), StorageFacade.usingBrowserLocalStorage(), {
-      useHierarchicalDataOwners: true,
+    const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), {
       encryptedFields: { patient: [], calendarItem: [] },
       lenientJson: true,
+    })
+
+    const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
+      useHierarchicalDataOwners: true,
+      cryptoStrategies: new PetraCareCryptoStrategies(() => baseSdk.auth.getBearerToken()),
     })
     const user = await api.user.getCurrentUser()
     apiCache[`${user.groupId}/${user.id}`] = api
@@ -408,12 +415,16 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
     console.error(`Couldn't login: ${e}`)
     dispatch(revertAll())
     dispatch(resetCredentials())
+    throw e
   } finally {
     dispatch(setAutoLoginProcessStarted(false))
   }
 })
 
 export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { dispatch }) => {
+  Object.keys(apiCache).forEach((key) => delete apiCache[key])
+  Object.keys(anonymousApiCache).forEach((key) => delete anonymousApiCache[key])
+
   dispatch(recoveryApiRtk.util.resetApiState())
   dispatch(emailApiRtk.util.resetApiState())
   dispatch(userApiRtk.util.resetApiState())

@@ -283,16 +283,16 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       const sortedMatchingProcedures = sortByOrder(matchingProcedures)
 
       const desiredArray = rowValues.appointmentDurations.map((duration, index) => {
-        const properties: DecryptedPropertyStub[] = []
+        let properties: DecryptedPropertyStub[] = []
 
         Object.entries(rowValues.subjectByLanguage).forEach(([locale, value]) => {
-          setProperty(properties, translationPropertyId(EntityType.CALENDARITEMTYPE, locale), new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: value }))
+          properties = setProperty(properties, translationPropertyId(EntityType.CALENDARITEMTYPE, locale), new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: value }))
         })
-        setProperty(properties, PropertyId.CALENDARITEMTYPE_ISPUBLIC, new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: rowValues.isPublic }))
-        setProperty(properties, PropertyId.CALENDARITEMTYPE_ORDER, new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
-        setProperty(properties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.procedureDetails }))
-        setProperty(properties, PropertyId.CALENDARITEMTYPE_AGENDAID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }))
-        setProperty(properties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.qBetterProcedureId }))
+        properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_ISPUBLIC, new DecryptedTypedValue({ type: TypedValuesType.Boolean, booleanValue: rowValues.isPublic }))
+        properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_ORDER, new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
+        properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.procedureDetails }))
+        properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_AGENDAID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }))
+        properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.qBetterProcedureId }))
 
         return new CalendarItemType({
           name: rowValues.subjectByLanguage['FR'],
@@ -431,7 +431,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
           const existingProp = updatedProperties.find((p) => p.id === id)
 
           if (existingProp) {
-            existingProp.typedValue = new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: title })
+            const idx = updatedProperties.indexOf(existingProp)
+            updatedProperties[idx] = new DecryptedPropertyStub({ ...existingProp, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: title }) })
           } else {
             updatedProperties.push(new DecryptedPropertyStub({ id, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: title }) }))
           }
@@ -789,8 +790,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             }
             yesBtnTitle={t('content.delete')}
             noBtnTitle={t('content.close')}
-            onYesClick={() => {
-              handleDeleteService(service)
+            onYesClick={async () => {
+              await handleDeleteService(service)
               setShowDeleteServiceModal(false)
             }}
             onNoClick={() => setShowDeleteServiceModal(false)}
@@ -812,10 +813,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             }
             yesBtnTitle={t('content.delete')}
             noBtnTitle={t('content.close')}
-            onYesClick={() => {
-              tableRowDelete()
-              setShowDeleteProcedureModal(false)
-            }}
+            onYesClick={tableRowDelete}
             onNoClick={() => setShowDeleteProcedureModal(false)}
             isVisible={showDeleteProcedureModal}
             mode="danger"

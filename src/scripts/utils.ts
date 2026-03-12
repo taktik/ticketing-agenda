@@ -1,11 +1,11 @@
 import { AuthenticationMethod, CardinalBaseSdk, PaginatedListIterator } from '@icure/cardinal-sdk'
 
 // Script-only constants — fill in before running any script, revert after
-export const ADMIN_SOLUTIONS_EMAIL = 'om+100@taktik.com' // get the email through icure dashboard
-export const ADMIN_SOLUTIONS_AUTH_TOKEN = 'b4841760-d87c-42e9-bac3-356a5e2f2556' // get the token through icure dashboard
-export const ICURE_NIGHTLY_URL = 'https://nightly.icure.cloud' // e.g. 'https://nightly.icure.cloud'
-export const ICURE_API_URL = 'https://api.icure.cloud' // e.g. 'https://api.icure.cloud'
-export const DATABASE_ID = 'ic-taktikticketingagendamouscron-f7627de4-d674-4443-9987-2cc5c0d793b1' // e.g. 'ic-xxxxx'
+export const ADMIN_SOLUTIONS_EMAIL = '' // get the email through icure dashboard
+export const ADMIN_SOLUTIONS_AUTH_TOKEN = '' // get the token through icure dashboard
+export const ICURE_NIGHTLY_URL = '' // e.g. 'https://nightly.icure.cloud'
+export const ICURE_API_URL = '' // e.g. 'https://api.icure.cloud'
+export const DATABASE_ID = '' // e.g. 'ic-xxxxx'
 export const EMAIL_TEMPLATE = '' // request the template id of the solution to icure
 export const SPEC_ID = '' // external services spec id
 

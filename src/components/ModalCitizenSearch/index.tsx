@@ -37,6 +37,13 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n.language])
 
   useEffect(() => {
+    if (!isVisible) {
+      setSearchValue('')
+      setSelectedPatient(undefined)
+    }
+  }, [isVisible])
+
+  useEffect(() => {
     if (debouncedSearch.length >= 2) {
       searchPatients(debouncedSearch)
     }

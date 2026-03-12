@@ -122,13 +122,13 @@ export const EMAIL_APPOINTMENT_CANCELLATION = {
   fr: window.config.REACT_APP_EMAIL_APPOINTMENT_CANCELLATION_FR,
   nl: window.config.REACT_APP_EMAIL_APPOINTMENT_CANCELLATION_NL,
 }
-export const EMAIL_APPOINTMENT_MODIFICATION = {
+export const EMAIL_APPOINTMENT_MODIFICATION: Record<string, Partial<Record<EmailTemplateKey, string>>> = {
   fr: {
-    withProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_FR,
-    withoutProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_FR_NP,
+    [EmailTemplateKey.WITH_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_FR,
+    [EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_FR_NP,
   },
   nl: {
-    withProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_NL,
-    withoutProcedureDetails: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_NL_NP,
+    [EmailTemplateKey.WITH_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_NL,
+    [EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS]: window.config.REACT_APP_EMAIL_APPOINTMENT_MODIFICATION_NL_NP,
   },
 }

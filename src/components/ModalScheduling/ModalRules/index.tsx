@@ -191,6 +191,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
   useEffect(() => {
     if (!Array.isArray(resourceGroupItems)) {
       setTableRows([])
+      return
     }
 
     const tableRowsSetup = resourceGroupItems.map((item) => {

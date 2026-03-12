@@ -321,8 +321,12 @@ export const ManagerUsers = (): ReactElement => {
         openNotification('error', t('notification.user_save_failed'), String(error))
 
         if (isNew) {
-          if (createdUser) await deleteSilentUser(createdUser).unwrap()
-          if (createdHcp) await deleteSilentHcp(createdHcp).unwrap()
+          try {
+            if (createdUser) await deleteSilentUser(createdUser).unwrap()
+            if (createdHcp) await deleteSilentHcp(createdHcp).unwrap()
+          } catch {
+            // Rollback is best-effort — user already sees the original error
+          }
         }
       }
     },

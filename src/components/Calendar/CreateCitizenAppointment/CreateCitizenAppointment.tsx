@@ -346,7 +346,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
             procedureDetails: siteVariant.procedureDetails,
             validationCode: confirmationCode,
           },
-        })
+        }).unwrap()
         rollingStartTime = endTime
       }
     },
@@ -483,7 +483,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         {notificationContextHolder}
         <Steps current={currentStep} items={stepItems} style={{ marginBottom: 32 }} />
 
-        <Form form={form} layout="vertical" initialValues={{ personalInfo: { countryCode: '+32', language: 'Français', birthDate: dayjs() } }}>
+        <Form form={form} layout="vertical" initialValues={{ personalInfo: { countryCode: '+32', language: 'Français' } }}>
           <div style={{ minHeight: '350px' }}>{renderStep()}</div>
           <Divider />
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>

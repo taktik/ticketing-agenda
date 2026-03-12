@@ -1,5 +1,5 @@
 import { MailOutlined, UserOutlined } from '@ant-design/icons'
-import { Form, Input, InputNumber, Select, Space, Typography } from 'antd'
+import { Form, Input, Select, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -139,9 +139,9 @@ export const StepPersonalInformation: FC = () => {
             <Form.Item
               name={['personalInfo', 'phoneNumber']}
               noStyle
-              rules={[{ required: true, message: t('content.select_phone_number_prompt') }, { type: 'number', message: t('content.phone_must_be_number') }, { validator: phoneValidator }]}
+              rules={[{ required: true, message: t('content.select_phone_number_prompt') }, { pattern: /^\d+$/, message: t('content.phone_must_be_number') }, { validator: phoneValidator }]}
             >
-              <InputNumber size="large" placeholder="470 12 34 56" style={{ width: '100%' }} controls={false} />
+              <Input size="large" placeholder="470123456" style={{ width: '100%' }} />
             </Form.Item>
           </Space.Compact>
         </Form.Item>

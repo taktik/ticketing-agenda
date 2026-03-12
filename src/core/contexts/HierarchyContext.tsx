@@ -74,7 +74,7 @@ export const HierarchyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       agendaMap,
       isLoading: isLoading,
     }
-  }, [sitesData, agendasData, itemTypesArrays, isSitesLoading, isAgendasLoading, isTypesLoading, isSiteRootLoading, isAdminRootLoading])
+  }, [siteRoot, adminRoot, sitesData, agendasData, itemTypesArrays, isSitesLoading, isAgendasLoading, isTypesLoading, isSiteRootLoading, isAdminRootLoading])
 
   return <HierarchyContext.Provider value={HierarchyData}>{children}</HierarchyContext.Provider>
 }

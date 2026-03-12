@@ -404,14 +404,13 @@ export const createStringProperty = (id: string, value: string) =>
     }),
   })
 
-export const setProperty = (properties: DecryptedPropertyStub[], id: string, typedValue: DecryptedTypedValue) => {
-  const existingProp = properties.find((p) => p.id === id)
+export const setProperty = (properties: DecryptedPropertyStub[], id: string, typedValue: DecryptedTypedValue): DecryptedPropertyStub[] => {
+  const existingIndex = properties.findIndex((p) => p.id === id)
 
-  if (existingProp) {
-    existingProp.typedValue = typedValue
-  } else {
-    properties.push(new DecryptedPropertyStub({ id, typedValue }))
+  if (existingIndex >= 0) {
+    return properties.map((p, i) => (i === existingIndex ? new DecryptedPropertyStub({ ...p, typedValue }) : p))
   }
+  return [...properties, new DecryptedPropertyStub({ id, typedValue })]
 }
 
 export const getCodeTagById = (tags: CodeStub[] | undefined, id: string) => {

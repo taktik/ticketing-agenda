@@ -45,6 +45,7 @@ interface EventDetailsProps {
     patientEmail: string,
     patientPhoneNumber: string,
   ) => Promise<void>
+  deleteTimeOff: (eventId: string, rev: string) => Promise<void>
   updateEvent: (
     event: EventApi | undefined,
     details: string,
@@ -60,7 +61,7 @@ interface EventDetailsProps {
   isCalendarItemLoading: boolean
 }
 
-export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event, deleteEvent, updateEvent }: EventDetailsProps) => {
+export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event, deleteEvent, deleteTimeOff, updateEvent }: EventDetailsProps) => {
   const { t, i18n } = useTranslation()
   const [form] = Form.useForm<CalendarEventUpdateForm>()
 
@@ -72,15 +73,15 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
 
+  const extendedProps = event?.extendedProps as EventExtendedProps | undefined
+  const isTimeOff = !!extendedProps?.isTimeOff
+
   const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
-  const isDetailsLoading = !calendarItem || !patient || !agenda || !calendarItemType
+  const isDetailsLoading = isTimeOff ? !calendarItem : !calendarItem || !patient || !agenda || !calendarItemType
 
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
 
   const dateFnsLocale = useMemo(() => localeMap[i18n.language] ?? enUS, [i18n.language])
-
-  const extendedProps = event?.extendedProps as EventExtendedProps | undefined
-  const isTimeOff = !!extendedProps?.isTimeOff
 
   const patientName = useMemo(() => (patient ? `${patient.firstName} ${patient.lastName}` : undefined), [patient])
 
@@ -171,16 +172,21 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
 
   const handleDelete = useCallback(async () => {
     try {
-      if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail) {
-        throw new Error('Missing data for email payload')
+      if (isTimeOff) {
+        if (!event?.id || !event?.extendedProps?.rev) throw new Error('Missing time-off data')
+        await deleteTimeOff(event.id, event.extendedProps.rev)
+      } else {
+        if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail) {
+          throw new Error('Missing data for email payload')
+        }
+        await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       }
-      await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       setShowDeleteAppointmentModal(false)
       onClose()
     } catch {
       openNotification('error', t('validation.unexpected_error'), '')
     }
-  }, [event, deleteEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, onClose, openNotification, t])
+  }, [isTimeOff, event, deleteEvent, deleteTimeOff, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, onClose, openNotification, t])
 
   const renderDisplayMode = () => (
     <div className="modal-event-display">
@@ -265,9 +271,11 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
                 <Button key="delete" danger onClick={() => setShowDeleteAppointmentModal(true)} disabled={isDetailsLoading}>
                   {t('content.delete')}
                 </Button>
-                <Button key="modify" type="primary" onClick={() => setIsEditing(true)} disabled={isDetailsLoading}>
-                  {t('content.modify')}
-                </Button>
+                {!isTimeOff && (
+                  <Button key="modify" type="primary" onClick={() => setIsEditing(true)} disabled={isDetailsLoading}>
+                    {t('content.modify')}
+                  </Button>
+                )}
               </>
             )}
           </div>
