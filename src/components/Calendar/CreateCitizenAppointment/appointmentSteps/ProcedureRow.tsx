@@ -1,5 +1,5 @@
 import { MinusCircleOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Form, Select, Space, Tooltip } from 'antd'
+import { Alert, Button, Card, Col, Form, Row, Select, Tooltip } from 'antd'
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_LANGUAGE_FALLBACK } from '../../../../constants'
@@ -92,12 +92,12 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
 
   return (
     <Card style={{ width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-        <Space align="end" style={{ gap: '2rem' }}>
+      <Row gutter={[16, 12]} align="bottom">
+        <Col xs={24} sm={24} md={10}>
           <Form.Item label={t('content.procedure')} required style={{ marginBottom: 0 }}>
             <Select
               placeholder={t('content.select_procedure_placeholder')}
-              style={{ width: '300px' }}
+              style={{ width: '100%' }}
               loading={isLoading}
               showSearch
               optionFilterProp="label"
@@ -109,10 +109,12 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
               }))}
             />
           </Form.Item>
+        </Col>
 
+        <Col xs={14} sm={14} md={7}>
           <Form.Item label={t('content.site')} required style={{ marginBottom: 0 }}>
             <Select
-              style={{ width: '200px' }}
+              style={{ width: '100%' }}
               placeholder={t('content.site')}
               disabled={!draft.procedureGroupId}
               value={draft.siteVariantId}
@@ -123,10 +125,12 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
               }))}
             />
           </Form.Item>
+        </Col>
 
+        <Col xs={8} sm={8} md={5}>
           <Form.Item label={t('content.quantity')} required style={{ marginBottom: 0 }}>
             <Select
-              style={{ minWidth: '80px' }}
+              style={{ width: '100%' }}
               placeholder={t('content.quantity')}
               disabled={!draft.siteVariantId}
               value={draft.quantity}
@@ -137,12 +141,14 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
               }))}
             />
           </Form.Item>
-        </Space>
+        </Col>
 
-        <Tooltip title={t('content.remove_selection')}>
-          <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => removeDraft(draft.tempId)} disabled={!canRemove} size="middle" style={{ border: 'none', fontSize: '18px', cursor: 'pointer' }} />
-        </Tooltip>
-      </div>
+        <Col xs={2} sm={2} md={2} style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', paddingBottom: 4 }}>
+          <Tooltip title={t('content.remove_selection')}>
+            <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => removeDraft(draft.tempId)} disabled={!canRemove} size="middle" style={{ border: 'none', fontSize: '18px', cursor: 'pointer' }} />
+          </Tooltip>
+        </Col>
+      </Row>
 
       {selectedSiteVariant?.procedureDetails && <Alert message={selectedSiteVariant.procedureDetails} type="warning" showIcon style={{ marginTop: '16px' }} />}
     </Card>
