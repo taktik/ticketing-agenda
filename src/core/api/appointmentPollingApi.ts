@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react'
-import { baseQueryWithRetry } from './utils'
+import { FetchArgs, fetchBaseQuery, retry } from '@reduxjs/toolkit/query'
 import { BACKEND_API } from '../../constants'
+import { AppState } from '../reducer'
 
 export enum PropagationStatus {
   NOT_YET_RECEIVED = 'NOT_YET_RECEIVED',
@@ -30,6 +31,31 @@ type PropagationStatusTrigger = (
   unwrap: () => Promise<PropagationTask>
 }
 
+const authenticatedBaseQuery = fetchBaseQuery({
+  baseUrl: '/',
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as AppState).app.savedCredentials?.token
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
+    return headers
+  },
+})
+
+const authenticatedBaseQueryWithRetry = retry(
+  async (args: string | FetchArgs, api, extraOptions) => {
+    const result = await authenticatedBaseQuery(args, api, extraOptions)
+    if (result.error) {
+      const { status } = result.error as { status: number | string }
+      if (typeof status === 'number' && status >= 400 && status < 500) {
+        retry.fail(result.error, result.meta)
+      }
+    }
+    return result
+  },
+  { maxRetries: 3 },
+)
+
 enum AppointmentPollingApiTags {
   AppointmentPolling = 'AppointmentPolling',
 }
@@ -37,7 +63,7 @@ enum AppointmentPollingApiTags {
 export const AppointmentPollingApiRtk = createApi({
   reducerPath: 'AppointmentPollingApi',
   tagTypes: [AppointmentPollingApiTags.AppointmentPolling],
-  baseQuery: baseQueryWithRetry,
+  baseQuery: authenticatedBaseQueryWithRetry,
   endpoints: (builder) => ({
     getPropagationStatus: builder.query<PropagationTask, string>({
       query: (icureAppointmentId) => ({
