@@ -120,12 +120,7 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
                   <List.Item className={`modal-citizen-search__patient-item ${selectedPatient?.id === patient.id ? 'modal-citizen-search__patient-item--selected' : ''}`} onClick={() => handleSelectPatient(patient)}>
                     <List.Item.Meta
                       title={`${patient.firstName ?? ''} ${patient.lastName ?? ''}`}
-                      description={
-                        <>
-                          {getPatientEmail(patient) && <span>{getPatientEmail(patient)}</span>}
-                          {patient.dateOfBirth && <span> — {formatPatientDob(patient)}</span>}
-                        </>
-                      }
+                      description={[getPatientEmail(patient), getPatientPhone(patient), patient.dateOfBirth ? formatPatientDob(patient) : ''].filter(Boolean).join(' — ')}
                     />
                   </List.Item>
                 )}

@@ -57,8 +57,23 @@ export const patientApiRtk = createApi({
         const patientApi = api?.patient
         const dataOwnerId = (await api?.dataOwner.getCurrentDataOwner())?.dataOwner.id
         return guard([patientApi, dataOwnerId], async (): Promise<DecryptedPatient[]> => {
-          const filter = PatientFilters.byFuzzyNameForDataOwner(dataOwnerId!, searchTerm)
-          return await loadFromIterator(await patientApi!.filterPatientsBy(filter), 50)
+          const nameFilter = PatientFilters.byFuzzyNameForDataOwner(dataOwnerId!, searchTerm)
+          const telecomFilter = PatientFilters.byTelecomForDataOwner(dataOwnerId!, searchTerm)
+
+          const [nameResults, telecomResults] = await Promise.all([
+            loadFromIterator(await patientApi!.filterPatientsBy(nameFilter), 50),
+            loadFromIterator(await patientApi!.filterPatientsBy(telecomFilter), 50).catch(() => [] as DecryptedPatient[]),
+          ])
+
+          const seen = new Set<string>()
+          const merged: DecryptedPatient[] = []
+          for (const patient of [...nameResults, ...telecomResults]) {
+            if (!seen.has(patient.id)) {
+              seen.add(patient.id)
+              merged.push(patient)
+            }
+          }
+          return merged
         })
       },
       providesTags: [{ type: PatientTags.Patient, id: 'search' }],

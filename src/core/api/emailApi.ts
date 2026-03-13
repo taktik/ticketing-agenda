@@ -27,9 +27,10 @@ export const emailApiRtk = createApi({
             Authorization: `Bearer ${token}`,
           },
           body: { from, processId, bcc, cc, variables },
+          responseHandler: 'text',
         })
         if (result.error) return { error: result.error }
-        return { data: result.data as SendEmailResponse }
+        return { data: { success: true } }
       },
     }),
   }),

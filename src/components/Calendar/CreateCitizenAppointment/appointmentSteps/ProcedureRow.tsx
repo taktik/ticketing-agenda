@@ -115,7 +115,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
           <Form.Item label={t('content.site')} required style={{ marginBottom: 0 }}>
             <Select
               style={{ width: '100%' }}
-              placeholder={t('content.site')}
+              placeholder={t('content.select_site_placeholder')}
               disabled={!draft.procedureGroupId}
               value={draft.siteVariantId}
               onChange={handleSiteChange}

@@ -21,7 +21,8 @@ const BirthdayInput: FC<BirthdayInputProps> = ({ value, onChange }) => {
 
   const handleDayChange = useCallback(
     (newDay: number) => {
-      const newDate = (value || dayjs()).date(newDay)
+      const base = value ?? dayjs().month(0).date(1)
+      const newDate = base.date(newDay)
       onChange?.(newDate.isValid() ? newDate : null)
     },
     [value, onChange],
@@ -29,10 +30,10 @@ const BirthdayInput: FC<BirthdayInputProps> = ({ value, onChange }) => {
 
   const handleMonthChange = useCallback(
     (newMonth: number) => {
-      const oldDate = value || dayjs()
-      const daysInNewMonth = oldDate.month(newMonth).daysInMonth()
-      let newDate = oldDate.month(newMonth)
-      if ((oldDate.date() || 0) > daysInNewMonth) {
+      const base = value ?? dayjs().month(0).date(1)
+      let newDate = base.month(newMonth)
+      const daysInNewMonth = newDate.daysInMonth()
+      if (base.date() > daysInNewMonth) {
         newDate = newDate.date(daysInNewMonth)
       }
       onChange?.(newDate.isValid() ? newDate : null)
@@ -42,10 +43,11 @@ const BirthdayInput: FC<BirthdayInputProps> = ({ value, onChange }) => {
 
   const handleYearChange = useCallback(
     (newYear: number) => {
-      const oldDate = value || dayjs()
-      let newDate = oldDate.year(newYear)
-      if (!newDate.isSame(oldDate, 'month')) {
-        newDate = newDate.date(1)
+      const base = value ?? dayjs().month(0).date(1)
+      let newDate = base.year(newYear)
+      const daysInNewMonth = newDate.daysInMonth()
+      if (base.date() > daysInNewMonth) {
+        newDate = newDate.date(daysInNewMonth)
       }
       onChange?.(newDate.isValid() ? newDate : null)
     },
