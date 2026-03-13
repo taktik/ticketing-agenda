@@ -64,11 +64,9 @@ export const waitForPropagation = async (trigger: PropagationStatusTrigger, id: 
         return result
       }
       await new Promise((resolve) => setTimeout(resolve, intervalMs))
-    } catch (e) {
-      console.warn(`Polling error for ${id}:`, e)
+    } catch {
       await new Promise((resolve) => setTimeout(resolve, intervalMs))
     }
   }
-  console.warn(`Polling timed out for appointment ${id}`)
   return { status: 'TIMEOUT' }
 }

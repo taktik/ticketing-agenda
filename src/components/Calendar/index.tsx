@@ -17,6 +17,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION, EMAIL_SENDER, EmailTemplateKey, MANAGE_APPOINTMENT_ROUTE, NEW_APPOINTMENT_ROUTE } from '../../constants'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
+import { PropagationStatus, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../core/api/appointmentPollingApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
 import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
@@ -86,6 +87,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const [sendEmail] = useSendEmailMutation()
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
+  const [triggerPolling] = useLazyGetPropagationStatusQuery()
 
   const isCalendarItemLoading = isDeleteLoading || isUpdateLoading
 
@@ -246,6 +248,15 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
 
         try {
+          const result = await waitForPropagation(triggerPolling, event.id)
+          if (result.status === 'TIMEOUT' || result.status === PropagationStatus.FAILED) {
+            openNotification('warning', t('notification.propagation_sync_warning'), '')
+          }
+        } catch {
+          openNotification('warning', t('notification.propagation_sync_warning'), '')
+        }
+
+        try {
           const emailPayload = await computeDeleteEmailPayload(calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
           await sendEmail(emailPayload).unwrap()
         } catch {
@@ -257,7 +268,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         openNotification('error', t('notification.appointment_delete_failed'), t('notification.appointment_delete_error'))
       }
     },
-    [deleteCalendarItem, computeDeleteEmailPayload, sendEmail, t, openNotification, showMessageFeedback],
+    [deleteCalendarItem, triggerPolling, computeDeleteEmailPayload, sendEmail, t, openNotification, showMessageFeedback],
   )
 
   const updateEvent = useCallback(
@@ -297,7 +308,35 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           })
         }
 
-        await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
+        const updateResult = await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
+
+        let propagationFailed = false
+        try {
+          const propagationResult = await waitForPropagation(triggerPolling, updatedCalendarItem.id)
+          if (propagationResult.status === 'TIMEOUT' || propagationResult.status === PropagationStatus.FAILED) {
+            propagationFailed = true
+          }
+        } catch {
+          propagationFailed = true
+        }
+
+        if (propagationFailed) {
+          try {
+            const rolledBackItem = new DecryptedCalendarItem({
+              ...(updateResult ?? updatedCalendarItem),
+              modified: new Date().getTime(),
+              startTime: calendarItem.startTime,
+              endTime: calendarItem.endTime,
+              details: calendarItem.details,
+              tags: calendarItem.tags,
+            })
+            await updateCalendarItem({ calendarItem: rolledBackItem }).unwrap()
+            openNotification('error', t('notification.reschedule_sync_failed'), '')
+          } catch {
+            openNotification('error', t('notification.reschedule_rollback_failed'), '')
+          }
+          return
+        }
 
         try {
           const recoveryDataKey = await createRecoveryDataKey(patient.id).unwrap()
@@ -344,7 +383,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
       }
     },
-    [updateCalendarItem, initializePatientExchangeDatas, createRecoveryDataKey, sendEmail, dataOwnerId, currentUser, t, openNotification, showMessageFeedback],
+    [updateCalendarItem, triggerPolling, initializePatientExchangeDatas, createRecoveryDataKey, sendEmail, dataOwnerId, currentUser, t, openNotification, showMessageFeedback],
   )
 
   return (
