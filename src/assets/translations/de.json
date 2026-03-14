@@ -241,7 +241,9 @@
     "citizen_appointments": "Termine",
     "no_appointments": "Keine Termine für diesen Bürger gefunden",
     "select_citizen_prompt": "Wählen Sie einen Bürger aus, um seine Termine anzuzeigen",
-    "past": "Vergangen"
+    "past": "Vergangen",
+    "confirmation_code": "Bestätigungscode",
+    "present_on_arrival": "Bei Ankunft vorzuzeigen"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",

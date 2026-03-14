@@ -16,6 +16,7 @@ import React, { ReactElement, useCallback, useEffect, useMemo, useState } from '
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION, EMAIL_SENDER, EmailTemplateKey, MANAGE_APPOINTMENT_ROUTE, NEW_APPOINTMENT_ROUTE } from '../../constants'
+import { ConfirmationCodeSpecialValue } from '../../core/api/fetchType'
 import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { PropagationStatus, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../core/api/appointmentPollingApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
@@ -311,10 +312,16 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         const updateResult = await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
 
         let propagationFailed = false
+        let confirmationCode: string | undefined
         try {
           const propagationResult = await waitForPropagation(triggerPolling, updatedCalendarItem.id)
           if (propagationResult.status === 'TIMEOUT' || propagationResult.status === PropagationStatus.FAILED) {
             propagationFailed = true
+          } else {
+            const raw = propagationResult.confirmationCode
+            if (raw && raw !== ConfirmationCodeSpecialValue.SKIPPED && raw !== ConfirmationCodeSpecialValue.NONE) {
+              confirmationCode = raw
+            }
           }
         } catch {
           propagationFailed = true
@@ -351,7 +358,14 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           params.append('calendarItemId', updatedCalendarItem.id)
           const url = `${MANAGE_APPOINTMENT_ROUTE}?${params.toString()}`
 
-          const templateKey = updatedCalendarItem.details?.trim() ? EmailTemplateKey.WITH_PROCEDURE_DETAILS : EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS
+          const hasProcedure = !!updatedCalendarItem.details?.trim()
+          const hasCC = !!confirmationCode
+          let templateKey: EmailTemplateKey
+          if (hasProcedure) {
+            templateKey = hasCC ? EmailTemplateKey.WITH_PROCEDURE_DETAILS_AND_CC : EmailTemplateKey.WITH_PROCEDURE_DETAILS
+          } else {
+            templateKey = hasCC ? EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS_AND_CC : EmailTemplateKey.WITHOUT_PROCEDURE_DETAILS
+          }
           const processId = EMAIL_APPOINTMENT_MODIFICATION[lang]?.[templateKey] || EMAIL_APPOINTMENT_MODIFICATION['fr']?.[templateKey] || ''
 
           await sendEmail({
@@ -372,6 +386,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
               location: calendarItem.addressText,
               url,
               procedureDetails: updatedCalendarItem.details,
+              validationCode: confirmationCode,
             },
           }).unwrap()
         } catch {

@@ -105,6 +105,59 @@ th {
   /*Can be any text*/
   src: local('Inter-Regular'), url('/public/fonts/Lato/Lato-Regular.ttf') format('truetype');
 }
+.summary-wrapper {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: left;
+}
+.summary-card-spaced {
+  margin-bottom: 16px;
+}
+.summary-card-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+.summary-icon-blue {
+  color: #3d87c5;
+}
+.summary-icon-blue-top {
+  color: #3d87c5;
+  margin-top: 4px;
+}
+.summary-icon-warning-top {
+  color: #faad14;
+  margin-top: 4px;
+}
+.summary-icon-success {
+  color: #52c41a;
+}
+.summary-code-divider {
+  margin: 8px 0;
+}
+.summary-code-section {
+  text-align: center;
+  padding: 8px 0;
+}
+.summary-code-value {
+  margin: 4px 0 0;
+  color: #52c41a;
+}
+.summary-code-hint {
+  font-size: 12px;
+}
+.summary-cards-wrapper {
+  padding: 0 16px 24px;
+}
+.summary-result-no-bottom {
+  padding-bottom: 0;
+}
+.result-loading {
+  text-align: center;
+  padding: 50px;
+}
+.result-loading p {
+  margin-top: 20px;
+}
 body {
   width: 100vw;
   height: 100vh;

@@ -67,3 +67,17 @@ export interface TimeSlot {
   date: Dayjs
   time: Dayjs
 }
+
+export interface CreatedAppointmentSummaryItem {
+  procedureName: string
+  serviceName: string
+  date: string
+  time: string
+  location: string
+  procedureDetails?: string
+  confirmationCode?: string
+}
+
+export interface CreatedAppointmentSummary {
+  items: CreatedAppointmentSummaryItem[]
+}

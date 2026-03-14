@@ -240,7 +240,9 @@
     "citizen_appointments": "Rendez-vous",
     "no_appointments": "Aucun rendez-vous trouvé pour ce citoyen",
     "select_citizen_prompt": "Sélectionnez un citoyen pour voir ses rendez-vous",
-    "past": "Passé"
+    "past": "Passé",
+    "confirmation_code": "Code de confirmation",
+    "present_on_arrival": "À présenter lors de votre arrivée"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",

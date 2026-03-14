@@ -240,7 +240,9 @@
     "citizen_appointments": "Afspraken",
     "no_appointments": "Geen afspraken gevonden voor deze burger",
     "select_citizen_prompt": "Selecteer een burger om hun afspraken te bekijken",
-    "past": "Verlopen"
+    "past": "Verlopen",
+    "confirmation_code": "Bevestigingscode",
+    "present_on_arrival": "Te tonen bij aankomst"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",

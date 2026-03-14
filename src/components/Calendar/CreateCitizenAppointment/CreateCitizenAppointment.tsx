@@ -24,7 +24,7 @@ import { StepCreateEventResult } from './appointmentSteps/StepCreateEventResult'
 import { StepPersonalInformation } from './appointmentSteps/StepPersonalInformation'
 import { StepProcedureSelector } from './appointmentSteps/StepProcedureSelector'
 import { StepTimeSlotSelector } from './appointmentSteps/StepTimeSlotSelector'
-import { AppointmentStep, CreationStatus, PersonalInfo } from '../../../types/citizenReservationTypes'
+import { AppointmentStep, CreatedAppointmentSummary, CreatedAppointmentSummaryItem, CreationStatus, PersonalInfo } from '../../../types/citizenReservationTypes'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 
 interface CreateEventProps {
@@ -53,6 +53,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
   const [currentStep, setCurrentStep] = useState<AppointmentStep>(AppointmentStep.PROCEDURE)
   const [creationStatus, setCreationStatus] = useState<CreationStatus | null>(null)
+  const [appointmentSummary, setAppointmentSummary] = useState<CreatedAppointmentSummary | null>(null)
 
   const [getUserByMailLazy] = useLazyGetUserByEmailQuery()
   const [getPatientByIdLazy] = useLazyGetEncryptedPatientByIdQuery()
@@ -384,6 +385,53 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     [triggerPolling, deleteEvent],
   )
 
+  const buildAppointmentSummary = useCallback(
+    (calendarItems: DecryptedCalendarItem[], qBetterCodes: Record<string, string>, info: PersonalInfo): CreatedAppointmentSummary => {
+      const safeLang = detectLanguage([info.language])
+      const startTime = combineDateAndTime(timeSlot!)
+      if (!startTime) return { items: [] }
+
+      let rollingStartTime = startTime
+      const items: CreatedAppointmentSummaryItem[] = []
+
+      for (const draft of drafts) {
+        const group = availableProcedures.find((p) => p.id === draft.procedureGroupId)
+        const siteVariant = group?.siteVariants.find((sv) => sv.id === draft.siteVariantId)
+        if (!draft.calendarItemType || !draft.agenda || !draft.duration || !group || !siteVariant) continue
+
+        const endTime = rollingStartTime.add(draft.duration, 'minute')
+        const itemStartTime = Number(rollingStartTime.format('YYYYMMDDHHmmss'))
+        const calendarItem = calendarItems.find((ci) => ci.startTime === itemStartTime)
+
+        let confirmationCode = ''
+        if (calendarItem && qBetterCodes[calendarItem.id]) {
+          const code = qBetterCodes[calendarItem.id]
+          if (code !== ConfirmationCodeSpecialValue.SKIPPED && code !== ConfirmationCodeSpecialValue.NONE) {
+            confirmationCode = code
+          }
+        }
+
+        const serviceName = getTranslationForEntity(draft.agenda.properties, EntityType.SERVICE, safeLang) || ''
+        const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, safeLang) || ''
+
+        items.push({
+          procedureName,
+          serviceName,
+          date: rollingStartTime.format('DD/MM/YYYY'),
+          time: `${rollingStartTime.format('HH[h]mm')} - ${endTime.format('HH[h]mm')}`,
+          location: siteVariant.siteLocation,
+          procedureDetails: siteVariant.procedureDetails || undefined,
+          confirmationCode: confirmationCode || undefined,
+        })
+
+        rollingStartTime = endTime
+      }
+
+      return { items }
+    },
+    [drafts, timeSlot, availableProcedures],
+  )
+
   const handleAppointmentCreation = useCallback(async () => {
     try {
       setCreationStatus(CreationStatus.LOADING)
@@ -414,6 +462,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         openNotification('warning', t('validation.appointments_created_email_failed'))
       }
 
+      setAppointmentSummary(buildAppointmentSummary(calendarItems, qBetterCodes, personalInfo))
       setCreationStatus(CreationStatus.SUCCESS)
     } catch (err) {
       setCreationStatus(CreationStatus.FAILURE)
@@ -421,7 +470,20 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     } finally {
       dispatch(calendarItemApiRtk.util.invalidateTags([CalendarItemTags.CalendarItem]))
     }
-  }, [dispatch, form, dataOwnerId, getOrCreateCitizenProfile, initializePatientExchangeDatas, createAppointments, createRecoveryDataKey, ensurePropagationOrRollback, sendEmails, t, openNotification])
+  }, [
+    dispatch,
+    form,
+    dataOwnerId,
+    getOrCreateCitizenProfile,
+    initializePatientExchangeDatas,
+    createAppointments,
+    createRecoveryDataKey,
+    ensurePropagationOrRollback,
+    sendEmails,
+    t,
+    openNotification,
+    buildAppointmentSummary,
+  ])
 
   const next = useCallback(async () => {
     try {
@@ -441,6 +503,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
     setCurrentStep(0)
     form.resetFields()
     setCreationStatus(null)
+    setAppointmentSummary(null)
     onClose()
   }, [form, onClose])
 
@@ -471,7 +534,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       case AppointmentStep.REVIEW:
         return <StepAppointmentReview />
       case AppointmentStep.RESULT:
-        return <StepCreateEventResult creationStatus={creationStatus} />
+        return <StepCreateEventResult creationStatus={creationStatus} appointmentSummary={appointmentSummary} />
       default:
         return null
     }
