@@ -225,19 +225,19 @@ Helper functions in `components/common/helpers.ts`:
 - `dayjsToYYYYMMDDHHmmss()`, `fuzzyDateIntToDayjs()`, `hhmmssToDayjs()`, `hhmmssToHHmm()`, `dayjsToHhmmss()`, `dayjsToFuzzyDateInt()`
 
 ## Environment Config
-Runtime config injected via `window.config` (from `public/config.js`):
+Runtime config injected via `window.config` in a `<script>` block in `public/index.html` (overridden at container startup by `json-env`):
 - `REACT_APP_ICURE_NIGHTLY_URL` - iCure API
 - `REACT_APP_BACKEND_API` - ticketing-service backend (https://mouscron.taktik.dev/backend)
 - `REACT_APP_MSG_GW_URL` - iCure MSG Gateway
 - `REACT_APP_DATABASE_ID` - iCure database ID
 - `REACT_APP_EXTERNAL_SERVICES_SPEC_ID` - iCure external services spec group ID
 - `REACT_APP_PARENT_ORGANISATION_ID` - Parent organisation ID
-- `REACT_APP_ADMIN_SOLUTION_AUTH_TOKEN` - Auth token for admin solution
-- `REACT_APP_AZURE_CLIENT_ID` / `AZURE_TENANT_ID` - Azure AD config
+- `REACT_APP_AZURE_CLIENT_ID` / `REACT_APP_AZURE_TENANT_ID` - Azure AD config
 - `REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY` - CAPTCHA site key
-- `REACT_APP_ROLE_ADMINISTRATOR` / `ROLE_CHIEF_OF_SERVICE` / `ROLE_CITY_WORKER` - Role IDs
-- `REACT_APP_EMAIL_*` - Email template process IDs per language (auth code, confirmation, cancellation, modification × FR/NL)
-- `REACT_APP_MANAGE_APPOINTMENT_ROUTE` / `NEW_APPOINTMENT_ROUTE` - Portal URLs for email links
+- `REACT_APP_ROLE_ADMINISTRATOR` / `REACT_APP_ROLE_CHIEF_OF_SERVICE` / `REACT_APP_ROLE_CITY_WORKER` - Role IDs
+- `REACT_APP_EMAIL_*` - Email template process IDs per language (auth code admin FR/NL + citizen FR/NL, confirmation FR/NL × with/without procedure × with/without CC, cancellation FR/NL, modification FR/NL × with/without procedure × with/without CC)
+- `REACT_APP_MANAGE_APPOINTMENT_ROUTE` / `REACT_APP_NEW_APPOINTMENT_ROUTE` - Portal URLs for email links
+- `REACT_APP_APPLICATION_ID`, `REACT_APP_PRIMARY_COLOR`, `REACT_APP_LOGO_URL` - White-label config
 
 ## Related Projects
 - **ticketing-portal** (ticketing-mouscron/ticketing-portal): Citizen-facing frontend for booking and managing appointments
