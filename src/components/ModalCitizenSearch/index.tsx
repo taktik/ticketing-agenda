@@ -52,9 +52,9 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
   const handleSelectPatient = useCallback(
     (patient: DecryptedPatient) => {
       setSelectedPatient(patient)
-      getAppointments(patient)
+      if (adminRoot?.id) getAppointments({ patient, dataOwnerId: adminRoot.id })
     },
-    [getAppointments],
+    [getAppointments, adminRoot?.id],
   )
 
   const getPatientEmail = useCallback((patient: DecryptedPatient) => {
@@ -154,7 +154,15 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
                       dataSource={sortedAppointments}
                       renderItem={(item) => {
                         const confirmationCode = getCodeTagById(item.tags, CalendarItemTag.APPOINTMENT_QBETTER_CODE)
-                        const isPast = item.startTime ? item.startTime < dayjsToYYYYMMDDHHmmss(dayjs()) : false
+                        const todayStart = dayjsToYYYYMMDDHHmmss(dayjs().startOf('day'))
+                        const tomorrowStart = dayjsToYYYYMMDDHHmmss(dayjs().add(1, 'day').startOf('day'))
+                        const startTime = item.startTime ?? 0
+                        const timeTag =
+                          startTime < todayStart
+                            ? { color: 'default' as const, label: t('content.past') }
+                            : startTime < tomorrowStart
+                              ? { color: 'blue' as const, label: t('content.today') }
+                              : { color: 'green' as const, label: t('content.upcoming') }
 
                         return (
                           <List.Item>
@@ -162,11 +170,9 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
                               title={
                                 <span>
                                   {formatAppointmentDate(item)}
-                                  {isPast && (
-                                    <Tag color="default" style={{ marginLeft: 8 }}>
-                                      {t('content.past')}
-                                    </Tag>
-                                  )}
+                                  <Tag color={timeTag.color} style={{ marginLeft: 8 }}>
+                                    {timeTag.label}
+                                  </Tag>
                                 </span>
                               }
                               description={

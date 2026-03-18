@@ -241,6 +241,7 @@
     "no_appointments": "No appointments found for this citizen",
     "select_citizen_prompt": "Select a citizen to view their appointments",
     "past": "Past",
+    "upcoming": "Upcoming",
     "confirmation_code": "Confirmation code",
     "present_on_arrival": "To present upon arrival"
   },

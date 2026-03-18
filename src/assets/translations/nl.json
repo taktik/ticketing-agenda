@@ -241,6 +241,7 @@
     "no_appointments": "Geen afspraken gevonden voor deze burger",
     "select_citizen_prompt": "Selecteer een burger om hun afspraken te bekijken",
     "past": "Verlopen",
+    "upcoming": "Aankomend",
     "confirmation_code": "Bevestigingscode",
     "present_on_arrival": "Te tonen bij aankomst"
   },

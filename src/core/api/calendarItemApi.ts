@@ -111,17 +111,12 @@ export const calendarItemApiRtk = createApi({
       },
       invalidatesTags: [{ type: CalendarItemTags.CalendarItem }],
     }),
-    getCalendarItemsByPatient: builder.query<DecryptedCalendarItem[] | undefined, DecryptedPatient>({
-      async queryFn(patient, { getState }) {
+    getCalendarItemsByPatient: builder.query<DecryptedCalendarItem[] | undefined, { patient: DecryptedPatient; dataOwnerId: string }>({
+      async queryFn({ patient, dataOwnerId }, { getState }) {
         const api = await cardinalApi(getState)
         const calendarApi = api?.calendarItem
-        const patientApi = api?.patient
-        return guard([calendarApi, patientApi], async (): Promise<DecryptedCalendarItem[]> => {
-          const secretIds = await patientApi!.getSecretIdsOf(patient)
-          const firstSecretId = Object.keys(secretIds)[0]
-          if (!firstSecretId) return []
-
-          const filter = CalendarItemFilters.byPatientsStartTimeForSelf([patient])
+        return guard([calendarApi], async (): Promise<DecryptedCalendarItem[]> => {
+          const filter = CalendarItemFilters.byPatientsStartTimeForDataOwner(dataOwnerId, [patient])
           return await loadFromIterator(await calendarApi!.filterCalendarItemsBy(filter), 100)
         })
       },

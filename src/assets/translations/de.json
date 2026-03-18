@@ -242,6 +242,7 @@
     "no_appointments": "Keine Termine für diesen Bürger gefunden",
     "select_citizen_prompt": "Wählen Sie einen Bürger aus, um seine Termine anzuzeigen",
     "past": "Vergangen",
+    "upcoming": "Bevorstehend",
     "confirmation_code": "Bestätigungscode",
     "present_on_arrival": "Bei Ankunft vorzuzeigen"
   },

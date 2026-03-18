@@ -241,6 +241,7 @@
     "no_appointments": "Aucun rendez-vous trouvé pour ce citoyen",
     "select_citizen_prompt": "Sélectionnez un citoyen pour voir ses rendez-vous",
     "past": "Passé",
+    "upcoming": "À venir",
     "confirmation_code": "Code de confirmation",
     "present_on_arrival": "À présenter lors de votre arrivée"
   },
