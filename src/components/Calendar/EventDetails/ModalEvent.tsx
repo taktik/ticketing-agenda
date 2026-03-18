@@ -228,7 +228,14 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   )
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={editMode !== 'none' ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={editMode === 'reschedule' ? 1100 : 700}>
+    <CustomModal
+      isVisible={isVisible}
+      handleClose={onClose}
+      title={editMode !== 'none' ? t('content.edit_appointment') : t('content.appointment_information')}
+      blockAntModalBodyVerticalScroll
+      noFooter
+      width={editMode === 'reschedule' ? 1100 : 700}
+    >
       <div className="modal-event">
         {notificationContextHolder}
 

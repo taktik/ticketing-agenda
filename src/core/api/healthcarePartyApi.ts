@@ -26,7 +26,7 @@ export const healthcarePartyApiRtk = createApi({
           return hcp
         })
       },
-      providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'current' }] : []),
     }),
     getHealthcareParties: builder.query<HealthcareParty[] | undefined, undefined>({
       async queryFn(_, { getState }) {
@@ -44,7 +44,7 @@ export const healthcarePartyApiRtk = createApi({
           return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byParentId(params.parentId)), 1000)
         })
       },
-      providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      providesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'hierarchy' }] : []),
     }),
     getHealthcarePartiesByIds: builder.query<HealthcareParty[] | undefined, string[]>({
       async queryFn(ids, { getState }) {
@@ -66,7 +66,17 @@ export const healthcarePartyApiRtk = createApi({
           return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byTag(rootType)), 1000)
         })
       },
-      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      providesTags: (res, _err, rootType) => {
+        if (!res) return []
+        const USER_TAG_TYPES = ['ADMINISTRATOR', 'HEAD_OF_SERVICE', 'CITY_WORKER', 'PENDING_ASSIGNMENT']
+        const tags: { type: typeof HealthcarePartyTags.HealthcareParty; id: string }[] = [{ type: HealthcarePartyTags.HealthcareParty, id: `tag-${rootType}` }]
+        if (USER_TAG_TYPES.includes(rootType)) {
+          tags.push({ type: HealthcarePartyTags.HealthcareParty, id: 'users' })
+        } else {
+          tags.push({ type: HealthcarePartyTags.HealthcareParty, id: 'hierarchy' })
+        }
+        return tags
+      },
       keepUnusedDataFor: Infinity,
     }),
     getHealthcareParty: builder.query<HealthcareParty | undefined, string>({
@@ -89,7 +99,7 @@ export const healthcarePartyApiRtk = createApi({
           return await loadFromIterator(await hcpApi!.filterHealthPartiesBy(HealthcarePartyFilters.byName(rootType)), 1000)
         })
       },
-      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      providesTags: (res) => (res ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'hierarchy' }] : []),
       keepUnusedDataFor: Infinity,
     }),
     createUpdateHealthcareParty: builder.mutation<HealthcareParty | undefined, HealthcareParty>({
@@ -103,7 +113,16 @@ export const healthcarePartyApiRtk = createApi({
           return updatedHcp
         })
       },
-      invalidatesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      invalidatesTags: (res, error) => {
+        if (!res || error) return []
+        const USER_TAG_TYPES = ['ADMINISTRATOR', 'HEAD_OF_SERVICE', 'CITY_WORKER', 'PENDING_ASSIGNMENT']
+        const resultTagTypes = (res.tags ?? []).map((t) => t.type).filter(Boolean)
+        const isUserHcp = resultTagTypes.some((t) => USER_TAG_TYPES.includes(t!)) || resultTagTypes.length === 0
+        return [
+          { type: HealthcarePartyTags.HealthcareParty, id: isUserHcp ? 'users' : 'hierarchy' },
+          { type: HealthcarePartyTags.HealthcareParty, id: 'current' },
+        ]
+      },
     }),
     deleteHealthcareParty: builder.mutation<string | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {
@@ -116,7 +135,7 @@ export const healthcarePartyApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      invalidatesTags: [{ type: HealthcarePartyTags.HealthcareParty, id: 'users' }],
     }),
     deleteHealthcareParties: builder.mutation<boolean | undefined, HealthcareParty[]>({
       async queryFn(hcps, { getState }) {
@@ -129,7 +148,7 @@ export const healthcarePartyApiRtk = createApi({
           return true
         })
       },
-      invalidatesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      invalidatesTags: [{ type: HealthcarePartyTags.HealthcareParty, id: 'hierarchy' }],
     }),
     silentDeleteHealthcareParty: builder.mutation<string | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {
@@ -154,7 +173,7 @@ export const healthcarePartyApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      invalidatesTags: [{ type: HealthcarePartyTags.HealthcareParty, id: 'users' }],
     }),
     unDeleteHealthcarePartyById: builder.mutation<string | undefined, UndeleteHcpByIdParameters>({
       async queryFn(params, { getState }) {
@@ -167,7 +186,7 @@ export const healthcarePartyApiRtk = createApi({
           return result.id
         })
       },
-      invalidatesTags: (res, error) => (res && !error ? [{ type: HealthcarePartyTags.HealthcareParty, id: 'all' }] : []),
+      invalidatesTags: [{ type: HealthcarePartyTags.HealthcareParty, id: 'users' }],
     }),
     silentUnDeleteHealthcareParty: builder.mutation<string | undefined, HealthcareParty>({
       async queryFn(hcp, { getState }) {

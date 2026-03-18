@@ -23,7 +23,7 @@ export const userApiRtk = createApi({
           return result
         })
       },
-      providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
+      providesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'current' }] : []),
     }),
     getUsersByIds: builder.query<User[] | undefined, string[]>({
       async queryFn(ids, { getState }) {
