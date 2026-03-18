@@ -234,7 +234,7 @@ Runtime config injected via `window.config` in a `<script>` block in `public/ind
 - `REACT_APP_PARENT_ORGANISATION_ID` - Parent organisation ID
 - `REACT_APP_AZURE_CLIENT_ID` / `REACT_APP_AZURE_TENANT_ID` - Azure AD config
 - `REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY` - CAPTCHA site key
-- `REACT_APP_ROLE_ADMINISTRATOR` / `REACT_APP_ROLE_CHIEF_OF_SERVICE` / `REACT_APP_ROLE_CITY_WORKER` - Role IDs
+- `REACT_APP_ROLE_ADMINISTRATOR` / `REACT_APP_ROLE_HEAD_OF_SERVICE` / `REACT_APP_ROLE_CITY_WORKER` - Role IDs
 - `REACT_APP_EMAIL_*` - Email template process IDs per language (auth code admin FR/NL + citizen FR/NL, confirmation FR/NL × with/without procedure × with/without CC, cancellation FR/NL, modification FR/NL × with/without procedure × with/without CC)
 - `REACT_APP_MANAGE_APPOINTMENT_ROUTE` / `REACT_APP_NEW_APPOINTMENT_ROUTE` - Portal URLs for email links
 - `REACT_APP_APPLICATION_ID`, `REACT_APP_PRIMARY_COLOR`, `REACT_APP_LOGO_URL` - White-label config

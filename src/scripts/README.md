@@ -33,7 +33,7 @@ We have to create a first administrator using the addAdmin.ts script.
 ## --- What about permissions ? ---
 
 See below for the list of permissions and how to handle roles.
-The basics is that we have created custom roles ('ADMINISTRATOR', 'CHIEF-OF-SERVICE', 'CITY_WORKER') and attached custom set of permissions to them
+The basics is that we have created custom roles ('ADMINISTRATOR', 'HEAD_OF_SERVICE', 'CITY_WORKER') and attached custom set of permissions to them
 When creating an Administrator, we give gim the Adminisrator set of permissions.
 
 ## Order of things :
@@ -67,7 +67,7 @@ POST https://api.icure.cloud/rest/v2/user/{userId}/inGroup/{groupId}/roles/set t
 Existing roles :
 
 - Administrator
-- Chief of service
+- Head of service
 - City Worker
 
 # Emails

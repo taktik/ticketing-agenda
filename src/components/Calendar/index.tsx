@@ -309,7 +309,13 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           })
         }
 
+        const isReschedule = !!(selectedDate && selectedTime)
         const updateResult = await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
+
+        if (!isReschedule) {
+          showMessageFeedback('success', t('notification.appointment_updated'))
+          return
+        }
 
         let propagationFailed = false
         let confirmationCode: string | undefined

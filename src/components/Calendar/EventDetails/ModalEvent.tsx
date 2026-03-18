@@ -66,7 +66,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   const [form] = Form.useForm<CalendarEventUpdateForm>()
 
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState<boolean>(false)
-  const [isEditing, setIsEditing] = useState(false)
+  const [editMode, setEditMode] = useState<'none' | 'details' | 'reschedule'>('none')
 
   const [availabilities, setAvailabilities] = useState<dayjs.Dayjs[]>([])
   const [currentMonth, setCurrentMonth] = useState(dayjs())
@@ -108,14 +108,14 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
       form.setFieldsValue({
         details: extendedProps?.details ?? '',
       })
-      setIsEditing(false)
+      setEditMode('none')
       setSelectedDate(undefined)
       setSelectedTime(undefined)
     }
   }, [event, isVisible, form, extendedProps])
 
   useEffect(() => {
-    if (!isEditing || !agenda?.id || !calendarItemType?.id) return
+    if (editMode !== 'reschedule' || !agenda?.id || !calendarItemType?.id) return
 
     const fetchRescheduleAvailabilities = async () => {
       try {
@@ -144,7 +144,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     }
 
     fetchRescheduleAvailabilities()
-  }, [isEditing, agenda, calendarItemType, currentMonth, getAvailabilities, openNotification, t, selectedDate])
+  }, [editMode, agenda, calendarItemType, currentMonth, getAvailabilities, openNotification, t, selectedDate])
 
   const handleDateSelect = useCallback((date: dayjs.Dayjs) => {
     setSelectedDate(date)
@@ -163,12 +163,13 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
         throw new Error('Missing data for email payload')
       }
 
-      await updateEvent(event, details, selectedDate, selectedTime, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+      const isReschedule = editMode === 'reschedule'
+      await updateEvent(event, details, isReschedule ? selectedDate : undefined, isReschedule ? selectedTime : undefined, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       onClose()
     } catch {
       openNotification('error', t('validation.unexpected_error'), '')
     }
-  }, [form, event, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t])
+  }, [form, event, editMode, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t])
 
   const handleDelete = useCallback(async () => {
     try {
@@ -200,7 +201,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
           <Descriptions.Item label={t('content.date_and_time')}>{event ? formatEventDate(event, dateFnsLocale) : ''}</Descriptions.Item>
           <Descriptions.Item label={t('content.procedure')}>{event?.title}</Descriptions.Item>
           <Descriptions.Item label={t('content.details')}>
-            <Text style={{ whiteSpace: 'pre-wrap' }}>{extendedProps?.details || t('content.no_details_provided')}</Text>
+            <Text style={{ whiteSpace: 'pre-wrap' }}>{extendedProps?.details}</Text>
           </Descriptions.Item>
           <Descriptions.Item label={t('content.confirmationCode')}>{qBetterConfirmationCode || t('content.no_code_provided')}</Descriptions.Item>
         </Descriptions>
@@ -227,12 +228,12 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   )
 
   return (
-    <CustomModal isVisible={isVisible} handleClose={onClose} title={isEditing ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={1100}>
+    <CustomModal isVisible={isVisible} handleClose={onClose} title={editMode !== 'none' ? t('content.edit_appointment') : t('content.appointment_information')} blockAntModalBodyVerticalScroll noFooter width={editMode === 'reschedule' ? 1100 : 700}>
       <div className="modal-event">
         {notificationContextHolder}
 
         <Form form={form} onFinish={handleUpdate} layout="vertical" style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}>
-          {isEditing ? (
+          {editMode === 'reschedule' ? (
             <>
               <div style={{ padding: '1rem' }}>
                 <TimeSlotPickerUI
@@ -250,19 +251,25 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
                 <TextArea rows={4} />
               </Form.Item>
             </>
+          ) : editMode === 'details' ? (
+            <div style={{ padding: '1rem' }}>
+              <Form.Item name="details" label={t('content.details')}>
+                <TextArea rows={4} autoFocus />
+              </Form.Item>
+            </div>
           ) : (
             renderDisplayMode()
           )}
 
           <Divider />
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-            {isEditing ? (
+          <div style={{ display: 'flex', justifyContent: editMode === 'none' ? 'space-between' : 'flex-end', gap: '8px' }}>
+            {editMode !== 'none' ? (
               <>
-                <Button key="cancel" onClick={() => setIsEditing(false)}>
+                <Button key="cancel" onClick={() => setEditMode('none')}>
                   {t('content.cancel')}
                 </Button>
-                <Button type="primary" htmlType="submit" key="save" disabled={isDetailsLoading}>
+                <Button type="primary" htmlType="submit" key="save" disabled={isDetailsLoading || (editMode === 'reschedule' && (!selectedDate || !selectedTime))}>
                   {t('content.save')}
                 </Button>
               </>
@@ -272,9 +279,14 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
                   {t('content.delete')}
                 </Button>
                 {!isTimeOff && (
-                  <Button key="modify" type="primary" onClick={() => setIsEditing(true)} disabled={isDetailsLoading}>
-                    {t('content.modify')}
-                  </Button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button key="edit-details" onClick={() => setEditMode('details')} disabled={isDetailsLoading}>
+                      {t('content.edit_details')}
+                    </Button>
+                    <Button key="reschedule" type="primary" onClick={() => setEditMode('reschedule')} disabled={isDetailsLoading}>
+                      {t('content.reschedule')}
+                    </Button>
+                  </div>
                 )}
               </>
             )}

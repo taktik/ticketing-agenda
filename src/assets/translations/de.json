@@ -135,6 +135,8 @@
     "remove_selection": "Auswahl entfernen",
     "details": "Details",
     "modify": "Ändern",
+    "edit_details": "Details bearbeiten",
+    "reschedule": "Umplanen",
     "editing": "Bearbeiten",
     "create_appointment": "Termin erstellen",
     "date_and_time": "Datum & Uhrzeit",
