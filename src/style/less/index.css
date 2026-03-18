@@ -131,16 +131,13 @@ th {
 .summary-icon-success {
   color: #52c41a;
 }
-.summary-code-divider {
-  margin: 8px 0;
-}
-.summary-code-section {
-  text-align: center;
-  padding: 8px 0;
-}
-.summary-code-value {
-  margin: 4px 0 0;
+.summary-icon-success-top {
   color: #52c41a;
+  margin-top: 4px;
+}
+.summary-code-inline {
+  color: #52c41a;
+  font-size: 18px;
 }
 .summary-code-hint {
   font-size: 12px;

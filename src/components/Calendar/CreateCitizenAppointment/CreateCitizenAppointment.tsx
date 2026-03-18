@@ -92,8 +92,10 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       const patientId = v4()
       const { patientAddress } = buildDecryptedContactPayload(userData.email, userData.mobilePhone)
 
-      const citizenPatient = await createDecryptedPatient(
-        new DecryptedPatient({
+      if (!adminRoot?.id || !siteRoot?.id) throw new Error('Missing adminRoot or siteRoot')
+
+      const citizenPatient = await createDecryptedPatient({
+        patient: new DecryptedPatient({
           id: patientId,
           firstName: userData.firstName,
           lastName: userData.lastName,
@@ -101,7 +103,8 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           dateOfBirth: userData.dateOfBirth,
           addresses: [patientAddress],
         }),
-      ).unwrap()
+        delegates: { adminRootId: adminRoot.id, siteRootId: siteRoot.id },
+      }).unwrap()
 
       if (!citizenPatient) throw new Error('Failed to create patient.')
 
@@ -160,10 +163,11 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           if (updated) citizenPatient = updated
         }
       } else {
+        if (!adminRoot?.id || !siteRoot?.id) throw new Error('Missing adminRoot or siteRoot')
         const patientId = v4()
         const { patientAddress } = buildDecryptedContactPayload(userData.email, userData.mobilePhone)
-        const createdPatient = await createDecryptedPatient(
-          new DecryptedPatient({
+        const createdPatient = await createDecryptedPatient({
+          patient: new DecryptedPatient({
             id: patientId,
             firstName: userData.firstName,
             lastName: userData.lastName,
@@ -171,7 +175,8 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
             dateOfBirth: userData.dateOfBirth,
             addresses: [patientAddress],
           }),
-        ).unwrap()
+          delegates: { adminRootId: adminRoot.id, siteRootId: siteRoot.id },
+        }).unwrap()
 
         if (!createdPatient) throw new Error('Failed to create patient record.')
         citizenPatient = createdPatient

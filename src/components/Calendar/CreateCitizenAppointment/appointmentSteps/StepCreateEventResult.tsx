@@ -1,5 +1,5 @@
 import { CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, InfoCircleOutlined, NumberOutlined } from '@ant-design/icons'
-import { Card, Divider, Result, Space, Spin, Typography } from 'antd'
+import { Card, Result, Space, Spin, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { CreatedAppointmentSummary, CreationStatus } from '../../../../types/citizenReservationTypes'
 import './index.css'
@@ -46,21 +46,20 @@ const AppointmentSummaryCard = ({ summary }: { summary: CreatedAppointmentSummar
             )}
 
             {item.confirmationCode && (
-              <>
-                <Divider className="summary-code-divider" />
-                <div className="summary-code-section">
-                  <Space align="center">
-                    <NumberOutlined className="summary-icon-success" />
-                    <Text type="secondary">{t('content.confirmation_code')}</Text>
-                  </Space>
-                  <Title level={2} className="summary-code-value">
-                    {item.confirmationCode}
-                  </Title>
+              <Space align="start">
+                <NumberOutlined className="summary-icon-success-top" />
+                <div>
+                  <div>
+                    <Text>{t('content.confirmation_code')} : </Text>
+                    <Text strong className="summary-code-inline">
+                      {item.confirmationCode}
+                    </Text>
+                  </div>
                   <Text type="secondary" className="summary-code-hint">
                     {t('content.present_on_arrival')}
                   </Text>
                 </div>
-              </>
+              </Space>
             )}
           </Space>
         </Card>

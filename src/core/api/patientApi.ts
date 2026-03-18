@@ -1,4 +1,4 @@
-import { DecryptedPatient, EncryptedPatient, PatientFilters } from '@icure/cardinal-sdk'
+import { AccessLevel, DecryptedPatient, EncryptedPatient, PatientFilters } from '@icure/cardinal-sdk'
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { cardinalApi } from '../services/auth.api'
 import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
@@ -12,11 +12,16 @@ export const patientApiRtk = createApi({
   tagTypes: [PatientTags.Patient],
   baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
-    createDecryptedPatient: builder.mutation<DecryptedPatient | undefined, DecryptedPatient>({
-      async queryFn(patient, { getState }) {
+    createDecryptedPatient: builder.mutation<DecryptedPatient | undefined, { patient: DecryptedPatient; delegates: { adminRootId: string; siteRootId: string } }>({
+      async queryFn({ patient, delegates }, { getState }) {
         const patientApi = (await cardinalApi(getState))?.patient
         return guard([patientApi], async (): Promise<DecryptedPatient> => {
-          const createdPatient = await patientApi?.createPatient(await patientApi?.withEncryptionMetadata(patient))
+          const createdPatient = await patientApi?.createPatient(
+            await patientApi?.withEncryptionMetadata(patient, {
+              delegates: { [delegates.siteRootId]: AccessLevel.Write },
+              alternateRootDelegateId: delegates.adminRootId,
+            }),
+          )
           if (!createdPatient) {
             throw new Error("Couldn't create the citizen")
           }

@@ -65,9 +65,8 @@ export const calendarItemApiRtk = createApi({
         const calendarApi = api?.calendarItem
         const patientApi = api?.patient
         return guard([calendarApi], async (): Promise<DecryptedCalendarItem> => {
-          const delegatesAcessLevel = {
+          const delegatesAcessLevel: { [key: string]: AccessLevel } = {
             [siteRootId]: AccessLevel.Write,
-            [adminRootId]: AccessLevel.Write,
           }
           if (patient?.id) {
             delegatesAcessLevel[patient.id] = AccessLevel.Write
@@ -86,7 +85,7 @@ export const calendarItemApiRtk = createApi({
           }
           const updatedCalendarItem = !!calendarItem.rev
             ? await calendarApi?.modifyCalendarItem(calendarItem)
-            : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient, { delegates: delegatesAcessLevel, secretId }))
+            : await calendarApi?.createCalendarItem(await calendarApi.withEncryptionMetadata(calendarItem, patient, { delegates: delegatesAcessLevel, secretId, alternateRootDelegateId: adminRootId }))
           if (!updatedCalendarItem) {
             throw new Error('CalendarItem update failed')
           }
