@@ -51,18 +51,20 @@ export const patientApiRtk = createApi({
       },
       providesTags: (res, error) => (res && !error ? [{ type: PatientTags.Patient, id: 'all' }] : []),
     }),
-    searchPatients: builder.query<DecryptedPatient[] | undefined, string>({
-      async queryFn(searchTerm, { getState }) {
+    searchPatients: builder.query<DecryptedPatient[] | undefined, { searchTerm: string; dataOwnerId: string }>({
+      async queryFn({ searchTerm, dataOwnerId }, { getState }) {
         const api = await cardinalApi(getState)
         const patientApi = api?.patient
-        const dataOwnerId = (await api?.dataOwner.getCurrentDataOwner())?.dataOwner.id
         return guard([patientApi, dataOwnerId], async (): Promise<DecryptedPatient[]> => {
           const nameFilter = PatientFilters.byFuzzyNameForDataOwner(dataOwnerId!, searchTerm)
           const telecomFilter = PatientFilters.byTelecomForDataOwner(dataOwnerId!, searchTerm)
 
           const [nameResults, telecomResults] = await Promise.all([
-            loadFromIterator(await patientApi!.filterPatientsBy(nameFilter), 50),
-            loadFromIterator(await patientApi!.filterPatientsBy(telecomFilter), 50).catch(() => [] as DecryptedPatient[]),
+            patientApi!.filterPatientsBy(nameFilter).then((iter) => loadFromIterator(iter, 50)),
+            patientApi!
+              .filterPatientsBy(telecomFilter)
+              .then((iter) => loadFromIterator(iter, 50))
+              .catch(() => [] as DecryptedPatient[]),
           ])
 
           const seen = new Set<string>()

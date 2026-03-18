@@ -26,7 +26,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ state, submitEmailForTokenRequest
     fetch(`${MSG_GW_URL}/${SPEC_ID}/challenge`)
       .then((x) => x.json())
       .then((challenge) => setChallenge(challenge))
-      .catch(() => openNotification('error', 'No internet connection', ''))
+      .catch(() => openNotification('error', t('notification.login_unavailable'), ''))
   }, [])
 
   const updateProgress = useCallback(

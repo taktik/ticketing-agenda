@@ -24,7 +24,7 @@ interface ModalCitizenSearchProps {
 
 export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchProps): ReactElement => {
   const { t, i18n } = useTranslation()
-  const { agendaMap } = useHierarchyContext()
+  const { agendaMap, adminRoot } = useHierarchyContext()
 
   const [searchValue, setSearchValue] = useState('')
   const debouncedSearch = useDebounce(searchValue, 400)
@@ -44,10 +44,10 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
   }, [isVisible])
 
   useEffect(() => {
-    if (debouncedSearch.length >= 2) {
-      searchPatients(debouncedSearch)
+    if (debouncedSearch.length >= 2 && adminRoot?.id) {
+      searchPatients({ searchTerm: debouncedSearch, dataOwnerId: adminRoot.id })
     }
-  }, [debouncedSearch, searchPatients])
+  }, [debouncedSearch, searchPatients, adminRoot?.id])
 
   const handleSelectPatient = useCallback(
     (patient: DecryptedPatient) => {

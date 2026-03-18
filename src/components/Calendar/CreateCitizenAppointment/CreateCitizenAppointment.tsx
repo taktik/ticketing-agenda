@@ -126,6 +126,8 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
   const handleExistingCitizenFlow = useCallback(
     async (patientUser: User, userData: CitizenInputData) => {
       let citizenUser = patientUser
+      const previousMobilePhone = citizenUser.mobilePhone
+      const previousEmail = citizenUser.email
 
       if (userData.mobilePhone && userData.mobilePhone !== citizenUser.mobilePhone) {
         const updated = await createUpdateUser(new User({ ...citizenUser, mobilePhone: userData.mobilePhone })).unwrap()
@@ -142,7 +144,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
         const hasLanguageChanged = userData.language && userData.language !== (citizenPatient.languages?.[0] || '')
         const hasBirthDateChanged = userData.dateOfBirth && userData.dateOfBirth !== citizenPatient.dateOfBirth
         const needsNameUpdate = !citizenPatient.firstName
-        const hasContactChanged = (userData.mobilePhone && userData.mobilePhone !== citizenUser.mobilePhone) || userData.email !== citizenUser.email
+        const hasContactChanged = (userData.mobilePhone && userData.mobilePhone !== previousMobilePhone) || userData.email !== previousEmail
 
         if (hasLanguageChanged || hasBirthDateChanged || needsNameUpdate || hasContactChanged) {
           const updated = await updateEncryptedPatient(
@@ -439,7 +441,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
       if (!dataOwnerId) throw new Error('No valid delegateId')
 
-      const personalInfo = await form.validateFields().then((v) => v.personalInfo as PersonalInfo)
+      const { personalInfo } = form.getFieldsValue(true)
 
       const { citizenUser, citizenPatient } = await getOrCreateCitizenProfile(personalInfo)
 
@@ -465,6 +467,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       setAppointmentSummary(buildAppointmentSummary(calendarItems, qBetterCodes, personalInfo))
       setCreationStatus(CreationStatus.SUCCESS)
     } catch (err) {
+      console.error('Appointment creation failed:', err)
       setCreationStatus(CreationStatus.FAILURE)
       openNotification('error', t('validation.unexpected_error'))
     } finally {

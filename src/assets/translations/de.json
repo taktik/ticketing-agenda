@@ -266,6 +266,7 @@
     "confirm_close_prompt": "Sind Sie sicher, dass Sie schließen möchten?"
   },
   "notification": {
+    "login_unavailable": "Die E-Mail-Anmeldung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
     "procedure_modified": "Das Verfahren wurde geändert!",
     "procedure_modify_failed": "Wir konnten das Verfahren nicht ändern!",
     "procedure_modify_error": "Beim Ändern des Verfahrens ist ein Fehler aufgetreten.",

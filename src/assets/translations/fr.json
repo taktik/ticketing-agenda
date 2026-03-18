@@ -265,6 +265,7 @@
     "confirm_close_prompt": "Êtes-vous sûr de vouloir fermer ?"
   },
   "notification": {
+    "login_unavailable": "La connexion par email est temporairement indisponible. Veuillez réessayer plus tard.",
     "procedure_modified": "La démarche a été modifiée !",
     "procedure_modify_failed": "Nous n'avons pas pu modifier la démarche !",
     "procedure_modify_error": "Une erreur s'est produite lors de la modification de la démarche.",

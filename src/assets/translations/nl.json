@@ -265,6 +265,7 @@
     "confirm_close_prompt": "Weet u zeker dat u wilt sluiten?"
   },
   "notification": {
+    "login_unavailable": "Inloggen via e-mail is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
     "procedure_modified": "De procedure is gewijzigd!",
     "procedure_modify_failed": "We konden de procedure niet wijzigen!",
     "procedure_modify_error": "Er is een fout opgetreden bij het wijzigen van de procedure.",
