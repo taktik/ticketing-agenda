@@ -263,6 +263,7 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
     const { baseSdk, api } = sdkResult
     const user = await api.user.getCurrentUser()
     const newToken = await api.user.getToken(user.id, 'rememberMe')
+    const bearerToken = await baseSdk.auth.getBearerToken()
 
     apiCache[`${user.groupId}/${user.id}`] = api
 
@@ -273,6 +274,7 @@ export const azureLogin = createAsyncThunk('cardinalApi/azureLogin', async ({ ac
       setSavedCredentials({
         login: `${user.groupId}/${user.id}`,
         token: newToken,
+        bearerToken,
         tokenTimestamp: +Date.now(),
       }),
     )
@@ -356,6 +358,7 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
 
     const user = await api.user.getCurrentUser()
     const newToken = await api.user.getToken(user.id, 'rememberMe')
+    const bearerToken = await baseSdk.auth.getBearerToken()
 
     apiCache[`${user.groupId}/${user.id}`] = api
 
@@ -366,6 +369,7 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
       setSavedCredentials({
         login: `${user.groupId}/${user.id}`,
         token: newToken,
+        bearerToken,
         tokenTimestamp: +Date.now(),
       }),
     )
@@ -409,6 +413,15 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
 
     const anonymousApi = await CardinalAnonymousSdk.initialize(ICURE_NIGHTLY_URL, { lenientJson: true })
     anonymousApiCache['anonymous'] = anonymousApi
+
+    dispatch(
+      setSavedCredentials({
+        login: email,
+        token: token,
+        bearerToken: await baseSdk.auth.getBearerToken(),
+        tokenTimestamp: +Date.now(),
+      }),
+    )
 
     return new User(user)
   } catch (e) {

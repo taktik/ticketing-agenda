@@ -13,6 +13,7 @@ export interface AppState {
     tokenTimestamp: number
     login: string
     token: string
+    bearerToken?: string
   }
 }
 
@@ -22,7 +23,7 @@ export const app = createSlice({
   name: 'app',
   initialState,
   reducers: {
-    setSavedCredentials(state, { payload: savedCredentials }: PayloadAction<{ login: string; token: string; tokenTimestamp: number } | undefined>) {
+    setSavedCredentials(state, { payload: savedCredentials }: PayloadAction<{ login: string; token: string; bearerToken?: string; tokenTimestamp: number } | undefined>) {
       state.savedCredentials = savedCredentials
     },
     revertAll() {

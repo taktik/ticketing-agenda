@@ -34,7 +34,8 @@ type PropagationStatusTrigger = (
 const authenticatedBaseQuery = fetchBaseQuery({
   baseUrl: '/',
   prepareHeaders: (headers, { getState }) => {
-    const token = (getState() as AppState).app.savedCredentials?.token
+    const credentials = (getState() as AppState).app.savedCredentials
+    const token = credentials?.bearerToken || credentials?.token
     if (token) {
       headers.set('Authorization', `Bearer ${token}`)
     }
