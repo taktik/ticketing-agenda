@@ -73,11 +73,18 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<dayjs.Dayjs | undefined>(undefined)
 
+  const [isProcessing, setIsProcessing] = useState(false)
+
   const extendedProps = event?.extendedProps as EventExtendedProps | undefined
   const isTimeOff = !!extendedProps?.isTimeOff
 
   const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
   const isDetailsLoading = isTimeOff ? !calendarItem : !calendarItem || !patient || !agenda || !calendarItemType
+
+  const isPastAppointment = useMemo(() => {
+    if (!calendarItem?.startTime) return false
+    return calendarItem.startTime < dayjsToYYYYMMDDHHmmss(dayjs())
+  }, [calendarItem])
 
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
 
@@ -109,6 +116,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
         details: extendedProps?.details ?? '',
       })
       setEditMode('none')
+      setIsProcessing(false)
       setSelectedDate(undefined)
       setSelectedTime(undefined)
     }
@@ -163,16 +171,21 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
         throw new Error('Missing data for email payload')
       }
 
+      setIsProcessing(true)
       const isReschedule = editMode === 'reschedule'
       await updateEvent(event, details, isReschedule ? selectedDate : undefined, isReschedule ? selectedTime : undefined, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       onClose()
     } catch {
       openNotification('error', t('validation.unexpected_error'), '')
+    } finally {
+      setIsProcessing(false)
     }
   }, [form, event, editMode, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t])
 
   const handleDelete = useCallback(async () => {
+    setShowDeleteAppointmentModal(false)
     try {
+      setIsProcessing(true)
       if (isTimeOff) {
         if (!event?.id || !event?.extendedProps?.rev) throw new Error('Missing time-off data')
         await deleteTimeOff(event.id, event.extendedProps.rev)
@@ -182,10 +195,11 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
         }
         await deleteEvent(event, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
       }
-      setShowDeleteAppointmentModal(false)
       onClose()
     } catch {
       openNotification('error', t('validation.unexpected_error'), '')
+    } finally {
+      setIsProcessing(false)
     }
   }, [isTimeOff, event, deleteEvent, deleteTimeOff, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, onClose, openNotification, t])
 
@@ -238,67 +252,72 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     >
       <div className="modal-event">
         {notificationContextHolder}
-
-        <Form form={form} onFinish={handleUpdate} layout="vertical" style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}>
-          {editMode === 'reschedule' ? (
-            <>
+        <Spin spinning={isProcessing} tip={t('content.processing')} size="large">
+          <Form form={form} onFinish={handleUpdate} layout="vertical" style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}>
+            {editMode === 'reschedule' ? (
+              <>
+                <div style={{ padding: '1rem' }}>
+                  <TimeSlotPickerUI
+                    availabilities={availabilities}
+                    isLoading={availabilitiesLoading}
+                    currentMonth={currentMonth}
+                    onMonthChange={setCurrentMonth}
+                    selectedDate={selectedDate}
+                    selectedTime={selectedTime}
+                    onDateSelect={handleDateSelect}
+                    onTimeSelect={handleTimeSelect}
+                  />
+                </div>
+                <Form.Item name="details" label={t('content.details')}>
+                  <TextArea rows={4} />
+                </Form.Item>
+              </>
+            ) : editMode === 'details' ? (
               <div style={{ padding: '1rem' }}>
-                <TimeSlotPickerUI
-                  availabilities={availabilities}
-                  isLoading={availabilitiesLoading}
-                  currentMonth={currentMonth}
-                  onMonthChange={setCurrentMonth}
-                  selectedDate={selectedDate}
-                  selectedTime={selectedTime}
-                  onDateSelect={handleDateSelect}
-                  onTimeSelect={handleTimeSelect}
-                />
+                <Form.Item name="details" label={t('content.details')}>
+                  <TextArea rows={4} autoFocus />
+                </Form.Item>
               </div>
-              <Form.Item name="details" label={t('content.details')}>
-                <TextArea rows={4} />
-              </Form.Item>
-            </>
-          ) : editMode === 'details' ? (
-            <div style={{ padding: '1rem' }}>
-              <Form.Item name="details" label={t('content.details')}>
-                <TextArea rows={4} autoFocus />
-              </Form.Item>
-            </div>
-          ) : (
-            renderDisplayMode()
-          )}
-
-          <Divider />
-
-          <div style={{ display: 'flex', justifyContent: editMode === 'none' ? 'space-between' : 'flex-end', gap: '8px' }}>
-            {editMode !== 'none' ? (
-              <>
-                <Button key="cancel" onClick={() => setEditMode('none')}>
-                  {t('content.cancel')}
-                </Button>
-                <Button type="primary" htmlType="submit" key="save" disabled={isDetailsLoading || (editMode === 'reschedule' && (!selectedDate || !selectedTime))}>
-                  {t('content.save')}
-                </Button>
-              </>
             ) : (
-              <>
-                <Button key="delete" danger onClick={() => setShowDeleteAppointmentModal(true)} disabled={isDetailsLoading}>
-                  {t('content.delete')}
-                </Button>
-                {!isTimeOff && (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button key="edit-details" onClick={() => setEditMode('details')} disabled={isDetailsLoading}>
-                      {t('content.edit_details')}
-                    </Button>
-                    <Button key="reschedule" type="primary" onClick={() => setEditMode('reschedule')} disabled={isDetailsLoading}>
-                      {t('content.reschedule')}
-                    </Button>
-                  </div>
-                )}
-              </>
+              renderDisplayMode()
             )}
-          </div>
-        </Form>
+
+            <Divider />
+
+            <div style={{ display: 'flex', justifyContent: editMode === 'none' ? 'space-between' : 'flex-end', gap: '8px' }}>
+              {editMode !== 'none' ? (
+                <>
+                  <Button key="cancel" onClick={() => setEditMode('none')}>
+                    {t('content.cancel')}
+                  </Button>
+                  <Button type="primary" htmlType="submit" key="save" disabled={isDetailsLoading || (editMode === 'reschedule' && (!selectedDate || !selectedTime))}>
+                    {t('content.save')}
+                  </Button>
+                </>
+              ) : isPastAppointment && !isTimeOff ? (
+                <Button key="close" onClick={onClose}>
+                  {t('content.close')}
+                </Button>
+              ) : (
+                <>
+                  <Button key="delete" danger onClick={() => setShowDeleteAppointmentModal(true)} disabled={isDetailsLoading}>
+                    {t('content.delete')}
+                  </Button>
+                  {!isTimeOff && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button key="edit-details" onClick={() => setEditMode('details')} disabled={isDetailsLoading}>
+                        {t('content.edit_details')}
+                      </Button>
+                      <Button key="reschedule" type="primary" onClick={() => setEditMode('reschedule')} disabled={isDetailsLoading}>
+                        {t('content.reschedule')}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </Form>
+        </Spin>
 
         {showDeleteAppointmentModal &&
           createPortal(
