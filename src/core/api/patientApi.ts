@@ -61,11 +61,29 @@ export const patientApiRtk = createApi({
         const api = await cardinalApi(getState)
         const patientApi = api?.patient
         return guard([patientApi, dataOwnerId], async (): Promise<DecryptedPatient[]> => {
-          const nameFilter = PatientFilters.byFuzzyNameForDataOwner(dataOwnerId!, searchTerm)
+          const words = searchTerm.trim().split(/\s+/).filter(Boolean)
           const telecomFilter = PatientFilters.byTelecomForDataOwner(dataOwnerId!, searchTerm)
 
+          const nameSearchPromise = (async () => {
+            if (words.length <= 1) {
+              return patientApi!.filterPatientsBy(PatientFilters.byFuzzyNameForDataOwner(dataOwnerId!, searchTerm)).then((iter) => loadFromIterator(iter, 50))
+            }
+            // Multi-word: search each word, intersect results (patient must match ALL words)
+            const perWordResults = await Promise.all(words.map((word) => patientApi!.filterPatientsBy(PatientFilters.byFuzzyNameForDataOwner(dataOwnerId!, word)).then((iter) => loadFromIterator(iter, 50))))
+            const idSets = perWordResults.map((results) => new Set(results.map((p) => p.id)))
+            const intersection = idSets.reduce((acc, set) => {
+              const filtered = new Set<string>()
+              acc.forEach((id) => {
+                if (set.has(id)) filtered.add(id)
+              })
+              return filtered
+            })
+            const firstResults = perWordResults[0] ?? []
+            return firstResults.filter((p) => intersection.has(p.id))
+          })()
+
           const [nameResults, telecomResults] = await Promise.all([
-            patientApi!.filterPatientsBy(nameFilter).then((iter) => loadFromIterator(iter, 50)),
+            nameSearchPromise,
             patientApi!
               .filterPatientsBy(telecomFilter)
               .then((iter) => loadFromIterator(iter, 50))

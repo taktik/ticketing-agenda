@@ -44,6 +44,7 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
   }, [isVisible])
 
   useEffect(() => {
+    setSelectedPatient(undefined)
     if (debouncedSearch.length >= 2 && adminRoot?.id) {
       searchPatients({ searchTerm: debouncedSearch, dataOwnerId: adminRoot.id })
     }
@@ -111,7 +112,7 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
               <div className="modal-citizen-search__hint">
                 <Text type="secondary">{t('content.search_min_chars')}</Text>
               </div>
-            ) : patients && patients.length === 0 ? (
+            ) : isSearching ? null : patients && patients.length === 0 ? (
               <Empty description={t('content.no_results')} />
             ) : (
               <List
