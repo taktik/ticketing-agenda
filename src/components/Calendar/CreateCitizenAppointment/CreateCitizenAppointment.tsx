@@ -248,7 +248,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
             new CodeStub({ id: CalendarItemTag.APPOINTMENT_LAST_AUTHOR, code: citizenUser.id, type: CalendarItemTag.APPOINTMENT_LAST_AUTHOR, version: '1' }),
             new CodeStub({
               id: CalendarItemTag.APPOINTMENT_QBETTER_SERVICE_ID,
-              code: getStringProperty(draft.calendarItemType.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID),
+              code: getStringProperty(draft.agenda.properties, PropertyId.SERVICE_QBETTER_SERVICE_ID),
               type: CalendarItemTag.APPOINTMENT_QBETTER_SERVICE_ID,
               version: '1',
             }),

@@ -96,18 +96,17 @@ interface ProcedureRow {
   subjectByLanguage: LanguageDescription
   procedureDetails: string
   color: string
-  qBetterProcedureId: string
 }
 
 export interface FormValuesService {
   descr: LanguageDescription
+  qBetterServiceId: string
   appointmentDurations: number[]
   isPublic: boolean
   emailTemplate: string
   subjectByLanguage: LanguageDescription
   procedureDetails: string
   color: string
-  qBetterProcedureId: string
 }
 
 interface ServiceSettingProps {
@@ -186,7 +185,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       procedureDetails: getStringProperty(procedure.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS),
       subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, EntityType.CALENDARITEMTYPE, locale)])),
       color: procedure.color ?? '',
-      qBetterProcedureId: getStringProperty(procedure.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID),
     }))
   }, [procedures, sortedProcedures])
 
@@ -228,8 +226,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       const orderProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_ORDER, typedValue: new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: 0 }) })
       const procedureDetailsProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
       const agendaIdProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_AGENDAID, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }) })
-      const qBetterProcedureIdProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
-      const calendarItemTypeProperties = [isPublicProp, orderProp, qBetterProcedureIdProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
+      const calendarItemTypeProperties = [isPublicProp, orderProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
 
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
@@ -292,7 +289,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_ORDER, new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
         properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.procedureDetails }))
         properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_AGENDAID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }))
-        properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.qBetterProcedureId }))
 
         return new CalendarItemType({
           name: rowValues.subjectByLanguage['FR'],
@@ -325,8 +321,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             ) ||
             getBooleanProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC) !== getBooleanProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC) ||
             getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) ||
-            getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS) ||
-            getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_QBETTER_SERVICE_ID)
+            getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS)
           ) {
             mutationPromises.push(
               createUpdateProcedure(
@@ -389,7 +384,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         procedureDetails: procedureRow.procedureDetails,
         subjectByLanguage: procedureRow.subjectByLanguage,
         color: procedureRow.color,
-        qBetterProcedureId: procedureRow.qBetterProcedureId,
       })
 
       setEditingKey(procedureRow.rowId)
@@ -420,11 +414,11 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
     }
   }, [procedureRowToBeDeleted, procedures, deleteProcedures, showMessageFeedback, openNotification, updateAgendaSchedules, service, t])
 
-  const renameService = useCallback(
-    async (newTitles: LanguageDescription) => {
+  const saveService = useCallback(
+    async (newTitles: LanguageDescription, qBetterServiceId: string) => {
       try {
         if (!service || !newTitles || !newTitles['FR']) throw new Error()
-        const updatedProperties = [...(service.properties || [])]
+        const updatedProperties = [...(service.properties || [])].filter((p) => p.id !== PropertyId.SERVICE_QBETTER_SERVICE_ID)
 
         Object.entries(newTitles).forEach(([locale, title]) => {
           const id = translationPropertyId(EntityType.SERVICE, locale)
@@ -437,6 +431,9 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             updatedProperties.push(new DecryptedPropertyStub({ id, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: title }) }))
           }
         })
+
+        updatedProperties.push(new DecryptedPropertyStub({ id: PropertyId.SERVICE_QBETTER_SERVICE_ID, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: qBetterServiceId }) }))
+
         await createUpdateService(new Agenda({ ...service, name: newTitles['FR'], properties: updatedProperties })).unwrap()
         showMessageFeedback('success', t('notification.service_saved'))
       } catch (error) {
@@ -452,8 +449,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
   const siteActionItems: MenuProps['items'] = [
     {
-      key: 'rename',
-      label: t('content.rename'),
+      key: 'edit',
+      label: t('content.edit'),
       icon: <EditOutlined />,
       onClick: () => setShowEditServiceTitle(true),
     },
@@ -498,14 +495,30 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       >
         <>
           <div className="service-title">
-            <Space align="center">
-              <EditableServiceTitle form={form} initialTitles={serviceTitles} showEditServiceTitle={showEditServiceTitle} setShowEditServiceTitle={setShowEditServiceTitle} onSave={renameService} />
-              {showEditServiceTitle ? null : (
+            {showEditServiceTitle ? (
+              <EditableServiceTitle
+                form={form}
+                initialTitles={serviceTitles}
+                initialQBetterServiceId={getStringProperty(service.properties, PropertyId.SERVICE_QBETTER_SERVICE_ID)}
+                showEditServiceTitle={showEditServiceTitle}
+                setShowEditServiceTitle={setShowEditServiceTitle}
+                onSave={saveService}
+              />
+            ) : (
+              <Space align="center">
+                <EditableServiceTitle
+                  form={form}
+                  initialTitles={serviceTitles}
+                  initialQBetterServiceId={getStringProperty(service.properties, PropertyId.SERVICE_QBETTER_SERVICE_ID)}
+                  showEditServiceTitle={showEditServiceTitle}
+                  setShowEditServiceTitle={setShowEditServiceTitle}
+                  onSave={saveService}
+                />
                 <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                   <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px' }} />} shape="circle" size="large" />
                 </Dropdown>
-              )}
-            </Space>
+              </Space>
+            )}
           </div>
 
           <div className="table-add-entry">
@@ -713,28 +726,6 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                     return (
                       <div className="details-box">
                         <Typography.Paragraph className="details-text">{details || ''}</Typography.Paragraph>
-                      </div>
-                    )
-                  }
-                }}
-              />
-              <Column
-                title={t('content.qBetterProcedureId')}
-                dataIndex="qBetterProcedureId"
-                key="qBetterProcedureId"
-                minWidth={150}
-                render={(qBetterId: string | undefined, record: ProcedureRow) => {
-                  const editable = isEditing(record)
-                  if (editable) {
-                    return (
-                      <Form.Item name="qBetterProcedureId" style={{ width: '100%' }}>
-                        <Input.TextArea autoSize={{ minRows: 3, maxRows: 6 }} placeholder="" />
-                      </Form.Item>
-                    )
-                  } else {
-                    return (
-                      <div className="details-box">
-                        <Typography.Paragraph className="details-text">{qBetterId || ''}</Typography.Paragraph>
                       </div>
                     )
                   }

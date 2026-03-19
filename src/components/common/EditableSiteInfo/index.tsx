@@ -54,7 +54,7 @@ export const EditableSiteInfo = React.memo(({ hcp, setShowEditableSite, onSave }
   )
 
   return (
-    <Card title={t('content.edit_site_information')} extra={cardActions} style={{ maxWidth: 800, background: '#fafafa' }} size="small">
+    <Card title={t('content.edit_site_information')} extra={cardActions} style={{ background: '#fafafa', marginBottom: 16 }} size="small">
       <Form form={form} layout="vertical" autoComplete="off" onFinish={handleSave}>
         <Row gutter={16}>
           <Col span={8}>

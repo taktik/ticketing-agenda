@@ -120,15 +120,16 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
 
       <div className="site-header">
         <div className="site-title">
-          <Space align="center">
-            {showEditableSite ? <EditableSiteInfo hcp={site} setShowEditableSite={setShowEditableSite} onSave={onSiteInfoSave} /> : <Typography.Title level={2}>{site.name}</Typography.Title>}
-
-            {!showEditableSite && (
+          {showEditableSite ? (
+            <EditableSiteInfo hcp={site} setShowEditableSite={setShowEditableSite} onSave={onSiteInfoSave} />
+          ) : (
+            <Space align="center">
+              <Typography.Title level={2}>{site.name}</Typography.Title>
               <Dropdown menu={{ items: siteActionItems }} trigger={['click']}>
                 <Button type="text" icon={<EllipsisOutlined style={{ fontSize: '20px' }} />} shape="circle" size="large" />
               </Dropdown>
-            )}
-          </Space>
+            </Space>
+          )}
           <Typography.Text type="secondary">{t('content.select_service_to_configure_procedures')}</Typography.Text>
         </div>
 
