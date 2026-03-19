@@ -25,7 +25,7 @@ export async function initSdk() {
   if (!ADMIN_SOLUTIONS_EMAIL || !ADMIN_SOLUTIONS_AUTH_TOKEN || !ICURE_NIGHTLY_URL) {
     throw new Error('Missing SDK credentials: fill in ADMIN_SOLUTIONS_EMAIL, ADMIN_SOLUTIONS_AUTH_TOKEN, and ICURE_NIGHTLY_URL in utils.ts')
   }
-  return CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL, ADMIN_SOLUTIONS_AUTH_TOKEN), { lenientJson: true })
+  return CardinalBaseSdk.initialize(undefined, ICURE_NIGHTLY_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(ADMIN_SOLUTIONS_EMAIL, ADMIN_SOLUTIONS_AUTH_TOKEN))
 }
 
 export async function loadFromIterator<T>(paginatedListIterator: PaginatedListIterator<T>, min: number, acc: T[] = []): Promise<T[]> {
