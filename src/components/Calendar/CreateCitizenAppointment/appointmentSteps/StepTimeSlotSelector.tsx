@@ -9,14 +9,23 @@ import { TimeSlotPickerUI } from '../../TimeSlotPickerUI/TimeSlotPickerUI'
 export const StepTimeSlotSelector = () => {
   const { t } = useTranslation()
   const form = Form.useFormInstance()
-  const [currentMonth, setCurrentMonth] = useState(dayjs())
+
+  // form.getFieldValue is synchronous and always returns stored values on mount.
+  // Form.useWatch may return undefined on the first render of a remounted component.
+  const storedDate = form.getFieldValue(['timeslot', 'date']) as Dayjs | undefined
+  const storedTime = form.getFieldValue(['timeslot', 'time']) as Dayjs | undefined
+
+  const dateValue = Form.useWatch(['timeslot', 'date'], form) as Dayjs | undefined
+  const timeValue = Form.useWatch(['timeslot', 'time'], form) as Dayjs | undefined
+
+  const effectiveDate = dateValue ?? storedDate
+  const effectiveTime = timeValue ?? storedTime
+
+  const [currentMonth, setCurrentMonth] = useState(effectiveDate ? dayjs(effectiveDate) : dayjs())
 
   const { availabilities, isAvailabilitiesLoading, fetchAvailabilitiesForMonth, setTimeSlot } = useCitizenReservation()
 
   const { openNotification, notificationContextHolder } = useNotificationHelper()
-
-  const dateValue: Dayjs | undefined = Form.useWatch(['timeslot', 'date'], form)
-  const timeValue: Dayjs | undefined = Form.useWatch(['timeslot', 'time'], form)
 
   useEffect(() => {
     fetchAvailabilitiesForMonth(currentMonth).catch(() => {
@@ -25,7 +34,7 @@ export const StepTimeSlotSelector = () => {
   }, [currentMonth, fetchAvailabilitiesForMonth, openNotification, t])
 
   useEffect(() => {
-    if (availabilities.length > 0 && !dateValue) {
+    if (availabilities.length > 0 && !effectiveDate) {
       const firstAvailable = availabilities.find((d) => d >= dayjs().startOf('day'))
       if (firstAvailable) {
         form.setFieldsValue({
@@ -33,7 +42,7 @@ export const StepTimeSlotSelector = () => {
         })
       }
     }
-  }, [availabilities, form, dateValue])
+  }, [availabilities, form, effectiveDate])
 
   const handleDateSelect = useCallback(
     (date: Dayjs) => {
@@ -75,8 +84,8 @@ export const StepTimeSlotSelector = () => {
         isLoading={isAvailabilitiesLoading}
         currentMonth={currentMonth}
         onMonthChange={setCurrentMonth}
-        selectedDate={dateValue}
-        selectedTime={timeValue}
+        selectedDate={effectiveDate}
+        selectedTime={effectiveTime}
         onDateSelect={handleDateSelect}
         onTimeSelect={handleTimeSelect}
       />

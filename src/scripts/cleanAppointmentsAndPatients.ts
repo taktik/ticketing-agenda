@@ -47,7 +47,8 @@ async function cleanAppointmentsAndPatients() {
         const batchIds = idArray.slice(i, i + BATCH_SIZE)
         const items = await sdk.calendarItem.inGroup.getCalendarItems(concernedGroupId, batchIds)
         if (items.length > 0) {
-          await sdk.calendarItem.inGroup.deleteCalendarItems(items)
+          const deleted = await sdk.calendarItem.inGroup.deleteCalendarItems(items)
+          await sdk.calendarItem.inGroup.purgeCalendarItemsByIds(deleted)
         }
         console.log(`Deleted CalendarItems ${i + 1}–${Math.min(i + BATCH_SIZE, idArray.length)} / ${idArray.length}`)
       }
@@ -91,7 +92,8 @@ async function cleanAppointmentsAndPatients() {
         const batchIds = idArray.slice(i, i + BATCH_SIZE)
         const patients = await sdk.patient.inGroup.getPatients(concernedGroupId, batchIds)
         if (patients.length > 0) {
-          await sdk.patient.inGroup.deletePatients(patients)
+          const deleted = await sdk.patient.inGroup.deletePatients(patients)
+          await sdk.patient.inGroup.purgePatientsByIds(deleted)
         }
         console.log(`  Deleted Patients ${i + 1}–${Math.min(i + BATCH_SIZE, idArray.length)} / ${idArray.length}`)
       }

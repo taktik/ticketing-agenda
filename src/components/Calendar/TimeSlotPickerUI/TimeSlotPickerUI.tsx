@@ -1,6 +1,6 @@
 import { Button, Calendar, CalendarProps, Col, Divider, Empty, Row, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomCellRender } from '../CreateCitizenAppointment/CustomCellRender'
 import { CustomCalendarHeader } from '../CreateCitizenAppointment/CustomCalendarHeader'
@@ -23,7 +23,7 @@ export const TimeSlotPickerUI = (props: TimeSlotPickerUIProps) => {
   const { availabilities, isLoading, currentMonth, selectedDate, selectedTime, onMonthChange, onDateSelect, onTimeSelect } = props
 
   const { t } = useTranslation()
-  const [selectedHour, setSelectedHour] = useState<dayjs.Dayjs | undefined>(undefined)
+  const [selectedHour, setSelectedHour] = useState<dayjs.Dayjs | undefined>(selectedTime ? selectedTime.startOf('hour') : undefined)
   const minDate = useMemo(() => dayjs(), [])
 
   const availableDatesSet = useMemo(() => {
@@ -67,7 +67,13 @@ export const TimeSlotPickerUI = (props: TimeSlotPickerUIProps) => {
       })
   }, [slotsByHour])
 
+  // Reset internal hour state when date changes (skip initial mount to preserve restored selection)
+  const isInitialMount = useRef(true)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
     setSelectedHour(undefined)
   }, [selectedDate])
 
@@ -130,7 +136,7 @@ export const TimeSlotPickerUI = (props: TimeSlotPickerUIProps) => {
                     {t('content.choose_slot')}
                   </Title>
                   <Space size={[8, 12]} wrap>
-                    {slotsByHour[selectedHour.format('HH')].map((time) => (
+                    {slotsByHour[selectedHour.format('HH')]?.map((time) => (
                       <Button key={time.format('HH:mm')} type={selectedTime?.isSame(time) ? 'primary' : 'default'} onClick={() => onTimeSelect(time)}>
                         {time.format('HH:mm')}
                       </Button>
