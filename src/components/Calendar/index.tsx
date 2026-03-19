@@ -17,13 +17,14 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION, EMAIL_SENDER, EmailTemplateKey, MANAGE_APPOINTMENT_ROUTE, NEW_APPOINTMENT_ROUTE } from '../../constants'
 import { ConfirmationCodeSpecialValue } from '../../core/api/fetchType'
-import { useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
+import { calendarItemApiRtk, CalendarItemTags, useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
 import { PropagationStatus, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../core/api/appointmentPollingApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
 import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
 import { useCreateExchangeDataRecoveryMutation } from '../../core/api/recoveryApi'
 import { useGetCurrentUserQuery } from '../../core/api/userApi'
 import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
+import { useAppDispatch } from '../../core/hooks'
 import { useNotificationHelper } from '../../core/hooks/useNotificationHelper'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import { calculateNumericEventTimes, combineDateAndTime, detectLanguage, fuzzyDateTimeIntToDayjs, getCodeTagById, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
@@ -52,6 +53,7 @@ type CalendarRangeType = {
 
 export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAgenda, selectedProcedure, calendarDate }: CalendarProps): ReactElement => {
   const { t, i18n } = useTranslation()
+  const dispatch = useAppDispatch()
 
   const { allCalendarItemTypes, allSites } = useHierarchyContext()
   const { dataOwnerId, isAdminLevel } = usePermissionContext()
@@ -230,9 +232,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   }, [])
 
   const deleteTimeOff = useCallback(
-    async (eventId: string, rev: string) => {
+    async (eventId: string) => {
       try {
-        await deleteCalendarItem({ calendarItemId: eventId, rev }).unwrap()
+        await deleteCalendarItem({ calendarItemId: eventId }).unwrap()
         showMessageFeedback('success', t('notification.appointment_deleted'))
       } catch {
         openNotification('error', t('notification.appointment_delete_failed'), t('notification.appointment_delete_error'))
@@ -246,7 +248,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       try {
         if (!event || !event.extendedProps.rev) throw new Error('No event to delete')
 
-        await deleteCalendarItem({ calendarItemId: event.id, rev: event.extendedProps.rev }).unwrap()
+        await deleteCalendarItem({ calendarItemId: event.id }).unwrap()
 
         try {
           const result = await waitForPropagation(triggerPolling, event.id)
@@ -324,6 +326,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           if (propagationResult.status === 'TIMEOUT' || propagationResult.status === PropagationStatus.FAILED) {
             propagationFailed = true
           } else {
+            // Backend has finished modifying the CalendarItem (Qbetter tags written).
+            // Invalidate the cache so the calendar view has the latest rev.
+            dispatch(calendarItemApiRtk.util.invalidateTags([{ type: CalendarItemTags.CalendarItem }]))
             const raw = propagationResult.confirmationCode
             if (raw && raw !== ConfirmationCodeSpecialValue.SKIPPED && raw !== ConfirmationCodeSpecialValue.NONE) {
               confirmationCode = raw
@@ -404,7 +409,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         openNotification('error', t('notification.appointment_update_failed'), t('notification.appointment_update_error'))
       }
     },
-    [updateCalendarItem, triggerPolling, initializePatientExchangeDatas, createRecoveryDataKey, sendEmail, dataOwnerId, currentUser, t, openNotification, showMessageFeedback],
+    [updateCalendarItem, triggerPolling, initializePatientExchangeDatas, createRecoveryDataKey, sendEmail, dataOwnerId, currentUser, t, openNotification, showMessageFeedback, dispatch],
   )
 
   return (

@@ -45,7 +45,7 @@ interface EventDetailsProps {
     patientEmail: string,
     patientPhoneNumber: string,
   ) => Promise<void>
-  deleteTimeOff: (eventId: string, rev: string) => Promise<void>
+  deleteTimeOff: (eventId: string) => Promise<void>
   updateEvent: (
     event: EventApi | undefined,
     details: string,
@@ -187,8 +187,8 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     try {
       setIsProcessing(true)
       if (isTimeOff) {
-        if (!event?.id || !event?.extendedProps?.rev) throw new Error('Missing time-off data')
-        await deleteTimeOff(event.id, event.extendedProps.rev)
+        if (!event?.id) throw new Error('Missing time-off data')
+        await deleteTimeOff(event.id)
       } else {
         if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail) {
           throw new Error('Missing data for email payload')

@@ -122,13 +122,15 @@ export const calendarItemApiRtk = createApi({
       },
       providesTags: (res) => (res ? [{ type: CalendarItemTags.CalendarItem, id: 'patient-search' }] : []),
     }),
-    deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string; rev: string }>({
-      async queryFn({ calendarItemId, rev }, { getState }) {
+    deleteCalendarItemById: builder.mutation<string | undefined, { calendarItemId: string }>({
+      async queryFn({ calendarItemId }, { getState }) {
         const calendarApi = (await cardinalApi(getState))?.calendarItem
         return guard([calendarApi], async () => {
-          const result = await calendarApi?.deleteCalendarItemById(calendarItemId, rev)
+          const latest = await calendarApi?.getCalendarItem(calendarItemId)
+          if (!latest?.rev) throw new Error('CalendarItem not found')
+          const result = await calendarApi?.deleteCalendarItemById(calendarItemId, latest.rev)
           if (!result) {
-            throw new Error('CalendarItem can’t be deleted')
+            throw new Error('CalendarItem cannot be deleted')
           }
           return result.id
         })

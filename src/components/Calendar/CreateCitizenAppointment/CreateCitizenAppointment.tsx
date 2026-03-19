@@ -272,7 +272,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       const successes = results.filter((r): r is PromiseFulfilledResult<DecryptedCalendarItem> => r.status === 'fulfilled' && !!r.value).map((r) => r.value)
       const failures = results.filter((r) => r.status === 'rejected')
       if (failures.length > 0) {
-        await Promise.allSettled(successes.map((s) => deleteEvent({ calendarItemId: s.id, rev: s.rev ?? '' }).unwrap()))
+        await Promise.allSettled(successes.map((s) => deleteEvent({ calendarItemId: s.id }).unwrap()))
         throw new Error(`Failed to create ${failures.length} of ${drafts.length} appointment(s)`)
       }
       return successes
@@ -379,14 +379,7 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
       // On any failure, roll back ALL created iCure calendar items.
       // Items that reached QBetter will be cancelled when iCure deletion is detected by the backend.
       // Items that failed QBetter propagation are cleaned up from iCure.
-      await Promise.allSettled(
-        items.map((item) =>
-          deleteEvent({
-            calendarItemId: item.id,
-            rev: item.rev ?? '',
-          }).unwrap(),
-        ),
-      )
+      await Promise.allSettled(items.map((item) => deleteEvent({ calendarItemId: item.id }).unwrap()))
       throw new Error('Propagation failed for one or more appointments')
     },
     [triggerPolling, deleteEvent],
