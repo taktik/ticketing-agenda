@@ -18,8 +18,7 @@ export const patientApiRtk = createApi({
         return guard([patientApi], async (): Promise<DecryptedPatient> => {
           const createdPatient = await patientApi?.createPatient(
             await patientApi?.withEncryptionMetadata(patient, {
-              delegates: { [delegates.siteRootId]: AccessLevel.Write },
-              alternateRootDelegateId: delegates.adminRootId,
+              delegates: { [delegates.siteRootId]: AccessLevel.Write, [delegates.adminRootId]: AccessLevel.Write },
             }),
           )
           if (!createdPatient) {

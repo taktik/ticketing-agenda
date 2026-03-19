@@ -17,6 +17,9 @@
   width: 100%;
   padding: 1rem;
 }
+.modal-event .ant-spin-nested-loading {
+  width: 100%;
+}
 .modal-event-display {
   display: flex;
   flex-direction: column;
