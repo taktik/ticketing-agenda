@@ -248,7 +248,10 @@
     "past": "Past",
     "upcoming": "Upcoming",
     "confirmation_code": "Confirmation code",
-    "present_on_arrival": "To present upon arrival"
+    "present_on_arrival": "To present upon arrival",
+    "show_weekends": "Weekends",
+    "create_site": "Create site",
+    "site_email": "Site email"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Are you sure you want to delete this site?",
@@ -340,7 +343,12 @@
     "role_updated": "The role was updated!",
     "role_update_failed": "We could not update the role!",
     "role_update_error": "An error occurred while updating the role.",
-    "at_least_one_rule_required": "At least one rule is required"
+    "at_least_one_rule_required": "At least one rule is required",
+    "conflict_title": "Modification conflict",
+    "conflict_description": "Another user modified this object before you. Your data has been refreshed, please try again.",
+    "site_created": "The site was created!",
+    "site_create_failed": "We could not create the site!",
+    "site_create_error": "An error occurred while creating the site."
   },
   "rrule": {
     "every": "Every",
@@ -399,6 +407,7 @@
     "name_is_reserved": "'{{word}}' is a reserved name. Please choose another.",
     "role_is_required": "Role is required",
     "assignment_is_required": "Assignment is required",
-    "appointments_created_email_failed": "The appointment was successfully registered, but the confirmation email could not be sent."
+    "appointments_created_email_failed": "The appointment was successfully registered, but the confirmation email could not be sent.",
+    "name_required": "Name is required"
   }
 }

@@ -1,16 +1,18 @@
-import { EditOutlined, EllipsisOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, EllipsisOutlined, PlusOutlined } from '@ant-design/icons'
 import { AddressType, Agenda, AgendaSlottingAlgorithm, CalendarItemType, DecryptedAddress, HealthcareParty } from '@icure/cardinal-sdk'
-import { Button, Card, Dropdown, MenuProps, message, Space, Typography } from 'antd'
+import { Button, Card, ConfigProvider, Dropdown, Form, Input, MenuProps, message, Modal, Space, Typography } from 'antd'
 import { ReactElement, useCallback, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
+import { ModalConfirmAction } from '../../common/ModalConfirmAction'
+import { agendaApiRtk, useCreateUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useCreateUpdateHealthcarePartyMutation } from '../../../core/api/healthcarePartyApi'
 import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { EditableSiteInfo, SiteInfoFormValues } from '../../common/EditableSiteInfo'
 import { createStringProperty, translationPropertyId } from '../../common/helpers'
 import { EntityType, PropertyId } from '../../../core/api/fetchType'
+import { useAppDispatch } from '../../../core/hooks'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
-import { ButtonStyleType, StyledButton } from '../../common/StyledButton'
 import './index.css'
 
 interface SiteSettingProps {
@@ -18,22 +20,25 @@ interface SiteSettingProps {
   services: Agenda[]
   isSitesLoading: boolean
   onSelectService: (serviceId: string) => void
+  onDeleteSite: (site: HealthcareParty) => Promise<void>
 }
 
 type ServiceWithProceduresTuple = [Agenda, CalendarItemType[]]
 
-export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }: SiteSettingProps): ReactElement => {
+export const SiteSetting = ({ site, services, isSitesLoading, onSelectService, onDeleteSite }: SiteSettingProps): ReactElement => {
   const { t } = useTranslation()
+  const dispatch = useAppDispatch()
   const { calendarItemTypesByAgendaId } = useHierarchyContext()
 
   const [showEditableSite, setShowEditableSite] = useState<boolean>(false)
+  const [showDeleteSiteModal, setShowDeleteSiteModal] = useState<boolean>(false)
+  const [showCreateServiceModal, setShowCreateServiceModal] = useState(false)
+  const [createServiceForm] = Form.useForm<{ name: string }>()
 
   const serviceAndProcedures: ServiceWithProceduresTuple[] = useMemo(() => {
     return services.map((service): ServiceWithProceduresTuple => {
       const allProcedures = calendarItemTypesByAgendaId.get(service.id) || []
-
       const defaultProcedures = allProcedures.filter((p) => p.defaultCalendarItemType === true)
-
       return [service, defaultProcedures]
     })
   }, [services, calendarItemTypesByAgendaId])
@@ -78,31 +83,43 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
 
   const handleCreateNewService = useCallback(async () => {
     try {
+      const values = await createServiceForm.validateFields()
+
       const properties = [
         createStringProperty(PropertyId.SERVICE_PARENTID, site.id),
-        createStringProperty(translationPropertyId(EntityType.SERVICE, 'FR'), t('content.new_service')),
+        createStringProperty(translationPropertyId(EntityType.SERVICE, 'FR'), values.name),
         createStringProperty(translationPropertyId(EntityType.SERVICE, 'NL'), ''),
         createStringProperty(translationPropertyId(EntityType.SERVICE, 'EN'), ''),
         createStringProperty(translationPropertyId(EntityType.SERVICE, 'DE'), ''),
       ]
 
-      const algorithm = new AgendaSlottingAlgorithm.FixedIntervals({ intervalMinutes: 5 })
-
-      await createUpdateAgendaMutation(
+      const createdAgenda = await createUpdateAgendaMutation(
         new Agenda({
           author: site.id,
           zoneId: 'Europe/Brussels',
-          slottingAlgorithm: algorithm,
-          name: t('content.new_service'),
-          properties: properties,
+          slottingAlgorithm: new AgendaSlottingAlgorithm.FixedIntervals({ intervalMinutes: 5 }),
+          name: values.name,
+          properties,
         }),
       ).unwrap()
 
+      if (!createdAgenda) throw new Error('Service creation failed')
+
+      dispatch(
+        agendaApiRtk.util.updateQueryData('getAgendas', undefined, (draft) => {
+          if (draft) draft.push(createdAgenda)
+        }),
+      )
+
       messageApi.success(t('notification.service_saved'))
-    } catch (error) {
+      setShowCreateServiceModal(false)
+      createServiceForm.resetFields()
+      onSelectService(createdAgenda.id)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'errorFields' in error) return
       openNotification('error', t('notification.service_save_failed'), t('notification.service_save_error'))
     }
-  }, [site, createUpdateAgendaMutation, messageApi, openNotification, t])
+  }, [site, createServiceForm, createUpdateAgendaMutation, dispatch, onSelectService, messageApi, openNotification, t])
 
   const siteActionItems: MenuProps['items'] = [
     {
@@ -110,6 +127,13 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
       label: t('content.edit'),
       icon: <EditOutlined />,
       onClick: () => setShowEditableSite(true),
+    },
+    {
+      key: 'delete',
+      label: t('content.delete_site'),
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => setShowDeleteSiteModal(true),
     },
   ]
 
@@ -133,9 +157,9 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
           <Typography.Text type="secondary">{t('content.select_service_to_configure_procedures')}</Typography.Text>
         </div>
 
-        <StyledButton stylingType={ButtonStyleType.BlackThemeActive} onClick={handleCreateNewService} style={{ alignSelf: 'baseline' }} loading={mutationIsLoading} disabled={isSitesLoading || mutationIsLoading}>
+        <Button type="dashed" icon={<PlusOutlined />} onClick={() => setShowCreateServiceModal(true)} disabled={isSitesLoading || mutationIsLoading}>
           {t('content.add_service')}
-        </StyledButton>
+        </Button>
       </div>
 
       <div className="site-grid">
@@ -145,6 +169,51 @@ export const SiteSetting = ({ site, services, isSitesLoading, onSelectService }:
           </Card>
         ))}
       </div>
+
+      <ConfigProvider modal={{ styles: {} }}>
+        <Modal
+          open={showCreateServiceModal}
+          title={t('content.add_service')}
+          onCancel={() => {
+            setShowCreateServiceModal(false)
+            createServiceForm.resetFields()
+          }}
+          onOk={handleCreateNewService}
+          okText={t('content.confirm')}
+          cancelText={t('content.cancel')}
+          confirmLoading={isCreateUpdateAgendaLoading}
+        >
+          <Form form={createServiceForm} layout="vertical" style={{ marginTop: 16 }}>
+            <Form.Item name="name" label={t('content.service_name')} rules={[{ required: true, message: t('validation.name_required') }]}>
+              <Input autoFocus />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </ConfigProvider>
+
+      {showDeleteSiteModal &&
+        createPortal(
+          <ModalConfirmAction
+            title={t('delete_modal.confirm_delete_site_prompt')}
+            description=""
+            content={
+              <>
+                <p>{t('delete_modal.delete_site_warning_details')}</p>
+                <p>{t('delete_modal.delete_permanent_warning')}</p>
+              </>
+            }
+            yesBtnTitle={t('content.delete')}
+            noBtnTitle={t('content.close')}
+            onYesClick={async () => {
+              await onDeleteSite(site)
+              setShowDeleteSiteModal(false)
+            }}
+            onNoClick={() => setShowDeleteSiteModal(false)}
+            isVisible={showDeleteSiteModal}
+            mode="danger"
+          />,
+          document.body,
+        )}
     </div>
   )
 }

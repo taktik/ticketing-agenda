@@ -249,7 +249,10 @@
     "past": "Vergangen",
     "upcoming": "Bevorstehend",
     "confirmation_code": "Bestätigungscode",
-    "present_on_arrival": "Bei Ankunft vorzuzeigen"
+    "present_on_arrival": "Bei Ankunft vorzuzeigen",
+    "show_weekends": "Wochenenden",
+    "create_site": "Standort erstellen",
+    "site_email": "E-Mail des Standorts"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
@@ -341,7 +344,12 @@
     "role_updated": "Die Rolle wurde aktualisiert!",
     "role_update_failed": "Wir konnten die Rolle nicht aktualisieren!",
     "role_update_error": "Beim Aktualisieren der Rolle ist ein Fehler aufgetreten.",
-    "at_least_one_rule_required": "Mindestens eine Regel ist erforderlich"
+    "at_least_one_rule_required": "Mindestens eine Regel ist erforderlich",
+    "conflict_title": "Änderungskonflikt",
+    "conflict_description": "Ein anderer Benutzer hat dieses Objekt vor Ihnen geändert. Ihre Daten wurden aktualisiert, bitte versuchen Sie es erneut.",
+    "site_created": "Der Standort wurde erstellt!",
+    "site_create_failed": "Der Standort konnte nicht erstellt werden!",
+    "site_create_error": "Beim Erstellen des Standorts ist ein Fehler aufgetreten."
   },
   "rrule": {
     "every": "Alle",
@@ -400,6 +408,7 @@
     "name_is_reserved": "'{{word}}' ist ein reservierter Name. Bitte wählen Sie einen anderen.",
     "role_is_required": "Rolle ist erforderlich",
     "assignment_is_required": "Zuweisung ist erforderlich",
-    "appointments_created_email_failed": "Der Termin wurde erfolgreich registriert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden."
+    "appointments_created_email_failed": "Der Termin wurde erfolgreich registriert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden.",
+    "name_required": "Name ist erforderlich"
   }
 }

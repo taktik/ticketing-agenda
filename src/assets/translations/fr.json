@@ -248,7 +248,10 @@
     "past": "Passé",
     "upcoming": "À venir",
     "confirmation_code": "Code de confirmation",
-    "present_on_arrival": "À présenter lors de votre arrivée"
+    "present_on_arrival": "À présenter lors de votre arrivée",
+    "show_weekends": "Week-ends",
+    "create_site": "Créer un site",
+    "site_email": "E-mail du site"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Êtes-vous sûr de vouloir supprimer ce site ?",
@@ -340,7 +343,12 @@
     "role_updated": "Le rôle a été mis à jour !",
     "role_update_failed": "Nous n'avons pas pu mettre à jour le rôle !",
     "role_update_error": "Une erreur s'est produite lors de la mise à jour du rôle.",
-    "at_least_one_rule_required": "Au moins une règle est requise"
+    "at_least_one_rule_required": "Au moins une règle est requise",
+    "conflict_title": "Conflit de modification",
+    "conflict_description": "Un utilisateur a modifié cet objet avant vous. Vos données ont été actualisées, veuillez réessayer.",
+    "site_created": "Le site a été créé !",
+    "site_create_failed": "Nous n'avons pas pu créer le site !",
+    "site_create_error": "Une erreur s'est produite lors de la création du site."
   },
   "rrule": {
     "every": "Tout(es) les",
@@ -396,6 +404,7 @@
     "value_required": "La valeur est requise",
     "unit_required": "L'unité est requise",
     "service_name_in_french_mandatory": "Le nom du service en français est obligatoire.",
+    "name_required": "Le nom est requis",
     "name_is_reserved": "'{{word}}' est un nom réservé. Veuillez en choisir un autre.",
     "role_is_required": "Le rôle est requis",
     "assignment_is_required": "L'affectation est requise",

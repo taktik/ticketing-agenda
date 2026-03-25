@@ -27,13 +27,13 @@ export const HierarchyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { data: siteRoot, isLoading: isSiteRootLoading } = useGetRootHealthcareParty({ rootType: HcpTag.SITE_ROOT, skip })
   const { data: adminRoot, isLoading: isAdminRootLoading } = useGetRootHealthcareParty({ rootType: HcpTag.ADMIN_ROOT, skip })
 
-  const { data: sitesData, isLoading: isSitesLoading } = useGetHealthcarePartyByTagQuery(HcpTag.SITE, { skip })
+  const { data: sitesData, isLoading: isSitesLoading } = useGetHealthcarePartyByTagQuery(HcpTag.SITE, { skip, refetchOnFocus: true })
   const siteIds = useMemo(() => sitesData?.map((s) => s.id) ?? [], [sitesData])
 
   const { data: agendasData, isLoading: isAgendasLoading } = useGetAgendasByAuthorIds({ authorIds: siteIds, skip: siteIds.length === 0 || skip })
   const agendaIds = useMemo(() => agendasData?.map((a) => a.id) ?? [], [agendasData])
 
-  const { data: itemTypesArrays, isLoading: isTypesLoading } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: agendaIds.length === 0 || skip })
+  const { data: itemTypesArrays, isLoading: isTypesLoading } = useGetCalendarItemTypesForMultipleAgendasQuery(agendaIds, { skip: agendaIds.length === 0 || skip, refetchOnFocus: true })
 
   const HierarchyData = useMemo(() => {
     const sortByName = (a: { name?: string }, b: { name?: string }) => (a.name ?? '').localeCompare(b.name ?? '')

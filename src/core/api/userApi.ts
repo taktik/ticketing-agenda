@@ -156,12 +156,21 @@ export const userApiRtk = createApi({
       },
       invalidatesTags: (res, error) => (res && !error ? [{ type: UserTags.User, id: 'all' }] : []),
     }),
+    getTokenForUser: builder.mutation<string | undefined, string>({
+      async queryFn(userId, { getState }) {
+        const userApi = (await cardinalApi(getState))?.user
+        return guard([userApi], async (): Promise<string> => {
+          return await userApi!.getToken(userId, 'keyInit')
+        })
+      },
+    }),
   }),
 })
 
 export const {
   useGetCurrentUserQuery,
   useGetUserByHcpIdsQuery,
+  useLazyGetUserByHcpIdsQuery,
   useGetUsersByIdsQuery,
   useGetUserByEmailQuery,
   useCreateUserMutation,
@@ -171,4 +180,5 @@ export const {
   useSetUserRolesMutation,
   useResetUserRolesMutation,
   useSilentDeleteUserMutation,
+  useGetTokenForUserMutation,
 } = userApiRtk

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Network Firewall Rules — On-Premise Deployment</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #333; }
+  h1 { color: #e30613; border-bottom: 3px solid #e30613; padding-bottom: 10px; font-size: 22px; }
+  h2 { color: #444; margin-top: 32px; font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+  h3 { color: #555; margin-top: 20px; font-size: 15px; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+  th { background: #f5f5f5; text-align: left; padding: 8px 10px; border: 1px solid #ddd; font-weight: 600; }
+  td { padding: 7px 10px; border: 1px solid #ddd; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .dir { text-align: center; font-weight: 600; }
+  .dir-out { color: #d4380d; }
+  .dir-in { color: #389e0d; }
+  .net-internet { color: #1677ff; font-weight: 500; }
+  .net-lan { color: #722ed1; font-weight: 500; }
+  .none { color: #999; font-style: italic; }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .note { background: #fffbe6; border-left: 4px solid #faad14; padding: 12px 16px; margin-top: 28px; font-size: 13px; line-height: 1.5; }
+  .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-top: 36px; margin-bottom: 4px; }
+  @media print { body { margin: 20px; } h1 { font-size: 18px; } }
+</style>
+</head>
+<body>
+
+<h1>Network Firewall Rules — On-Premise Deployment</h1>
+
+<p class="section-label">Servers (VMs)</p>
+
+<h2>ticketing-service</h2>
+<table>
+  <tr><th style="width:90px">Direction</th><th style="width:80px">Network</th><th>Target</th><th style="width:50px">Port</th><th>Purpose</th></tr>
+  <tr><td class="dir dir-out">↗ OUT</td><td class="net-internet">Internet</td><td><code>api.icure.cloud</code></td><td>443</td><td>iCure API + WebSocket subscription + token validation</td></tr>
+  <tr><td class="dir dir-out">↗ OUT</td><td class="net-internet">Internet</td><td><code>login.microsoftonline.com</code></td><td>443</td><td>Azure AD JWKS fetch (user auto-registration)</td></tr>
+  <tr><td class="dir dir-out">↗ OUT</td><td class="net-lan">LAN</td><td>QBetter VM</td><td>*</td><td>Appointment synchronisation</td></tr>
+  <tr><td class="dir dir-in">↙ IN</td><td class="net-lan">LAN</td><td>User browsers</td><td>443</td><td>Backend REST API</td></tr>
+</table>
+
+<h2>ticketing-agenda</h2>
+<table>
+  <tr><th style="width:90px">Direction</th><th style="width:80px">Network</th><th>Target</th><th style="width:50px">Port</th><th>Purpose</th></tr>
+  <tr><td class="dir dir-in">↙ IN</td><td class="net-lan">LAN</td><td>User browsers</td><td>443</td><td>Serve static SPA</td></tr>
+  <tr><td class="dir">—</td><td class="none">None</td><td class="none">No outbound required</td><td>—</td><td>—</td></tr>
+</table>
+
+<h2>ticketing-portal</h2>
+<table>
+  <tr><th style="width:90px">Direction</th><th style="width:80px">Network</th><th>Target</th><th style="width:50px">Port</th><th>Purpose</th></tr>
+  <tr><td class="dir dir-in">↙ IN</td><td class="net-lan">LAN</td><td>User browsers</td><td>443</td><td>Serve static SPA</td></tr>
+  <tr><td class="dir">—</td><td class="none">None</td><td class="none">No outbound required</td><td>—</td><td>—</td></tr>
+</table>
+
+<h2>QBetter</h2>
+<table>
+  <tr><th style="width:90px">Direction</th><th style="width:80px">Network</th><th>Target</th><th style="width:50px">Port</th><th>Purpose</th></tr>
+  <tr><td class="dir dir-in">↙ IN</td><td class="net-lan">LAN</td><td>ticketing-service VM</td><td>*</td><td>Receive appointment sync</td></tr>
+</table>
+
+<p class="section-label">User Browsers</p>
+
+<h2>City Workers (ticketing-agenda)</h2>
+<table>
+  <tr><th style="width:80px">Network</th><th>Target</th><th style="width:50px">Port</th><th>Purpose</th></tr>
+  <tr><td class="net-internet">Internet</td><td><code>api.icure.cloud</code></td><td>443</td><td>iCure data operations</td></tr>
+  <tr><td class="net-internet">Internet</td><td><code>msg-gw.icure.cloud</code></td><td>443</td><td>Email sending + CAPTCHA challenge (Kerberus)</td></tr>
+  <tr><td class="net-internet">Internet</td><td><code>login.microsoftonline.com</code></td><td>443</td><td>Azure AD authentication</td></tr>
+  <tr><td class="net-lan">LAN</td><td>ticketing-agenda VM</td><td>443</td><td>Load application</td></tr>
+  <tr><td class="net-lan">LAN</td><td>ticketing-service VM</td><td>443</td><td>Backend API calls</td></tr>
+</table>
+
+<h2>Citizens (ticketing-portal)</h2>
+<table>
+  <tr><th style="width:80px">Network</th><th>Target</th><th style="width:50px">Port</th><th>Purpose</th></tr>
+  <tr><td class="net-internet">Internet</td><td><code>api.icure.cloud</code></td><td>443</td><td>iCure data operations</td></tr>
+  <tr><td class="net-internet">Internet</td><td><code>msg-gw.icure.cloud</code></td><td>443</td><td>Email sending + CAPTCHA challenge (Kerberus)</td></tr>
+  <tr><td class="net-lan">LAN</td><td>ticketing-portal VM</td><td>443</td><td>Load application</td></tr>
+  <tr><td class="net-lan">LAN</td><td>ticketing-service VM</td><td>443</td><td>Backend API calls</td></tr>
+</table>
+
+<div class="note">
+  <strong>Notes:</strong><br>
+  • All internet traffic is HTTPS (port 443) only. No inbound internet access is required on any server.<br>
+  • The QBetter port (<code>*</code>) depends on their configuration — to be confirmed with QBetter.<br>
+  • iCure is SaaS-only — all client data is encrypted end-to-end before reaching their servers.<br>
+  • All API calls are authenticated via Bearer JWT tokens. No implicit network trust.
+</div>
+
+</body>
+</html>

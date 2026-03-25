@@ -248,7 +248,10 @@
     "past": "Verlopen",
     "upcoming": "Aankomend",
     "confirmation_code": "Bevestigingscode",
-    "present_on_arrival": "Te tonen bij aankomst"
+    "present_on_arrival": "Te tonen bij aankomst",
+    "show_weekends": "Weekend",
+    "create_site": "Locatie aanmaken",
+    "site_email": "E-mail van de locatie"
   },
   "delete_modal": {
     "confirm_delete_site_prompt": "Weet u zeker dat u deze locatie wilt verwijderen?",
@@ -340,7 +343,12 @@
     "role_updated": "De rol is bijgewerkt!",
     "role_update_failed": "We konden de rol niet bijwerken!",
     "role_update_error": "Er is een fout opgetreden bij het bijwerken van de rol.",
-    "at_least_one_rule_required": "Minstens één regel is vereist"
+    "at_least_one_rule_required": "Minstens één regel is vereist",
+    "conflict_title": "Wijzigingsconflict",
+    "conflict_description": "Een andere gebruiker heeft dit object gewijzigd. Uw gegevens zijn bijgewerkt, probeer het opnieuw.",
+    "site_created": "De locatie is aangemaakt!",
+    "site_create_failed": "We konden de locatie niet aanmaken!",
+    "site_create_error": "Er is een fout opgetreden bij het aanmaken van de locatie."
   },
   "rrule": {
     "every": "Elke",
@@ -399,6 +407,7 @@
     "name_is_reserved": "'{{word}}' is een gereserveerde naam. Kies alstublieft een andere.",
     "role_is_required": "Rol is verplicht",
     "assignment_is_required": "Toewijzing is verplicht",
-    "appointments_created_email_failed": "De afspraak is succesvol geregistreerd, maar de bevestigingsmail kon niet worden verzonden."
+    "appointments_created_email_failed": "De afspraak is succesvol geregistreerd, maar de bevestigingsmail kon niet worden verzonden.",
+    "name_required": "Naam is vereist"
   }
 }

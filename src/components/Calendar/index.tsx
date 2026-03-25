@@ -8,7 +8,7 @@ import listPlugin from '@fullcalendar/list'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Agenda, CalendarItem, CalendarItemType, CodeStub, DecryptedCalendarItem, EncryptedPatient } from '@icure/cardinal-sdk'
-import { Button, message, Segmented, Space, Tooltip, Typography } from 'antd'
+import { Button, message, Segmented, Space, Switch, Tooltip, Typography } from 'antd'
 import { endOfWeek, startOfWeek } from 'date-fns'
 import dayjs from 'dayjs'
 import { EventApi, EventClickArg, EventContentArg, EventInput } from 'fullcalendar'
@@ -67,6 +67,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const [selectedEvent, setSelectedEvent] = useState<EventApi | undefined>(undefined)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
   const [timeRange, setTimeRange] = useState<'week' | 'day'>('week')
+  const [showWeekends, setShowWeekends] = useState(false)
   const [calendarTitle, setCalendarTitle] = useState<string>('')
 
   const [calendarRange, setCalendarRange] = useState<CalendarRangeType>({
@@ -82,7 +83,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
       from: calendarRange.from.getTime(),
       to: calendarRange.to.getTime(),
     },
-    { skip: !selectedAgenda },
+    { skip: !selectedAgenda, refetchOnFocus: true },
   )
 
   const [deleteCalendarItem, { isLoading: isDeleteLoading }] = useDeleteCalendarItemByIdMutation()
@@ -166,7 +167,10 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   }, [viewMode, timeRange, calendarRef])
 
   useEffect(() => {
-    setCalendarRange({ from: startOfWeek(calendarDate, { weekStartsOn: 1 }), to: endOfWeek(calendarDate, { weekStartsOn: 1 }) })
+    setCalendarRange({
+      from: startOfWeek(calendarDate, { weekStartsOn: 1 }),
+      to: endOfWeek(calendarDate, { weekStartsOn: 1 }),
+    })
   }, [calendarDate])
 
   const handlePrev = useCallback(() => calendarRef.current?.getApi().prev(), [calendarRef])
@@ -312,7 +316,9 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
         }
 
         const isReschedule = !!(selectedDate && selectedTime)
-        const updateResult = await updateCalendarItem({ calendarItem: updatedCalendarItem }).unwrap()
+        const updateResult = await updateCalendarItem({
+          calendarItem: updatedCalendarItem,
+        }).unwrap()
 
         if (!isReschedule) {
           showMessageFeedback('success', t('notification.appointment_updated'))
@@ -452,6 +458,12 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
               { label: t('content.week', 'Week'), value: 'week' },
             ]}
           />
+          <Space size="small">
+            <Switch size="small" checked={showWeekends} onChange={setShowWeekends} />
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {t('content.show_weekends')}
+            </Typography.Text>
+          </Space>
         </Space>
       </div>
 
@@ -467,7 +479,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           selectable={false}
           selectMirror={true}
           dayMaxEvents={true}
-          weekends={false}
+          weekends={showWeekends}
           height="100%"
           datesSet={handleDatesSet}
           events={filteredEvents}

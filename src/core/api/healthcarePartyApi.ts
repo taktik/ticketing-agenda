@@ -6,7 +6,7 @@ import { GetHealthcarePartyByParentParameters, GetRootHealthcarePartyParameters,
 import { allRoleTags } from './roleApi'
 import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
-enum HealthcarePartyTags {
+export enum HealthcarePartyTags {
   HealthcareParty = 'HealthcareParty',
 }
 
@@ -224,6 +224,7 @@ export const {
 export const useGetRootHealthcareParty = (params: GetRootHealthcarePartyParameters) => {
   const { data, ...rest } = useGetHealthcarePartyByTagQuery(params.rootType, {
     skip: params.skip,
+    refetchOnFocus: true,
   })
 
   const root = data ? data[0] : undefined

@@ -48,13 +48,13 @@ When creating an Administrator, we give gim the Adminisrator set of permissions.
 From the root of the project you can use
 npx ts-node --transpile-only -P tsconfig.scripts.json src/scripts/getAdminRoot.ts
 
-Before running, fill in the credentials and config values in `src/scripts/utils.ts` (`ADMIN_SOLUTIONS_EMAIL`, `ADMIN_SOLUTIONS_AUTH_TOKEN`, `ICURE_NIGHTLY_URL`, `DATABASE_ID`).
+Before running, fill in the credentials and config values in `src/scripts/utils.ts` (`ADMIN_SOLUTIONS_EMAIL`, `ADMIN_SOLUTIONS_AUTH_TOKEN`, `ICURE_NIGHTLY_URL`, `ICURE_API_URL`, `DATABASE_ID`).
 Don't forget to modify the variables inside the script you wish to run, and revert `utils.ts` after running to avoid committing credentials.
 
 # Permissions and roles :
 
 To fetch all possible permissions :
-curl -X POST https://nightly.icure.cloud/rest/v2/aa/icure/permissions
+curl -X POST https://api.icure.cloud/rest/v2/aa/icure/permissions
 
 Roles endpoints :
 POST https://api.icure.cloud/rest/v2/role/{roleName} with body being a json array of the permission name string (e.g. "UserManagement.Delete.Patient") to create a role

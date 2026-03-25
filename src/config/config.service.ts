@@ -1,5 +1,4 @@
 export class Config {
-  REACT_APP_ICURE_NIGHTLY_URL = 'https://nightly.icure.cloud'
   REACT_APP_ICURE_API_URL = 'https://api.icure.cloud'
   REACT_APP_MSG_GW_URL = 'https://msg-gw.icure.cloud'
   REACT_APP_EXTERNAL_SERVICES_SPEC_ID = ''

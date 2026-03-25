@@ -34,7 +34,12 @@ function getStatus(error: unknown): number | undefined {
 }
 
 function getError(e: unknown): FetchBaseQueryError {
+  const httpStatus = getStatus(e)
   const message = e instanceof Error ? e.message : typeof e === 'string' ? e : 'Unknown error'
+
+  if (typeof httpStatus === 'number') {
+    return { status: httpStatus, data: { message, originalError: e } }
+  }
 
   return {
     status: 'CUSTOM_ERROR',

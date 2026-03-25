@@ -4,7 +4,7 @@ import { cardinalApi } from '../services/auth.api'
 import { GetAgendasByStringPropertyParameters } from './fetchType'
 import { baseQueryWithRetry, guard, loadFromIterator } from './utils'
 
-enum AgendaTags {
+export enum AgendaTags {
   Agenda = 'Agenda',
 }
 
@@ -105,6 +105,7 @@ export const { useGetAgendaQuery, useGetAgendasQuery, useCreateUpdateAgendaMutat
 export const useGetAgendasByAuthorIds = (params: { skip: boolean; authorIds: string[] }) => {
   const { data, ...rest } = useGetAgendasQuery(undefined, {
     skip: params.skip,
+    refetchOnFocus: true,
   })
 
   const result = data?.filter((agenda) => agenda.author && params.authorIds.includes(agenda.author)) ?? []

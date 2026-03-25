@@ -1,5 +1,6 @@
 import { PublicClientApplication } from '@azure/msal-browser'
 import { MsalProvider } from '@azure/msal-react'
+import { setupListeners } from '@reduxjs/toolkit/query'
 import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
@@ -8,6 +9,8 @@ import { msalConfig } from './config/config.azure'
 import { persistor, store } from './core/store'
 import './i18n'
 import './style/less/index.css'
+
+setupListeners(store.dispatch)
 
 const container = document.getElementById('root')!
 const root = createRoot(container)

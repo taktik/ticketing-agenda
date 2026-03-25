@@ -16,7 +16,7 @@ Script constants are read from `src/scripts/utils.ts`. Fill in the empty strings
 **Before running a script:**
 1. Open `src/scripts/utils.ts`
 2. Fill in `ADMIN_SOLUTIONS_EMAIL` and `ADMIN_SOLUTIONS_AUTH_TOKEN` (get from iCure Cockpit dashboard)
-3. Fill in `ICURE_NIGHTLY_URL` and `DATABASE_ID`
+3. Fill in `ICURE_NIGHTLY_URL` (SDK target URL), `ICURE_API_URL` (REST API URL), and `DATABASE_ID`
 
 **After running:** revert `src/scripts/utils.ts` to avoid committing credentials.
 
@@ -71,7 +71,7 @@ The JWT needed for `addAdministrator.ts` is a **global admin JWT** (not a regula
 Custom roles: `ADMINISTRATOR`, `HEAD_OF_SERVICE`, `CITY_WORKER`. All endpoints require a global admin JWT.
 
 ```
-POST   https://nightly.icure.cloud/rest/v2/aa/icure/permissions          # List all possible permissions
+POST   https://api.icure.cloud/rest/v2/aa/icure/permissions               # List all possible permissions
 POST   https://api.icure.cloud/rest/v2/role/{roleName}                   # Create role (body: ["PermissionName", ...])
 GET    https://api.icure.cloud/rest/v2/role/{roleID}                     # Get role
 GET    https://api.icure.cloud/rest/v2/role/inGroup/{groupId}            # List roles in group (including builtins)

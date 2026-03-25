@@ -3,13 +3,13 @@ import { createApi } from '@reduxjs/toolkit/query/react'
 import { cardinalApi } from '../services/auth.api'
 import { baseQueryWithRetry, guard } from './utils'
 
-enum calendarItemTypeTag {
+export enum CalendarItemTypeTags {
   CalendarItemType = 'CalendarItemTypeTag',
 }
 
 export const calendarItemTypeApiRtk = createApi({
   reducerPath: 'calendarItemTypeApi',
-  tagTypes: [calendarItemTypeTag.CalendarItemType],
+  tagTypes: [CalendarItemTypeTags.CalendarItemType],
   baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
     getCalendarItemTypes: builder.query<CalendarItemType[] | undefined, string>({
@@ -19,7 +19,7 @@ export const calendarItemTypeApiRtk = createApi({
           return await calendarItemTypeApi!.listCalendarItemTypesByAgendaId(agendaId)
         })
       },
-      providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
+      providesTags: (res) => (res ? [{ type: CalendarItemTypeTags.CalendarItemType, id: 'all' }] : []),
     }),
     getCalendarItemTypesForMultipleAgendas: builder.query<CalendarItemType[][], string[]>({
       async queryFn(agendaIds, { getState, dispatch }) {
@@ -45,7 +45,7 @@ export const calendarItemTypeApiRtk = createApi({
 
         return { data: finalData }
       },
-      providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
+      providesTags: (res) => (res ? [{ type: CalendarItemTypeTags.CalendarItemType, id: 'all' }] : []),
     }),
     getCalendarItemType: builder.query<CalendarItemType | undefined, string>({
       async queryFn(id, { getState }) {
@@ -58,7 +58,7 @@ export const calendarItemTypeApiRtk = createApi({
           return new CalendarItemType(item)
         })
       },
-      providesTags: (res) => (res ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
+      providesTags: (res) => (res ? [{ type: CalendarItemTypeTags.CalendarItemType, id: 'all' }] : []),
     }),
     createUpdateCalendarItemType: builder.mutation<CalendarItemType | undefined, CalendarItemType>({
       async queryFn(item, { getState }) {
@@ -71,7 +71,7 @@ export const calendarItemTypeApiRtk = createApi({
           return new CalendarItemType(updated)
         })
       },
-      invalidatesTags: (result) => (result ? [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }] : []),
+      invalidatesTags: (result) => (result ? [{ type: CalendarItemTypeTags.CalendarItemType, id: 'all' }] : []),
     }),
     deleteCalendarItemTypes: builder.mutation<StoredDocumentIdentifier[] | undefined, CalendarItemType[]>({
       async queryFn(calendarItemTypes, { getState }) {
@@ -84,7 +84,7 @@ export const calendarItemTypeApiRtk = createApi({
           return result
         })
       },
-      invalidatesTags: () => [{ type: calendarItemTypeTag.CalendarItemType, id: 'all' }],
+      invalidatesTags: () => [{ type: CalendarItemTypeTags.CalendarItemType, id: 'all' }],
     }),
   }),
 })

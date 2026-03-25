@@ -76,14 +76,6 @@ const sortByOrder = (items: CalendarItemType[]): CalendarItemType[] => {
   })
 }
 
-const getAllDurations = (procedures: CalendarItemType[] | undefined, name: string | undefined): number[] => {
-  const matchingProcedures = (procedures ?? []).filter((item) => item.name === name)
-  const sortedMatchingProcedures = sortByOrder(matchingProcedures)
-  const allDurations = sortedMatchingProcedures.map((item) => item.duration)
-
-  return allDurations
-}
-
 export interface LanguageDescription {
   [key: string]: string
 }
@@ -163,24 +155,25 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   )
 
   const tableRows: ProcedureRow[] = useMemo(() => {
-    const proceduresByName = procedures.reduce((acc, procedure) => {
-      if (!procedure.name) return acc
-      const existing = acc.get(procedure.name) || []
-      acc.set(procedure.name, [...existing, procedure])
+    const groupKeyFor = (p: CalendarItemType) => getStringProperty(p.publicProperties, PropertyId.CALENDARITEMTYPE_GROUPID) || p.name || p.id
+
+    const proceduresByGroup = procedures.reduce((acc, procedure) => {
+      const key = groupKeyFor(procedure)
+      const existing = acc.get(key) || []
+      acc.set(key, [...existing, procedure])
       return acc
     }, new Map<string, CalendarItemType[]>())
 
     const durationsMap = new Map<string, number[]>()
-    proceduresByName.forEach((procsForName, name) => {
-      const sortedDurations = getAllDurations(procsForName, name)
-      durationsMap.set(name, sortedDurations)
+    proceduresByGroup.forEach((procsForGroup, groupKey) => {
+      const sortedDurations = sortByOrder(procsForGroup).map((item) => item.duration)
+      durationsMap.set(groupKey, sortedDurations)
     })
 
     return sortedProcedures.map((procedure) => ({
       rowId: procedure.id,
       procedureId: procedure.id,
-      procedureName: procedure.name,
-      appointmentDurations: procedure.name ? durationsMap.get(procedure.name) || [] : [],
+      appointmentDurations: durationsMap.get(groupKeyFor(procedure)) || [],
       isPublic: getBooleanProperty(procedure.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC),
       procedureDetails: getStringProperty(procedure.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS),
       subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, EntityType.CALENDARITEMTYPE, locale)])),
@@ -226,7 +219,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       const orderProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_ORDER, typedValue: new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: 0 }) })
       const procedureDetailsProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: '' }) })
       const agendaIdProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_AGENDAID, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }) })
-      const calendarItemTypeProperties = [isPublicProp, orderProp, procedureDetailsProp, agendaIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
+      const groupIdProp = new DecryptedPropertyStub({ id: PropertyId.CALENDARITEMTYPE_GROUPID, typedValue: new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: v4() }) })
+      const calendarItemTypeProperties = [isPublicProp, orderProp, procedureDetailsProp, agendaIdProp, groupIdProp, translationPropertyDE, translationPropertyEN, translationPropertyFR, translationPropertyNL]
 
       const procedure = new CalendarItemType({
         name: t('content.new_procedure'),
@@ -276,8 +270,13 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       if (!service) throw new Error()
       const rowValues = await form.validateFields()
 
-      const matchingProcedures = procedures.filter((item) => item.name === procedureRow.subjectByLanguage['FR'])
+      const existingDefault = procedures.find((item) => item.id === procedureRow.procedureId)
+      const existingGroupId = getStringProperty(existingDefault?.publicProperties, PropertyId.CALENDARITEMTYPE_GROUPID)
+      const matchingProcedures = existingGroupId
+        ? procedures.filter((item) => getStringProperty(item.publicProperties, PropertyId.CALENDARITEMTYPE_GROUPID) === existingGroupId)
+        : procedures.filter((item) => item.name === procedureRow.subjectByLanguage['FR'])
       const sortedMatchingProcedures = sortByOrder(matchingProcedures)
+      const groupId = existingGroupId || v4()
 
       const desiredArray = rowValues.appointmentDurations.map((duration, index) => {
         let properties: DecryptedPropertyStub[] = []
@@ -289,6 +288,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_ORDER, new DecryptedTypedValue({ type: TypedValuesType.Integer, integerValue: index }))
         properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: rowValues.procedureDetails }))
         properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_AGENDAID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: service.id }))
+        properties = setProperty(properties, PropertyId.CALENDARITEMTYPE_GROUPID, new DecryptedTypedValue({ type: TypedValuesType.String, stringValue: groupId }))
 
         return new CalendarItemType({
           name: rowValues.subjectByLanguage['FR'],
@@ -394,7 +394,11 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
   const tableRowDelete = useCallback(async () => {
     try {
       if (!procedureRowToBeDeleted) throw new Error()
-      const proceduresToDelete = procedures.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR']) || []
+      const deletingDefault = procedures.find((item) => item.id === procedureRowToBeDeleted.procedureId)
+      const deletingGroupId = getStringProperty(deletingDefault?.publicProperties, PropertyId.CALENDARITEMTYPE_GROUPID)
+      const proceduresToDelete = deletingGroupId
+        ? procedures.filter((item) => getStringProperty(item.publicProperties, PropertyId.CALENDARITEMTYPE_GROUPID) === deletingGroupId)
+        : procedures.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR'])
 
       if (!proceduresToDelete || proceduresToDelete.length === 0) {
         console.warn('No matching procedures found to delete by that name.')
