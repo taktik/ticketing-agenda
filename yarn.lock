@@ -2042,13 +2042,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@icure/cardinal-sdk@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@icure/cardinal-sdk@npm:2.1.0"
+"@icure/cardinal-sdk@npm:2.1.3":
+  version: 2.1.3
+  resolution: "@icure/cardinal-sdk@npm:2.1.3"
   dependencies:
     "@js-joda/core": "npm:3.2.0"
     ws: "npm:8.18.0"
-  checksum: 26350cdae999bd54cd088096c681f0f3bf4f711fcc5cc239c7b84241d458de098a1a1915b832da8299c218d20e8f0f4bd959983389d9a0b1b8eae2cfd17a2ec1
+  checksum: c65db37e07d3c8bf4f994e41af0d83216022acc5601f60f9331cf7dcfd36073a33febffce62936169db9d5962e5f55b27b2350a8be9aceb032fabfc68b0c2c3e
   languageName: node
   linkType: hard
 
@@ -16073,7 +16073,7 @@ __metadata:
     "@fullcalendar/core": "npm:6.1.17"
     "@fullcalendar/daygrid": "npm:^6.1.17"
     "@fullcalendar/react": "npm:^6.1.17"
-    "@icure/cardinal-sdk": "npm:2.1.0"
+    "@icure/cardinal-sdk": "npm:2.1.3"
     "@icure/form": "npm:^3.0.1"
     "@reduxjs/toolkit": "npm:2.8.2"
     "@testing-library/dom": "npm:^10.4.0"

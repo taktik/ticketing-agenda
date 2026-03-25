@@ -226,7 +226,7 @@ Helper functions in `components/common/helpers.ts`:
 
 ## Environment Config
 Runtime config injected via `window.config` in a `<script>` block in `public/index.html` (overridden at container startup by `json-env`):
-- `REACT_APP_ICURE_NIGHTLY_URL` - iCure API
+- `REACT_APP_ICURE_API_URL` - iCure API
 - `REACT_APP_BACKEND_API` - ticketing-service backend (https://mouscron.taktik.dev/backend)
 - `REACT_APP_MSG_GW_URL` - iCure MSG Gateway
 - `REACT_APP_DATABASE_ID` - iCure database ID
