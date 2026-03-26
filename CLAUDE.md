@@ -157,6 +157,10 @@ Two auth methods:
 - On new key creation: generates recovery key, stores it on ticketing-service backend (`POST /api/keys`)
 - On key recovery: fetches recovery key from backend (`GET /api/keys/{userId}`)
 
+**Crypto hierarchy — only `siteRoot` and `adminRoot` are cryptographic participants.** Individual site HCPs (tagged `SITE`) are structural/organisational only — they are never passed as delegates in `withEncryptionMetadata`. Patients and CalendarItems are delegated to `siteRoot` + `adminRoot` + the patient. This has two architectural consequences:
+- Individual site HCPs never have key pairs generated for them and require no recovery key in the backend.
+- `POST /api/keys` enforces `token.id == payload.userId` (worker can only store their own key). If a site HCP were ever added to the crypto hierarchy, that check would block key storage for it because the site never authenticates. Any such change would require revisiting the key storage authorization on ticketing-service.
+
 ## Scheduling Rules
 Rules stored as `ResourceGroupAllocationSchedule` inside `TimeTable` objects per service.
 

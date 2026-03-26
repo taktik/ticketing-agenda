@@ -27,8 +27,8 @@ import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
 import { useAppDispatch } from '../../core/hooks'
 import { useNotificationHelper } from '../../core/hooks/useNotificationHelper'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
-import { calculateNumericEventTimes, combineDateAndTime, detectLanguage, fuzzyDateTimeIntToDayjs, getCodeTagById, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
-import { CalendarItemTag, EntityType } from '../../core/api/fetchType'
+import { calculateNumericEventTimes, combineDateAndTime, detectLanguage, fuzzyDateTimeIntToDayjs, getCodeTagById, getStringProperty, getTranslationForEntity, isAllDayEvent, parseTimeRange } from '../common/helpers'
+import { CalendarItemTag, EntityType, PropertyId } from '../../core/api/fetchType'
 import { AppointmentSelector } from './AppointmentSelector/AppointmentSelector'
 import { ModalCitizenSearch } from '../ModalCitizenSearch'
 import { CreateCitizenAppointment } from './CreateCitizenAppointment/CreateCitizenAppointment'
@@ -375,7 +375,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           params.append('calendarItemId', updatedCalendarItem.id)
           const url = `${MANAGE_APPOINTMENT_ROUTE}?${params.toString()}`
 
-          const hasProcedure = !!updatedCalendarItem.details?.trim()
+          const procedureDetails = getStringProperty(calendarItemType.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS)
+          const hasProcedure = !!procedureDetails?.trim()
           const hasCC = !!confirmationCode
           let templateKey: EmailTemplateKey
           if (hasProcedure) {
@@ -402,7 +403,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
               time: `${startDayjs.format('HH[h]mm')} - ${endDayjs.format('HH[h]mm')}`,
               location: calendarItem.addressText,
               url,
-              procedureDetails: updatedCalendarItem.details,
+              procedureDetails,
               validationCode: confirmationCode,
             },
           }).unwrap()
