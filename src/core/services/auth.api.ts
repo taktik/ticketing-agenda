@@ -27,6 +27,7 @@ import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
 import { calendarItemTypeApiRtk } from '../api/calendarItemTypeApi'
+import { contactApiRtk } from '../api/contactApi'
 import { dataOwnerApiRtk } from '../api/dataOwnerApi'
 import { emailApiRtk } from '../api/emailApi'
 import { groupApiRtk } from '../api/groupApi'
@@ -442,6 +443,7 @@ export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { 
   dispatch(anonymousApiRtk.util.resetApiState())
   dispatch(calendarItemApiRtk.util.resetApiState())
   dispatch(calendarItemTypeApiRtk.util.resetApiState())
+  dispatch(contactApiRtk.util.resetApiState())
   dispatch(dataOwnerApiRtk.util.resetApiState())
   dispatch(patientApiRtk.util.resetApiState())
   dispatch(roleApiRtk.util.resetApiState())

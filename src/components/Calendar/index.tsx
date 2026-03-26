@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { EMAIL_APPOINTMENT_CANCELLATION_FR, EMAIL_APPOINTMENT_CANCELLATION_NL, EMAIL_APPOINTMENT_MODIFICATION, EMAIL_SENDER, EmailTemplateKey, MANAGE_APPOINTMENT_ROUTE, NEW_APPOINTMENT_ROUTE } from '../../constants'
 import { ConfirmationCodeSpecialValue } from '../../core/api/fetchType'
 import { calendarItemApiRtk, CalendarItemTags, useDeleteCalendarItemByIdMutation, useGetCalendarItemByAgendaIdAndPeriodQuery, useUpdateCalendarItemMutation } from '../../core/api/calendarItemApi'
+import { useDeleteContactByCalendarItemIdMutation } from '../../core/api/contactApi'
 import { PropagationStatus, useLazyGetPropagationStatusQuery, waitForPropagation } from '../../core/api/appointmentPollingApi'
 import { useSendEmailMutation } from '../../core/api/emailApi'
 import { useInitializeExchangeDataMutation } from '../../core/api/patientApi'
@@ -88,6 +89,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
   const [deleteCalendarItem, { isLoading: isDeleteLoading }] = useDeleteCalendarItemByIdMutation()
   const [updateCalendarItem, { isLoading: isUpdateLoading }] = useUpdateCalendarItemMutation()
+  const [deleteContactByCalendarItemId] = useDeleteContactByCalendarItemIdMutation()
   const [sendEmail] = useSendEmailMutation()
   const [initializePatientExchangeDatas] = useInitializeExchangeDataMutation()
   const [createRecoveryDataKey] = useCreateExchangeDataRecoveryMutation()
@@ -135,7 +137,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           color: isTimeOff ? 'orange' : linkedProcedure?.color,
           allDay: isAllDay,
           extendedProps: {
-            details: calendarItem.details,
             calendarItemTypeId: calendarItem.calendarItemTypeId,
             agendaId: calendarItem.agendaId,
             isTimeOff: isTimeOff,
@@ -254,6 +255,8 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
         await deleteCalendarItem({ calendarItemId: event.id }).unwrap()
 
+        deleteContactByCalendarItemId(event.id).catch(() => {})
+
         try {
           const result = await waitForPropagation(triggerPolling, event.id)
           if (result.status === 'TIMEOUT' || result.status === PropagationStatus.FAILED) {
@@ -281,7 +284,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const updateEvent = useCallback(
     async (
       event: EventApi | undefined,
-      details: string,
       selectedDate: dayjs.Dayjs | undefined,
       selectedTime: dayjs.Dayjs | undefined,
       calendarItem: DecryptedCalendarItem,
@@ -297,7 +299,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
         await initializePatientExchangeDatas(patient.id).unwrap()
 
-        let updatedCalendarItem = new DecryptedCalendarItem({ ...calendarItem, details })
+        let updatedCalendarItem = new DecryptedCalendarItem({ ...calendarItem })
 
         if (selectedDate && selectedTime && calendarItem?.duration) {
           const currentStartTime = combineDateAndTime({ date: selectedDate, time: selectedTime })
@@ -308,7 +310,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
           updatedCalendarItem = new DecryptedCalendarItem({
             ...calendarItem,
             modified: new Date().getTime(),
-            details: details,
             startTime: numericTimes?.startTime,
             endTime: numericTimes?.endTime,
             tags,
@@ -351,7 +352,6 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
               modified: new Date().getTime(),
               startTime: calendarItem.startTime,
               endTime: calendarItem.endTime,
-              details: calendarItem.details,
               tags: calendarItem.tags,
             })
             await updateCalendarItem({ calendarItem: rolledBackItem }).unwrap()

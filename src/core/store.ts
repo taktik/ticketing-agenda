@@ -6,6 +6,7 @@ import { agendaApiRtk, AgendaTags } from './api/agendaApi'
 import { anonymousApiRtk } from './api/anonymousApi'
 import { AppointmentPollingApiRtk } from './api/appointmentPollingApi'
 import { calendarItemApiRtk, CalendarItemTags } from './api/calendarItemApi'
+import { contactApiRtk } from './api/contactApi'
 import { calendarItemTypeApiRtk, CalendarItemTypeTags } from './api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from './api/dataOwnerApi'
 import { emailApiRtk } from './api/emailApi'
@@ -54,6 +55,7 @@ export const store = configureStore({
       recoveryApiRtk.middleware,
       emailApiRtk.middleware,
       AppointmentPollingApiRtk.middleware,
+      contactApiRtk.middleware,
     ),
 })
 

@@ -8,8 +8,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useLazyGetAvailabilitiesQuery } from '../../../core/api/anonymousApi'
+import { NOTE_LANG_KEY, useCreateOrUpdateContactNoteMutation, useGetContactByCalendarItemIdQuery } from '../../../core/api/contactApi'
 import { useCalendarItemDetails } from '../../../core/hooks/useCalendarItemDetails'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
+import { useHierarchyContext } from '../../../core/contexts/HierarchyContext'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss, formatEventDate, getCodeTagById, localeMap } from '../../common/helpers'
 import { CalendarItemTag } from '../../../core/api/fetchType'
@@ -21,7 +23,7 @@ const { TextArea } = Input
 const { Text } = Typography
 
 export interface CalendarEventUpdateForm {
-  details: string
+  note: string
 }
 
 interface EventExtendedProps {
@@ -29,7 +31,6 @@ interface EventExtendedProps {
   agendaId?: string
   isTimeOff?: boolean
   rev?: string
-  details?: string
 }
 
 interface EventDetailsProps {
@@ -48,7 +49,6 @@ interface EventDetailsProps {
   deleteTimeOff: (eventId: string) => Promise<void>
   updateEvent: (
     event: EventApi | undefined,
-    details: string,
     selectedDate: dayjs.Dayjs | undefined,
     selectedTime: dayjs.Dayjs | undefined,
     calendarItem: DecryptedCalendarItem,
@@ -64,6 +64,7 @@ interface EventDetailsProps {
 export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event, deleteEvent, deleteTimeOff, updateEvent }: EventDetailsProps) => {
   const { t, i18n } = useTranslation()
   const [form] = Form.useForm<CalendarEventUpdateForm>()
+  const { siteRoot, adminRoot } = useHierarchyContext()
 
   const [showDeleteAppointmentModal, setShowDeleteAppointmentModal] = useState<boolean>(false)
   const [editMode, setEditMode] = useState<'none' | 'details' | 'reschedule'>('none')
@@ -79,7 +80,13 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
   const isTimeOff = !!extendedProps?.isTimeOff
 
   const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
-  const isDetailsLoading = isTimeOff ? !calendarItem : !calendarItem || !patient || !agenda || !calendarItemType
+
+  const { data: existingContact, isLoading: isContactLoading } = useGetContactByCalendarItemIdQuery(event?.id ?? '', { skip: !event?.id || isTimeOff })
+  const [createOrUpdateContactNote] = useCreateOrUpdateContactNoteMutation()
+
+  const isDetailsLoading = isTimeOff ? !calendarItem : !calendarItem || !patient || !agenda || !calendarItemType || isContactLoading
+
+  const noteText = useMemo(() => existingContact?.services[0]?.notes[0]?.markdown?.[NOTE_LANG_KEY] ?? '', [existingContact])
 
   const isPastAppointment = useMemo(() => {
     if (!calendarItem?.startTime) return false
@@ -110,17 +117,23 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
 
   const qBetterConfirmationCode = useMemo(() => getCodeTagById(calendarItem?.tags, CalendarItemTag.APPOINTMENT_QBETTER_CODE), [calendarItem])
 
+  // Reset modal state when the event changes or the modal opens
   useEffect(() => {
     if (event && isVisible) {
-      form.setFieldsValue({
-        details: extendedProps?.details ?? '',
-      })
       setEditMode('none')
       setIsProcessing(false)
       setSelectedDate(undefined)
       setSelectedTime(undefined)
+      form.setFieldsValue({ note: '' })
     }
-  }, [event, isVisible, form, extendedProps])
+  }, [event, isVisible, form])
+
+  // Once the Contact has loaded (or changed), populate the form field — but only when not actively editing
+  useEffect(() => {
+    if (editMode === 'none') {
+      form.setFieldsValue({ note: noteText })
+    }
+  }, [noteText, editMode, form])
 
   useEffect(() => {
     if (editMode !== 'reschedule' || !agenda?.id || !calendarItemType?.id) return
@@ -165,22 +178,34 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
 
   const handleUpdate = useCallback(async () => {
     try {
-      const { details } = await form.validateFields()
+      const { note } = await form.validateFields()
 
       if (!calendarItem || !patient || !agenda || !calendarItemType || !patientEmail) {
         throw new Error('Missing data for email payload')
       }
 
       setIsProcessing(true)
-      const isReschedule = editMode === 'reschedule'
-      await updateEvent(event, details, isReschedule ? selectedDate : undefined, isReschedule ? selectedTime : undefined, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+
+      if (siteRoot?.id && adminRoot?.id) {
+        await createOrUpdateContactNote({
+          calendarItemId: calendarItem.id,
+          note,
+          delegates: { siteRootId: siteRoot.id, adminRootId: adminRoot.id },
+          existingContact,
+          patient,
+        }).unwrap()
+      }
+
+      if (editMode === 'reschedule') {
+        await updateEvent(event, selectedDate, selectedTime, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber)
+      }
       onClose()
     } catch {
       openNotification('error', t('validation.unexpected_error'), '')
     } finally {
       setIsProcessing(false)
     }
-  }, [form, event, editMode, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t])
+  }, [form, event, editMode, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t, siteRoot, adminRoot, existingContact, createOrUpdateContactNote])
 
   const handleDelete = useCallback(async () => {
     setShowDeleteAppointmentModal(false)
@@ -215,7 +240,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
           <Descriptions.Item label={t('content.date_and_time')}>{event ? formatEventDate(event, dateFnsLocale) : ''}</Descriptions.Item>
           <Descriptions.Item label={t('content.procedure')}>{event?.title}</Descriptions.Item>
           <Descriptions.Item label={t('content.details')}>
-            <Text style={{ whiteSpace: 'pre-wrap' }}>{extendedProps?.details}</Text>
+            <Text style={{ whiteSpace: 'pre-wrap' }}>{noteText}</Text>
           </Descriptions.Item>
           <Descriptions.Item label={t('content.confirmationCode')}>{qBetterConfirmationCode || t('content.no_code_provided')}</Descriptions.Item>
         </Descriptions>
@@ -268,13 +293,13 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
                     onTimeSelect={handleTimeSelect}
                   />
                 </div>
-                <Form.Item name="details" label={t('content.details')}>
+                <Form.Item name="note" label={t('content.details')}>
                   <TextArea rows={4} />
                 </Form.Item>
               </>
             ) : editMode === 'details' ? (
               <div style={{ padding: '1rem' }}>
-                <Form.Item name="details" label={t('content.details')}>
+                <Form.Item name="note" label={t('content.details')}>
                   <TextArea rows={4} autoFocus />
                 </Form.Item>
               </div>

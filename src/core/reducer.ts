@@ -4,6 +4,7 @@ import { agendaApiRtk } from './api/agendaApi'
 import { anonymousApiRtk } from './api/anonymousApi'
 import { AppointmentPollingApiRtk } from './api/appointmentPollingApi'
 import { calendarItemApiRtk } from './api/calendarItemApi'
+import { contactApiRtk } from './api/contactApi'
 import { calendarItemTypeApiRtk } from './api/calendarItemTypeApi'
 import { dataOwnerApiRtk } from './api/dataOwnerApi'
 import { emailApiRtk } from './api/emailApi'
@@ -32,6 +33,7 @@ export const appReducer = combineReducers({
   recoveryApi: recoveryApiRtk.reducer,
   emailApi: emailApiRtk.reducer,
   AppointmentPollingApi: AppointmentPollingApiRtk.reducer,
+  contactApi: contactApiRtk.reducer,
 })
 
 export const persistedReducer = persistReducer(persistConfig, appReducer)
