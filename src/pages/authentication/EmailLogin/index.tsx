@@ -19,14 +19,14 @@ const reduxSelector = createSelector(
 )
 
 export default function EmailLogin() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const dispatch = useAppDispatch()
   const { waitingForToken, emailLoginProcessStarted } = useAppSelector(reduxSelector)
   const [isExpanded, setIsExpanded] = useState(false)
 
   const startAuthenticationProcessWithEmailAndCaptchaToken = (email: string, captchaToken: Solution) => {
     dispatch(setEmail({ email: email }))
-    dispatch(startEmailAuthentication({ captchaToken: captchaToken }))
+    dispatch(startEmailAuthentication({ captchaToken: captchaToken, language: i18n.language }))
   }
 
   const completeAuthenticationProcessWithEmailAndValidationCode = (email: string, validationCode: string) => {

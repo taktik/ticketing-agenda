@@ -1,4 +1,4 @@
-import { differenceInDays, differenceInMonths, differenceInYears, format, fromUnixTime, parse } from 'date-fns'
+import { differenceInDays, differenceInMonths, differenceInYears, format, parse } from 'date-fns'
 
 export const getNumericDate = (date: Date | number): number => {
   return Number(format(date, 'yyyyMMddHHmmss'))
@@ -18,7 +18,7 @@ export const getAge = (date: number | undefined): string | undefined => {
   }
 
   const now = new Date()
-  const birthDate = fromUnixTime(date)
+  const birthDate = parse(date.toString(), 'yyyyMMddHHmmss', new Date())
 
   const years = differenceInYears(now, birthDate)
   if (years !== 0) {

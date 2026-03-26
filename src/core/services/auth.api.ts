@@ -22,7 +22,7 @@ import {
 } from '@icure/cardinal-sdk'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { msalInstance } from '../..'
-import { APPLICATION_ID, BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, ICURE_API_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
+import { APPLICATION_ID, BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, EMAIL_AUTH_CODE_ADMIN_NL, ICURE_API_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
@@ -70,11 +70,11 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Backend request failed')
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || `Backend request failed with status ${response.status}`)
         }
 
-        await response.json()
+        await response.json().catch(() => {})
       } catch (error) {
         console.error('Failed to save recovery key:', error)
         throw error
@@ -95,8 +95,8 @@ export class PetraCareCryptoStrategies extends CryptoStrategies {
       }
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Request failed')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Request failed with status ${response.status}`)
       }
 
       const result = await response.json()
@@ -294,6 +294,7 @@ export const startEmailAuthentication = createAsyncThunk(
   async (
     _payload: {
       captchaToken: Solution
+      language?: string
     },
     { getState, dispatch },
   ) => {
@@ -311,7 +312,7 @@ export const startEmailAuthentication = createAsyncThunk(
         ICURE_API_URL,
         MSG_GW_URL,
         SPEC_ID,
-        EMAIL_AUTH_CODE_ADMIN_FR,
+        _payload.language?.toLowerCase().startsWith('nl') ? EMAIL_AUTH_CODE_ADMIN_NL : EMAIL_AUTH_CODE_ADMIN_FR,
         AuthenticationProcessTelecomType.Email,
         email,
         new CaptchaOptions.Kerberus.Computed({ solution: _payload.captchaToken }),
@@ -321,7 +322,6 @@ export const startEmailAuthentication = createAsyncThunk(
         },
       )
 
-      dispatch(setEmailLoginProcessStarted(false))
       return authenticationStep
     } catch (e) {
       console.error(`Couldn't start authentication: ${e}`)
@@ -339,12 +339,10 @@ export const completeEmailAuthentication = createAsyncThunk('cardinalApi/complet
   dispatch(setEmailLoginProcessStarted(true))
   try {
     if (!authProcess) {
-      dispatch(setEmailLoginProcessStarted(false))
       throw new Error('No authProcess provided')
     }
 
     if (!token) {
-      dispatch(setEmailLoginProcessStarted(false))
       throw new Error('No token provided')
     }
 
@@ -533,6 +531,7 @@ export const cardinalApiRtk = createSlice({
     })
     builder.addCase(startEmailAuthentication.rejected, (state, {}) => {
       state.invalidEmail = true
+      state.waitingForToken = false
     })
     builder.addCase(completeEmailAuthentication.fulfilled, (state, { payload: user }) => {
       state.user = user as User
@@ -548,6 +547,7 @@ export const cardinalApiRtk = createSlice({
     })
     builder.addCase(azureLogin.rejected, (state, {}) => {
       state.invalidToken = true
+      state.online = false
     })
     builder.addCase(login.fulfilled, (state, { payload: user }) => {
       state.user = user as User

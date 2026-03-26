@@ -286,7 +286,9 @@ export const ModalHierarchySettings = ({ isVisible, onClose, initialSiteId }: Mo
           {messageContextHolder}
           <Sider width={250} className="menu-sites-root">
             <div className="menu-sites">
-              {isDataLoading ? <SpinLoader /> : <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />}
+              <div className="menu-sites-list">
+                {isDataLoading ? <SpinLoader /> : <Menu mode="inline" items={menuItems} onClick={onServiceClick} onOpenChange={onSiteClick} selectedKeys={[selectedKey]} openKeys={openKeys} expandIcon={false} />}
+              </div>
               {isAdminLevel && (
                 <div className="sider-footer">
                   <Button type="dashed" icon={<PlusOutlined />} onClick={() => setShowCreateSiteModal(true)} style={{ width: '80%' }}>

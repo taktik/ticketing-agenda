@@ -967,7 +967,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                           <Form.Item
                             label={t('rrule.rrule_time_min')}
-                            name="notAfterInMinutes" // This form field will store total minutes
+                            name="notBeforeInMinutes" // This form field will store total minutes
                             labelCol={{ span: 24 }}
                             wrapperCol={{ span: 24 }}
                             style={{ marginBottom: 0 }}
@@ -978,7 +978,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
 
                           <Form.Item
                             label={t('rrule.rrule_time_max')}
-                            name="notBeforeInMinutes" // This form field will store total minutes
+                            name="notAfterInMinutes" // This form field will store total minutes
                             labelCol={{ span: 24 }}
                             wrapperCol={{ span: 24 }}
                             style={{ marginBottom: 8 }}

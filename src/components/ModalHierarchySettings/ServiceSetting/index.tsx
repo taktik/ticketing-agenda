@@ -320,7 +320,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
               (locale) => getTranslationForEntity(existingItem.publicProperties, EntityType.CALENDARITEMTYPE, locale) !== getTranslationForEntity(desiredProps.publicProperties, EntityType.CALENDARITEMTYPE, locale),
             ) ||
             getBooleanProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC) !== getBooleanProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_ISPUBLIC) ||
-            getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) ||
+            getIntegerProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) !== getIntegerProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_ORDER) ||
             getStringProperty(existingItem.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS) !== getStringProperty(desiredProps.publicProperties, PropertyId.CALENDARITEMTYPE_PROCEDUREDETAILS)
           ) {
             mutationPromises.push(
