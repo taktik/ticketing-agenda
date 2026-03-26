@@ -205,7 +205,27 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     } finally {
       setIsProcessing(false)
     }
-  }, [form, event, editMode, updateEvent, calendarItem, patient, agenda, calendarItemType, patientEmail, patientPhoneNumber, selectedDate, selectedTime, onClose, openNotification, t, siteRoot, adminRoot, existingContact, createOrUpdateContactNote])
+  }, [
+    form,
+    event,
+    editMode,
+    updateEvent,
+    calendarItem,
+    patient,
+    agenda,
+    calendarItemType,
+    patientEmail,
+    patientPhoneNumber,
+    selectedDate,
+    selectedTime,
+    onClose,
+    openNotification,
+    t,
+    siteRoot,
+    adminRoot,
+    existingContact,
+    createOrUpdateContactNote,
+  ])
 
   const handleDelete = useCallback(async () => {
     setShowDeleteAppointmentModal(false)

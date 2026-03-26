@@ -48,10 +48,14 @@
 .menu-sites {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   height: 100%;
   padding: 0;
   gap: 0;
+}
+.menu-sites-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 .sider-footer {
   display: flex;

@@ -83,6 +83,11 @@
 }
 .site-root {
   padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .site-header {
   display: flex;
@@ -100,6 +105,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
 }
 .site-card {
   background: #fdfdfd;

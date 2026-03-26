@@ -746,8 +746,12 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                   if (editable) {
                     return (
                       <Space size="middle">
-                        <Button onClick={() => tableRowUpdate(record)} disabled={isMutating}>{t('content.update')}</Button>
-                        <Button onClick={tableRowCancel} disabled={isMutating}>{t('content.cancel')}</Button>
+                        <Button onClick={() => tableRowUpdate(record)} disabled={isMutating}>
+                          {t('content.update')}
+                        </Button>
+                        <Button onClick={tableRowCancel} disabled={isMutating}>
+                          {t('content.cancel')}
+                        </Button>
                       </Space>
                     )
                   } else {

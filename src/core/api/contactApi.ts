@@ -20,10 +20,7 @@ export const contactApiRtk = createApi({
       async queryFn(calendarItemId, { getState }) {
         const cApi = (await cardinalApi(getState))?.contact
         return guard([cApi], async (): Promise<DecryptedContact | undefined> => {
-          const contacts = await loadFromIterator(
-            await cApi!.filterContactsBy(ContactFilters.byServiceTagForSelf(INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })),
-            10,
-          )
+          const contacts = await loadFromIterator(await cApi!.filterContactsBy(ContactFilters.byServiceTagForSelf(INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })), 10)
           return contacts[0] ? new DecryptedContact(contacts[0]) : undefined
         })
       },
@@ -75,10 +72,7 @@ export const contactApiRtk = createApi({
       async queryFn(calendarItemId, { getState }) {
         const cApi = (await cardinalApi(getState))?.contact
         return guard([cApi], async (): Promise<undefined> => {
-          const contacts = await loadFromIterator(
-            await cApi!.filterContactsBy(ContactFilters.byServiceTagForSelf(INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })),
-            10,
-          )
+          const contacts = await loadFromIterator(await cApi!.filterContactsBy(ContactFilters.byServiceTagForSelf(INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })), 10)
           if (contacts[0]) {
             await cApi!.deleteContact(contacts[0])
           }
