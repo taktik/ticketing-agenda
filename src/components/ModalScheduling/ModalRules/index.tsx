@@ -15,6 +15,7 @@ import { NOT_AFTER_IN_MINUTES, NOT_BEFORE_IN_MINUTES, TOKENS } from '../../../co
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { useUpdateAgendaMutation } from '../../../core/api/agendaApi'
 import { useGetCalendarItemTypesQuery } from '../../../core/api/calendarItemTypeApi'
+import { PropertyId } from '../../../core/api/fetchType'
 import { CustomModal } from '../../common/CustomModal'
 import { DurationInput } from '../../common/DurationInput'
 import {
@@ -23,6 +24,7 @@ import {
   dayjsToHhmmss,
   dayjsToYYYYMMDDHHmmss,
   fuzzyDateIntToDayjs,
+  getStringProperty,
   hhmmssToDayjs,
   hhmmssToHHmm,
   localeMap,
@@ -155,9 +157,11 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
   }, [procedures])
 
   const groupProcedures = useMemo(() => {
-    const groupedByName = (procedures ?? []).reduce(
+    const groupKeyFor = (p: CalendarItemType) => getStringProperty(p.publicProperties, PropertyId.CALENDARITEMTYPE_GROUPID) || p.name || p.id
+
+    const groupedByKey = (procedures ?? []).reduce(
       (acc, procedure) => {
-        const key = procedure.name ?? ''
+        const key = groupKeyFor(procedure)
 
         if (!acc[key]) {
           acc[key] = []
@@ -169,7 +173,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       {} as Record<string, CalendarItemType[]>,
     )
 
-    const finalEntries = Object.values(groupedByName)
+    const finalEntries = Object.values(groupedByKey)
       .map((group) => {
         const defaultProc = group.find((p) => p.defaultCalendarItemType)
 
@@ -294,8 +298,11 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
       }))
 
       // Finally set the state with the values
+      // Filter to default-only IDs: the stored schedule contains all variant IDs (from extendedCalendarItemTypesIds),
+      // but the selector only works with default IDs (keys in groupProcedures). Non-defaults would be phantom invisible values.
+      const defaultOnlyIds = tableRow.calendarItemTypesIds.filter((id) => groupProcedures.has(id))
       form.setFieldsValue({
-        calendarItemTypesIds: tableRow.calendarItemTypesIds,
+        calendarItemTypesIds: defaultOnlyIds,
         public: tableRow.public,
         availabilities: tableRow.availabilities,
         notBeforeInMinutes: tableRow.timeConstraints[0],
@@ -672,7 +679,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                               size="small"
                               onClick={handleSelectAll}
                               disabled={
-                                (allCalendarItemTypeIds.length > 0 && watchedCalendarItemTypesIds && watchedCalendarItemTypesIds.length === allCalendarItemTypeIds.length) ||
+                                (allDefaultCalendarItemTypeIds.length > 0 && watchedCalendarItemTypesIds && watchedCalendarItemTypesIds.length === allDefaultCalendarItemTypeIds.length) ||
                                 !sortedProcedures ||
                                 sortedProcedures.length === 0
                               }

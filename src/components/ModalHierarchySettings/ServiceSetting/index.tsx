@@ -401,7 +401,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
         : procedures.filter((item) => item.name === procedureRowToBeDeleted.subjectByLanguage['FR'])
 
       if (!proceduresToDelete || proceduresToDelete.length === 0) {
-        console.warn('No matching procedures found to delete by that name.')
+        throw new Error('No matching procedures found to delete.')
       }
 
       const proceduresToDeleteIds = proceduresToDelete.map((item) => item.id)
@@ -652,7 +652,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                                 type="dashed"
                                 onClick={() => {
                                   const currentDurationsList: number[] = watchedDurations || []
-                                  const lastDuration = currentDurationsList && currentDurationsList.length > 1 ? currentDurationsList?.[currentDurationsList.length - 1] : 15
+                                  const lastDuration = currentDurationsList && currentDurationsList.length > 0 ? currentDurationsList[currentDurationsList.length - 1] : 15
                                   add(lastDuration + 15)
                                 }}
                                 block
@@ -746,8 +746,8 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
                   if (editable) {
                     return (
                       <Space size="middle">
-                        <Button onClick={() => tableRowUpdate(record)}>{t('content.update')}</Button>
-                        <Button onClick={tableRowCancel}>{t('content.cancel')}</Button>
+                        <Button onClick={() => tableRowUpdate(record)} disabled={isMutating}>{t('content.update')}</Button>
+                        <Button onClick={tableRowCancel} disabled={isMutating}>{t('content.cancel')}</Button>
                       </Space>
                     )
                   } else {
