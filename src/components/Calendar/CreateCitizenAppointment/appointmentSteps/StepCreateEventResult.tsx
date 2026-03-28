@@ -2,7 +2,7 @@ import { CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, InfoCircleO
 import { Card, Result, Space, Spin, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { CreatedAppointmentSummary, CreationStatus } from '../../../../types/citizenReservationTypes'
-import './index.css'
+import './index.less'
 
 const { Text, Title } = Typography
 

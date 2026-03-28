@@ -3,7 +3,7 @@ import { Card, Col, Row, Typography } from 'antd'
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomModal } from '../../common/CustomModal'
-import './index.css'
+import './index.less'
 
 const { Title, Text } = Typography
 

@@ -37,7 +37,7 @@ import { CreateTimeOff } from './CreateTimeOff/CreateTimeOff'
 import { GridEventContent } from './EventContent/GridEventContent'
 import { ListEventContent } from './EventContent/ListEventContent'
 import { EventDetails } from './EventDetails/ModalEvent'
-import './index.css'
+import './index.less'
 
 interface CalendarProps {
   handleFullCalendarDateChange: () => void

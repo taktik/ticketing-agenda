@@ -5,7 +5,7 @@ import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { MSG_GW_URL, SPEC_ID } from '../../../constants'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
-import '../index.css'
+import '../index.less'
 import { KerberusWidget } from '../KerberusWidget'
 
 interface LoginFormProps {

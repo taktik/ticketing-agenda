@@ -19,7 +19,7 @@ import { HcpTag } from '../../core/api/fetchType'
 import { useGetHealthcarePartyByTagQuery } from '../../core/api/healthcarePartyApi'
 import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
-import './index.css'
+import './index.less'
 
 export default function DashboardPage() {
   const { t } = useTranslation()

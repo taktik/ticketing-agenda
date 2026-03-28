@@ -35,7 +35,6 @@
     "react-i18next": "15.5.1",
     "react-redux": "9.2.0",
     "react-router-dom": "^7.1.5",
-    "react-scripts": "^5.0.1",
     "redux": "5.0.1",
     "redux-persist": "^6.0.0",
     "rrule": "^2.8.1",
@@ -44,25 +43,9 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "concurrently --kill-others \"less-watch-compiler --config less-watcher.config.json\" \"react-scripts start\"",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -80,7 +63,7 @@
     "@typescript-eslint/parser": "^8.23.0",
     "@typescript-eslint/scope-manager": "8.31.0",
     "@typescript-eslint/typescript-estree": "8.31.0",
-    "concurrently": "^9.1.2",
+    "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.0.1",
     "eslint-config-react": "^1.1.7",
@@ -90,11 +73,10 @@
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-react": "^7.29.4",
     "less": "^4.2.2",
-    "less-watch-compiler": "^1.16.3",
     "lint-staged": "^15.4.3",
     "prettier": "^3.4.2",
     "pretty-quick": "^4.0.0",
-    "typescript": "^4.9.5"
-  },
-  "packageManager": "yarn@4.0.1"
+    "typescript": "^4.9.5",
+    "vite": "^8.0.3"
+  }
 }

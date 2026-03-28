@@ -7,7 +7,7 @@ import { ReactElement, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePermissionContext } from '../../core/contexts/PermissionContext'
 import { CustomModal } from '../common/CustomModal'
-import './index.css'
+import './index.less'
 import { AccountSetting } from './Settings/AccountSetting'
 import { ManagerUsers } from './Settings/ManageUsers'
 

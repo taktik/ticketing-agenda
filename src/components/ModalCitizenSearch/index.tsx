@@ -13,7 +13,7 @@ import { useHierarchyContext } from '../../core/contexts/HierarchyContext'
 import { useDebounce } from '../../core/hooks'
 import { CustomModal } from '../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss, getCodeTagById, localeMap, timestampToDayjs } from '../common/helpers'
-import './index.css'
+import './index.less'
 
 const { Text } = Typography
 

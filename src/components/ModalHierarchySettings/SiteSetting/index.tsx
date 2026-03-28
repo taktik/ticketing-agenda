@@ -13,7 +13,7 @@ import { createStringProperty, translationPropertyId } from '../../common/helper
 import { EntityType, PropertyId } from '../../../core/api/fetchType'
 import { useAppDispatch } from '../../../core/hooks'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
-import './index.css'
+import './index.less'
 
 interface SiteSettingProps {
   site: HealthcareParty

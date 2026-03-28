@@ -12,7 +12,7 @@ import { useAppDispatch } from '../../../core/hooks'
 import { logout } from '../../../core/services/auth.api'
 import { ModalSettings } from '../../ModalGeneralSettings'
 import { LanguageSelector } from '../LanguageSelector'
-import './index.css'
+import './index.less'
 
 export const Header = () => {
   const { t } = useTranslation()

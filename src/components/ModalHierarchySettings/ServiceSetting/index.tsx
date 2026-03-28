@@ -16,7 +16,7 @@ import { EntityType, PropertyId } from '../../../core/api/fetchType'
 import { useNotificationHelper } from '../../../core/hooks/useNotificationHelper'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { EditableServiceTitle } from '../../EditableServiceTitle/EditableServiceTitle'
-import './index.css'
+import './index.less'
 
 interface SubjectEditProps {
   activeLang: string

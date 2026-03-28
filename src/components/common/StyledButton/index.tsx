@@ -1,7 +1,7 @@
 import type { ButtonProps } from 'antd'
 import { Button } from 'antd'
 import React from 'react'
-import './index.css'
+import './index.less'
 
 export enum ButtonStyleType {
   Default = 'defaultAntd',

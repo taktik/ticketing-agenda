@@ -8,7 +8,7 @@ import App from './App'
 import { msalConfig } from './config/config.azure'
 import { persistor, store } from './core/store'
 import './i18n'
-import './style/less/index.css'
+import './style/less/index.less'
 
 setupListeners(store.dispatch)
 

@@ -2,7 +2,7 @@ import React from 'react'
 import { Spin } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 
-import './index.css'
+import './index.less'
 
 //Please ensure that the parent element where you intend to place the SpinLoader has the CSS property 'position: relative;' set.
 

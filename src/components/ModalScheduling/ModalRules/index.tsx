@@ -33,7 +33,7 @@ import {
 } from '../../common/helpers'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { SchedulingTableRow } from '../index'
-import './index.css'
+import './index.less'
 
 interface TableRow {
   rowId: string

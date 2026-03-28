@@ -20,7 +20,7 @@ import { useAppDispatch } from '../../core/hooks'
 import { useNotificationHelper } from '../../core/hooks/useNotificationHelper'
 import { CustomModal } from '../common/CustomModal'
 import { SpinLoader } from '../common/SpinLoader'
-import './index.css'
+import './index.less'
 import { ServiceSetting } from './ServiceSetting'
 import { SiteSetting } from './SiteSetting'
 

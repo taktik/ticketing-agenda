@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useCreateUpdateHealthcarePartyMutation } from '../../../../core/api/healthcarePartyApi'
 import { useNotificationHelper } from '../../../../core/hooks/useNotificationHelper'
 import { SpinLoader } from '../../../common/SpinLoader'
-import './index.css'
+import './index.less'
 
 interface AccountSettingProps {
   currentUserHcp?: HealthcareParty

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import LoginForm from '../../../components/authentication/LoginForm'
 import { useAppDispatch, useAppSelector } from '../../../core/hooks'
 import { CardinalApiState, completeEmailAuthentication, setEmail, setToken, setWaitingForToken, startEmailAuthentication } from '../../../core/services/auth.api'
-import '../index.css'
+import '../index.less'
 
 const reduxSelector = createSelector(
   (state: { cardinalApi: CardinalApiState }) => state.cardinalApi,

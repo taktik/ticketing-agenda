@@ -11,7 +11,7 @@ import { useUpdateAgendaMutation } from '../../core/api/agendaApi'
 import { CustomModal } from '../common/CustomModal'
 import { dateToYYYYMMDDHHmmss, localeMap, timestampToDate } from '../common/helpers'
 import { ModalConfirmAction } from '../common/ModalConfirmAction'
-import './index.css'
+import './index.less'
 import { ModalRules } from './ModalRules'
 
 export interface SchedulingTableRow extends ResourceGroupAllocationSchedule {

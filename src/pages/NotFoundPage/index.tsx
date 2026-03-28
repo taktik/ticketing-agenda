@@ -2,7 +2,7 @@ import { HomeOutlined } from '@ant-design/icons'
 import { Button, Result } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import './index.css'
+import './index.less'
 
 export const PageNotFound = () => {
   const { t } = useTranslation()

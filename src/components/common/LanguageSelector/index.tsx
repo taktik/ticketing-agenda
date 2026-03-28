@@ -4,7 +4,7 @@ import flagFrance from '../../../assets/flag_france.png'
 import flagGermany from '../../../assets/flag_germany.png'
 import flagUK from '../../../assets/flag_kingdom_united.png'
 import flagDutch from '../../../assets/flag_netherlands.png'
-import './index.css'
+import './index.less'
 
 interface LanguageOption {
   code: string

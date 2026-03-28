@@ -1,7 +1,7 @@
 import { Button, Divider, Spin, Typography } from 'antd'
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import './index.css'
+import './index.less'
 
 interface SelectableItem {
   id?: string

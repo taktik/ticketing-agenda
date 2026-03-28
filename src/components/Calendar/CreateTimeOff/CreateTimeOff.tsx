@@ -11,7 +11,7 @@ import { usePermissionContext } from '../../../core/contexts/PermissionContext'
 import { CustomModal } from '../../common/CustomModal'
 import { dayjsToYYYYMMDDHHmmss } from '../../common/helpers'
 import { CalendarItemTag } from '../../../core/api/fetchType'
-import './index.css'
+import './index.less'
 
 const { RangePicker } = DatePicker
 

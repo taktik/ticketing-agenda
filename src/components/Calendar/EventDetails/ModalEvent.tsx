@@ -17,7 +17,7 @@ import { dayjsToYYYYMMDDHHmmss, formatEventDate, getCodeTagById, localeMap } fro
 import { CalendarItemTag } from '../../../core/api/fetchType'
 import { ModalConfirmAction } from '../../common/ModalConfirmAction'
 import { TimeSlotPickerUI } from '../TimeSlotPickerUI/TimeSlotPickerUI'
-import './index.css'
+import './index.less'
 
 const { TextArea } = Input
 const { Text } = Typography

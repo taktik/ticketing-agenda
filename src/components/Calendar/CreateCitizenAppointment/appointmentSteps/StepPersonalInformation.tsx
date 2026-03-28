@@ -3,7 +3,7 @@ import { Form, Input, Select, Space, Typography } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import './index.css'
+import './index.less'
 
 const { Title } = Typography
 const { Option } = Select
