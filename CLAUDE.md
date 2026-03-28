@@ -235,7 +235,7 @@ Runtime config injected via `window.config` in a `<script>` block in `public/ind
 - `REACT_APP_MSG_GW_URL` - iCure MSG Gateway
 - `REACT_APP_DATABASE_ID` - iCure database ID
 - `REACT_APP_EXTERNAL_SERVICES_SPEC_ID` - iCure external services spec group ID
-- `REACT_APP_PARENT_ORGANISATION_ID` - Parent organisation ID
+
 - `REACT_APP_AZURE_CLIENT_ID` / `REACT_APP_AZURE_TENANT_ID` - Azure AD config
 - `REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY` - CAPTCHA site key
 - `REACT_APP_ROLE_ADMINISTRATOR` / `REACT_APP_ROLE_HEAD_OF_SERVICE` / `REACT_APP_ROLE_CITY_WORKER` - Role IDs

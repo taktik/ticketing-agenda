@@ -2,7 +2,7 @@ export class Config {
   REACT_APP_ICURE_API_URL = 'https://api.icure.cloud'
   REACT_APP_MSG_GW_URL = 'https://msg-gw.icure.cloud'
   REACT_APP_EXTERNAL_SERVICES_SPEC_ID = ''
-  REACT_APP_PARENT_ORGANISATION_ID = ''
+
   REACT_APP_FRIENDLY_CAPTCHA_SITE_KEY = ''
   REACT_APP_DATABASE_ID = ''
   REACT_APP_BACKEND_API = ''
