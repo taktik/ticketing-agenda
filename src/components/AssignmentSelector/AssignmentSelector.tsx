@@ -63,6 +63,7 @@ export const AssignmentSelector: React.FC<AssignmentSelectProps> = ({ value, onC
 
   return (
     <Select
+      aria-label={t('content.select_an_assignment')}
       mode="multiple"
       style={{ width: '100%' }}
       placeholder={t('content.select_an_assignment')}

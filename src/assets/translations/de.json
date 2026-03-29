@@ -146,6 +146,7 @@
     "select_procedures": "Verfahren auswählen",
     "add_procedures_instruction": "Fügen Sie ein oder mehrere Verfahren hinzu, die Sie buchen möchten.",
     "quantity": "Menge",
+    "quantity_tooltip": "Wenn Sie für mehrere Personen kommen, geben Sie bitte die Anzahl der Personen an, die den Termin wahrnehmen werden",
     "add_another_procedure": "Weiteres Verfahren hinzufügen",
     "next": "Weiter",
     "select_a_date": "Datum auswählen",

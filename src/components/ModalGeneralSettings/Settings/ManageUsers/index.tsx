@@ -461,7 +461,7 @@ export const ManagerUsers = (): ReactElement => {
                   return (
                     <div className="role-column">
                       <Form.Item name="role" style={{ margin: 0 }} rules={[{ required: true, message: t('validation.role_is_required') }]}>
-                        <Select placeholder={t('content.select_a_role')} options={roleOptions} />
+                        <Select aria-label={t('content.select_a_role')} placeholder={t('content.select_a_role')} options={roleOptions} />
                       </Form.Item>
 
                       {(watchedRole === UserRole.CITY_WORKER || watchedRole === UserRole.HEAD_OF_SERVICE) && (

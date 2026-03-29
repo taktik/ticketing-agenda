@@ -96,6 +96,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
         <Col xs={24} sm={24} md={10}>
           <Form.Item label={t('content.procedure')} required style={{ marginBottom: 0 }}>
             <Select
+              aria-label={t('content.procedure')}
               placeholder={t('content.select_procedure_placeholder')}
               style={{ width: '100%' }}
               loading={isLoading}
@@ -114,6 +115,7 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
         <Col xs={14} sm={14} md={7}>
           <Form.Item label={t('content.site')} required style={{ marginBottom: 0 }}>
             <Select
+              aria-label={t('content.site')}
               style={{ width: '100%' }}
               placeholder={t('content.select_site_placeholder')}
               disabled={!draft.procedureGroupId}
@@ -128,8 +130,9 @@ export const ProcedureRow = ({ draft, availableProcedures, lockedAgendaId, canRe
         </Col>
 
         <Col xs={8} sm={8} md={5}>
-          <Form.Item label={t('content.quantity')} required style={{ marginBottom: 0 }}>
+          <Form.Item label={t('content.quantity')} required style={{ marginBottom: 0 }} tooltip={{ title: t('content.quantity_tooltip'), placement: 'topLeft', overlayStyle: { maxWidth: 200 }, getPopupContainer: () => document.body }}>
             <Select
+              aria-label={t('content.quantity')}
               style={{ width: '100%' }}
               placeholder={t('content.quantity')}
               disabled={!draft.siteVariantId}

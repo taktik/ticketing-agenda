@@ -651,6 +651,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                         <>
                           <Form.Item name="calendarItemTypesIds" style={{ margin: 0 }} rules={[{ required: true, message: t('content.select_procedure_required') }]}>
                             <Select
+                              aria-label={t('content.procedure')}
                               mode="multiple"
                               allowClear
                               placeholder={t('content.select_procedure_placeholder')}
@@ -739,7 +740,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                               <InputNumber min={1} style={{ width: '35%' }} />
                             </Form.Item>
                             <Form.Item name="_freq" initialValue={RRule.WEEKLY} rules={[{ required: true, message: t('validation.unit_required') }]} noStyle>
-                              <Select style={{ width: '65%' }}>
+                              <Select aria-label="Frequency" style={{ width: '65%' }}>
                                 <Select.Option value={RRule.DAILY}>{watchedInterval === 1 ? t('rrule.day') : t('rrule.days')}</Select.Option>
                                 <Select.Option value={RRule.WEEKLY}>{watchedInterval === 1 ? t('rrule.week') : t('rrule.weeks')}</Select.Option>
                               </Select>
@@ -750,7 +751,7 @@ export const ModalRules = ({ isVisible, onClose, schedulingTableRow, schedulingT
                             <div className="rrule-start">
                               <Typography.Text style={{ marginRight: 8, whiteSpace: 'nowrap' }}>{t('rrule.on_days')}:</Typography.Text>
                               <Form.Item name="_byday" rules={[{ required: true, message: t('content.select_at_least_one_day') }]} style={{ marginBottom: '12px', width: '100%', flexGrow: 1 }}>
-                                <Select mode="multiple" allowClear placeholder={t('content.select_days_placeholder')}>
+                                <Select aria-label={t('content.select_days_placeholder')} mode="multiple" allowClear placeholder={t('content.select_days_placeholder')}>
                                   {RRuleWeekdays.map((day) => (
                                     <Select.Option key={day.value} value={day.value} label={day.label}>
                                       {day.label}

@@ -142,6 +142,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
         <Form form={form} layout="vertical" onFinish={handleSubmit} name="absence_form" className="createOffTime-form">
           <Form.Item name="site" label={t('content.site')} rules={[{ required: true }]}>
             <Select
+              aria-label={t('content.site')}
               showSearch
               allowClear
               placeholder={t('content.select_site')}
@@ -154,6 +155,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
 
           <Form.Item name="service" label={t('content.service')} rules={[{ required: true }]} tooltip={watchedSite ? null : t('content.select_site_for_service')}>
             <Select
+              aria-label={t('content.service')}
               showSearch
               placeholder={t('content.select_service')}
               optionFilterProp="label"
@@ -172,6 +174,7 @@ export const CreateTimeOff = ({ isVisible, onClose, sites, showMessageFeedback, 
 
           <Form.Item name="reason" label={t('content.reason')} rules={[{ required: true }]} tooltip={watchedService ? null : t('content.select_service_for_reason')}>
             <Select
+              aria-label={t('content.reason')}
               placeholder={t('content.select_reason')}
               allowClear
               disabled={!watchedService}

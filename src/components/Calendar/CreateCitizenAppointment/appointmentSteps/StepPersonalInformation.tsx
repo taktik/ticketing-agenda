@@ -68,21 +68,21 @@ const BirthdayInput: FC<BirthdayInputProps> = ({ value, onChange }) => {
 
   return (
     <Space.Compact style={{ width: '50%' }}>
-      <Select size="large" placeholder={t('content.day')} value={day} onChange={handleDayChange} style={{ width: '25%' }}>
+      <Select aria-label={t('content.day')} size="large" placeholder={t('content.day')} value={day} onChange={handleDayChange} style={{ width: '25%' }}>
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
           <Option key={d} value={d}>
             {d}
           </Option>
         ))}
       </Select>
-      <Select size="large" placeholder={t('content.month')} value={month} onChange={handleMonthChange} style={{ width: '45%' }}>
+      <Select aria-label={t('content.month')} size="large" placeholder={t('content.month')} value={month} onChange={handleMonthChange} style={{ width: '45%' }}>
         {months.map((m) => (
           <Option key={m.value} value={m.value}>
             {m.label}
           </Option>
         ))}
       </Select>
-      <Select size="large" placeholder={t('content.year')} value={year} onChange={handleYearChange} style={{ width: '30%' }}>
+      <Select aria-label={t('content.year')} size="large" placeholder={t('content.year')} value={year} onChange={handleYearChange} style={{ width: '30%' }}>
         {years.map((y) => (
           <Option key={y} value={y}>
             {y}
@@ -130,12 +130,12 @@ export const StepPersonalInformation: FC = () => {
         <Form.Item {...formItemLayout} labelAlign="left" label={t('content.phone_number')} required layout="horizontal">
           <Space.Compact>
             <Form.Item name={['personalInfo', 'countryCode']} noStyle rules={[{ required: true, type: 'string' }]}>
-              <Select style={{ width: 120 }} size="large">
-                <Option value="+32">🇧🇪 +32</Option>
-                <Option value="+33">🇫🇷 +33</Option>
-                <Option value="+352">🇱🇺 +352</Option>
-                <Option value="+31">🇳🇱 +31</Option>
-                <Option value="+49">🇩🇪 +49</Option>
+              <Select aria-label="Country code" style={{ width: 120 }} size="large">
+                <Option value="+32">BE +32</Option>
+                <Option value="+33">FR +33</Option>
+                <Option value="+352">LU +352</Option>
+                <Option value="+31">NL +31</Option>
+                <Option value="+49">DE +49</Option>
               </Select>
             </Form.Item>
             <Form.Item
@@ -149,7 +149,7 @@ export const StepPersonalInformation: FC = () => {
         </Form.Item>
 
         <Form.Item {...formItemLayout} labelAlign="left" name={['personalInfo', 'language']} label={t('content.language')} rules={[{ required: true, type: 'string' }]} layout="horizontal">
-          <Select style={{ width: 120 }} size="large">
+          <Select aria-label={t('content.language')} style={{ width: 120 }} size="large">
             <Option value="Français">Français</Option>
             <Option value="Nederlands">Nederlands</Option>
           </Select>

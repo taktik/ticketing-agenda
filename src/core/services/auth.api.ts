@@ -216,7 +216,7 @@ export const anonymousCardinalApi = () => {
 
 const tryAzureLogin = async (idToken: string) => {
   const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_API_URL, new AuthenticationMethod.UsingCredentials.ExternalAuthenticationToken('azure', idToken), {
-    encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'] },
+    encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'], patient: [] },
   })
 
   const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
@@ -318,7 +318,7 @@ export const startEmailAuthentication = createAsyncThunk(
         new CaptchaOptions.Kerberus.Computed({ solution: _payload.captchaToken }),
         { firstName, lastName },
         {
-          encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'] },
+          encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'], patient: [] },
         },
       )
 
@@ -397,7 +397,7 @@ export const login = createAsyncThunk('cardinalApi/login', async (_, { getState,
 
   try {
     const baseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_API_URL, new AuthenticationMethod.UsingCredentials.UsernamePassword(email, token), {
-      encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'] },
+      encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'], patient: [] },
     })
 
     const api = await baseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {

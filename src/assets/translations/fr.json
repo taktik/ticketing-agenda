@@ -146,6 +146,7 @@
     "select_procedures": "Sélectionner une ou plusieurs démarches",
     "add_procedures_instruction": "Ajoutez une ou plusieurs démarches que vous souhaitez réserver.",
     "quantity": "Quantité",
+    "quantity_tooltip": "Si vous venez pour plusieurs personnes, veuillez indiquer le nombre de personnes qui se présenteront au rendez-vous",
     "add_another_procedure": "Ajouter une autre démarche",
     "next": "Suivant",
     "select_a_date": "Sélectionner une date",

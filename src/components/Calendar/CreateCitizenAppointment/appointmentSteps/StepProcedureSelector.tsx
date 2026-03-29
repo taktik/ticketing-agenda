@@ -34,7 +34,7 @@ export const StepProcedureSelector = () => {
       <Title level={4}>{t('content.select_procedures')}</Title>
       <Paragraph type="secondary">{t('content.add_procedures_instruction')}</Paragraph>
 
-      <Space direction="vertical" style={{ width: '100%', maxHeight: '350px', overflow: 'auto' }}>
+      <Space direction="vertical" style={{ width: '100%', maxHeight: '450px', overflow: 'auto' }}>
         {drafts.map((draft, index) => {
           const rowOptions =
             index === 0
@@ -55,13 +55,13 @@ export const StepProcedureSelector = () => {
             />
           )
         })}
-
-        <div style={{ marginTop: 8 }}>
-          <Button type="dashed" onClick={addDraft} block icon={<PlusOutlined />} disabled={!lockedAgendaId || isLoadingData || remainingOptions.length === 0}>
-            {t('content.add_another_procedure')}
-          </Button>
-        </div>
       </Space>
+
+      <div style={{ marginTop: 12 }}>
+        <Button type="dashed" onClick={addDraft} block icon={<PlusOutlined />} disabled={!lockedAgendaId || isLoadingData || remainingOptions.length === 0}>
+          {t('content.add_another_procedure')}
+        </Button>
+      </div>
     </Space>
   )
 }

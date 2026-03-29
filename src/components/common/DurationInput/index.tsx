@@ -95,7 +95,7 @@ export const DurationInput: React.FC<DurationInputProps> = ({ value, onChange, d
   return (
     <Space.Compact style={{ width: '100%', display: 'flex' }}>
       <InputNumber style={{ flex: 1 }} value={quantity} onChange={handleQuantityChange} min={0} placeholder={placeholder} />
-      <Select style={{ width: '120px' }} value={currentUnit} onChange={handleUnitChange}>
+      <Select aria-label="Duration unit" style={{ width: '120px' }} value={currentUnit} onChange={handleUnitChange}>
         {unitOptions.map((opt) => (
           <Option key={opt.value} value={opt.value}>
             {opt.label}

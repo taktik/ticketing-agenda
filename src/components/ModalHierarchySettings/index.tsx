@@ -154,7 +154,7 @@ export const ModalHierarchySettings = ({ isVisible, onClose, initialSiteId }: Mo
         const longToken = await getTokenForUser(createdUser.id).unwrap()
         if (!longToken) throw new Error('Could not generate token for site user')
         const siteBaseSdk = await CardinalBaseSdk.initialize(APPLICATION_ID, ICURE_API_URL, new AuthenticationMethod.UsingCredentials.UsernameLongToken(createdUser.id, longToken), {
-          encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'] },
+          encryptedFields: { calendarItem: ['details', 'patientId', 'phoneNumber', 'address', 'addressText', 'meetingTags[].*', 'flowItem'], patient: [] },
         })
         siteFullSdk = await siteBaseSdk.toFullSdk(StorageFacade.usingBrowserLocalStorage(), {
           useHierarchicalDataOwners: true,

@@ -146,6 +146,7 @@
     "select_procedures": "Selecteer procedure(s)",
     "add_procedures_instruction": "Voeg een of meer procedures toe die u wilt boeken.",
     "quantity": "Aantal",
+    "quantity_tooltip": "Als u voor meerdere personen komt, geef dan het aantal personen op dat de afspraak zal bijwonen",
     "add_another_procedure": "Nog een procedure toevoegen",
     "next": "Volgende",
     "select_a_date": "Selecteer een datum",

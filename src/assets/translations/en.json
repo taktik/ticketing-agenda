@@ -146,6 +146,7 @@
     "select_procedures": "Select Procedure(s)",
     "add_procedures_instruction": "Add one or more procedures you would like to book.",
     "quantity": "Quantity",
+    "quantity_tooltip": "If you are coming for multiple people, please indicate the number of people who will attend the appointment",
     "add_another_procedure": "Add Another Procedure",
     "next": "Next",
     "select_a_date": "Select a Date",
