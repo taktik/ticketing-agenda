@@ -162,8 +162,8 @@ export const ModalCitizenSearch = ({ isVisible, onClose }: ModalCitizenSearchPro
                           startTime < todayStart
                             ? { color: 'default' as const, label: t('content.past') }
                             : startTime < tomorrowStart
-                              ? { color: 'blue' as const, label: t('content.today') }
-                              : { color: 'green' as const, label: t('content.upcoming') }
+                              ? { color: 'green' as const, label: t('content.today') }
+                              : { color: 'blue' as const, label: t('content.upcoming') }
 
                         return (
                           <List.Item>

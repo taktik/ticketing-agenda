@@ -16,15 +16,15 @@ export const contactApiRtk = createApi({
   tagTypes: [ContactApiTags.Contact],
   baseQuery: baseQueryWithRetry,
   endpoints: (builder) => ({
-    getContactByCalendarItemId: builder.query<DecryptedContact | undefined, string>({
-      async queryFn(calendarItemId, { getState }) {
+    getContactByCalendarItemId: builder.query<DecryptedContact | undefined, { calendarItemId: string; siteRootId: string }>({
+      async queryFn({ calendarItemId, siteRootId }, { getState }) {
         const cApi = (await cardinalApi(getState))?.contact
         return guard([cApi], async (): Promise<DecryptedContact | undefined> => {
-          const contacts = await loadFromIterator(await cApi!.filterContactsBy(ContactFilters.byServiceTagForSelf(INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })), 10)
+          const contacts = await loadFromIterator(await cApi!.filterContactsBy(ContactFilters.byServiceTagForDataOwner(siteRootId, INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })), 10)
           return contacts[0] ? new DecryptedContact(contacts[0]) : undefined
         })
       },
-      providesTags: (_, __, calendarItemId) => [{ type: ContactApiTags.Contact, id: calendarItemId }],
+      providesTags: (_, __, { calendarItemId }) => [{ type: ContactApiTags.Contact, id: calendarItemId }],
     }),
 
     createOrUpdateContactNote: builder.mutation<
@@ -68,18 +68,18 @@ export const contactApiRtk = createApi({
       invalidatesTags: (_, __, { calendarItemId }) => [{ type: ContactApiTags.Contact, id: calendarItemId }],
     }),
 
-    deleteContactByCalendarItemId: builder.mutation<undefined, string>({
-      async queryFn(calendarItemId, { getState }) {
+    deleteContactByCalendarItemId: builder.mutation<undefined, { calendarItemId: string; siteRootId: string }>({
+      async queryFn({ calendarItemId, siteRootId }, { getState }) {
         const cApi = (await cardinalApi(getState))?.contact
         return guard([cApi], async (): Promise<undefined> => {
-          const contacts = await loadFromIterator(await cApi!.filterContactsBy(ContactFilters.byServiceTagForSelf(INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })), 10)
+          const contacts = await loadFromIterator(await cApi!.filterContactsBy(ContactFilters.byServiceTagForDataOwner(siteRootId, INTERNAL_NOTE_TAG_TYPE, { tagCode: calendarItemId })), 10)
           if (contacts[0]) {
             await cApi!.deleteContact(contacts[0])
           }
           return undefined
         })
       },
-      invalidatesTags: (_, __, calendarItemId) => [{ type: ContactApiTags.Contact, id: calendarItemId }],
+      invalidatesTags: (_, __, { calendarItemId }) => [{ type: ContactApiTags.Contact, id: calendarItemId }],
     }),
   }),
 })

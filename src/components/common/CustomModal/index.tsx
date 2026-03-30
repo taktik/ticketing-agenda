@@ -15,7 +15,7 @@ interface CustomModalProps {
   deleteBtnTitle?: string
   children: ReactElement
   width?: number
-  title: string
+  title: React.ReactNode
   customFooter?: ReactElement[]
   mode?: 'danger' | undefined
   primaryBtnDisabled?: boolean

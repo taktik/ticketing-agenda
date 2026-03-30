@@ -1,5 +1,5 @@
 import { Agenda, CalendarItemType, DecryptedCalendarItem, EncryptedPatient, TelecomType } from '@icure/cardinal-sdk'
-import { Button, Card, Descriptions, Divider, Form, Input, Spin, Typography } from 'antd'
+import { Button, Card, Descriptions, Divider, Form, Input, Spin, Tag, Typography } from 'antd'
 import { format, parse } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import dayjs from 'dayjs'
@@ -81,7 +81,10 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
 
   const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
 
-  const { data: existingContact, isLoading: isContactLoading } = useGetContactByCalendarItemIdQuery(event?.id ?? '', { skip: !event?.id || isTimeOff })
+  const { data: existingContact, isLoading: isContactLoading } = useGetContactByCalendarItemIdQuery(
+    { calendarItemId: event?.id ?? '', siteRootId: siteRoot?.id ?? '' },
+    { skip: !event?.id || isTimeOff || !siteRoot?.id },
+  )
   const [createOrUpdateContactNote] = useCreateOrUpdateContactNoteMutation()
 
   const isDetailsLoading = isTimeOff ? !calendarItem : !calendarItem || !patient || !agenda || !calendarItemType || isContactLoading
@@ -92,6 +95,16 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     if (!calendarItem?.startTime) return false
     return calendarItem.startTime < dayjsToYYYYMMDDHHmmss(dayjs())
   }, [calendarItem])
+
+  const timeTag = useMemo(() => {
+    if (!calendarItem?.startTime) return null
+    const startTime = calendarItem.startTime
+    const todayStart = dayjsToYYYYMMDDHHmmss(dayjs().startOf('day'))
+    const tomorrowStart = dayjsToYYYYMMDDHHmmss(dayjs().add(1, 'day').startOf('day'))
+    if (startTime < todayStart) return { color: 'default' as const, label: t('content.past') }
+    if (startTime < tomorrowStart) return { color: 'green' as const, label: t('content.today') }
+    return { color: 'blue' as const, label: t('content.upcoming') }
+  }, [calendarItem, t])
 
   const [getAvailabilities, { isLoading: availabilitiesLoading }] = useLazyGetAvailabilitiesQuery()
 
@@ -290,7 +303,16 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
     <CustomModal
       isVisible={isVisible}
       handleClose={onClose}
-      title={editMode !== 'none' ? t('content.edit_appointment') : t('content.appointment_information')}
+      title={
+        <span>
+          {editMode !== 'none' ? t('content.edit_appointment') : t('content.appointment_information')}
+          {editMode === 'none' && timeTag && !isTimeOff && (
+            <Tag color={timeTag.color} style={{ marginLeft: 8 }}>
+              {timeTag.label}
+            </Tag>
+          )}
+        </span>
+      }
       blockAntModalBodyVerticalScroll
       noFooter
       width={editMode === 'reschedule' ? 1100 : 700}

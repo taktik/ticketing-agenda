@@ -56,7 +56,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
   const { t, i18n } = useTranslation()
   const dispatch = useAppDispatch()
 
-  const { allCalendarItemTypes, allSites } = useHierarchyContext()
+  const { allCalendarItemTypes, allSites, siteRoot } = useHierarchyContext()
   const { dataOwnerId, isAdminLevel } = usePermissionContext()
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
@@ -255,7 +255,7 @@ export const Calendar = ({ handleFullCalendarDateChange, calendarRef, selectedAg
 
         await deleteCalendarItem({ calendarItemId: event.id }).unwrap()
 
-        deleteContactByCalendarItemId(event.id).catch(() => {})
+        if (siteRoot?.id) deleteContactByCalendarItemId({ calendarItemId: event.id, siteRootId: siteRoot.id }).catch(() => {})
 
         try {
           const result = await waitForPropagation(triggerPolling, event.id)
