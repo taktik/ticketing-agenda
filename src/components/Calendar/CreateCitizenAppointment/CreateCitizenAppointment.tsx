@@ -543,14 +543,14 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
   return (
     <CustomModal isVisible={true} handleClose={onClose} title={t('content.appointment_booking_title')} blockAntModalBodyVerticalScroll noFooter width={1200}>
-      <div style={{ width: '100%', padding: '1.5rem' }}>
+      <div style={{ width: '100%', padding: '1.5rem', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
         {notificationContextHolder}
-        <Steps current={currentStep} items={stepItems} style={{ marginBottom: 32 }} />
+        <Steps current={currentStep} items={stepItems} style={{ marginBottom: 32, flexShrink: 0 }} />
 
-        <Form form={form} layout="vertical" initialValues={{ personalInfo: { countryCode: '+32', language: 'Français' } }}>
-          <div style={{ minHeight: '350px' }}>{renderStep()}</div>
-          <Divider />
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Form form={form} layout="vertical" initialValues={{ personalInfo: { countryCode: '+32', language: 'Français' } }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>{renderStep()}</div>
+          <Divider style={{ flexShrink: 0 }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
             <div>
               {currentStep > 0 && currentStep < AppointmentStep.RESULT && (
                 <Button size="large" onClick={prev}>

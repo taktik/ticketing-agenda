@@ -30,38 +30,40 @@ export const StepProcedureSelector = () => {
   }, [filteredProcedures, selectedProcedureIds, lockedAgendaId])
 
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }} className="procedure-selector">
-      <Title level={4}>{t('content.select_procedures')}</Title>
-      <Paragraph type="secondary">{t('content.add_procedures_instruction')}</Paragraph>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }} className="procedure-selector">
+      <Title level={4} style={{ margin: 0 }}>{t('content.select_procedures')}</Title>
+      <Paragraph type="secondary" style={{ margin: 0 }}>{t('content.add_procedures_instruction')}</Paragraph>
 
-      <Space direction="vertical" style={{ width: '100%', maxHeight: '450px', overflow: 'auto' }}>
-        {drafts.map((draft, index) => {
-          const rowOptions =
-            index === 0
-              ? availableProcedures
-              : filteredProcedures.filter((p) => {
-                  return !selectedProcedureIds.has(p.id) || p.id === draft.procedureGroupId
-                })
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          {drafts.map((draft, index) => {
+            const rowOptions =
+              index === 0
+                ? availableProcedures
+                : filteredProcedures.filter((p) => {
+                    return !selectedProcedureIds.has(p.id) || p.id === draft.procedureGroupId
+                  })
 
-          return (
-            <ProcedureRow
-              key={draft.tempId}
-              draft={draft}
-              index={index}
-              canRemove={drafts.length > 1}
-              availableProcedures={rowOptions}
-              lockedAgendaId={index === 0 ? undefined : lockedAgendaId}
-              isLoading={isLoadingData}
-            />
-          )
-        })}
-      </Space>
+            return (
+              <ProcedureRow
+                key={draft.tempId}
+                draft={draft}
+                index={index}
+                canRemove={drafts.length > 1}
+                availableProcedures={rowOptions}
+                lockedAgendaId={index === 0 ? undefined : lockedAgendaId}
+                isLoading={isLoadingData}
+              />
+            )
+          })}
+        </Space>
+      </div>
 
-      <div style={{ marginTop: 12 }}>
+      <div style={{ flexShrink: 0 }}>
         <Button type="dashed" onClick={addDraft} block icon={<PlusOutlined />} disabled={!lockedAgendaId || isLoadingData || remainingOptions.length === 0}>
           {t('content.add_another_procedure')}
         </Button>
       </div>
-    </Space>
+    </div>
   )
 }
