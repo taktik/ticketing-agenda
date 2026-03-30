@@ -8,6 +8,34 @@ import './index.less'
 const { Title } = Typography
 const { Option } = Select
 
+const flagPaths: Record<string, string> = {
+  BE: 'M0,0h5v15H0zM5,0h5v15H5zM10,0h5v15H10z',
+  FR: 'M0,0h5v15H0zM5,0h5v15H5zM10,0h5v15H10z',
+  LU: 'M0,0h15v5H0zM0,5h15v5H0zM0,10h15v5H0z',
+  NL: 'M0,0h15v5H0zM0,5h15v5H0zM0,10h15v5H0z',
+  DE: 'M0,0h15v5H0zM0,5h15v5H0zM0,10h15v5H0z',
+}
+
+const flagColors: Record<string, string[]> = {
+  BE: ['#000', '#FDDA24', '#EF3340'],
+  FR: ['#002395', '#fff', '#ED2939'],
+  LU: ['#EF3340', '#fff', '#00A1DE'],
+  NL: ['#AE1C28', '#fff', '#21468B'],
+  DE: ['#000', '#DD0000', '#FFCC00'],
+}
+
+const CountryFlag = ({ code }: { code: string }) => {
+  const paths = (flagPaths[code] || '').split('z').filter(Boolean)
+  const colors = flagColors[code] || []
+  return (
+    <svg width="20" height="15" viewBox="0 0 15 15" style={{ verticalAlign: 'middle', marginRight: 4 }}>
+      {paths.map((d, i) => (
+        <path key={i} d={d + 'z'} fill={colors[i] || '#ccc'} />
+      ))}
+    </svg>
+  )
+}
+
 interface BirthdayInputProps {
   value?: Dayjs
   onChange?: (date: Dayjs | null) => void
@@ -131,11 +159,21 @@ export const StepPersonalInformation: FC = () => {
           <Space.Compact>
             <Form.Item name={['personalInfo', 'countryCode']} noStyle rules={[{ required: true, type: 'string' }]}>
               <Select aria-label="Country code" style={{ width: 120 }} size="large">
-                <Option value="+32">BE +32</Option>
-                <Option value="+33">FR +33</Option>
-                <Option value="+352">LU +352</Option>
-                <Option value="+31">NL +31</Option>
-                <Option value="+49">DE +49</Option>
+                <Option value="+32">
+                  <CountryFlag code="BE" /> +32
+                </Option>
+                <Option value="+33">
+                  <CountryFlag code="FR" /> +33
+                </Option>
+                <Option value="+352">
+                  <CountryFlag code="LU" /> +352
+                </Option>
+                <Option value="+31">
+                  <CountryFlag code="NL" /> +31
+                </Option>
+                <Option value="+49">
+                  <CountryFlag code="DE" /> +49
+                </Option>
               </Select>
             </Form.Item>
             <Form.Item
