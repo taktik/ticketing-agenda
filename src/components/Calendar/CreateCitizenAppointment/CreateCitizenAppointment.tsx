@@ -310,8 +310,8 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
 
         const safeLang = detectLanguage([info.language])
 
-        const serviceName = getTranslationForEntity(draft.agenda.properties, EntityType.SERVICE, safeLang)
-        const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, safeLang)
+        const serviceName = getTranslationForEntity(draft.agenda.properties, EntityType.SERVICE, safeLang) || draft.agenda.name || ''
+        const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, safeLang) || draft.calendarItemType.name || ''
 
         const dateFormat = rollingStartTime.format('DD/MM/YYYY')
         const timeFormat = `${rollingStartTime.format('HH[h]mm')} - ${endTime.format('HH[h]mm')}`
@@ -411,8 +411,8 @@ const CreateCitizenAppointmentContent = ({ onClose }: { onClose: () => void }) =
           }
         }
 
-        const serviceName = getTranslationForEntity(draft.agenda.properties, EntityType.SERVICE, safeLang) || ''
-        const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, safeLang) || ''
+        const serviceName = getTranslationForEntity(draft.agenda.properties, EntityType.SERVICE, safeLang) || draft.agenda.name || ''
+        const procedureName = getTranslationForEntity(draft.calendarItemType.publicProperties, EntityType.CALENDARITEMTYPE, safeLang) || draft.calendarItemType.name || ''
 
         items.push({
           procedureName,
