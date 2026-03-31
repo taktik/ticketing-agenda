@@ -1,0 +1,5 @@
+# Env files contain credentials (cardinal token, QBetter password, etc.)
+*.env
+
+# Docker images
+*.tar.gz

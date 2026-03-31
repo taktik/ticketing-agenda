@@ -1,0 +1,63 @@
+# =============================================================================
+# Ticketing system - On-premise Docker Compose
+# =============================================================================
+#
+# Prerequisites:
+#   1. Docker + Docker Compose installed on the VM
+#   2. Load the 3 Docker images provided:
+#        docker load < ticketing-agenda-<version>.tar.gz
+#        docker load < ticketing-portal-<version>.tar.gz
+#        docker load < ticketing-service-<version>.tar.gz
+#   3. Fill in the .env files (ticketing-agenda.env, ticketing-portal.env, ticketing-service.env)
+#   4. Edit reverse-proxy.conf: replace YOUR_PORTAL_DOMAIN and YOUR_AGENDA_DOMAIN
+#      with the actual domain names (e.g. ticketing.city.com and ticketing-admin.city.com)
+#   5. Run: docker compose up -d
+#
+# Architecture:
+#   reverse-proxy (nginx, port 80)
+#     |- YOUR_PORTAL_DOMAIN/          -> ticketing-portal  (citizen booking)
+#     |- YOUR_PORTAL_DOMAIN/backend/  -> ticketing-service (Spring Boot API)
+#     |- YOUR_AGENDA_DOMAIN/          -> ticketing-agenda   (admin/worker UI)
+#
+#   Both domains point to port 80 on this server. Set up DNS accordingly.
+#   For HTTPS, add TLS termination in front (reverse proxy, load balancer, or certbot).
+# =============================================================================
+
+services:
+  reverse-proxy:
+    image: nginx:1.29-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./reverse-proxy.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ticketing-portal
+      - ticketing-agenda
+      - ticketing-service
+    restart: unless-stopped
+
+  ticketing-portal:
+    image: ticketing-portal:${VERSION:-latest}
+    env_file:
+      - ./ticketing-portal.env
+    restart: unless-stopped
+
+  ticketing-agenda:
+    image: ticketing-agenda:${VERSION:-latest}
+    env_file:
+      - ./ticketing-agenda.env
+    restart: unless-stopped
+
+  ticketing-service:
+    image: ticketing-service:${VERSION:-latest}
+    env_file:
+      - ./ticketing-service.env
+    volumes:
+      # Existing worker keys are baked into the JAR (src/main/resources/key_store/).
+      # This volume is for NEW keys created after on-premise deployment.
+      # The path must match ticketing.key.destinationKeyDirectory in ticketing-service.env.
+      - keystore-data:/media/DATA/keystore
+    restart: unless-stopped
+
+volumes:
+  keystore-data:
