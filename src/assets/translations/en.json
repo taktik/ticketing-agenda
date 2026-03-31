@@ -108,8 +108,8 @@
     "is_public": "Is public",
     "visibility": "Visibility",
     "booking_window_min": "Booking Window",
-    "before": "Before",
-    "after": "After",
+    "before": "Opens",
+    "after": "Closes",
     "all_procedures": "All procedures",
     "select_all": "Select all",
     "enterValue": "Enter value",
@@ -378,8 +378,8 @@
     "from_date": "Starting from",
     "weekday": "weekday",
     "until": "Until",
-    "rrule_time_min": "Booking Opens",
-    "rrule_time_max": "Booking Closes"
+    "rrule_time_min": "Booking opens within",
+    "rrule_time_max": "Booking closes within"
   },
   "validation": {
     "check_highlighted_fields_correct_errors": "Please check the highlighted fields and correct the errors.",
