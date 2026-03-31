@@ -24,6 +24,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { msalInstance } from '../..'
 import { APPLICATION_ID, BACKEND_API, EMAIL_AUTH_CODE_ADMIN_FR, EMAIL_AUTH_CODE_ADMIN_NL, ICURE_API_URL, MSG_GW_URL, SPEC_ID } from '../../constants'
 import { agendaApiRtk } from '../api/agendaApi'
+import { AppointmentPollingApiRtk } from '../api/appointmentPollingApi'
 import { anonymousApiRtk } from '../api/anonymousApi'
 import { calendarItemApiRtk } from '../api/calendarItemApi'
 import { calendarItemTypeApiRtk } from '../api/calendarItemTypeApi'
@@ -33,6 +34,7 @@ import { emailApiRtk } from '../api/emailApi'
 import { groupApiRtk } from '../api/groupApi'
 import { patientApiRtk } from '../api/patientApi'
 import { recoveryApiRtk } from '../api/recoveryApi'
+import { healthcarePartyApiRtk } from '../api/healthcarePartyApi'
 import { roleApiRtk } from '../api/roleApi'
 import { userApiRtk } from '../api/userApi'
 import { revertAll, setSavedCredentials } from '../app'
@@ -443,7 +445,9 @@ export const logout = createAsyncThunk('cardinalApi/logout', async (_payload, { 
   dispatch(calendarItemTypeApiRtk.util.resetApiState())
   dispatch(contactApiRtk.util.resetApiState())
   dispatch(dataOwnerApiRtk.util.resetApiState())
+  dispatch(healthcarePartyApiRtk.util.resetApiState())
   dispatch(patientApiRtk.util.resetApiState())
+  dispatch(AppointmentPollingApiRtk.util.resetApiState())
   dispatch(roleApiRtk.util.resetApiState())
   dispatch(groupApiRtk.util.resetApiState())
   dispatch(revertAll())
@@ -508,9 +512,7 @@ export const cardinalApiRtk = createSlice({
       state.user = user
       state.online = !!user
     },
-    resetCredentials: (state) => {
-      state.online = false
-    },
+    resetCredentials: () => cardinalApiInitialState,
     setEmailLoginProcessStarted(state, { payload: status }: PayloadAction<boolean>) {
       state.emailLoginProcessStarted = status
     },
