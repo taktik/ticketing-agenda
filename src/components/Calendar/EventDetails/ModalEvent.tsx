@@ -81,10 +81,7 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
 
   const { calendarItem, patient, agenda, calendarItemType } = useCalendarItemDetails(event?.id)
 
-  const { data: existingContact, isLoading: isContactLoading } = useGetContactByCalendarItemIdQuery(
-    { calendarItemId: event?.id ?? '', siteRootId: siteRoot?.id ?? '' },
-    { skip: !event?.id || isTimeOff || !siteRoot?.id },
-  )
+  const { data: existingContact, isLoading: isContactLoading } = useGetContactByCalendarItemIdQuery({ calendarItemId: event?.id ?? '', siteRootId: siteRoot?.id ?? '' }, { skip: !event?.id || isTimeOff || !siteRoot?.id })
   const [createOrUpdateContactNote] = useCreateOrUpdateContactNoteMutation()
 
   const isDetailsLoading = isTimeOff ? !calendarItem : !calendarItem || !patient || !agenda || !calendarItemType || isContactLoading
@@ -322,23 +319,18 @@ export const EventDetails = ({ isCalendarItemLoading, isVisible, onClose, event,
         <Spin spinning={isProcessing} tip={t('content.processing')} size="large">
           <Form form={form} onFinish={handleUpdate} layout="vertical" style={{ width: '100%', gap: '0.5rem', display: 'flex', flexDirection: 'column' }}>
             {editMode === 'reschedule' ? (
-              <>
-                <div style={{ padding: '1rem' }}>
-                  <TimeSlotPickerUI
-                    availabilities={availabilities}
-                    isLoading={availabilitiesLoading}
-                    currentMonth={currentMonth}
-                    onMonthChange={setCurrentMonth}
-                    selectedDate={selectedDate}
-                    selectedTime={selectedTime}
-                    onDateSelect={handleDateSelect}
-                    onTimeSelect={handleTimeSelect}
-                  />
-                </div>
-                <Form.Item name="note" label={t('content.details')}>
-                  <TextArea rows={4} />
-                </Form.Item>
-              </>
+              <div style={{ padding: '1rem' }}>
+                <TimeSlotPickerUI
+                  availabilities={availabilities}
+                  isLoading={availabilitiesLoading}
+                  currentMonth={currentMonth}
+                  onMonthChange={setCurrentMonth}
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                  onDateSelect={handleDateSelect}
+                  onTimeSelect={handleTimeSelect}
+                />
+              </div>
             ) : editMode === 'details' ? (
               <div style={{ padding: '1rem' }}>
                 <Form.Item name="note" label={t('content.details')}>
