@@ -1,83 +1,91 @@
 {
-	"permissions": {
-		"allow": [
-			"Read",
-			"Write",
-			"Edit",
-			"MultiEdit",
-			"Grep",
-			"Glob",
-			"LS",
-			"WebSearch",
-			"WebFetch",
-			"Task",
-			"TodoWrite",
-			"NotebookEdit",
-			"Bash(git:*)",
-			"Bash(pwd)",
-			"Bash(which:*)",
-			"Bash(jq:*)",
-			"Bash(./gradlew:*)",
-			"Bash(npm:*)",
-			"Bash(ls:*)",
-			"Bash(npx:*)",
-			"Bash(yarn:*)",
-			"Bash(lerna:*)",
-			"Bash(node:*)",
-			"Bash(java:*)",
-			"Bash(cat:*)",
-			"Bash(head:*)",
-			"Bash(tail:*)",
-			"Bash(grep:*)",
-			"Bash(rg:*)",
-			"Bash(find:*)",
-			"Bash(echo:*)",
-			"Bash(wc:*)",
-			"Bash(test:*)",
-			"Bash(diff:*)",
-			"Bash(sort:*)",
-			"Bash(uniq:*)",
-			"Bash(mkdir:*)",
-			"Bash(cp:*)",
-			"Bash(sed:*)",
-			"Bash(awk:*)",
-			"Bash(curl:*)",
-			"Bash(env:*)",
-			"Bash(printenv:*)",
-			"Bash(du:*)",
-			"Bash(df:*)",
-			"Bash(basename:*)",
-			"Bash(dirname:*)",
-			"Bash(realpath:*)",
-			"Bash(tr:*)",
-			"Bash(cut:*)",
-			"Bash(xargs:*)",
-			"Bash(tee:*)"
-		],
-		"deny": ["Bash(git push:*)", "Bash(git reset --hard:*)", "Bash(rm:*)", "Bash(sudo:*)"]
-	},
-	"hooks": {
-		"PreToolUse": [
-			{
-				"matcher": "Edit|Write",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "filepath=\"$CLAUDE_FILE_PATH\"; case \"$filepath\" in *package-lock.json|*yarn.lock) echo 'BLOCK: Lock files — use npm/yarn to modify' >&2; exit 2 ;; esac; exit 0"
-					}
-				]
-			}
-		],
-		"PostToolUse": [
-			{
-				"matcher": "Edit|Write",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "ROOT=\"$(git rev-parse --show-toplevel)\"; filepath=\"$CLAUDE_FILE_PATH\"; case \"$filepath\" in *.ts|*.tsx|*.js|*.jsx|*.json|*.html|*.css|*.md) cd \"$ROOT\" && npx prettier --write \"$filepath\" 2>/dev/null ;; esac; exit 0"
-					}
-				]
-			}
-		]
-	}
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Grep",
+      "Glob",
+      "LS",
+      "WebSearch",
+      "WebFetch",
+      "Task",
+      "TodoWrite",
+      "NotebookEdit",
+      "Bash(git:*)",
+      "Bash(pwd)",
+      "Bash(which:*)",
+      "Bash(jq:*)",
+      "Bash(./gradlew:*)",
+      "Bash(npm:*)",
+      "Bash(ls:*)",
+      "Bash(npx:*)",
+      "Bash(yarn:*)",
+      "Bash(lerna:*)",
+      "Bash(node:*)",
+      "Bash(java:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(echo:*)",
+      "Bash(wc:*)",
+      "Bash(test:*)",
+      "Bash(diff:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(curl:*)",
+      "Bash(env:*)",
+      "Bash(printenv:*)",
+      "Bash(du:*)",
+      "Bash(df:*)",
+      "Bash(basename:*)",
+      "Bash(dirname:*)",
+      "Bash(realpath:*)",
+      "Bash(tr:*)",
+      "Bash(cut:*)",
+      "Bash(xargs:*)",
+      "Bash(tee:*)",
+      "Read(//Users/oliviermarechal/Documents/ticketing-mouscron/ticketing-portal/src/core/api/**)",
+      "Read(//Users/oliviermarechal/Documents/ticketing-mouscron/ticketing-portal/**)",
+      "Read(//Users/oliviermarechal/Documents/ticketing-mouscron/ticketing-service/**)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm:*)",
+      "Bash(sudo:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "filepath=\"$CLAUDE_FILE_PATH\"; case \"$filepath\" in *package-lock.json|*yarn.lock) echo 'BLOCK: Lock files — use npm/yarn to modify' >&2; exit 2 ;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ROOT=\"$(git rev-parse --show-toplevel)\"; filepath=\"$CLAUDE_FILE_PATH\"; case \"$filepath\" in *.ts|*.tsx|*.js|*.jsx|*.json|*.html|*.css|*.md) cd \"$ROOT\" && npx prettier --write \"$filepath\" 2>/dev/null ;; esac; exit 0"
+          }
+        ]
+      }
+    ]
+  }
 }

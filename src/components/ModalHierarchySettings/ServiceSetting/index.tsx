@@ -120,6 +120,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
 
   const [showEditServiceTitle, setShowEditServiceTitle] = useState<boolean>(false)
   const [editingKey, setEditingKey] = useState<string>('')
+  const [searchText, setSearchText] = useState<string>('')
   const isEditing = useMemo(() => (record: ProcedureRow) => record.rowId === editingKey, [editingKey])
   const [rowViewedLangs, setRowViewedLangs] = useState<{ [rowKey: string]: string }>({})
 
@@ -170,7 +171,7 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       durationsMap.set(groupKey, sortedDurations)
     })
 
-    return sortedProcedures.map((procedure) => ({
+    const rows = sortedProcedures.map((procedure) => ({
       rowId: procedure.id,
       procedureId: procedure.id,
       appointmentDurations: durationsMap.get(groupKeyFor(procedure)) || [],
@@ -179,7 +180,16 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
       subjectByLanguage: Object.fromEntries(languages.map((locale) => [locale, getTranslationForEntity(procedure.publicProperties, EntityType.CALENDARITEMTYPE, locale)])),
       color: procedure.color ?? '',
     }))
-  }, [procedures, sortedProcedures])
+
+    if (!searchText.trim()) return rows
+
+    const lower = searchText.toLowerCase()
+    return rows.filter(
+      (row) =>
+        row.rowId === editingKey ||
+        Object.values(row.subjectByLanguage).some((name) => name.toLowerCase().includes(lower)),
+    )
+  }, [procedures, sortedProcedures, searchText, editingKey])
 
   useEffect(() => {
     setEditingKey('')
@@ -525,8 +535,9 @@ export const ServiceSetting = ({ service, handleDeleteService, isServicesLoading
             )}
           </div>
 
-          <div className="table-add-entry">
-            <Button style={{ width: '100%' }} onClick={addProcedure} loading={isMutating} disabled={isLoading || !!editingKey}>
+          <div className="table-add-entry" style={{ display: 'flex', gap: 8 }}>
+            <Input allowClear placeholder={t('content.search_table_placeholder')} value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ flex: 1 }} />
+            <Button onClick={addProcedure} loading={isMutating} disabled={isLoading || !!editingKey}>
               {t('content.add_procedure')}
             </Button>
           </div>

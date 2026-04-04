@@ -242,6 +242,7 @@
     "no_code_provided": "Kein Code angegeben",
     "search_citizen": "Bürger suchen",
     "search_citizen_placeholder": "Nach Name, E-Mail oder Telefon suchen...",
+    "search_table_placeholder": "Suchen...",
     "search_min_chars": "Geben Sie mindestens 2 Zeichen ein",
     "no_results": "Keine Bürger gefunden",
     "citizen_appointments": "Termine",

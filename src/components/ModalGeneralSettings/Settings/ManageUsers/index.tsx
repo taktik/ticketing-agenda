@@ -59,6 +59,7 @@ export const ManagerUsers = (): ReactElement => {
   const [showDeleteUserModal, setShowDeleteUserModal] = useState<boolean>(false)
   const [userRowToBeDeleted, setUserRowToBeDeleted] = useState<UserRow | undefined>(undefined)
   const [editingKey, setEditingKey] = useState<string>('')
+  const [searchText, setSearchText] = useState<string>('')
 
   const { data: hcps, isLoading: isHcpsLoading } = useGetHealthcarePartyUsers()
   const hcpIds = useMemo(() => hcps?.map((hcp) => hcp.id).filter((id): id is string => !!id) ?? [], [hcps])
@@ -150,14 +151,25 @@ export const ManagerUsers = (): ReactElement => {
     const uniqueNewUsers = newUsers.filter((n) => !serverRows.some((s) => s.hcp?.id === n.hcp?.id))
     const combined = [...uniqueNewUsers, ...serverRows]
 
-    return combined.sort((a, b) => {
+    const sorted = combined.sort((a, b) => {
       const nameA = a.firstName ?? ''
       const nameB = b.firstName ?? ''
       if (nameA === '' && nameB !== '') return -1
       if (nameA !== '' && nameB === '') return 1
       return nameA.localeCompare(nameB)
     })
-  }, [newUsers, serverRows])
+
+    if (!searchText.trim()) return sorted
+
+    const lower = searchText.toLowerCase()
+    return sorted.filter(
+      (row) =>
+        row.rowId === editingKey ||
+        (row.firstName ?? '').toLowerCase().includes(lower) ||
+        (row.lastName ?? '').toLowerCase().includes(lower) ||
+        (row.email ?? '').toLowerCase().includes(lower),
+    )
+  }, [newUsers, serverRows, searchText, editingKey])
 
   const roleOptions = useMemo(
     () => [
@@ -350,8 +362,9 @@ export const ManagerUsers = (): ReactElement => {
       {notificationContextHolder}
       {messageContextHolder}
 
-      <div className="table-add-entry">
-        <Button style={{ width: '100%' }} onClick={addUser} loading={isLoading} disabled={isLoading || !!editingKey}>
+      <div className="table-add-entry" style={{ display: 'flex', gap: 8 }}>
+        <Input allowClear placeholder={t('content.search_table_placeholder')} value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ flex: 1 }} />
+        <Button onClick={addUser} loading={isLoading} disabled={isLoading || !!editingKey}>
           {t('content.add_user')}
         </Button>
       </div>

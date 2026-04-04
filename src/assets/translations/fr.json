@@ -241,6 +241,7 @@
     "no_code_provided": "Aucun code fourni",
     "search_citizen": "Rechercher un citoyen",
     "search_citizen_placeholder": "Rechercher par nom, email ou téléphone...",
+    "search_table_placeholder": "Rechercher...",
     "search_min_chars": "Entrez au moins 2 caractères",
     "no_results": "Aucun citoyen trouvé",
     "citizen_appointments": "Rendez-vous",

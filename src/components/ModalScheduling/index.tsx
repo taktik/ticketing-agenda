@@ -1,5 +1,5 @@
 import { Agenda, ResourceGroupAllocationSchedule } from '@icure/cardinal-sdk'
-import { Select as AntSelect, Button, Empty, message, Space, Table, Tooltip } from 'antd'
+import { Input, Select as AntSelect, Button, Empty, message, Space, Table, Tooltip } from 'antd'
 import Column from 'antd/es/table/Column'
 import { addMonths, endOfToday, format, startOfToday } from 'date-fns'
 import { enUS } from 'date-fns/locale'
@@ -34,6 +34,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
   const [showDeleteResourceGroupModal, setShowDeleteResourceGroupModal] = useState<boolean>(false)
   const [selectedResourceGroup, setSelectedResourceGroup] = useState<SchedulingTableRow | undefined>(undefined)
   const [resourceGroupToBeDeleted, setResourceGroupToBeDeleted] = useState<SchedulingTableRow | undefined>(undefined)
+  const [searchText, setSearchText] = useState<string>('')
 
   useEffect(() => {
     const sortedResourceGroups = [...(selectedService?.schedules ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
@@ -42,6 +43,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
       return Object.assign(instance, { rowId: v4() })
     })
     setSchedulingTableRow(tableRows)
+    setSearchText('')
   }, [selectedService])
 
   const [updateAgenda, { isLoading: isUpdateAgendaLoading }] = useUpdateAgendaMutation()
@@ -93,6 +95,12 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
 
   const serviceOptions = useMemo(() => services.map((service) => ({ label: service.name, value: service.id })), [services])
 
+  const filteredSchedulingTableRows = useMemo(() => {
+    if (!searchText.trim()) return schedulingTableRows
+    const lower = searchText.toLowerCase()
+    return schedulingTableRows.filter((row) => (row.name ?? '').toLowerCase().includes(lower))
+  }, [schedulingTableRows, searchText])
+
   const hasUnsavedChanges = selectedService?.schedules.length !== schedulingTableRows.length
 
   return (
@@ -116,10 +124,11 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
           />
         </div>
 
-        <div className="table-add-entry margin-top">
+        <div className="table-add-entry margin-top" style={{ display: 'flex', gap: 8 }}>
+          <Input allowClear placeholder={t('content.search_table_placeholder')} value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ flex: 1 }} />
           <Tooltip title={selectedService ? (hasUnsavedChanges ? t('content.save_current_schedule_before_adding') : null) : t('content.select_service_for_schedule')}>
             <span>
-              <Button style={{ width: '100%' }} disabled={!selectedService || hasUnsavedChanges} onClick={addSchedule}>
+              <Button disabled={!selectedService || hasUnsavedChanges} onClick={addSchedule}>
                 {t('content.add_schedule')}
               </Button>
             </span>
@@ -130,7 +139,7 @@ export const ModalScheduling = ({ isVisible, onClose, services }: ModalSchedulin
           <Table<SchedulingTableRow>
             pagination={false}
             scroll={{ y: 'calc(800px - 350px)', x: 'max-content' }}
-            dataSource={schedulingTableRows}
+            dataSource={filteredSchedulingTableRows}
             rowKey="rowId"
             locale={{ emptyText: <Empty description={t('content.no_schedule_yet')} /> }}
             loading={isUpdateAgendaLoading}

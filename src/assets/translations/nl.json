@@ -241,6 +241,7 @@
     "no_code_provided": "Geen code opgegeven",
     "search_citizen": "Burger zoeken",
     "search_citizen_placeholder": "Zoeken op naam, e-mail of telefoon...",
+    "search_table_placeholder": "Zoeken...",
     "search_min_chars": "Voer minstens 2 tekens in",
     "no_results": "Geen burgers gevonden",
     "citizen_appointments": "Afspraken",

@@ -9,5 +9,12 @@ export default defineConfig({
   server: {
     port: 3001,
     open: true,
+    proxy: {
+      '/backend': {
+        target: 'https://mouscron.taktik.dev',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 })
